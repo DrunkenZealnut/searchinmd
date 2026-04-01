@@ -1,0 +1,1836 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마크다운 키워드 검색기</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNhJlKfuyQM4tIRAI062MaV8sfjQKYVGjOBaZBOA87z+IhZE9DA==" crossorigin="anonymous"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title .number {
+            background: #667eea;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(17, 153, 142, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .folder-path {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .path-display {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 16px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            color: #495057;
+        }
+
+        .keywords-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .keyword-tag {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .keyword-tag.inactive {
+            background: #adb5bd;
+        }
+
+        .keyword-tag .remove {
+            cursor: pointer;
+            opacity: 0.8;
+            font-size: 16px;
+        }
+
+        .keyword-tag .remove:hover {
+            opacity: 1;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .option-item label {
+            font-size: 14px;
+            color: #495057;
+        }
+
+        .option-item input[type="text"] {
+            padding: 8px 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            width: 80px;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .progress-bar.active {
+            display: block;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .status-text {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .results-section {
+            margin-top: 30px;
+        }
+
+        .results-tabs {
+            display: flex;
+            gap: 5px;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 2px;
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #6c757d;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            font-weight: 600;
+        }
+
+        .tab-btn .count {
+            background: #e9ecef;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        .tab-btn.active .count {
+            background: #667eea;
+            color: white;
+        }
+
+        .results-table-wrapper {
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .results-table th {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #1a1a2e;
+            position: sticky;
+            top: 0;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .results-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: top;
+        }
+
+        .results-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .type-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .type-sentence { background: #e3f2fd; color: #1565c0; }
+        .type-table { background: #e8f5e9; color: #2e7d32; }
+        .type-image { background: #fff3e0; color: #e65100; }
+
+        .content-preview {
+            max-width: 500px;
+            max-height: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        .highlight {
+            background: #fff176;
+            padding: 1px 3px;
+            border-radius: 2px;
+        }
+
+        .file-count {
+            background: #e9ecef;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #495057;
+        }
+
+        .file-count strong {
+            color: #1a1a2e;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .empty-state svg {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .alert-info {
+            background: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #90caf9;
+        }
+
+        .alert-warning {
+            background: #fff3e0;
+            color: #e65100;
+            border: 1px solid #ffcc80;
+        }
+
+        .alert-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+
+        .llm-option {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .llm-status {
+            margin-top: 8px;
+            margin-left: 26px;
+            font-size: 13px;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #adb5bd;
+            display: inline-block;
+        }
+
+        .dot.connected {
+            background: #38ef7d;
+            box-shadow: 0 0 6px rgba(56, 239, 125, 0.5);
+        }
+
+        .dot.checking {
+            background: #ffc107;
+            animation: pulse-dot 1s infinite;
+        }
+
+        .dot.error {
+            background: #f5576c;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .heading-context {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 11px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .excel-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            margin-top: 15px;
+        }
+
+        .excel-info .icon {
+            font-size: 40px;
+        }
+
+        .excel-info .details {
+            flex: 1;
+        }
+
+        .excel-info .filename {
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+        }
+
+        .excel-info .meta {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .keyword-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .keyword-stat {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            text-align: center;
+        }
+
+        .keyword-stat .name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .keyword-stat .count {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                border-radius: 0;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 마크다운 키워드 검색기</h1>
+            <p>폴더 내 모든 마크다운 파일에서 키워드가 포함된 문장, 표, 이미지를 검색합니다</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Step 1: Excel Template -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="number">1</span>
+                    키워드 Excel 파일 불러오기
+                </div>
+                <p style="color: #6c757d; margin-bottom: 15px; font-size: 14px;">
+                    시트 이름이 검색 키워드로 사용됩니다. 결과는 각 시트에 저장됩니다.
+                </p>
+                <div class="folder-path">
+                    <button class="btn btn-warning" id="loadExcelBtn">
+                        📊 Excel 파일 선택
+                    </button>
+                    <input type="file" id="excelFileInput" accept=".xlsx,.xls" style="display: none;">
+                </div>
+                <div id="excelInfo" style="display: none;"></div>
+                <div class="keywords-list" id="keywordsList"></div>
+            </div>
+
+            <!-- Step 2: Folder Selection -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="number">2</span>
+                    마크다운 파일이 있는 폴더 선택
+                </div>
+                <div class="folder-path">
+                    <button class="btn btn-primary" id="selectFolderBtn">
+                        📁 폴더 선택
+                    </button>
+                    <div class="path-display" id="folderPath">폴더를 선택해주세요...</div>
+                </div>
+                <div class="file-count" id="fileCount" style="display: none; margin-top: 15px;">
+                    발견된 마크다운 파일: <strong id="mdFileCount">0</strong>개
+                </div>
+            </div>
+
+            <!-- Step 3: Options -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="number">3</span>
+                    검색 옵션
+                </div>
+                <div class="options-grid">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="caseSensitive">
+                        <label for="caseSensitive">대소문자 구분</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="searchSentences" checked>
+                        <label for="searchSentences">문장 검색</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="searchTables" checked>
+                        <label for="searchTables">표 검색</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="searchImages" checked>
+                        <label for="searchImages">이미지 검색</label>
+                    </div>
+                </div>
+                <div class="llm-option">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="useHybridLLM">
+                        <label for="useHybridLLM">🤖 LLM 하이브리드 검색 (LM Studio)</label>
+                    </div>
+                    <div class="llm-status" id="llmStatus" style="display:none;">
+                        <span class="dot" id="llmDot"></span>
+                        <span id="llmStatusText"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Search -->
+            <div class="section">
+                <div class="section-title">
+                    <span class="number">4</span>
+                    검색 실행
+                </div>
+                <button class="btn btn-success" id="searchBtn" disabled style="font-size: 16px; padding: 15px 40px;">
+                    🔍 검색 시작
+                </button>
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <div class="status-text" id="statusText"></div>
+            </div>
+
+            <!-- Results -->
+            <div class="results-section" id="resultsSection" style="display: none;">
+                <h2 style="margin-bottom: 20px; color: #1a1a2e;">📊 검색 결과</h2>
+
+                <div class="keyword-stats" id="keywordStats"></div>
+
+                <div class="results-tabs" id="resultsTabs" style="margin-top: 20px;"></div>
+
+                <div id="resultsContent"></div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-success" id="exportExcelBtn">
+                        📥 Excel로 내보내기 (원본 포맷 유지)
+                    </button>
+                    <button class="btn btn-secondary" id="clearResultsBtn">
+                        🗑️ 결과 초기화
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let selectedFolder = null;
+        let markdownFiles = [];
+        let keywords = [];
+        let searchResults = {};
+        let originalWorkbook = null;
+        let originalFileName = '';
+        let sheetColumnMappings = {}; // Store column mappings per sheet
+
+        // Shared heading detection helpers (used by both buildPageMapping and extractSentencesWithLineNumbers)
+        function isHeadingLine(trimmed) {
+            if (/^#+\s/.test(trimmed)) return true;
+            if (/^[○●◆◇■□▶▷]+\s/.test(trimmed)) return true;
+            if (/^\(?[가-힣\d]+[\.\)]\s/.test(trimmed)) return true;
+            return false;
+        }
+
+        function isStandaloneTitle(trimmed, prevLineEmpty) {
+            if (!prevLineEmpty) return false;
+            if (trimmed.length > 25) return false;
+            if (/^[•·\-\*]\s/.test(trimmed)) return false;
+            if (/[다.!?。！？]$/.test(trimmed)) return false;
+            if (!/[가-힣]/.test(trimmed)) return false;
+            if (/^\s*\|/.test(trimmed) || /!\[/.test(trimmed)) return false;
+            return true;
+        }
+
+        function normalizeHeading(text) {
+            return text
+                .replace(/^#+\s*/, '')
+                .replace(/\*\*/g, '')
+                .replace(/\n/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        // LLM Configuration
+        const LLM_PROXY_URL = '/api/llm';
+        const LLM_DIRECT_URL = 'http://localhost:1234/v1';
+        let LLM_BASE_URL = LLM_PROXY_URL;
+        let llmCache = {};
+        let llmAvailable = false;
+        let llmModelName = '';
+
+        // DOM Elements
+        const loadExcelBtn = document.getElementById('loadExcelBtn');
+        const excelFileInput = document.getElementById('excelFileInput');
+        const excelInfo = document.getElementById('excelInfo');
+        const selectFolderBtn = document.getElementById('selectFolderBtn');
+        const folderPathDisplay = document.getElementById('folderPath');
+        const fileCountDiv = document.getElementById('fileCount');
+        const mdFileCountSpan = document.getElementById('mdFileCount');
+        const keywordsList = document.getElementById('keywordsList');
+        const searchBtn = document.getElementById('searchBtn');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const statusText = document.getElementById('statusText');
+        const resultsSection = document.getElementById('resultsSection');
+        const keywordStats = document.getElementById('keywordStats');
+        const resultsTabs = document.getElementById('resultsTabs');
+        const resultsContent = document.getElementById('resultsContent');
+        const exportExcelBtn = document.getElementById('exportExcelBtn');
+        const clearResultsBtn = document.getElementById('clearResultsBtn');
+        const useHybridLLMCheckbox = document.getElementById('useHybridLLM');
+        const llmStatusDiv = document.getElementById('llmStatus');
+        const llmDot = document.getElementById('llmDot');
+        const llmStatusText = document.getElementById('llmStatusText');
+
+        // Check browser support
+        if (!('showDirectoryPicker' in window)) {
+            selectFolderBtn.innerHTML = '📁 파일 선택 (폴더 미지원)';
+        }
+
+        // Excel file loading
+        loadExcelBtn.addEventListener('click', () => {
+            excelFileInput.click();
+        });
+
+        excelFileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                originalFileName = nfc(file.name);
+                const arrayBuffer = await file.arrayBuffer();
+                originalWorkbook = XLSX.read(arrayBuffer, { type: 'array' });
+
+                // Extract keywords from sheet names (NFC-normalize for consistent Korean matching)
+                keywords = originalWorkbook.SheetNames.map(nfc);
+
+                // Store column mappings for each sheet
+                sheetColumnMappings = {};
+                keywords.forEach(sheetName => {
+                    const sheet = originalWorkbook.Sheets[sheetName];
+                    const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
+                    const headers = [];
+                    for (let col = range.s.c; col <= range.e.c; col++) {
+                        const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+                        const cell = sheet[cellAddress];
+                        headers.push(cell ? cell.v : '');
+                    }
+                    sheetColumnMappings[sheetName] = headers;
+                });
+
+                // Initialize search results
+                searchResults = {};
+                keywords.forEach(k => {
+                    searchResults[k] = [];
+                });
+
+                // Display Excel info
+                excelInfo.style.display = 'block';
+                excelInfo.innerHTML = `
+                    <div class="excel-info">
+                        <div class="icon">📊</div>
+                        <div class="details">
+                            <div class="filename">${escapeHtml(originalFileName)}</div>
+                            <div class="meta">${keywords.length}개의 키워드 (시트) 발견</div>
+                        </div>
+                    </div>
+                `;
+
+                // Display keywords
+                renderKeywords();
+                updateSearchButton();
+
+            } catch (err) {
+                console.error('Excel 파일 읽기 오류:', err);
+                alert('Excel 파일을 읽는 중 오류가 발생했습니다: ' + err.message);
+            }
+        });
+
+        function renderKeywords() {
+            keywordsList.innerHTML = keywords.map(k => `
+                <div class="keyword-tag">
+                    ${escapeHtml(k)}
+                </div>
+            `).join('');
+        }
+
+        // Folder selection
+        selectFolderBtn.addEventListener('click', async () => {
+            try {
+                if ('showDirectoryPicker' in window) {
+                    selectedFolder = await window.showDirectoryPicker();
+                    folderPathDisplay.textContent = nfc(selectedFolder.name);
+                    await scanForMarkdownFiles(selectedFolder);
+                } else {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.multiple = true;
+                    input.accept = '.md,.markdown';
+                    input.webkitdirectory = true;
+
+                    input.onchange = async (e) => {
+                        const files = Array.from(e.target.files).filter(f =>
+                            f.name.endsWith('.md') || f.name.endsWith('.markdown')
+                        );
+                        markdownFiles = [];
+                        for (const file of files) {
+                            const content = nfc(await file.text());
+                            markdownFiles.push({
+                                name: nfc(file.webkitRelativePath || file.name),
+                                content: content
+                            });
+                        }
+                        folderPathDisplay.textContent = `${files.length}개 파일 선택됨`;
+                        fileCountDiv.style.display = 'block';
+                        mdFileCountSpan.textContent = markdownFiles.length;
+                        updateSearchButton();
+                    };
+                    input.click();
+                }
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('폴더 선택 오류:', err);
+                    alert('폴더를 선택하는 중 오류가 발생했습니다.');
+                }
+            }
+        });
+
+        async function scanForMarkdownFiles(dirHandle, path = '') {
+            markdownFiles = [];
+            await scanDirectory(dirHandle, path);
+            fileCountDiv.style.display = 'block';
+            mdFileCountSpan.textContent = markdownFiles.length;
+            updateSearchButton();
+        }
+
+        async function scanDirectory(dirHandle, path) {
+            const pendingJsonFiles = {};
+            const localMdFiles = [];
+            const entries = [];
+
+            for await (const entry of dirHandle.values()) {
+                entries.push(entry);
+            }
+
+            for (const entry of entries) {
+                const entryPath = path ? `${path}/${nfc(entry.name)}` : nfc(entry.name);
+
+                if (entry.kind === 'directory') {
+                    await scanDirectory(entry, entryPath);
+                } else if (entry.kind === 'file') {
+                    if (entry.name.endsWith('.md') || entry.name.endsWith('.markdown')) {
+                        const file = await entry.getFile();
+                        const content = nfc(await file.text());
+                        const mdFile = {
+                            name: entryPath,
+                            content: content,
+                            handle: entry,
+                            metadata: null
+                        };
+                        markdownFiles.push(mdFile);
+                        localMdFiles.push(mdFile);
+                    } else if (entry.name.endsWith('_meta.json')) {
+                        const file = await entry.getFile();
+                        const content = await file.text();
+                        try {
+                            const metadata = JSON.parse(content);
+                            pendingJsonFiles[entryPath] = metadata;
+                        } catch (e) {
+                            console.warn('JSON 파싱 오류:', entryPath);
+                        }
+                    }
+                }
+            }
+
+            // Match only this directory's MD files with this directory's JSON metadata
+            for (const mdFile of localMdFiles) {
+                const baseName = mdFile.name.replace(/\.(md|markdown)$/, '');
+                const jsonPath = baseName + '_meta.json';
+
+                if (pendingJsonFiles[jsonPath]) {
+                    mdFile.metadata = pendingJsonFiles[jsonPath];
+                    console.log(`메타데이터 연결: ${mdFile.name}`);
+                }
+            }
+        }
+
+        function updateSearchButton() {
+            searchBtn.disabled = !(markdownFiles.length > 0 && keywords.length > 0);
+        }
+
+        // LLM Hybrid Search Functions
+        async function tryLLMEndpoint(baseUrl) {
+            const response = await fetch(`${baseUrl}/models`, {
+                signal: AbortSignal.timeout(5000)
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            if (data.data && data.data.length > 0) {
+                return data.data[0].id;
+            }
+            throw new Error('모델 없음');
+        }
+
+        async function checkLLMConnection() {
+            llmStatusDiv.style.display = 'flex';
+            llmDot.className = 'dot checking';
+            llmStatusText.textContent = '연결 확인 중...';
+
+            // 1차: 프록시 시도, 2차: 직접 연결 시도
+            const endpoints = [
+                { url: LLM_PROXY_URL, label: '프록시' },
+                { url: LLM_DIRECT_URL, label: '직접' }
+            ];
+
+            for (const ep of endpoints) {
+                try {
+                    const modelId = await tryLLMEndpoint(ep.url);
+                    LLM_BASE_URL = ep.url;
+                    llmModelName = modelId;
+                    llmAvailable = true;
+                    llmDot.className = 'dot connected';
+                    llmStatusText.textContent = `연결됨 (${ep.label}): ${llmModelName}`;
+                    return;
+                } catch (e) {
+                    console.log(`LLM ${ep.label} 연결 실패:`, e.message);
+                }
+            }
+
+            llmAvailable = false;
+            llmModelName = '';
+            llmDot.className = 'dot error';
+            llmStatusText.textContent = '연결 실패: LM Studio가 실행 중인지 확인하세요 (포트 1234)';
+        }
+
+        async function extractSentencesWithLLM(lines, filename) {
+            // Check cache
+            const cacheKey = filename;
+            if (llmCache[cacheKey]) {
+                return llmCache[cacheKey];
+            }
+
+            // Prepare content with line numbers (limit to 30000 chars)
+            let numberedContent = '';
+            for (let i = 0; i < lines.length; i++) {
+                const line = `[L${i + 1}] ${lines[i]}\n`;
+                if (numberedContent.length + line.length > 30000) break;
+                numberedContent += line;
+            }
+
+            const prompt = `다음 마크다운 문서의 구조를 분석해주세요. 각 문장이 어떤 섹션(제목) 아래에 속하는지 파악하여, 아래 JSON 형식으로 반환해주세요. 코드 블록, 테이블, 이미지 줄은 제외하세요.
+
+반환 형식 (JSON 배열만 반환, 다른 텍스트 없이):
+[{"h":"섹션 제목","s":"문장 내용","l":줄번호}]
+
+문서:
+${numberedContent}`;
+
+            try {
+                const response = await fetch(`${LLM_BASE_URL}/chat/completions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: llmModelName,
+                        messages: [
+                            { role: 'system', content: '당신은 마크다운 문서 구조 분석 전문가입니다. 요청된 JSON 형식만 반환하세요.' },
+                            { role: 'user', content: prompt }
+                        ],
+                        temperature: 0.1,
+                        max_tokens: 8192
+                    }),
+                    signal: AbortSignal.timeout(30000)
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                let content = data.choices[0].message.content.trim();
+
+                // Strip <think>...</think> reasoning blocks (common in reasoning models)
+                content = content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+
+                // Extract JSON from response (handle markdown code blocks)
+                let jsonStr = content;
+                const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+                if (jsonMatch) {
+                    jsonStr = jsonMatch[1].trim();
+                }
+                // Also try to find raw JSON array
+                if (!jsonStr.startsWith('[')) {
+                    const firstBracket = content.indexOf('[');
+                    const lastBracket = content.lastIndexOf(']');
+                    if (firstBracket !== -1 && lastBracket > firstBracket) {
+                        jsonStr = content.substring(firstBracket, lastBracket + 1);
+                    }
+                }
+
+                const parsed = JSON.parse(jsonStr);
+                // Build results, tracking current heading for items without 'h'
+                const results = [];
+                let currentHeading = null;
+                for (const item of parsed) {
+                    // If item has heading but no sentence, update current heading
+                    if (item.h && !item.s) {
+                        currentHeading = item.h;
+                        continue;
+                    }
+                    // If item has heading and sentence, use it directly
+                    if (item.h) {
+                        currentHeading = item.h;
+                    }
+                    if (item.s) {
+                        results.push({
+                            sentence: item.s,
+                            lineNumber: item.l,
+                            isHeading: false,
+                            headingContext: item.h || currentHeading || null
+                        });
+                    }
+                }
+
+                llmCache[cacheKey] = results;
+                return results;
+
+            } catch (err) {
+                console.warn(`LLM 분석 실패 (${filename}):`, err.message, '→ 폴백 사용');
+                return extractSentencesWithLineNumbers(lines);
+            }
+        }
+
+        // LLM checkbox event listener
+        useHybridLLMCheckbox.addEventListener('change', async () => {
+            if (useHybridLLMCheckbox.checked) {
+                await checkLLMConnection();
+            } else {
+                llmStatusDiv.style.display = 'none';
+                llmAvailable = false;
+            }
+        });
+
+        // Build page mapping from markdown content and metadata
+        // Strategy 1: Use <!-- page: N --> markers if present (highest accuracy)
+        // Strategy 2: TOC-based 3-stage algorithm as fallback
+        function buildPageMapping(lines, metadata) {
+            const pageMap = new Map(); // lineNumber (1-based) -> page number (1-based)
+
+            // --- Strategy 1: Page markers in markdown ---
+            const pageMarkerRegex = /<!--\s*page:\s*(\d+)\s*-->/;
+            let markerCount = 0;
+            let currentPage = null;
+
+            for (let i = 0; i < lines.length; i++) {
+                const match = lines[i].match(pageMarkerRegex);
+                if (match) {
+                    currentPage = parseInt(match[1]);
+                    markerCount++;
+                }
+                if (currentPage !== null) {
+                    pageMap.set(i + 1, currentPage);
+                }
+            }
+
+            if (markerCount > 0) {
+                return pageMap.size > 0 ? pageMap : null;
+            }
+
+            // --- Strategy 2: TOC-based matching (fallback) ---
+            if (!metadata || !metadata.table_of_contents) {
+                return null;
+            }
+
+            const toc = metadata.table_of_contents;
+
+            // --- Stage 1: Identify heading lines only ---
+            const headingLines = []; // { lineNumber (1-based), normalizedText }
+            let prevLineEmpty = true;
+            let inCodeBlock = false;
+
+            for (let i = 0; i < lines.length; i++) {
+                const trimmed = lines[i].trim();
+
+                if (trimmed.startsWith('```')) {
+                    inCodeBlock = !inCodeBlock;
+                    prevLineEmpty = false;
+                    continue;
+                }
+                if (inCodeBlock) { prevLineEmpty = false; continue; }
+
+                if (!trimmed) {
+                    prevLineEmpty = true;
+                    continue;
+                }
+
+                if (isHeadingLine(trimmed) || isStandaloneTitle(trimmed, prevLineEmpty)) {
+                    headingLines.push({
+                        lineNumber: i + 1,
+                        normalizedText: normalizeHeading(trimmed)
+                    });
+                }
+
+                prevLineEmpty = false;
+            }
+
+            // --- Stage 2: Anchor-based TOC matching (2-pass) ---
+            // Group TOC items by normalized title
+            const tocByTitle = new Map(); // normalizedTitle -> [{pageId, tocIdx}]
+            const tocUsed = new Set(); // set of tocIdx already matched
+
+            for (let ti = 0; ti < toc.length; ti++) {
+                const item = toc[ti];
+                if (!item.title) continue;
+                const key = normalizeHeading(item.title);
+                if (!key) continue;
+                if (!tocByTitle.has(key)) {
+                    tocByTitle.set(key, []);
+                }
+                tocByTitle.get(key).push({ pageId: item.page_id, tocIdx: ti });
+            }
+
+            // Group MD headings by title
+            const mdByTitle = new Map();
+            for (const h of headingLines) {
+                if (!mdByTitle.has(h.normalizedText)) {
+                    mdByTitle.set(h.normalizedText, []);
+                }
+                mdByTitle.get(h.normalizedText).push(h);
+            }
+
+            const headingPageMap = new Map(); // lineNumber -> page (1-based)
+
+            // Pass 1: Match unique titles (exactly 1 TOC entry AND 1 MD heading)
+            // These establish reliable position anchors.
+            for (const [title, tocEntries] of tocByTitle) {
+                const mdHeadings = mdByTitle.get(title);
+                if (!mdHeadings) continue;
+                if (tocEntries.length === 1 && mdHeadings.length === 1) {
+                    tocUsed.add(tocEntries[0].tocIdx);
+                    headingPageMap.set(mdHeadings[0].lineNumber, tocEntries[0].pageId + 1);
+                }
+            }
+
+            // Build sorted anchors from pass 1 for position interpolation
+            const anchors = Array.from(headingPageMap.entries())
+                .map(([ln, pg]) => ({ lineNumber: ln, pageId: pg - 1 }))
+                .sort((a, b) => a.lineNumber - b.lineNumber);
+
+            const totalLines = lines.length;
+            const maxPageId = toc.reduce((mx, item) => Math.max(mx, item.page_id || 0), 0);
+
+            function getExpectedPageId(lineNumber) {
+                if (anchors.length === 0) {
+                    return (lineNumber / totalLines) * maxPageId;
+                }
+                let prev = null, next = null;
+                for (const a of anchors) {
+                    if (a.lineNumber <= lineNumber) prev = a;
+                    else if (!next) { next = a; break; }
+                }
+                if (prev && next) {
+                    const ratio = (lineNumber - prev.lineNumber) / (next.lineNumber - prev.lineNumber);
+                    return prev.pageId + ratio * (next.pageId - prev.pageId);
+                } else if (prev) {
+                    return prev.pageId + (lineNumber - prev.lineNumber) / totalLines * maxPageId * 0.3;
+                } else if (next) {
+                    return Math.max(0, next.pageId - (next.lineNumber - lineNumber) / totalLines * maxPageId * 0.3);
+                }
+                return (lineNumber / totalLines) * maxPageId;
+            }
+
+            // Pass 2: Match duplicate titles using anchor-interpolated DP
+            for (const [title, tocEntries] of tocByTitle) {
+                const mdHeadings = mdByTitle.get(title);
+                if (!mdHeadings) continue;
+
+                const unusedToc = tocEntries.filter(e => !tocUsed.has(e.tocIdx));
+                const unmatchedMd = mdHeadings.filter(h => !headingPageMap.has(h.lineNumber));
+
+                if (unusedToc.length === 0 || unmatchedMd.length === 0) continue;
+
+                const tc = unusedToc.length;
+                const mc = unmatchedMd.length;
+
+                if (mc <= tc) {
+                    // MD count <= TOC count: match k-th to k-th sequentially
+                    for (let k = 0; k < mc; k++) {
+                        headingPageMap.set(unmatchedMd[k].lineNumber, unusedToc[k].pageId + 1);
+                        tocUsed.add(unusedToc[k].tocIdx);
+                    }
+                } else {
+                    // MD count > TOC count: DP to find optimal subset
+                    // Cost = |tocPageId - anchorExpectedPageId| for each MD heading
+                    const tocPids = unusedToc.map(e => e.pageId);
+                    const mdExpected = unmatchedMd.map(h => getExpectedPageId(h.lineNumber));
+
+                    const INF = 1e18;
+                    const dp = Array.from({ length: tc + 1 }, () => new Float64Array(mc + 1).fill(INF));
+                    const choiceType = Array.from({ length: tc + 1 }, () => new Int8Array(mc + 1));
+                    dp[0].fill(0);
+
+                    for (let i = 1; i <= tc; i++) {
+                        for (let j = i; j <= mc; j++) {
+                            // Option 1: skip MD[j-1]
+                            if (dp[i][j - 1] < dp[i][j]) {
+                                dp[i][j] = dp[i][j - 1];
+                                choiceType[i][j] = 0; // skip
+                            }
+                            // Option 2: match TOC[i-1] with MD[j-1]
+                            const cost = Math.abs(tocPids[i - 1] - mdExpected[j - 1]);
+                            if (dp[i - 1][j - 1] + cost < dp[i][j]) {
+                                dp[i][j] = dp[i - 1][j - 1] + cost;
+                                choiceType[i][j] = 1; // match
+                            }
+                        }
+                    }
+
+                    // Backtrack
+                    let bi = tc, bj = mc;
+                    while (bi > 0 && bj > 0) {
+                        if (choiceType[bi][bj] === 1) {
+                            // match
+                            headingPageMap.set(unmatchedMd[bj - 1].lineNumber, unusedToc[bi - 1].pageId + 1);
+                            tocUsed.add(unusedToc[bi - 1].tocIdx);
+                            bi--; bj--;
+                        } else {
+                            // skip
+                            bj--;
+                        }
+                    }
+                }
+            }
+
+            // --- Stage 3: Page inheritance ---
+            // Propagate each heading's page number to all lines below it until the next mapped heading
+            if (headingPageMap.size === 0) {
+                return null;
+            }
+
+            // Sort heading line numbers
+            const mappedHeadingLines = Array.from(headingPageMap.keys()).sort((a, b) => a - b);
+
+            for (let idx = 0; idx < mappedHeadingLines.length; idx++) {
+                const startLine = mappedHeadingLines[idx];
+                const endLine = idx + 1 < mappedHeadingLines.length
+                    ? mappedHeadingLines[idx + 1] - 1
+                    : lines.length;
+                const page = headingPageMap.get(startLine);
+
+                for (let ln = startLine; ln <= endLine; ln++) {
+                    pageMap.set(ln, page);
+                }
+            }
+
+            return pageMap.size > 0 ? pageMap : null;
+        }
+
+        // Search functionality
+        searchBtn.addEventListener('click', performSearch);
+
+        async function performSearch() {
+            // Reset search results
+            searchResults = {};
+            keywords.forEach(k => {
+                searchResults[k] = [];
+            });
+
+            const caseSensitive = document.getElementById('caseSensitive').checked;
+            const searchSentences = document.getElementById('searchSentences').checked;
+            const searchTables = document.getElementById('searchTables').checked;
+            const searchImages = document.getElementById('searchImages').checked;
+
+            progressBar.classList.add('active');
+            searchBtn.disabled = true;
+
+            for (let i = 0; i < markdownFiles.length; i++) {
+                const file = markdownFiles[i];
+                const progress = ((i + 1) / markdownFiles.length) * 100;
+                progressFill.style.width = `${progress}%`;
+                statusText.textContent = `검색 중: ${file.name} (${i + 1}/${markdownFiles.length})`;
+
+                // Split lines once per file
+                const lines = file.content.split('\n');
+
+                // Build page mapping from metadata if available
+                const pageMap = buildPageMapping(lines, file.metadata);
+
+                // Extract content once per file (keyword-independent)
+                const useHybrid = useHybridLLMCheckbox.checked && llmAvailable;
+                let sentencesWithLines = [];
+                if (searchSentences) {
+                    if (useHybrid) {
+                        statusText.textContent = `LLM 분석 중: ${file.name} (${i + 1}/${markdownFiles.length})`;
+                        sentencesWithLines = await extractSentencesWithLLM(lines, file.name);
+                    } else {
+                        sentencesWithLines = extractSentencesWithLineNumbers(lines);
+                    }
+                }
+                const tablesWithLines = searchTables ? extractTablesWithLineNumbers(lines) : [];
+                const imagesWithLines = searchImages ? extractImagesWithLineNumbers(lines) : [];
+
+                for (const keyword of keywords) {
+                    const searchKeyword = caseSensitive ? keyword : keyword.toLowerCase();
+
+                    // Search sentences with line/page numbers
+                    if (searchSentences) {
+                        sentencesWithLines.forEach((item, idx) => {
+                            const sentenceToSearch = caseSensitive ? item.sentence : item.sentence.toLowerCase();
+                            if (sentenceToSearch.includes(searchKeyword)) {
+                                const pageNum = pageMap ? pageMap.get(item.lineNumber) : null;
+                                let content;
+
+                                if (item.isHeading) {
+                                    // Heading match: include up to 5 subsequent content lines
+                                    let subLines = [item.sentence.trim()];
+                                    for (let si = idx + 1; si < sentencesWithLines.length && subLines.length <= 5; si++) {
+                                        const sub = sentencesWithLines[si];
+                                        if (sub.isHeading) break;
+                                        subLines.push(sub.sentence.trim());
+                                    }
+                                    content = subLines.join('\n');
+                                } else {
+                                    // Regular content match: show with heading context
+                                    content = item.headingContext
+                                        ? `[${item.headingContext}]\n${item.sentence.trim()}`
+                                        : item.sentence.trim();
+                                }
+
+                                searchResults[keyword].push({
+                                    type: '문장',
+                                    filename: file.name,
+                                    content: content,
+                                    lineNumber: item.lineNumber,
+                                    pageNumber: pageNum || item.lineNumber,
+                                    hasPage: !!pageNum,
+                                    headingContext: item.headingContext || null
+                                });
+                            }
+                        });
+                    }
+
+                    // Search tables with line/page numbers
+                    if (searchTables) {
+                        tablesWithLines.forEach(item => {
+                            const tableToSearch = caseSensitive ? item.table : item.table.toLowerCase();
+                            if (tableToSearch.includes(searchKeyword)) {
+                                const pageNum = pageMap ? pageMap.get(item.lineNumber) : null;
+                                searchResults[keyword].push({
+                                    type: '표',
+                                    filename: file.name,
+                                    content: item.table.trim(),
+                                    lineNumber: item.lineNumber,
+                                    pageNumber: pageNum || item.lineNumber,
+                                    hasPage: !!pageNum
+                                });
+                            }
+                        });
+                    }
+
+                    // Search images with line/page numbers
+                    if (searchImages) {
+                        imagesWithLines.forEach(img => {
+                            const imgSearchText = caseSensitive ? img.searchText : img.searchText.toLowerCase();
+                            if (imgSearchText.includes(searchKeyword)) {
+                                const pageNum = pageMap ? pageMap.get(img.lineNumber) : null;
+                                searchResults[keyword].push({
+                                    type: '이미지',
+                                    filename: file.name,
+                                    content: img.content,
+                                    lineNumber: img.lineNumber,
+                                    pageNumber: pageNum || img.lineNumber,
+                                    hasPage: !!pageNum
+                                });
+                            }
+                        });
+                    }
+                }
+
+                await new Promise(r => setTimeout(r, 1));
+            }
+
+            progressFill.style.width = '100%';
+            statusText.textContent = '검색 완료!';
+            searchBtn.disabled = false;
+
+            // Sort results by filename, then by page number (ascending)
+            keywords.forEach(keyword => {
+                searchResults[keyword].sort((a, b) => {
+                    // First by filename
+                    const fileCompare = a.filename.localeCompare(b.filename);
+                    if (fileCompare !== 0) return fileCompare;
+                    // Then by page number (or line number if no page)
+                    const aPage = a.hasPage ? a.pageNumber : a.lineNumber;
+                    const bPage = b.hasPage ? b.pageNumber : b.lineNumber;
+                    return aPage - bPage;
+                });
+            });
+
+            setTimeout(() => {
+                progressBar.classList.remove('active');
+                displayResults();
+            }, 500);
+        }
+
+        function extractSentencesWithLineNumbers(lines) {
+            const results = [];
+            let inCodeBlock = false;
+            let currentHeading = null;
+
+            function cleanHeadingText(trimmed) {
+                return trimmed.replace(/^#+\s*/, '').replace(/^[○●◆◇■□▶▷]+\s*/, '');
+            }
+
+            let prevLineEmpty = true; // treat start of file as after blank line
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+
+                // Track code blocks
+                if (line.trim().startsWith('```')) {
+                    inCodeBlock = !inCodeBlock;
+                    continue;
+                }
+                if (inCodeBlock) continue;
+
+                // Skip table rows
+                if (/^\s*\|.*\|\s*$/.test(line) || /^\s*\|?[\s\-:|]+\|[\s\-:|]*$/.test(line)) {
+                    continue;
+                }
+
+                // Skip image lines
+                if (/!\[.*?\]\(.*?\)/.test(line)) {
+                    continue;
+                }
+
+                const trimmed = line.trim();
+
+                // Track empty lines for standalone title detection
+                if (!trimmed) {
+                    prevLineEmpty = true;
+                    continue;
+                }
+
+                if (isHeadingLine(trimmed)) {
+                    // Update current heading context
+                    currentHeading = cleanHeadingText(trimmed);
+                    results.push({
+                        sentence: trimmed.replace(/^#+\s*/, ''),
+                        lineNumber: i + 1,
+                        isHeading: true,
+                        headingContext: null
+                    });
+                } else if (isStandaloneTitle(trimmed, prevLineEmpty)) {
+                    // Standalone title like "안전 ・ 유의 사항"
+                    currentHeading = trimmed;
+                    results.push({
+                        sentence: trimmed,
+                        lineNumber: i + 1,
+                        isHeading: true,
+                        headingContext: null
+                    });
+                } else {
+                    // Regular content line (including bullets like •, -, *)
+                    results.push({
+                        sentence: trimmed,
+                        lineNumber: i + 1,
+                        isHeading: false,
+                        headingContext: currentHeading
+                    });
+                }
+
+                prevLineEmpty = false;
+            }
+
+            return results;
+        }
+
+        function extractTablesWithLineNumbers(lines) {
+            const tables = [];
+            let currentTable = [];
+            let tableStartLine = 0;
+            let inTable = false;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const isTableRow = /^\s*\|.*\|\s*$/.test(line) ||
+                                  /^\s*\|?[\s\-:|]+\|[\s\-:|]*$/.test(line);
+
+                if (isTableRow) {
+                    if (!inTable) {
+                        tableStartLine = i + 1;  // 1-based line number
+                        inTable = true;
+                    }
+                    currentTable.push(line);
+                } else if (inTable) {
+                    if (currentTable.length > 0) {
+                        tables.push({
+                            table: currentTable.join('\n'),
+                            lineNumber: tableStartLine
+                        });
+                    }
+                    currentTable = [];
+                    inTable = false;
+                }
+            }
+
+            if (currentTable.length > 0) {
+                tables.push({
+                    table: currentTable.join('\n'),
+                    lineNumber: tableStartLine
+                });
+            }
+
+            return tables;
+        }
+
+        function extractImagesWithLineNumbers(lines) {
+            const images = [];
+            const imgRegex = /!\[([^\]]*)\]\(([^)]+)\)|<img[^>]*src=["']([^"']+)["'][^>]*>/gi;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                let match;
+
+                while ((match = imgRegex.exec(line)) !== null) {
+                    const altText = match[1] || '';
+                    const imagePath = match[2] || match[3] || '';
+
+                    const contextStart = Math.max(0, i - 2);
+                    const contextEnd = Math.min(lines.length, i + 3);
+                    const context = lines.slice(contextStart, contextEnd).join('\n');
+
+                    images.push({
+                        content: `[이미지: ${imagePath}]\nAlt: ${altText}\n컨텍스트: ${context.substring(0, 200)}...`,
+                        searchText: `${altText} ${imagePath} ${context}`,
+                        lineNumber: i + 1
+                    });
+                }
+                imgRegex.lastIndex = 0;
+            }
+
+            return images;
+        }
+
+        function displayResults() {
+            resultsSection.style.display = 'block';
+
+            // Show keyword statistics
+            keywordStats.innerHTML = keywords.slice(0, 10).map(k => `
+                <div class="keyword-stat">
+                    <div class="name">${escapeHtml(k)}</div>
+                    <div class="count">${searchResults[k].length}</div>
+                </div>
+            `).join('') + (keywords.length > 10 ? `<div class="keyword-stat"><div class="name">...</div><div class="count">${keywords.length - 10}개 더</div></div>` : '');
+
+            // Create tabs
+            resultsTabs.innerHTML = keywords.map((k, i) => `
+                <button class="tab-btn ${i === 0 ? 'active' : ''}" data-keyword="${escapeHtml(k)}">
+                    ${escapeHtml(k)}
+                    <span class="count">${searchResults[k].length}</span>
+                </button>
+            `).join('');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderResultsTable(btn.dataset.keyword);
+                });
+            });
+
+            if (keywords.length > 0) {
+                renderResultsTable(keywords[0]);
+            }
+        }
+
+        function renderResultsTable(keyword) {
+            const results = searchResults[keyword];
+
+            if (results.length === 0) {
+                resultsContent.innerHTML = `
+                    <div class="empty-state">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p>"${escapeHtml(keyword)}" 키워드에 대한 검색 결과가 없습니다.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Check if any results have page numbers from metadata
+            const hasAnyPageInfo = results.some(r => r.hasPage);
+            const locationHeader = hasAnyPageInfo ? '페이지/줄' : '줄 번호';
+
+            resultsContent.innerHTML = `
+                <div class="results-table-wrapper">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">번호</th>
+                                <th style="width: 80px;">유형</th>
+                                <th style="width: 200px;">파일명</th>
+                                <th>내용</th>
+                                <th style="width: 100px;">${locationHeader}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${results.map((r, i) => `
+                                <tr>
+                                    <td>${i + 1}</td>
+                                    <td><span class="type-badge type-${r.type === '문장' ? 'sentence' : r.type === '표' ? 'table' : 'image'}">${r.type}</span></td>
+                                    <td title="${escapeHtml(r.filename)}">${escapeHtml(r.filename.length > 30 ? '...' + r.filename.slice(-27) : r.filename)}</td>
+                                    <td><div class="content-preview">${r.headingContext ? `<span class="heading-context">[${escapeHtml(r.headingContext)}]</span>` : ''}${highlightKeyword(escapeHtml(r.headingContext ? r.content.replace(`[${r.headingContext}]\n`, '') : r.content).substring(0, 500), keyword)}</div></td>
+                                    <td>${r.hasPage ? `<strong>p.${r.pageNumber}</strong>` : `L${r.lineNumber}`}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function highlightKeyword(text, keyword) {
+            const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+            return text.replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        // Export to Excel (preserving original format)
+        exportExcelBtn.addEventListener('click', () => {
+            try {
+                // Validate state
+                if (!keywords || keywords.length === 0) {
+                    alert('내보낼 키워드가 없습니다. Excel 파일을 먼저 불러와주세요.');
+                    return;
+                }
+
+                const totalResults = keywords.reduce((sum, k) => sum + (searchResults[k] ? searchResults[k].length : 0), 0);
+                if (totalResults === 0) {
+                    alert('내보낼 검색 결과가 없습니다. 검색을 먼저 실행해주세요.');
+                    return;
+                }
+
+                const now = new Date();
+                const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+
+                if (!originalWorkbook) {
+                    // Create new workbook if no template
+                    const wb = XLSX.utils.book_new();
+                    const usedNames = new Set();
+                    keywords.forEach(keyword => {
+                        const results = searchResults[keyword] || [];
+                        const EXCEL_CELL_LIMIT = 32767;
+                        const wsData = [['number', 'filename', 'contents', 'page', 'line']];
+                        results.forEach((r, i) => {
+                            let content = r.content || '';
+                            if (content.length > EXCEL_CELL_LIMIT) {
+                                content = content.substring(0, EXCEL_CELL_LIMIT - 3) + '...';
+                            }
+                            wsData.push([
+                                i + 1,
+                                r.filename,
+                                content,
+                                r.hasPage ? r.pageNumber : '',
+                                r.lineNumber
+                            ]);
+                        });
+                        const ws = XLSX.utils.aoa_to_sheet(wsData);
+                        ws['!cols'] = [{ wch: 8 }, { wch: 40 }, { wch: 80 }, { wch: 8 }, { wch: 8 }];
+                        let sheetName = keyword.substring(0, 31).replace(/[\\\/\?\*\[\]]/g, '_');
+                        let sfx = 2;
+                        while (usedNames.has(sheetName)) {
+                            const sfxStr = `_${sfx}`;
+                            sheetName = keyword.substring(0, 31 - sfxStr.length).replace(/[\\\/\?\*\[\]]/g, '_') + sfxStr;
+                            sfx++;
+                        }
+                        usedNames.add(sheetName);
+                        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+                    });
+                    XLSX.writeFile(wb, `markdown_search_results_${dateStr}.xlsx`);
+                    alert('엑셀 파일이 다운로드되었습니다.');
+                    return;
+                }
+
+                // Clone the workbook to avoid mutating the original
+                const wbOut = XLSX.utils.book_new();
+                wbOut.SheetNames = [];
+                const usedSheetNames = new Set();
+
+                keywords.forEach(keyword => {
+                    const results = searchResults[keyword] || [];
+                    const origSheet = originalWorkbook.Sheets[keyword];
+
+                    // Get existing column headers from original sheet
+                    const headers = sheetColumnMappings[keyword] || [];
+
+                    // Find column indices (support both Korean and English headers)
+                    const numberAliases = ['number', '번호', 'no', 'no.', '#'];
+                    const filenameAliases = ['filename', '파일명', '파일', 'file', '문서명', '문서'];
+                    const contentsAliases = ['contents', '내용', 'content', '검색결과', '결과', keyword.toLowerCase(), keyword];
+                    const pageAliases = ['page', '페이지', 'line', '줄', '줄번호', '위치', 'location'];
+
+                    function findCol(aliases) {
+                        return headers.findIndex(h => {
+                            if (!h) return false;
+                            const val = h.toString().toLowerCase().trim();
+                            return aliases.some(a => val === a.toLowerCase());
+                        });
+                    }
+
+                    let numberCol = findCol(numberAliases);
+                    let filenameCol = findCol(filenameAliases);
+                    let contentsCol = findCol(contentsAliases);
+                    let pageCol = findCol(pageAliases);
+
+                    // Default indices if not found
+                    if (numberCol === -1) numberCol = 0;
+                    if (filenameCol === -1) filenameCol = 1;
+                    if (contentsCol === -1) contentsCol = 2;
+                    if (pageCol === -1) pageCol = 3;
+
+                    const maxCol = Math.max(numberCol, filenameCol, contentsCol, pageCol);
+
+                    // Build new sheet from scratch
+                    const newSheet = {};
+
+                    // Copy header row from original sheet (or create defaults)
+                    if (origSheet && origSheet['!ref']) {
+                        const origRange = XLSX.utils.decode_range(origSheet['!ref']);
+                        const headerEnd = Math.max(origRange.e.c, maxCol);
+                        for (let c = 0; c <= headerEnd; c++) {
+                            const cellAddr = XLSX.utils.encode_cell({ r: 0, c: c });
+                            if (origSheet[cellAddr]) {
+                                newSheet[cellAddr] = Object.assign({}, origSheet[cellAddr]);
+                            }
+                        }
+                    } else {
+                        // No original headers — create defaults
+                        newSheet[XLSX.utils.encode_cell({ r: 0, c: numberCol })] = { t: 's', v: '번호' };
+                        newSheet[XLSX.utils.encode_cell({ r: 0, c: filenameCol })] = { t: 's', v: '파일명' };
+                        newSheet[XLSX.utils.encode_cell({ r: 0, c: contentsCol })] = { t: 's', v: '내용' };
+                        newSheet[XLSX.utils.encode_cell({ r: 0, c: pageCol })] = { t: 's', v: '페이지' };
+                    }
+
+                    // Add results data (Excel cell max: 32767 chars)
+                    const EXCEL_MAX_CHARS = 32767;
+                    results.forEach((r, i) => {
+                        const rowIndex = i + 1;
+                        let content = r.content || '';
+                        if (content.length > EXCEL_MAX_CHARS) {
+                            content = content.substring(0, EXCEL_MAX_CHARS - 3) + '...';
+                        }
+                        let filename = r.filename || '';
+                        if (filename.length > EXCEL_MAX_CHARS) {
+                            filename = filename.substring(0, EXCEL_MAX_CHARS - 3) + '...';
+                        }
+                        newSheet[XLSX.utils.encode_cell({ r: rowIndex, c: numberCol })] = { t: 'n', v: i + 1 };
+                        newSheet[XLSX.utils.encode_cell({ r: rowIndex, c: filenameCol })] = { t: 's', v: filename };
+                        newSheet[XLSX.utils.encode_cell({ r: rowIndex, c: contentsCol })] = { t: 's', v: content };
+                        const locationValue = r.hasPage ? r.pageNumber : r.lineNumber;
+                        newSheet[XLSX.utils.encode_cell({ r: rowIndex, c: pageCol })] = { t: 'n', v: locationValue || 0 };
+                    });
+
+                    // Set range
+                    newSheet['!ref'] = XLSX.utils.encode_range({
+                        s: { r: 0, c: 0 },
+                        e: { r: Math.max(results.length, 0), c: maxCol }
+                    });
+
+                    // Copy column widths from original if available
+                    if (origSheet && origSheet['!cols']) {
+                        newSheet['!cols'] = origSheet['!cols'];
+                    } else {
+                        newSheet['!cols'] = [];
+                        newSheet['!cols'][numberCol] = { wch: 8 };
+                        newSheet['!cols'][filenameCol] = { wch: 40 };
+                        newSheet['!cols'][contentsCol] = { wch: 80 };
+                        newSheet['!cols'][pageCol] = { wch: 10 };
+                    }
+
+                    // Add sheet to output workbook (with collision detection)
+                    let safeName = keyword.substring(0, 31).replace(/[\\\/\?\*\[\]]/g, '_');
+                    let suffix = 2;
+                    while (usedSheetNames.has(safeName)) {
+                        const suffixStr = `_${suffix}`;
+                        safeName = keyword.substring(0, 31 - suffixStr.length).replace(/[\\\/\?\*\[\]]/g, '_') + suffixStr;
+                        suffix++;
+                    }
+                    usedSheetNames.add(safeName);
+                    wbOut.SheetNames.push(safeName);
+                    wbOut.Sheets[safeName] = newSheet;
+                });
+
+                const baseName = originalFileName.replace(/\.xlsx?$/i, '');
+                XLSX.writeFile(wbOut, `${baseName}_results_${dateStr}.xlsx`);
+                alert('엑셀 파일이 다운로드되었습니다.');
+
+            } catch (err) {
+                console.error('Excel 내보내기 오류:', err);
+                alert('Excel 내보내기 중 오류가 발생했습니다:\n' + err.message);
+            }
+        });
+
+        // Clear results
+        clearResultsBtn.addEventListener('click', () => {
+            searchResults = {};
+            keywords.forEach(k => {
+                searchResults[k] = [];
+            });
+            resultsSection.style.display = 'none';
+            statusText.textContent = '';
+        });
+
+        // Utility functions
+        // macOS File System API returns NFD (decomposed) Unicode filenames
+        // e.g. "반도체" → "ㅂㅏㄴㄷㅗㅊㅔ". NFC normalizes back to composed form.
+        function nfc(str) {
+            return str ? str.normalize('NFC') : str;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function escapeRegex(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+    </script>
+</body>
+</html>

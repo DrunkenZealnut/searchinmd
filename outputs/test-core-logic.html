@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>SearchInMD Core Logic Tests</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1a1a2e; color: #e0e0e0; }
+        .pass { color: #38ef7d; }
+        .fail { color: #f5576c; font-weight: bold; }
+        .section { margin: 20px 0; padding: 10px; border-left: 3px solid #667eea; }
+        h2 { color: #667eea; }
+        pre { background: #16213e; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+<h1>SearchInMD Core Logic Tests</h1>
+<div id="results"></div>
+
+<script>
+// ===== Copy of shared helpers from markdown-search-app.html =====
+function isHeadingLine(trimmed) {
+    if (/^#+\s/.test(trimmed)) return true;
+    if (/^[○●◆◇■□▶▷]+\s/.test(trimmed)) return true;
+    if (/^\(?[가-힣\d]+[\.\)]\s/.test(trimmed)) return true;
+    return false;
+}
+
+function isStandaloneTitle(trimmed, prevLineEmpty) {
+    if (!prevLineEmpty) return false;
+    if (trimmed.length > 25) return false;
+    if (/^[•·\-\*]\s/.test(trimmed)) return false;
+    if (/[다.!?。！？]$/.test(trimmed)) return false;
+    if (!/[가-힣]/.test(trimmed)) return false;
+    if (/^\s*\|/.test(trimmed) || /!\[/.test(trimmed)) return false;
+    return true;
+}
+
+function normalizeHeading(text) {
+    return text
+        .replace(/^#+\s*/, '')
+        .replace(/\*\*/g, '')
+        .replace(/\n/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function nfc(str) {
+    return str ? str.normalize('NFC') : str;
+}
+
+// ===== Test framework =====
+let passed = 0, failed = 0, total = 0;
+const output = [];
+
+function assert(condition, description) {
+    total++;
+    if (condition) {
+        passed++;
+        output.push(`<span class="pass">  ✓ ${description}</span>`);
+    } else {
+        failed++;
+        output.push(`<span class="fail">  ✗ ${description}</span>`);
+    }
+}
+
+function assertEqual(actual, expected, description) {
+    total++;
+    if (actual === expected) {
+        passed++;
+        output.push(`<span class="pass">  ✓ ${description}</span>`);
+    } else {
+        failed++;
+        output.push(`<span class="fail">  ✗ ${description} (expected: ${JSON.stringify(expected)}, got: ${JSON.stringify(actual)})</span>`);
+    }
+}
+
+function section(name) {
+    output.push(`\n<h2>${name}</h2>`);
+}
+
+// ===== Tests =====
+
+section('isHeadingLine');
+assert(isHeadingLine('## 제목'), 'Markdown heading ## detected');
+assert(isHeadingLine('# 큰 제목'), 'Markdown heading # detected');
+assert(isHeadingLine('### 작은 제목'), 'Markdown heading ### detected');
+assert(isHeadingLine('○ 적용범위'), 'Circle marker ○ detected');
+assert(isHeadingLine('■ 안전사항'), 'Square marker ■ detected');
+assert(isHeadingLine('▶ 참고사항'), 'Arrow marker ▶ detected');
+assert(isHeadingLine('(가) 일반사항'), 'Korean numbered (가) detected');
+assert(isHeadingLine('1. 개요'), 'Numbered 1. detected');
+assert(!isHeadingLine('• 일반 항목'), 'Bullet • is NOT a heading');
+assert(!isHeadingLine('- 일반 항목'), 'Bullet - is NOT a heading');
+assert(!isHeadingLine('* 일반 항목'), 'Bullet * is NOT a heading');
+assert(!isHeadingLine('일반 텍스트입니다'), 'Plain text is NOT a heading');
+assert(!isHeadingLine(''), 'Empty string is NOT a heading');
+assert(!isHeadingLine('| 표 셀 |'), 'Table row is NOT a heading');
+
+section('isStandaloneTitle');
+assert(isStandaloneTitle('안전 유의 사항', true), 'Short Korean after blank = title');
+assert(!isStandaloneTitle('안전 유의 사항', false), 'Short Korean NOT after blank = not title');
+assert(!isStandaloneTitle('이것은 매우 긴 제목인데 25글자를 초과하는 텍스트입니다', true), 'Over 25 chars = not title');
+assert(!isStandaloneTitle('• 일반 항목', true), 'Bullet after blank = not title');
+assert(!isStandaloneTitle('문장이 끝납니다', true), 'Ends with 다 = not title (sentence ending)');
+assert(!isStandaloneTitle('확인합니다.', true), 'Ends with . = not title');
+assert(!isStandaloneTitle('Hello World', true), 'No Korean = not title');
+assert(!isStandaloneTitle('| 셀 |', true), 'Table = not title');
+assert(!isStandaloneTitle('![alt](url)', true), 'Image = not title');
+assert(isStandaloneTitle('적용범위', true), 'Short Korean word = title');
+
+section('normalizeHeading');
+assertEqual(normalizeHeading('## 제목 텍스트'), '제목 텍스트', 'Strips ## prefix');
+assertEqual(normalizeHeading('**굵은 제목**'), '굵은 제목', 'Strips ** bold');
+assertEqual(normalizeHeading('  공백   많은   제목  '), '공백 많은 제목', 'Collapses whitespace');
+assertEqual(normalizeHeading('제목\n줄바꿈'), '제목 줄바꿈', 'Replaces newlines');
+
+section('NFC normalization');
+// Korean string in NFD (decomposed) vs NFC (composed)
+const nfd = '\u1100\u1161\u1102\u1161\u1103\u1161'; // 가나다 in NFD
+const nfc_str = '가나다';
+assert(nfc(nfd) === nfc_str, 'NFC normalizes decomposed Korean');
+assert(nfc('일반텍스트') === '일반텍스트', 'NFC preserves already-composed Korean');
+assert(nfc(null) === null, 'NFC handles null');
+assert(nfc('') === '', 'NFC handles empty string');
+
+// ===== Results =====
+output.push(`\n<h2>Results: ${passed}/${total} passed${failed > 0 ? `, <span class="fail">${failed} failed</span>` : ''}</h2>`);
+document.getElementById('results').innerHTML = output.join('<br>');
+
+// Exit code for CI
+if (failed > 0) {
+    document.title = `FAIL: ${failed}/${total} tests failed`;
+} else {
+    document.title = `PASS: ${passed}/${total} tests passed`;
+}
+</script>
+</body>
+</html>

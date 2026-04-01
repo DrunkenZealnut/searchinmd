@@ -1,0 +1,5 @@
+.DS_Store
+.bkit/
+.claude/
+audit.jsonl
+uploads/
