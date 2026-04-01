@@ -77,7 +77,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         port = int(sys.argv[1])
     else:
-        port = find_available_port(8080)
+        port = find_available_port(3008)
 
     if port is None:
         print('❌ 사용 가능한 포트를 찾을 수 없습니다.')

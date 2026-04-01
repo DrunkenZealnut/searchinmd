@@ -353,6 +353,39 @@
             border-radius: 2px;
         }
 
+        .fullpage-cell {
+            max-width: 300px;
+        }
+
+        .fullpage-preview {
+            max-height: 60px;
+            overflow: hidden;
+            font-family: monospace;
+            font-size: 11px;
+            background: #f0f4ff;
+            padding: 6px 8px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: #495057;
+        }
+
+        .fullpage-preview.expanded {
+            max-height: none;
+        }
+
+        .fullpage-toggle {
+            display: inline-block;
+            margin-top: 4px;
+            font-size: 11px;
+            color: #667eea;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 0;
+            text-decoration: underline;
+        }
+
         .file-count {
             background: #e9ecef;
             padding: 10px 15px;
@@ -1259,6 +1292,26 @@ ${numberedContent}`;
             return pageMap.size > 0 ? pageMap : null;
         }
 
+        // Extract full page content for a given page number
+        function extractPageContent(lines, pageMap, targetPageNum, matchedLineNumber) {
+            // Case 1: pageMap exists and targetPageNum is valid
+            if (pageMap && targetPageNum) {
+                const pageLines = [];
+                for (const [lineNum, pageNum] of pageMap) {
+                    if (pageNum === targetPageNum) {
+                        pageLines.push(lines[lineNum - 1]); // lineNum is 1-based
+                    }
+                }
+                return pageLines.join('\n');
+            }
+
+            // Case 2: no pageMap — fallback to ±20 lines around match
+            const center = matchedLineNumber - 1; // convert to 0-based
+            const start = Math.max(0, center - 20);
+            const end = Math.min(lines.length, center + 21);
+            return lines.slice(start, end).join('\n');
+        }
+
         // Search functionality
         searchBtn.addEventListener('click', performSearch);
 
@@ -1288,6 +1341,7 @@ ${numberedContent}`;
 
                 // Build page mapping from metadata if available
                 const pageMap = buildPageMapping(lines, file.metadata);
+                const pageContentCache = new Map(); // Cache full page content per page number
 
                 // Extract content once per file (keyword-independent)
                 const useHybrid = useHybridLLMCheckbox.checked && llmAvailable;
@@ -1330,6 +1384,16 @@ ${numberedContent}`;
                                         : item.sentence.trim();
                                 }
 
+                                // Get full page content (with cache)
+                                let fullPageContent;
+                                const cacheKey = pageNum || `L${item.lineNumber}`;
+                                if (pageContentCache.has(cacheKey)) {
+                                    fullPageContent = pageContentCache.get(cacheKey);
+                                } else {
+                                    fullPageContent = extractPageContent(lines, pageMap, pageNum, item.lineNumber);
+                                    pageContentCache.set(cacheKey, fullPageContent);
+                                }
+
                                 searchResults[keyword].push({
                                     type: '문장',
                                     filename: file.name,
@@ -1337,7 +1401,8 @@ ${numberedContent}`;
                                     lineNumber: item.lineNumber,
                                     pageNumber: pageNum || item.lineNumber,
                                     hasPage: !!pageNum,
-                                    headingContext: item.headingContext || null
+                                    headingContext: item.headingContext || null,
+                                    fullPageContent: fullPageContent
                                 });
                             }
                         });
@@ -1349,13 +1414,22 @@ ${numberedContent}`;
                             const tableToSearch = caseSensitive ? item.table : item.table.toLowerCase();
                             if (tableToSearch.includes(searchKeyword)) {
                                 const pageNum = pageMap ? pageMap.get(item.lineNumber) : null;
+                                const tCacheKey = pageNum || `L${item.lineNumber}`;
+                                let tFullPage;
+                                if (pageContentCache.has(tCacheKey)) {
+                                    tFullPage = pageContentCache.get(tCacheKey);
+                                } else {
+                                    tFullPage = extractPageContent(lines, pageMap, pageNum, item.lineNumber);
+                                    pageContentCache.set(tCacheKey, tFullPage);
+                                }
                                 searchResults[keyword].push({
                                     type: '표',
                                     filename: file.name,
                                     content: item.table.trim(),
                                     lineNumber: item.lineNumber,
                                     pageNumber: pageNum || item.lineNumber,
-                                    hasPage: !!pageNum
+                                    hasPage: !!pageNum,
+                                    fullPageContent: tFullPage
                                 });
                             }
                         });
@@ -1367,13 +1441,22 @@ ${numberedContent}`;
                             const imgSearchText = caseSensitive ? img.searchText : img.searchText.toLowerCase();
                             if (imgSearchText.includes(searchKeyword)) {
                                 const pageNum = pageMap ? pageMap.get(img.lineNumber) : null;
+                                const iCacheKey = pageNum || `L${img.lineNumber}`;
+                                let iFullPage;
+                                if (pageContentCache.has(iCacheKey)) {
+                                    iFullPage = pageContentCache.get(iCacheKey);
+                                } else {
+                                    iFullPage = extractPageContent(lines, pageMap, pageNum, img.lineNumber);
+                                    pageContentCache.set(iCacheKey, iFullPage);
+                                }
                                 searchResults[keyword].push({
                                     type: '이미지',
                                     filename: file.name,
                                     content: img.content,
                                     lineNumber: img.lineNumber,
                                     pageNumber: pageNum || img.lineNumber,
-                                    hasPage: !!pageNum
+                                    hasPage: !!pageNum,
+                                    fullPageContent: iFullPage
                                 });
                             }
                         });
@@ -1607,22 +1690,46 @@ ${numberedContent}`;
                                 <th style="width: 200px;">파일명</th>
                                 <th>내용</th>
                                 <th style="width: 100px;">${locationHeader}</th>
+                                <th style="width: 300px;">페이지 전체</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${results.map((r, i) => `
+                            ${results.map((r, i) => {
+                                const fp = r.fullPageContent || '';
+                                const fpPreview = escapeHtml(fp.substring(0, 200));
+                                const fpNeedsToggle = fp.length > 200;
+                                return `
                                 <tr>
                                     <td>${i + 1}</td>
                                     <td><span class="type-badge type-${r.type === '문장' ? 'sentence' : r.type === '표' ? 'table' : 'image'}">${r.type}</span></td>
                                     <td title="${escapeHtml(r.filename)}">${escapeHtml(r.filename.length > 30 ? '...' + r.filename.slice(-27) : r.filename)}</td>
                                     <td><div class="content-preview">${r.headingContext ? `<span class="heading-context">[${escapeHtml(r.headingContext)}]</span>` : ''}${highlightKeyword(escapeHtml(r.headingContext ? r.content.replace(`[${r.headingContext}]\n`, '') : r.content).substring(0, 500), keyword)}</div></td>
                                     <td>${r.hasPage ? `<strong>p.${r.pageNumber}</strong>` : `L${r.lineNumber}`}</td>
-                                </tr>
-                            `).join('')}
+                                    <td class="fullpage-cell">${fp ? `<div class="fullpage-preview" id="fp-${i}">${fpPreview}</div>${fpNeedsToggle ? `<button class="fullpage-toggle" data-idx="${i}">[더보기]</button>` : ''}` : '-'}</td>
+                                </tr>`;
+                            }).join('')}
                         </tbody>
                     </table>
                 </div>
             `;
+
+            // Bind toggle events for full page content
+            document.querySelectorAll('.fullpage-toggle').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const idx = parseInt(btn.dataset.idx);
+                    const preview = document.getElementById('fp-' + idx);
+                    const full = results[idx].fullPageContent || '';
+                    if (preview.classList.contains('expanded')) {
+                        preview.classList.remove('expanded');
+                        preview.textContent = full.substring(0, 200);
+                        btn.textContent = '[더보기]';
+                    } else {
+                        preview.classList.add('expanded');
+                        preview.textContent = full;
+                        btn.textContent = '[접기]';
+                    }
+                });
+            });
         }
 
         function highlightKeyword(text, keyword) {
@@ -1655,22 +1762,27 @@ ${numberedContent}`;
                     keywords.forEach(keyword => {
                         const results = searchResults[keyword] || [];
                         const EXCEL_CELL_LIMIT = 32767;
-                        const wsData = [['number', 'filename', 'contents', 'page', 'line']];
+                        const wsData = [['number', 'filename', 'contents', 'page', 'line', 'fullpage']];
                         results.forEach((r, i) => {
                             let content = r.content || '';
                             if (content.length > EXCEL_CELL_LIMIT) {
                                 content = content.substring(0, EXCEL_CELL_LIMIT - 3) + '...';
+                            }
+                            let fullpage = r.fullPageContent || '';
+                            if (fullpage.length > EXCEL_CELL_LIMIT) {
+                                fullpage = fullpage.substring(0, EXCEL_CELL_LIMIT - 3) + '...';
                             }
                             wsData.push([
                                 i + 1,
                                 r.filename,
                                 content,
                                 r.hasPage ? r.pageNumber : '',
-                                r.lineNumber
+                                r.lineNumber,
+                                fullpage
                             ]);
                         });
                         const ws = XLSX.utils.aoa_to_sheet(wsData);
-                        ws['!cols'] = [{ wch: 8 }, { wch: 40 }, { wch: 80 }, { wch: 8 }, { wch: 8 }];
+                        ws['!cols'] = [{ wch: 8 }, { wch: 40 }, { wch: 80 }, { wch: 8 }, { wch: 8 }, { wch: 100 }];
                         let sheetName = keyword.substring(0, 31).replace(/[\\\/\?\*\[\]]/g, '_');
                         let sfx = 2;
                         while (usedNames.has(sheetName)) {
@@ -1703,6 +1815,7 @@ ${numberedContent}`;
                     const filenameAliases = ['filename', '파일명', '파일', 'file', '문서명', '문서'];
                     const contentsAliases = ['contents', '내용', 'content', '검색결과', '결과', keyword.toLowerCase(), keyword];
                     const pageAliases = ['page', '페이지', 'line', '줄', '줄번호', '위치', 'location'];
+                    const fullpageAliases = ['fullpage', '페이지전체내용', '전체내용', 'full page', 'full content', 'page content'];
 
                     function findCol(aliases) {
                         return headers.findIndex(h => {
@@ -1716,14 +1829,16 @@ ${numberedContent}`;
                     let filenameCol = findCol(filenameAliases);
                     let contentsCol = findCol(contentsAliases);
                     let pageCol = findCol(pageAliases);
+                    let fullpageCol = findCol(fullpageAliases);
 
                     // Default indices if not found
                     if (numberCol === -1) numberCol = 0;
                     if (filenameCol === -1) filenameCol = 1;
                     if (contentsCol === -1) contentsCol = 2;
                     if (pageCol === -1) pageCol = 3;
+                    if (fullpageCol === -1) fullpageCol = Math.max(numberCol, filenameCol, contentsCol, pageCol) + 1;
 
-                    const maxCol = Math.max(numberCol, filenameCol, contentsCol, pageCol);
+                    const maxCol = Math.max(numberCol, filenameCol, contentsCol, pageCol, fullpageCol);
 
                     // Build new sheet from scratch
                     const newSheet = {};
@@ -1738,12 +1853,18 @@ ${numberedContent}`;
                                 newSheet[cellAddr] = Object.assign({}, origSheet[cellAddr]);
                             }
                         }
+                        // Ensure fullpage header exists even if not in original
+                        const fpHeaderAddr = XLSX.utils.encode_cell({ r: 0, c: fullpageCol });
+                        if (!newSheet[fpHeaderAddr]) {
+                            newSheet[fpHeaderAddr] = { t: 's', v: '페이지전체내용' };
+                        }
                     } else {
                         // No original headers — create defaults
                         newSheet[XLSX.utils.encode_cell({ r: 0, c: numberCol })] = { t: 's', v: '번호' };
                         newSheet[XLSX.utils.encode_cell({ r: 0, c: filenameCol })] = { t: 's', v: '파일명' };
                         newSheet[XLSX.utils.encode_cell({ r: 0, c: contentsCol })] = { t: 's', v: '내용' };
                         newSheet[XLSX.utils.encode_cell({ r: 0, c: pageCol })] = { t: 's', v: '페이지' };
+                        newSheet[XLSX.utils.encode_cell({ r: 0, c: fullpageCol })] = { t: 's', v: '페이지전체내용' };
                     }
 
                     // Add results data (Excel cell max: 32767 chars)
@@ -1763,6 +1884,11 @@ ${numberedContent}`;
                         newSheet[XLSX.utils.encode_cell({ r: rowIndex, c: contentsCol })] = { t: 's', v: content };
                         const locationValue = r.hasPage ? r.pageNumber : r.lineNumber;
                         newSheet[XLSX.utils.encode_cell({ r: rowIndex, c: pageCol })] = { t: 'n', v: locationValue || 0 };
+                        let fullpage = r.fullPageContent || '';
+                        if (fullpage.length > EXCEL_MAX_CHARS) {
+                            fullpage = fullpage.substring(0, EXCEL_MAX_CHARS - 3) + '...';
+                        }
+                        newSheet[XLSX.utils.encode_cell({ r: rowIndex, c: fullpageCol })] = { t: 's', v: fullpage };
                     });
 
                     // Set range
@@ -1780,6 +1906,7 @@ ${numberedContent}`;
                         newSheet['!cols'][filenameCol] = { wch: 40 };
                         newSheet['!cols'][contentsCol] = { wch: 80 };
                         newSheet['!cols'][pageCol] = { wch: 10 };
+                        newSheet['!cols'][fullpageCol] = { wch: 100 };
                     }
 
                     // Add sheet to output workbook (with collision detection)

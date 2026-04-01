@@ -12,10 +12,11 @@ SearchInMD (마크다운 키워드 검색기) is a client-side web application t
 ## Running the Application
 
 ```bash
-python3 outputs/server.py          # starts on first available port from 8080
+python3 outputs/server.py          # starts on port 3008 (Caddy proxy default)
 python3 outputs/server.py 9000     # specify port explicitly
 
-# Access at: http://localhost:<port>/search_in_md
+# Access at: http://searchinmd.localhost:2026/search_in_md  (via Caddy)
+# Or direct: http://localhost:3008/search_in_md
 ```
 
 The server sets its working directory to `outputs/` automatically via `os.chdir`. It also proxies `/api/llm/*` requests to LM Studio at `localhost:1234` to bypass CORS for the optional LLM hybrid search feature.
