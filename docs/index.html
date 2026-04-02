@@ -70,27 +70,27 @@ h1{font-weight:800;font-size:clamp(2.5rem,5vw,3.5rem)}h2{font-weight:700;font-si
 <div class="card"><div class="ah"><h3>반도체재료</h3><div class="ap" style="color:var(--g3)">78.9%</div></div><div class="ts" style="margin-bottom:12px">24권 3,784건 — 안전 최우수</div><div class="bars"><div class="br"><span class="lb">등급1</span><div class="b"><div class="bf" style="width:21.1%;background:var(--g1)">799</div></div><span class="ct">21.1%</span></div><div class="br"><span class="lb">등급2</span><div class="b"><div class="bf" style="width:59.4%;background:var(--g2)">2246</div></div><span class="ct">59.4%</span></div><div class="br"><span class="lb">등급3</span><div class="b"><div class="bf" style="width:19.5%;background:var(--g3)">739</div></div><span class="ct">19.5%</span></div></div></div>
 </div></section>
 
-<section class="g2" data-reveal>
+<section class="g2">
 <div class="card"><h3 style="margin-bottom:12px">영역별 등급 구성</h3><div class="cc" role="img" aria-label="영역별 등급 스택 바"><canvas id="c3"></canvas></div></div>
 <div class="card"><h3 style="margin-bottom:12px">상위 키워드별 등급 분포</h3><div class="cc" role="img" aria-label="키워드별 등급 분포"><canvas id="c4"></canvas></div></div>
 </section>
 
-<section data-reveal style="margin-bottom:48px"><h2>키워드 x 영역 매트릭스</h2>
+<section style="margin-bottom:48px"><h2>키워드 x 영역 매트릭스</h2>
 <div class="fb"><button class="fbtn on" onclick="fK('all',this)">전체</button><button class="fbtn" onclick="fK('high',this)">상위15</button><button class="fbtn" onclick="fK('case',this)">사고사례있음</button></div>
 <div class="card" style="overflow-x:auto"><table class="tbl"><thead><tr><th onclick="sK('k')">키워드</th><th onclick="sK('t')">총건수</th><th onclick="sK('dev')">개발</th><th onclick="sK('mfg')">제조</th><th onclick="sK('eq')">장비</th><th onclick="sK('mat')">재료</th><th onclick="sK('g3')">등급3(%)</th><th onclick="sK('cs')">사고사례</th></tr></thead><tbody id="kb"></tbody></table></div></section>
 
-<section data-reveal style="margin-bottom:48px"><h2>영역별 키워드 상세</h2>
+<section style="margin-bottom:48px"><h2>영역별 키워드 상세</h2>
 <div class="tn"><button class="tb on" onclick="sA('dev',this)">반도체개발</button><button class="tb" onclick="sA('mfg',this)">반도체제조</button><button class="tb" onclick="sA('eq',this)">반도체장비</button><button class="tb" onclick="sA('mat',this)">반도체재료</button></div>
 <div class="card"><div style="height:400px;padding:16px" role="img" aria-label="영역 키워드 차트"><canvas id="c5"></canvas></div></div></section>
 
-<section data-reveal style="margin-bottom:48px"><h2>문제점과 시사점</h2>
+<section style="margin-bottom:48px"><h2>문제점과 시사점</h2>
 <div class="ins"><h3>1. 반도체개발 영역의 심각한 안전 공백</h3><p>30권 794건 중 안전 관련 비율이 <strong>39.7%</strong>로 최하위이며, 사고사례는 <strong>0건</strong>이다. 회로 설계, 아키텍처, 레이아웃 등 설계 중심 교재 16권은 안전보건 내용이 전무하다. 설계 엔지니어도 클린룸 출입, 시제품 테스트, VDT 증후군 등의 위험에 노출되나 교육이 전혀 이루어지지 않고 있다.</p></div>
 <div class="ins"><h3>2. 형식적 안전 언급(등급2)의 높은 비중</h3><p>전체 7,769건 중 등급2(기본 언급)가 <strong>3,464건(44.6%)</strong>으로 최다. "안전에 유의한다", "해당 사항 없음" 수준의 형식적 문구가 대부분으로, 구체적 대책(등급3)은 <strong>2,228건(28.7%)</strong>에 그쳐 실질적 안전교육 효과가 제한적이다.</p></div>
 <div class="ins"><h3>3. 사고사례의 편중과 절대 부족</h3><p>740건의 사고사례 중 <strong>반도체장비(584건, 78.9%)</strong>에 과도 집중. 반도체개발은 <strong>0건</strong>, 반도체제조는 <strong>14건</strong>에 불과. '직업병'(5건), '유해인자'(1건), '추락'(1건) 등 반도체 산업에서 실제 발생하는 재해 유형이 극히 적다.</p></div>
 <div class="ins"><h3>4. 키워드별 구조적 불균형</h3><p>'감전'이 반도체개발에 0건, '끼임'이 장비 외 전 영역 0건, '직업병'이 전체 5건에 불과하다. 반도체 특유의 화학물질 노출에 따른 직업성 질환과 산업재해 유형에 대한 교육이 심각하게 미흡하다.</p></div>
 </section>
 
-<section data-reveal style="margin-bottom:48px"><h2>개선 권고안</h2>
+<section style="margin-bottom:48px"><h2>개선 권고안</h2>
 <div class="rec"><h3>즉시 1: 반도체개발 안전 콘텐츠 신규 작성</h3><p>안전 비율 0%인 16권 교재에 클린룸 안전, VDT 건강관리, 정전기 방지, 시제품 테스트 안전 내용 추가. 특히 전장 설계 교재에 감전 방지 내용이 필수적이다.</p></div>
 <div class="rec"><h3>즉시 2: 등급2 → 등급3 품질 향상</h3><p>3,464건의 형식적 언급을 구체적 안전조치/보호구/대응절차 수준으로 상향. "해당 사항 없음" 항목은 해당 공정의 실제 위험요인을 재조사하여 내용을 보강해야 한다.</p></div>
 <div class="rec"><h3>구조 1: 사고사례의 영역 분산 배치</h3><p>장비 영역에 집중된 740건의 사고사례를 제조, 재료, 개발 교재에도 분산 배치하여, 각 공정 특유의 사고사례로 체험적 학습 효과를 높여야 한다.</p></div>
@@ -125,9 +125,9 @@ var x1=RC('c1');if(x1)new Chart(x1,{type:'bar',data:{labels:['반도체재료','
 var x2=RC('c2');if(x2)new Chart(x2,{type:'doughnut',data:{labels:['등급1: 관련없음','등급2: 기본언급','등급3: 구체대책'],datasets:[{data:[2077,3464,2228],backgroundColor:[c.g1,c.g2,c.g3],borderWidth:0,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{tooltip:{enabled:true,padding:12,cornerRadius:8,callbacks:{label:function(x){return x.label+': '+x.raw.toLocaleString()+'건 ('+(x.raw/7769*100).toFixed(1)+'%)'}}},legend:{position:'bottom',labels:{color:c.t,padding:16,font:{size:12}}}},layout:{padding:10}}});
 var x3=RC('c3');if(x3)new Chart(x3,{type:'bar',data:{labels:['개발','제조','장비','재료'],datasets:[{label:'등급1',data:[479,282,516,799],backgroundColor:c.g1},{label:'등급2',data:[203,327,688,2246],backgroundColor:c.g2},{label:'등급3',data:[112,379,998,739],backgroundColor:c.g3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{tooltip:{enabled:true,mode:'index',intersect:false,padding:12,cornerRadius:8},legend:{position:'top',labels:{color:c.t,font:{size:12},padding:16}}},scales:{x:{stacked:true,ticks:{color:c.t},grid:{display:false}},y:{stacked:true,ticks:{color:c.ts},grid:{color:c.bd}}},layout:{padding:10}}});
 var t10=KW.slice(0,10);var x4=RC('c4');if(x4)new Chart(x4,{type:'bar',data:{labels:t10.map(function(d){return d.k}),datasets:[{label:'등급1',data:t10.map(function(d){return d.g1}),backgroundColor:c.g1},{label:'등급2',data:t10.map(function(d){return d.g2}),backgroundColor:c.g2},{label:'등급3',data:t10.map(function(d){return d.g3}),backgroundColor:c.g3}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{tooltip:{enabled:true,mode:'index',intersect:false,padding:12,cornerRadius:8},legend:{position:'top',labels:{color:c.t,font:{size:11},padding:12}}},scales:{x:{stacked:true,ticks:{color:c.ts},grid:{color:c.bd}},y:{stacked:true,ticks:{color:c.t,font:{size:11}},grid:{display:false}}},layout:{padding:10}}});
-chartsBuilt=true;bAC('dev')}
+chartsBuilt=true;setTimeout(function(){bAC('dev')},200)}
 function onThemeChange(){chartsBuilt=false;buildCharts()}
-document.addEventListener('DOMContentLoaded',buildCharts);
+document.addEventListener('DOMContentLoaded',function(){buildCharts();rKT()});
 
 var aCI=null;
 function bAC(a){if(typeof Chart==='undefined')return;var c=GC();var f=KW.filter(function(d){return d[a]>0}).sort(function(x,y){return y[a]-x[a]}).slice(0,15);if(aCI){try{aCI.destroy()}catch(e){}}var x=RC('c5');if(!x)return;aCI=new Chart(x,{type:'bar',data:{labels:f.map(function(d){return d.k}),datasets:[{label:'건수',data:f.map(function(d){return d[a]}),backgroundColor:c.ac,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{tooltip:{enabled:true,padding:12,cornerRadius:8},legend:{display:false}},scales:{x:{ticks:{color:c.t,font:{size:11},maxRotation:45},grid:{display:false}},y:{ticks:{color:c.ts},grid:{color:c.bd}}},layout:{padding:10}}})}
@@ -137,7 +137,6 @@ var kF='all',kS='t',kD=-1;
 function rKT(){var d=KW.slice();if(kF==='high')d=d.slice(0,15);if(kF==='case')d=d.filter(function(x){return x.cs>0});d.sort(function(a,b){if(kS==='k')return kD*(a.k<b.k?-1:a.k>b.k?1:0);return kD*((a[kS]||0)-(b[kS]||0))});var h='';d.forEach(function(r){var gp=r.t?Math.round(r.g3/r.t*100):0;h+='<tr><td><strong>'+r.k+'</strong></td><td>'+r.t.toLocaleString()+'</td><td>'+(r.dev||'-')+'</td><td>'+(r.mfg||'-')+'</td><td>'+(r.eq||'-')+'</td><td>'+(r.mat||'-')+'</td><td><span class="pb" style="width:'+Math.min(gp,100)+'px;max-width:80px;background:var(--g3)"></span>'+gp+'%</td><td style="color:'+(r.cs>0?'var(--danger)':'var(--text-secondary)')+'">'+r.cs+'</td></tr>'});document.getElementById('kb').innerHTML=h}
 function fK(f,el){kF=f;document.querySelectorAll('.fb .fbtn').forEach(function(b){b.classList.remove('on')});el.classList.add('on');rKT()}
 function sK(c){if(kS===c)kD*=-1;else{kS=c;kD=-1}rKT()}
-document.addEventListener('DOMContentLoaded',rKT);
 </script>
 </body>
 </html>
