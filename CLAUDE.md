@@ -23,7 +23,7 @@ The server sets its working directory to `outputs/` automatically via `os.chdir`
 
 ## Architecture
 
-The entire application lives in a single file: `outputs/markdown-search-app.html` (~1850 lines of embedded HTML + CSS + JavaScript). There is no build system, bundler, or package manager.
+The entire application lives in a single file: `outputs/markdown-search-app.html` (~1960 lines of embedded HTML + CSS + JavaScript). There is no build system, bundler, or package manager.
 
 ### Key Data Flow
 
@@ -95,31 +95,26 @@ All state is held in module-level variables: `selectedFolder`, `markdownFiles`, 
 - **Python 3 standard library** for the dev server (no pip packages)
 - **LM Studio** (optional) — local LLM server on port 1234 for hybrid search
 
-## Directory Structure
+## Testing
 
-- `outputs/markdown-search-app.html` — the entire application (single-file SPA)
-- `outputs/server.py` — dev server with LLM proxy
-- `outputs/test-samples/` — sample `.md` files for manual testing (includes nested `subfolder/`)
-- `uploads/` — contains a sample `_meta.json` and sample Excel keyword file for reference
+```bash
+# Open in browser to run core logic unit tests (isHeadingLine, isStandaloneTitle, normalizeHeading, NFC)
+open outputs/test-core-logic.html
+# Check browser title: "PASS: N/N tests passed" or "FAIL: ..."
+```
 
-## Test Samples
+`test-core-logic.html` copies shared helper functions from the main app and runs assertions in-browser. When adding or changing heading detection / normalization logic, update both files and verify tests pass.
 
-`outputs/test-samples/` contains sample markdown files for manual testing. For real-world testing with `_meta.json` files, use NCS 반도체 documents in `/Users/zealnutkim/Documents/개발/pinecone_agent/documents/ncs/`.
+For manual E2E testing, use `outputs/test-samples/` with sample `.md` files. For real-world testing with `_meta.json` files, use NCS 반도체 documents in `/Users/zealnutkim/Documents/개발/pinecone_agent/documents/ncs/`.
 
-## Skill routing
+## Other Artifacts
 
-When the user's request matches an available skill, ALWAYS invoke it using the Skill
-tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
-The skill has specialized workflows that produce better results than ad-hoc answers.
+- `docs/index.html` — NCS 반도체 안전보건 분석 대시보드 (GitHub Pages로 배포, Chart.js + XLSX.js 사용). 검색 앱과 별도의 독립 HTML 파일.
+- `docs/01-plan/`, `docs/02-design/`, `docs/03-analysis/`, `docs/04-report/` — feature PDCA documents
 
-Key routing rules:
-- Product ideas, "is this worth building", brainstorming → invoke office-hours
-- Bugs, errors, "why is this broken", 500 errors → invoke investigate
-- Ship, deploy, push, create PR → invoke ship
-- QA, test the site, find bugs → invoke qa
-- Code review, check my diff → invoke review
-- Update docs after shipping → invoke document-release
-- Weekly retro → invoke retro
-- Design system, brand → invoke design-consultation
-- Visual audit, design polish → invoke design-review
-- Architecture review → invoke plan-eng-review
+## Development Notes
+
+- The app is a single HTML file — all CSS, JS, and markup are inline. There is no module system; functions share the global scope.
+- `test-core-logic.html` duplicates helper functions rather than importing them. Keep both files in sync when modifying `isHeadingLine`, `isStandaloneTitle`, `normalizeHeading`, or `nfc`.
+- `server.py` auto-detects an available port starting from 3008. It uses only Python stdlib — no pip dependencies.
+- The File System Access API (`showDirectoryPicker`) only works in Chromium browsers. Safari/Firefox are not supported.
