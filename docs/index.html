@@ -28,19 +28,21 @@ h1{font-weight:800;font-size:clamp(2.5rem,5vw,3.5rem)}h2{font-weight:700;font-si
 .cc{height:380px;padding:16px}
 .ah{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.ap{font-size:2rem;font-weight:800}
 .bars{display:flex;flex-direction:column;gap:6px}.br{display:flex;align-items:center;gap:8px;font-size:.8125rem}.br .lb{width:64px;text-align:right;color:var(--text-secondary)}.br .b{flex:1;height:22px;border-radius:4px;background:var(--border);overflow:hidden}.br .bf{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:6px;font-size:.7rem;font-weight:600;color:#fff;min-width:20px}.br .ct{width:42px;font-weight:600;font-size:.8125rem}
-.tbl{width:100%;border-collapse:collapse;font-size:.8125rem}.tbl th{text-align:left;padding:10px 12px;border-bottom:2px solid var(--border);color:var(--text-secondary);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;cursor:pointer;user-select:none}.tbl th:hover{color:var(--text)}.tbl td{padding:10px 12px;border-bottom:1px solid var(--border)}.tbl tr:hover{background:var(--surface-hover)}
+.tbl{width:100%;border-collapse:collapse;font-size:.8125rem}.tbl th{text-align:left;padding:10px 12px;border-bottom:2px solid var(--border);color:var(--text-secondary);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;cursor:pointer;user-select:none;white-space:nowrap}.tbl th:hover{color:var(--text)}.tbl th::after{content:' ↕';opacity:.3;font-size:.6rem}.tbl td{padding:10px 12px;border-bottom:1px solid var(--border)}.tbl tr:hover{background:var(--surface-hover)}
 .pb{display:inline-block;height:6px;border-radius:3px;vertical-align:middle;margin-right:6px}
 .fb{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}.fbtn{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:.8125rem;font-family:inherit;transition:all .15s}.fbtn:hover{background:var(--surface-hover)}.fbtn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .upload-section{margin-bottom:48px;text-align:center}.upload-btn{padding:12px 24px;border-radius:8px;border:2px dashed var(--border);background:var(--surface);color:var(--accent);cursor:pointer;font-size:1rem;font-family:inherit;font-weight:600;transition:all .2s}.upload-btn:hover{border-color:var(--accent);background:var(--surface-hover)}.upload-status{display:block;margin-top:8px;font-size:.875rem;color:var(--positive);font-weight:500}
-.ins{border-left:4px solid var(--danger);padding:20px 24px;margin-bottom:16px;background:var(--surface);border-radius:0 12px 12px 0}.ins h3{color:var(--danger);margin-bottom:6px;font-size:1.125rem}.ins p,.rec p{color:var(--text-secondary);font-size:.9375rem;line-height:1.7}
-.rec{border-left:4px solid var(--positive);padding:20px 24px;margin-bottom:16px;background:var(--surface);border-radius:0 12px 12px 0}.rec h3{color:var(--positive);margin-bottom:6px;font-size:1.125rem}
+.ins{border-left:4px solid var(--danger);padding:20px 24px;margin-bottom:16px;background:var(--surface);border-radius:0 12px 12px 0}.ins h3{color:var(--danger);margin-bottom:8px;font-size:1.125rem}.ins p,.rec p{color:var(--text-secondary);font-size:.9375rem;line-height:1.8}.ins p strong,.rec p strong{color:var(--text)}
+.rec{border-left:4px solid var(--positive);padding:20px 24px;margin-bottom:16px;background:var(--surface);border-radius:0 12px 12px 0}.rec h3{color:var(--positive);margin-bottom:8px;font-size:1.125rem}
+.case-detail td{vertical-align:top;line-height:1.6}.case-detail td:nth-child(5){min-width:200px;max-width:360px}.case-detail td:nth-child(6){font-size:.75rem;color:var(--text-secondary)}
 .tn{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:24px;overflow-x:auto}.tb{padding:10px 20px;border:none;background:none;cursor:pointer;font-size:.875rem;font-family:inherit;color:var(--text-secondary);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;white-space:nowrap}.tb.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}.ani{animation:fadeInUp .6s ease-out both}.d1{animation-delay:.1s}.d2{animation-delay:.2s}.d3{animation-delay:.3s}
 .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}.reveal.visible{opacity:1;transform:translateY(0)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
 @media print{body{background:#fff!important;color:#000!important}.viz-menu{display:none}.card{break-inside:avoid}*{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
 @media(max-width:768px){.g4{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}.ctn{padding:24px 16px}}
-@media(max-width:375px){body{overflow-x:hidden}.g4{grid-template-columns:1fr}}
+@media(max-width:480px){.g4{grid-template-columns:1fr 1fr}.hs-row{gap:24px}.hs-v{font-size:2rem}.case-detail th:nth-child(2),.case-detail td:nth-child(2),.case-detail th:nth-child(3),.case-detail td:nth-child(3){display:none}}
+@media(max-width:375px){body{overflow-x:hidden}.g4{grid-template-columns:1fr}.hs-row{flex-direction:column;gap:16px}}
 .viz-menu{position:fixed;top:16px;right:16px;z-index:9999}.viz-menu-toggle{width:44px;height:44px;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px)}.viz-menu-toggle:hover{background:var(--surface-hover)}.viz-menu-dropdown{position:absolute;top:52px;right:0;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px;opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .2s;backdrop-filter:blur(16px)}.viz-menu-dropdown.open{opacity:1;visibility:visible;transform:translateY(0)}.viz-menu-dropdown button{width:100%;padding:10px 14px;border:none;border-radius:8px;background:transparent;color:var(--text);font-size:14px;font-family:inherit;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px}.viz-menu-dropdown button:hover{background:var(--surface-hover)}
 </style>
 </head>
@@ -50,7 +52,7 @@ h1{font-weight:800;font-size:clamp(2.5rem,5vw,3.5rem)}h2{font-weight:700;font-si
 <main id="mc" role="main"><div class="ctn">
 
 <section class="hero ani"><h1>NCS 반도체 교재<br>안전보건 키워드 분석</h1><p>30개 안전보건 키워드 x 4개 영역(86권) 교재의 7,769개 페이지 항목을 분석한 종합 대시보드</p>
-<div class="hs-row"><div class="hs"><div class="hs-v" id="hero-total">7,769</div><div class="hs-l">전체 분석 항목</div></div><div class="hs"><div class="hs-v" id="hero-kw">30</div><div class="hs-l">안전보건 키워드</div></div><div class="hs"><div class="hs-v" id="hero-books">86</div><div class="hs-l">분석 교재</div></div><div class="hs"><div class="hs-v" id="hero-cases">7</div><div class="hs-l">사고사례 발견</div></div></div></section>
+<div class="hs-row"><div class="hs"><div class="hs-v" id="hero-total">7,769</div><div class="hs-l">전체 분석 항목</div></div><div class="hs"><div class="hs-v" id="hero-kw">30</div><div class="hs-l">안전보건 키워드</div></div><div class="hs"><div class="hs-v" id="hero-books">86</div><div class="hs-l">분석 교재</div></div><div class="hs"><div class="hs-v" id="hero-cases" style="color:var(--danger)">7</div><div class="hs-l" style="color:var(--danger);font-weight:600">사고사례 발견</div></div></div></section>
 
 <section class="card upload-section ani d1">
 <h3>Excel 분석 결과 업로드</h3>
@@ -64,7 +66,7 @@ h1{font-weight:800;font-size:clamp(2.5rem,5vw,3.5rem)}h2{font-weight:700;font-si
 <div class="card kpi"><div class="kpi-v" style="color:var(--g1)">2,077</div><div class="kpi-l">등급1 — 관련없음/미약</div><div class="kpi-bar"><i style="width:26.7%;background:var(--g1)"></i></div></div>
 <div class="card kpi"><div class="kpi-v" style="color:var(--g2)">3,464</div><div class="kpi-l">등급2 — 기본 언급</div><div class="kpi-bar"><i style="width:44.6%;background:var(--g2)"></i></div></div>
 <div class="card kpi"><div class="kpi-v" style="color:var(--g3)">2,228</div><div class="kpi-l">등급3 — 구체적 대책</div><div class="kpi-bar"><i style="width:28.7%;background:var(--g3)"></i></div></div>
-<div class="card kpi"><div class="kpi-v" style="color:var(--danger)">7</div><div class="kpi-l">사고/부상 사례</div><div class="kpi-bar"><i style="width:0.1%;background:var(--danger);min-width:4px"></i></div></div>
+<div class="card kpi"><div class="kpi-v" style="color:var(--danger)">7</div><div class="kpi-l">사고/부상 사례</div><div class="kpi-bar"><i style="width:2%;background:var(--danger);min-width:8px"></i></div></div>
 </section>
 
 <section class="g2 ani d2">
@@ -93,7 +95,7 @@ h1{font-weight:800;font-size:clamp(2.5rem,5vw,3.5rem)}h2{font-weight:700;font-si
 
 <section style="margin-bottom:48px"><h2>사고사례 상세 (고유 7건)</h2>
 <p class="ts" style="margin-bottom:16px">NCS 반도체 교재 86권 중 구체적 사고사례가 포함된 교재는 2권뿐이며, 고유 사례는 7건입니다.</p>
-<div class="card" style="overflow-x:auto"><table class="tbl"><thead><tr><th style="width:30px">#</th><th>교재</th><th>분야</th><th>페이지</th><th>사고사례 내용</th><th>검출 키워드</th></tr></thead><tbody>
+<div class="card" style="overflow-x:auto"><table class="tbl case-detail"><thead><tr><th style="width:30px">#</th><th>교재</th><th>분야</th><th>페이지</th><th>사고사례 내용</th><th>검출 키워드</th></tr></thead><tbody>
 <tr><td>1</td><td>반도체 장비 안전관리</td><td>장비</td><td>33</td><td>H사 구미 공장 불산 가스 유출 사고 — 작업자 5명 사망, 18명 부상</td><td>사망, 부상</td></tr>
 <tr><td>2</td><td>반도체 장비 안전관리</td><td>장비</td><td>105</td><td>TMAH 피부 노출 급성중독 사망사고 — 타이완 논문 보고, 국내 사례 있음</td><td>안전, 누출, 중독, 보호구, 사망</td></tr>
 <tr><td>3</td><td>반도체 재료 안전관리</td><td>재료</td><td>33</td><td>2014년 환풍구 붕괴 사고 — 행인 16명 사망, 11명 부상</td><td>안전, 사망</td></tr>
