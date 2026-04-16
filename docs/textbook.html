@@ -49,8 +49,8 @@ h1{font-weight:800;font-size:clamp(2.5rem,5vw,3.5rem)}h2{font-weight:700;font-si
 <div class="viz-menu"><button class="viz-menu-toggle" onclick="toggleMenu()" aria-label="Menu"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg></button><div class="viz-menu-dropdown" id="vizMenuDropdown"><button onclick="cycleTheme()"><span id="themeIcon">☀️</span><span id="themeLabel">Light</span></button><button onclick="downloadImage()"><span>📥</span><span>Download PNG</span></button><button onclick="window.print()"><span>🖨️</span><span>Print / PDF</span></button></div></div>
 <main id="mc" role="main"><div class="ctn">
 
-<section class="hero ani"><h1>반도체고 교과서<br>안전보건 키워드 분석</h1><p>30개 안전보건 키워드로 반도체 특성화고 교과서 9권의 982개 페이지 항목을 분석한 종합 대시보드</p>
-<div class="hs-row"><div class="hs"><div class="hs-v">982</div><div class="hs-l">전체 분석 항목</div></div><div class="hs"><div class="hs-v">22</div><div class="hs-l">검출 키워드</div></div><div class="hs"><div class="hs-v">9</div><div class="hs-l">분석 교과서</div></div><div class="hs"><div class="hs-v" style="color:var(--danger)">0</div><div class="hs-l" style="color:var(--danger);font-weight:600">사고사례 발견</div></div></div></section>
+<section class="hero ani"><h1>반도체고 교과서<br>안전보건 키워드 분석</h1><p>30개 안전보건 키워드로 반도체 특성화고 교과서 9권(총 2,055쪽)에서 982건의 키워드 항목을 분석한 종합 대시보드</p>
+<div class="hs-row"><div class="hs"><div class="hs-v">2,055</div><div class="hs-l">전체 페이지</div></div><div class="hs"><div class="hs-v">982</div><div class="hs-l">키워드 검출 항목</div></div><div class="hs"><div class="hs-v">22</div><div class="hs-l">검출 키워드</div></div><div class="hs"><div class="hs-v">9</div><div class="hs-l">분석 교과서</div></div><div class="hs"><div class="hs-v" style="color:var(--danger)">0</div><div class="hs-l" style="color:var(--danger);font-weight:600">사고사례 발견</div></div></div></section>
 
 <section class="g3x ani d1">
 <div class="card kpi"><div class="kpi-v" style="color:var(--g1)">360</div><div class="kpi-l">등급1 — 기본 언급</div><div class="kpi-bar"><i style="width:36.7%;background:var(--g1)"></i></div></div>
@@ -68,16 +68,17 @@ h1{font-weight:800;font-size:clamp(2.5rem,5vw,3.5rem)}h2{font-weight:700;font-si
 <div class="card" style="overflow-x:auto"><table class="tbl"><thead><tr><th onclick="sK('k')">키워드</th><th onclick="sK('t')">총건수</th><th onclick="sK('g1')">등급1</th><th onclick="sK('g2')">등급2</th><th onclick="sK('g3')">등급3</th><th onclick="sK('gp')">등급2(%)</th><th onclick="sK('cs')">사고사례</th></tr></thead><tbody id="kb"></tbody></table></div></section>
 
 <section style="margin-bottom:48px"><h2>교과서 목록</h2>
-<div class="card" style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>교과서명</th><th>출판사/기관</th></tr></thead><tbody>
-<tr><td>1</td><td>반도체 기초기술 1</td><td>크리아트</td></tr>
-<tr><td>2</td><td>반도체 기초기술 2</td><td>크리아트</td></tr>
-<tr><td>3</td><td>반도체 기초</td><td>렛유인</td></tr>
-<tr><td>4</td><td>반도체 공정기초</td><td>렛유인</td></tr>
-<tr><td>5</td><td>반도체 장비 유지보수</td><td>충남반도체고</td></tr>
-<tr><td>6</td><td>반도체 인프라 일반</td><td>서울시교육청</td></tr>
-<tr><td>7</td><td>반도체 포토에칭</td><td>에이치앤지</td></tr>
-<tr><td>8</td><td>반도체 조립검사</td><td>에이치앤지</td></tr>
-<tr><td>9</td><td>반도체 박막확산</td><td>에이치앤지</td></tr>
+<div class="card" style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>교과서명</th><th>출판사/기관</th><th>페이지</th></tr></thead><tbody>
+<tr><td>1</td><td>반도체 기초기술 1</td><td>크리아트</td><td>172</td></tr>
+<tr><td>2</td><td>반도체 기초기술 2</td><td>크리아트</td><td>232</td></tr>
+<tr><td>3</td><td>반도체 기초</td><td>렛유인</td><td>235</td></tr>
+<tr><td>4</td><td>반도체 공정기초</td><td>렛유인</td><td>224</td></tr>
+<tr><td>5</td><td>반도체 장비 유지보수</td><td>충남반도체고</td><td>217</td></tr>
+<tr><td>6</td><td>반도체 인프라 일반</td><td>서울시교육청</td><td>197</td></tr>
+<tr><td>7</td><td>반도체 포토에칭</td><td>에이치앤지</td><td>274</td></tr>
+<tr><td>8</td><td>반도체 조립검사</td><td>에이치앤지</td><td>256</td></tr>
+<tr><td>9</td><td>반도체 박막확산</td><td>에이치앤지</td><td>248</td></tr>
+<tr style="font-weight:700;border-top:2px solid var(--border)"><td></td><td>합계</td><td></td><td>2,055</td></tr>
 </tbody></table></div></section>
 
 <section style="margin-bottom:48px"><h2>문제점과 시사점</h2>
@@ -89,7 +90,8 @@ h1{font-weight:800;font-size:clamp(2.5rem,5vw,3.5rem)}h2{font-weight:700;font-si
 
 <section style="margin-bottom:48px"><h2>NCS 교재 vs 교과서 비교</h2>
 <div class="card" style="overflow-x:auto"><table class="tbl"><thead><tr><th>항목</th><th>NCS 교재 (86권)</th><th>교과서 (9권)</th><th>차이</th></tr></thead><tbody>
-<tr><td><strong>분석 항목</strong></td><td>7,769건</td><td>982건</td><td>-</td></tr>
+<tr><td><strong>전체 페이지</strong></td><td>-</td><td>2,055쪽</td><td>-</td></tr>
+<tr><td><strong>검출 항목</strong></td><td>7,769건</td><td>982건</td><td>-</td></tr>
 <tr><td><strong>등급1 (기본 언급)</strong></td><td>2,077건 (26.7%)</td><td>360건 (36.7%)</td><td style="color:var(--danger)">+10.0%p</td></tr>
 <tr><td><strong>등급2 (구체적 대책)</strong></td><td>3,464건 (44.6%)</td><td>64건 (6.5%)</td><td style="color:var(--danger)">-38.1%p</td></tr>
 <tr><td><strong>등급3 (관련 없음)</strong></td><td>2,228건 (28.7%)</td><td>558건 (56.8%)</td><td style="color:var(--danger)">+28.1%p</td></tr>
