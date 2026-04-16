@@ -66,7 +66,7 @@ h1{font-weight:800;font-size:clamp(2.5rem,5vw,3.5rem)}h2{font-weight:700;font-si
 
 <section style="margin-bottom:48px"><h2>키워드별 상세</h2>
 <div class="fb"><button class="fbtn on" onclick="fK('all',this)">전체</button><button class="fbtn" onclick="fK('detected',this)">검출된 키워드</button></div>
-<div class="card" style="overflow-x:auto"><table class="tbl"><thead><tr><th onclick="sK('k')">키워드</th><th onclick="sK('t')">총건수</th><th onclick="sK('g1')">등급1</th><th onclick="sK('g2')">등급2</th><th onclick="sK('g3')">등급3</th><th onclick="sK('gp')">등급2(%)</th><th onclick="sK('cs')">사고사례</th></tr></thead><tbody id="kb"></tbody></table></div></section>
+<div class="card" style="overflow-x:auto"><table class="tbl"><thead><tr><th onclick="sK('k')">키워드</th><th onclick="sK('t')">총건수</th><th onclick="sK('tp')">검출비율<br><span style="font-weight:400;font-size:.65rem">(÷2,055쪽)</span></th><th onclick="sK('g1')">등급1</th><th onclick="sK('g2')">등급2</th><th onclick="sK('g3')">등급3</th><th onclick="sK('cs')">사고사례</th></tr></thead><tbody id="kb"></tbody></table></div></section>
 
 <section style="margin-bottom:48px"><h2>교과서 목록</h2>
 <div class="card" style="overflow-x:auto"><table class="tbl"><thead><tr><th>#</th><th>교과서명</th><th>출판사/기관</th><th>페이지</th></tr></thead><tbody>
@@ -131,7 +131,7 @@ function onThemeChange(){buildCharts()}
 document.addEventListener('DOMContentLoaded',function(){applyTheme(currentTheme);buildCharts();rKT()});
 
 var kF='all',kS='t',kD=-1;
-function rKT(){var d=KW.slice();if(kF==='detected')d=d.filter(function(x){return x.t>0});d.sort(function(a,b){if(kS==='k')return kD*(a.k<b.k?-1:a.k>b.k?1:0);if(kS==='gp'){var ap=a.t?(a.g2/a.t):0,bp=b.t?(b.g2/b.t):0;return kD*(ap-bp)}return kD*((a[kS]||0)-(b[kS]||0))});var h='';d.forEach(function(r){var gp=r.t?Math.round(r.g2/r.t*100):0;h+='<tr><td><strong>'+r.k+'</strong></td><td>'+r.t.toLocaleString()+'</td><td>'+r.g1+'</td><td>'+r.g2+'</td><td>'+r.g3+'</td><td><span class="pb" style="width:'+Math.min(gp*2,100)+'px;max-width:80px;background:var(--g2)"></span>'+gp+'%</td><td style="color:'+(r.cs>0?'var(--danger)':'var(--text-secondary)')+'">'+r.cs+'</td></tr>'});document.getElementById('kb').innerHTML=h}
+function rKT(){var TP=2055;var d=KW.slice();if(kF==='detected')d=d.filter(function(x){return x.t>0});d.sort(function(a,b){if(kS==='k')return kD*(a.k<b.k?-1:a.k>b.k?1:0);if(kS==='tp'){var ap=a.t/TP,bp=b.t/TP;return kD*(ap-bp)}return kD*((a[kS]||0)-(b[kS]||0))});var h='';d.forEach(function(r){var tp=(r.t/TP*100).toFixed(1);h+='<tr><td><strong>'+r.k+'</strong></td><td>'+r.t.toLocaleString()+'</td><td><span class="pb" style="width:'+Math.min(tp*4,100)+'px;max-width:80px;background:var(--accent)"></span>'+tp+'%</td><td>'+r.g1+'</td><td>'+r.g2+'</td><td>'+r.g3+'</td><td style="color:'+(r.cs>0?'var(--danger)':'var(--text-secondary)')+'">'+r.cs+'</td></tr>'});document.getElementById('kb').innerHTML=h}
 function fK(f,el){kF=f;document.querySelectorAll('.fb .fbtn').forEach(function(b){b.classList.remove('on')});el.classList.add('on');rKT()}
 function sK(c){if(kS===c)kD*=-1;else{kS=c;kD=-1}rKT()}
 </script>
