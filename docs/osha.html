@@ -56,11 +56,11 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 
 <section class="hero">
 <h1>OSHA 반도체 화학물질 안전교육 과정</h1>
-<p>Semiconductor Chemical Safety (SCS) 3개 과정의 교육 내용을 분석하고, 한국 NCS 교재 및 반도체고 교과서와 비교합니다</p>
+<p>Semiconductor Chemical Safety (SCS) 5개 과정의 교육 내용을 분석하고, 한국 NCS 교재 및 반도체고 교과서와 비교합니다</p>
 <div style="display:flex;justify-content:center;gap:32px;margin-top:24px;flex-wrap:wrap">
-<div style="text-align:center"><div style="font-size:2.25rem;font-weight:800;color:var(--accent)">3</div><div class="ts">교육 과정</div></div>
-<div style="text-align:center"><div style="font-size:2.25rem;font-weight:800;color:var(--accent)">79분</div><div class="ts">총 교육시간</div></div>
-<div style="text-align:center"><div style="font-size:2.25rem;font-weight:800;color:var(--accent)">30+</div><div class="ts">교육 주제</div></div>
+<div style="text-align:center"><div style="font-size:2.25rem;font-weight:800;color:var(--accent)">5</div><div class="ts">교육 과정</div></div>
+<div style="text-align:center"><div style="font-size:2.25rem;font-weight:800;color:var(--accent)">129분</div><div class="ts">총 교육시간</div></div>
+<div style="text-align:center"><div style="font-size:2.25rem;font-weight:800;color:var(--accent)">50+</div><div class="ts">교육 주제</div></div>
 </div>
 </section>
 
@@ -70,6 +70,8 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <button class="part-btn" onclick="showPart('part1a',this)">Part 1-A: GHS 소개</button>
 <button class="part-btn" onclick="showPart('part1b',this)">Part 1-B: 통제·비상절차</button>
 <button class="part-btn" onclick="showPart('part2',this)">Part 2: 위험·대응</button>
+<button class="part-btn" onclick="showPart('part3',this)">Part 3: 극유해물질</button>
+<button class="part-btn" onclick="showPart('part4',this)">Part 4: 가스시스템</button>
 <button class="part-btn" onclick="showPart('insight',this)">비교 인사이트</button>
 </div>
 
@@ -84,6 +86,8 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td><strong>Part 1-A</strong></td><td>22분</td><td>GHS 소개, 위험 분류 체계 (물리적·건강·환경 위험), 9개 픽토그램, 반도체 공정별 유해 화학물질</td></tr>
 <tr><td><strong>Part 1-B</strong></td><td>24분</td><td>SDS 16개 섹션, 라벨 요건, 위험 통제 5단계, 화학물질 취급·보관, 비상절차, 유해폐기물 처리</td></tr>
 <tr><td><strong>Part 2</strong></td><td>33분</td><td>인화성 액체·가스·고체, 자연발화성, 산화제, 부식성, 독성, 노출한계(PEL/TLV/IDLH), 화학물질 호환성, PPE</td></tr>
+<tr><td><strong>Part 3</strong></td><td>24분</td><td>극도 유해 화학물질 9개 범주 (독성수소화물, 부식성·산화성·자연발화성 가스, 실란, 유기금속, 부식성 액체, 유해 부산물), 데이터시트 활용</td></tr>
+<tr><td><strong>Part 4</strong></td><td>26분</td><td>불활성 가스와 산소결핍, 극저온 실린더(Dewar), 압축 가스 실린더 위험, 유해 가스 통제 시스템 12단계, NFPA 등급, MAQ, 비상 대응(EMO)</td></tr>
 </tbody>
 </table>
 </div>
@@ -100,7 +104,10 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td><strong>노출한계</strong></td><td>PEL, TLV, TWA, STEL, IDLH, LD50, LC50</td><td><span class="tag tag-danger">부재</span> 노출한계 개념 교육 전무</td></tr>
 <tr><td><strong>비상 대응</strong></td><td>눈세척(15분), 안전샤워(15분), HF 응급처치(칼슘글루코네이트), 유출 대응</td><td><span class="tag tag-danger">부재</span> 구체적 응급처치 절차 교육 없음</td></tr>
 <tr><td><strong>화학물질 보관·호환</strong></td><td>유형별 보관함, 호환성 차트 (5x5 매트릭스)</td><td><span class="tag tag-danger">부재</span> 화학물질 호환성 교육 없음</td></tr>
-<tr><td><strong>사고사례</strong></td><td>실제 반도체 공정 사례 (실란 가스 누출, HF 화상 등)</td><td><span class="tag tag-danger">극히 부족</span> NCS 7건, 교과서 0건</td></tr>
+<tr><td><strong>극도 유해 화학물질</strong></td><td>9개 범주별 데이터시트, 실란 폭발 위험(TNT 9배), 유해 부산물</td><td><span class="tag tag-danger">부재</span> 물질별 심층 교육 없음</td></tr>
+<tr><td><strong>가스 통제 시스템</strong></td><td>12단계 시스템, RFO, 인클로저, EMO, NFPA/MAQ</td><td><span class="tag tag-danger">부재</span> 공학적 통제 시스템 교육 없음</td></tr>
+<tr><td><strong>산소 결핍·극저온</strong></td><td>불활성 가스 질식 위험, Dewar 팽창계수 700배, 실린더 발사체화</td><td><span class="tag tag-danger">부재</span> 산소 결핍 위험 교육 없음</td></tr>
+<tr><td><strong>사고사례</strong></td><td>실란 폭발 사망, HF 화상, 가스 누출 등 다수</td><td><span class="tag tag-danger">극히 부족</span> NCS 7건, 교과서 0건</td></tr>
 </tbody>
 </table>
 </div>
@@ -448,6 +455,178 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 
 </div>
 
+<!-- ===================== PART 3 ===================== -->
+<div id="part-part3" class="part-section">
+
+<h2>Part 3: 극도 유해 화학물질 9개 범주 (24분)</h2>
+
+<p>반도체 제조는 가장 화학물질 집약적인 산업 중 하나입니다. 이 과정은 반도체 공정에서 사용되는 <strong>9개 범주의 극도 유해 화학물질</strong>과 각각의 데이터시트를 다룹니다.</p>
+
+<h3>9개 극도 유해 화학물질 범주 개요</h3>
+<div class="card">
+<table>
+<thead><tr><th>#</th><th>범주</th><th>주요 위험</th><th>핵심 특성</th><th>대표 화학물질</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>독성 수소화물 가스</strong></td><td>독성 (흡입)</td><td>인화성, 일부 자연발화성. 안전 노출 수준이 냄새 역치보다 낮아 <strong>냄새로 감지 불가</strong></td><td>아르신(AsH₃), 디보레인(B₂H₆), 포스핀(PH₃), 저메인(GeH₄), 셀렌화수소(H₂Se), 황화수소(H₂S)</td></tr>
+<tr><td>2</td><td><strong>부식성 가스</strong></td><td>독성 + 부식성</td><td>눈, 점막, 호흡기의 수분과 접촉하여 화학 화상. 매우 낮은 농도에서도 유해</td><td>암모니아(NH₃), 삼염화붕소(BCl₃), 브롬화수소(HBr), 염화수소(HCl), 육불화텅스텐(WF₆)</td></tr>
+<tr><td>3</td><td><strong>산화성 가스</strong></td><td>독성</td><td>가연성/인화성 물질과 접촉 시 화재·폭발 위험 증가. 일부 부식성</td><td>염소(Cl₂), 삼불화염소(ClF₃), 불소(F₂), 일산화질소(NO), 이산화질소(NO₂), 오존(O₃)</td></tr>
+<tr><td>4</td><td><strong>자연발화성 가스</strong></td><td>인화성</td><td>공기 접촉 시 자연 발화. 일부는 배기관에 부산물 퇴적</td><td>실란(SiH₄), 포스핀(PH₃), 저메인(GeH₄), 디실란(Si₂H₆)</td></tr>
+<tr><td>5</td><td><strong>실란 (특별 항목)</strong></td><td>인화성 (자연발화)</td><td>공기 접촉 시 거의 항상 발화. 서방출 시 <strong>TNT의 9배 에너지로 폭발</strong>. 반도체 산업 사망사고 연관</td><td>실란(SiH₄)</td></tr>
+<tr><td>6</td><td><strong>인화성 가스</strong></td><td>인화성</td><td>자연발화성보다는 덜 위험하지만 누출 시 상당한 화재 위험</td><td>아세틸렌(C₂H₂), 일산화탄소(CO), 수소(H₂), 메탄(CH₄), 프로판(C₃H₈)</td></tr>
+<tr><td>7</td><td><strong>고에너지 물질 (유기금속)</strong></td><td>자연발화 + 물반응</td><td>2% 이상 농도에서 불안정/물반응성. 폭발 또는 독성·부식성 증기 노출</td><td>디에틸아연(DEZ), 트리메틸알루미늄(TMA), 트리메틸갈륨(TMG), 트리메틸인듐(TMI)</td></tr>
+<tr><td>8</td><td><strong>부식성 액체</strong></td><td>부식성</td><td>심부 관통 화상. 다른 화학물질과 격렬한 발열 반응. 용기/배관 부식</td><td>염산(HCl), 불산(HF), 황산(H₂SO₄), 질산(HNO₃), 인산(H₃PO₄)</td></tr>
+<tr><td>9</td><td><strong>유해 부산물</strong></td><td>복합</td><td>챔버 벽, 배기관, 펌프에 퇴적. 원재료와 동일한 위험 + <strong>결합 시 새로운 위험 생성</strong> (자연발화, 물반응, 독성 등)</td><td>증착·확산·주입 공정 잔류물</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>실란 (Silane) — 특별 경고</h3>
+<div class="ins">
+<h3>반도체 산업 사망사고와 직결</h3>
+<p>실란은 반도체에서 실리콘 증착원으로 매우 흔하게 사용되는 가스입니다. 공기와 접촉하면 발열 반응으로 수소를 발화시켜 <strong>거의 항상 점화</strong>됩니다. 서방출(slow release) 시 실란이 이산화규소 층에 둘러싸인 거품을 형성하고, 이 취약한 외층이 깨지면 미반응 실란이 공기와 반응하여 <strong>TNT의 9배 에너지로 폭발</strong>합니다. 실란 누출은 반도체 산업에서 <strong>중대 사고 및 사망</strong>과 관련되어 있습니다.</p>
+</div>
+
+<h3>유해 부산물 — 숨겨진 위험</h3>
+<p>증착, 확산, 주입 공정은 100% 효율적이지 않습니다. 원재료가 챔버 벽, 배기관, 배기 장비(펌프, 밸브, 저감 장비)에 퇴적됩니다.</p>
+<ul>
+<li>부산물은 액체, 고체, 또는 반고체 혼합물일 수 있음</li>
+<li>공기나 수분에 반응하여 <strong>격렬한 반응</strong>을 일으키거나 독성·인화성·부식성 증기를 생성할 수 있음</li>
+<li>원재료와 동일한 위험성을 보유하면서, <strong>결합 시 새로운 위험</strong>(자연발화, 물반응, 독성 등)을 생성할 수 있음</li>
+</ul>
+
+<h3>비상 대응</h3>
+<table>
+<thead><tr><th>상황</th><th>대응</th></tr></thead>
+<tbody>
+<tr><td>경보 발동</td><td><strong>지정 집결지로 즉시 대피</strong></td></tr>
+<tr><td>연기/화염 발견</td><td>화재 경보 작동 (안전한 경우)</td></tr>
+<tr><td>가스 차단 필요</td><td>원격 차단 사용. <strong>절대 실린더에서 직접 차단 시도 금지</strong></td></tr>
+<tr><td>화학물질 흡입</td><td>신선한 공기로 이동</td></tr>
+<tr><td>화학 화상</td><td>안전 샤워 이용</td></tr>
+</tbody>
+</table>
+<blockquote><strong>자신의 안전을 먼저 확보</strong>한 후 타인을 지원. 추가 사상자가 되는 것을 피해야 합니다.</blockquote>
+
+</div>
+
+<!-- ===================== PART 4 ===================== -->
+<div id="part-part4" class="part-section">
+
+<h2>Part 4: 유해 가스 시스템과 통제 (26분)</h2>
+
+<p>반도체 제조에 사용되는 가스의 저장, 유통, 사용 과정에서의 위험과 통제 시스템을 다룹니다. 이 과정으로 SCS 전체 커리큘럼이 완료됩니다.</p>
+
+<h3>1. 불활성 가스와 산소 결핍</h3>
+<p>불활성 가스(질소, 아르곤, 육불화황)는 화학적·물리적 위험은 없지만, 농도가 높아지면 <strong>산소를 치환하여 질식</strong>을 유발합니다.</p>
+
+<h4>산소 결핍 효과</h4>
+<div class="card">
+<table>
+<thead><tr><th>산소 농도</th><th>영향</th></tr></thead>
+<tbody>
+<tr><td>23.5% ~ 19.5%</td><td>정상, 신체 증상 없음</td></tr>
+<tr><td>19.5% ~ 10%</td><td>심박수·호흡 증가</td></tr>
+<tr><td>10% ~ 6%</td><td>오심, 구토, 의식 상실</td></tr>
+<tr><td style="color:var(--danger);font-weight:700">6% 이하</td><td style="color:var(--danger);font-weight:700">사망</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>2. 극저온 실린더 (Dewar)</h3>
+<p>극저온 액체(질소, 아르곤, 수소, 산소)를 압력 하에 저장합니다. 액체가 서서히 증발하여 가스를 생성하며, 이 가스가 클린룸에서 사용됩니다.</p>
+
+<div class="ins">
+<h3>열팽창 위험: 액체질소 팽창계수 700배</h3>
+<p>액체질소 1리터가 <strong>700리터의 질소 가스</strong>를 생성합니다. 클린룸의 Dewar 용량은 160~230리터이므로, 전량 방출 시 최대 <strong>161,000리터의 질소 가스</strong>가 생성되어 실내 산소 농도에 심각한 영향을 줍니다.</p>
+</div>
+
+<h4>안전 수칙</h4>
+<ul>
+<li><strong>PPE:</strong> 보안경/안면보호대, 단열 장갑, 앞치마</li>
+<li><strong>지진 대비:</strong> 대형 Dewar는 반드시 고정</li>
+<li><strong>모니터링:</strong> 극저온 용기 보관 공간의 산소 농도 감시</li>
+</ul>
+
+<h3>3. 압축 가스 실린더 위험</h3>
+<p>압축 가스 실린더 내부 압력은 <strong>2,000 PSI 이상</strong>에 달할 수 있습니다.</p>
+
+<div class="card">
+<table>
+<thead><tr><th>위험</th><th>설명</th></tr></thead>
+<tbody>
+<tr><td><strong>가스 방출</strong></td><td>노즐/밸브에서 고속 가스 방출 — 분진·파편이 비산 위험</td></tr>
+<tr><td><strong>핀홀 누출</strong></td><td>100 PSI만으로 핀홀 누출이 피부를 관통 가능. <strong>절대 손으로 점검하지 말 것</strong> — 승인된 누출 검사 방법만 사용</td></tr>
+<tr><td><strong>실린더 발사체화</strong></td><td>밸브 스템이 손상되어 절단되면 전체 압력이 순간적으로 방출되어 실린더가 <strong>고속 발사체</strong>로 변환</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>실린더 취급 수칙</h4>
+<ul>
+<li>가스 라인 연결 시 보안경 착용</li>
+<li>사용하지 않을 때 실린더 캡 장착</li>
+<li>실린더 카트로 지지 및 운반</li>
+<li>시설 요건에 따라 안전화 착용</li>
+<li><strong>항상 실린더를 고정</strong> — 운반 중 카트에, 사용 장소에서도 고정</li>
+</ul>
+
+<h3>4. NFPA 등급 시스템과 MAQ</h3>
+<div class="card">
+<table>
+<thead><tr><th>NFPA 등급</th><th>위험 수준</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>무위험</td></tr>
+<tr><td>1</td><td>경미</td></tr>
+<tr><td>2</td><td>중간</td></tr>
+<tr><td>3</td><td>심각</td></tr>
+<tr><td style="font-weight:700;color:var(--danger)">4</td><td style="font-weight:700;color:var(--danger)">고위험</td></tr>
+</tbody>
+</table>
+</div>
+<ul>
+<li>NFPA 다이아몬드 필드에서 <strong>3 또는 4</strong>에 해당하는 가스는 더 엄격한 통제 적용</li>
+<li>국제 소방법(IFC)이 각 위험 가스 등급별 <strong>최대 허용량(MAQ)</strong>을 설정</li>
+<li>대부분의 반도체 팹은 MAQ를 <strong>초과</strong>하여 사용 → 일반 산업보다 더 엄격한 요건 적용</li>
+</ul>
+
+<h3>5. 유해 가스 통제 시스템 — 12단계 구축</h3>
+<div class="card">
+<table>
+<thead><tr><th>단계</th><th>구성 요소</th><th>기능</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>원료 가스 실린더</strong></td><td>유해 가스 저장</td></tr>
+<tr><td>2</td><td><strong>제한 유량 오리피스 (RFO)</strong></td><td>밸브 출구에 설치, 배관/부품 고장 시 가스 유출량 제한</td></tr>
+<tr><td>3</td><td><strong>인클로저 (격납 장치)</strong></td><td>가스 누출 격납 + 화재/폭발 등 물리적 위험 보호</td></tr>
+<tr><td>4</td><td><strong>공압 차단 밸브</strong></td><td>실린더 출구에 설치, 인원 또는 모니터링 장비의 원격 차단 가능</td></tr>
+<tr><td>5</td><td><strong>배기 연결</strong></td><td>누출 가스를 인원으로부터 배출</td></tr>
+<tr><td>6</td><td><strong>유량 센서</strong></td><td>가스 유량 감시</td></tr>
+<tr><td>7</td><td><strong>가스 누출 센서</strong></td><td>가스 누출 감지</td></tr>
+<tr><td>8</td><td><strong>모니터링 스테이션</strong></td><td>유량·가스 센서, 화재 경보, 지진 감지 신호 수신</td></tr>
+<tr><td>9</td><td><strong>차단 신호</strong></td><td>모니터링 스테이션에서 차단 밸브로 신호 전송</td></tr>
+<tr><td>10</td><td><strong>레귤레이터</strong></td><td>가스 압력 제어</td></tr>
+<tr><td>11</td><td><strong>가스 제어 패널</strong></td><td>하류 장비로의 안전한 가스 흐름 관리</td></tr>
+<tr><td>12</td><td><strong>과유량 차단 장치</strong></td><td>유량이 설정값 초과 시 자동 차단 — 파손된 배관의 비제어 누출 방지</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>불활성 퍼지 가스</h4>
+<p>안전 작업 절차에 따라 배관 분리 전에 <strong>퍼지 가스로 유해 가스를 배출</strong>해야 합니다. 실린더 교체 및 유지보수 시 필수 단계입니다.</p>
+
+<h3>6. 비상 절차</h3>
+<div class="card">
+<table>
+<thead><tr><th>상황</th><th>대응</th></tr></thead>
+<tbody>
+<tr><td><strong>경보 발동</strong></td><td>항상 <strong>즉시 대피</strong> — 경보는 허용 노출 수준보다 낮게 설정되어 있어 대피 시간 확보됨</td></tr>
+<tr><td><strong>가스 문제 직접 목격</strong></td><td><strong>EMO(비상 기계 정지) 버튼</strong> 사용 — 장비 정지 및 누출 차단</td></tr>
+</tbody>
+</table>
+</div>
+<blockquote>경보 시 <strong>먼저 대피</strong>. EMO 버튼은 특정 문제를 직접 목격했을 때 사용하며, 모든 경보에 대한 첫 번째 대응이 아닙니다.</blockquote>
+
+</div>
+
 <!-- ===================== INSIGHT ===================== -->
 <div id="part-insight" class="part-section">
 
@@ -480,20 +659,32 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <p>OSHA SCS는 <strong>5x5 호환성 매트릭스</strong>(인화성/산화제/산/염기/독성)와 유형별 보관함 지정을 구체적으로 교육합니다. NCS 교재에서 "MSDS" 키워드가 333건 검출되었지만, 실제 화학물질 간 호환성이나 보관 분리 원칙을 다루는 내용은 없습니다.</p>
 </div>
 
+<div class="ins">
+<h3>Gap 6. 극도 유해 화학물질 범주별 교육 부재 (Part 3)</h3>
+<p>OSHA SCS Part 3는 반도체 공정에서 사용되는 <strong>9개 범주의 극도 유해 화학물질</strong>(독성 수소화물, 실란, 유기금속 등)을 각각의 데이터시트와 함께 교육합니다. 특히 실란의 <strong>TNT 9배 폭발 위험</strong>과 반도체 산업 사망사고 연관성을 명시적으로 다룹니다. NCS 교재와 교과서에는 이러한 물질별 심층 교육이 없으며, 유해 부산물(챔버 벽·배기관 퇴적물)의 복합 위험에 대한 교육도 전무합니다.</p>
+</div>
+
+<div class="ins">
+<h3>Gap 7. 가스 통제 시스템 및 산소 결핍 교육 부재 (Part 4)</h3>
+<p>OSHA SCS Part 4는 <strong>12단계 유해 가스 통제 시스템</strong>(RFO→인클로저→차단밸브→센서→모니터링→과유량 차단), NFPA 등급, MAQ 기준을 구체적으로 교육합니다. 또한 불활성 가스에 의한 <strong>산소 결핍 위험</strong>(액체질소 팽창계수 700배)과 압축 가스 실린더의 물리적 위험(2,000+ PSI, 발사체화)을 다룹니다. 한국 교재에는 이러한 공학적 통제 시스템과 가스 인프라 안전 교육이 <strong>완전히 부재</strong>합니다.</p>
+</div>
+
 <h3>정량적 비교</h3>
 <div class="card">
 <table>
-<thead><tr><th>교육 항목</th><th>OSHA SCS (3과정)</th><th>NCS 교재 (86권)</th><th>교과서 (9권)</th></tr></thead>
+<thead><tr><th>교육 항목</th><th>OSHA SCS (5과정)</th><th>NCS 교재 (86권)</th><th>교과서 (9권)</th></tr></thead>
 <tbody>
-<tr><td><strong>총 교육 시간</strong></td><td>79분</td><td>측정 불가 (분산)</td><td>측정 불가 (분산)</td></tr>
+<tr><td><strong>총 교육 시간</strong></td><td>129분 (5과정)</td><td>측정 불가 (분산)</td><td>측정 불가 (분산)</td></tr>
 <tr><td><strong>GHS 분류 체계</strong></td><td>9개 픽토그램 + 3대 위험</td><td>없음</td><td>없음</td></tr>
 <tr><td><strong>SDS 구조 교육</strong></td><td>16개 섹션 상세</td><td>MSDS 333건 (키워드만)</td><td>MSDS 0건</td></tr>
 <tr><td><strong>위험 통제 계층</strong></td><td>5단계 체계적 교육</td><td>없음 (PPE 단편적 언급)</td><td>없음</td></tr>
-<tr><td><strong>화학물질별 위험·통제</strong></td><td>7개 유형 × 각 통제·대응</td><td>키워드별 언급만</td><td>키워드별 언급만</td></tr>
+<tr><td><strong>화학물질별 위험·통제</strong></td><td>9개 극유해 범주 + 7개 일반 유형</td><td>키워드별 언급만</td><td>키워드별 언급만</td></tr>
 <tr><td><strong>노출 한계</strong></td><td>PEL/TLV/TWA/STEL/IDLH</td><td>없음</td><td>없음</td></tr>
-<tr><td><strong>비상 대응</strong></td><td>8가지 시나리오별 절차</td><td>극히 단편적</td><td>없음</td></tr>
+<tr><td><strong>비상 대응</strong></td><td>10+ 시나리오별 절차, EMO</td><td>극히 단편적</td><td>없음</td></tr>
 <tr><td><strong>화학물질 호환성</strong></td><td>5x5 매트릭스 + 보관 규칙</td><td>없음</td><td>없음</td></tr>
-<tr><td><strong>사고사례</strong></td><td>실란 가스, HF 화상 등</td><td>7건</td><td>0건</td></tr>
+<tr><td><strong>가스 통제 시스템</strong></td><td>12단계 시스템 구축, NFPA/MAQ</td><td>없음</td><td>없음</td></tr>
+<tr><td><strong>극저온·압축가스 위험</strong></td><td>Dewar, 실린더 취급, 산소결핍</td><td>없음</td><td>없음</td></tr>
+<tr><td><strong>사고사례</strong></td><td>실란 폭발(TNT 9배), HF 화상 등</td><td>7건</td><td>0건</td></tr>
 </tbody>
 </table>
 </div>
@@ -523,6 +714,16 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <div class="rec">
 <h3>5. 화학물질 호환성 차트 및 보관 원칙 추가</h3>
 <p>OSHA SCS의 5x5 호환성 매트릭스와 유형별 보관함 지정 원칙을 교과서에 시각적 자료로 포함해야 합니다. 현재 "MSDS를 확인한다" 수준에서 "어떤 화학물질을 어떻게 분리 보관하는지" 수준으로 격상이 필요합니다.</p>
+</div>
+
+<div class="rec">
+<h3>6. 극도 유해 화학물질 데이터시트 교육</h3>
+<p>OSHA SCS Part 3의 9개 범주별 데이터시트처럼, 반도체 공정에서 실제 사용되는 극도 유해 화학물질(실란, 아르신, HF 등)에 대한 개별 안전 정보 카드를 교과서에 포함해야 합니다. 특히 실란의 폭발 위험과 유해 부산물의 복합 위험에 대한 교육이 시급합니다.</p>
+</div>
+
+<div class="rec">
+<h3>7. 가스 안전 인프라 및 산소 결핍 교육</h3>
+<p>반도체 팹에서의 가스 통제 시스템 구조(12단계), 극저온 실린더 취급, 압축 가스 실린더의 물리적 위험, 불활성 가스에 의한 산소 결핍 위험을 교과서에 포함해야 합니다. 액체질소 1리터가 700리터의 가스를 생성한다는 사실은 클린룸 작업자에게 필수 지식입니다.</p>
 </div>
 
 </div>
