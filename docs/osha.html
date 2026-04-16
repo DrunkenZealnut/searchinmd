@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ko" class="theme-light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSHA 반도체 화학물질 안전교육 과정 분석</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html.theme-dark{--bg:#0A0A0A;--surface:#141414;--surface-hover:#1C1C1C;--border:rgba(255,255,255,0.06);--text:#EDEDED;--text-secondary:#888;--accent:#3b82f6;--accent-secondary:#8b5cf6;--positive:#10b981;--negative:#f43f5e;--warning:#f59e0b;--g1:#6b7280;--g2:#f59e0b;--g3:#10b981;--danger:#ef4444}
+html.theme-light{--bg:#FAFAF9;--surface:#FFFFFF;--surface-hover:#F5F5F4;--border:rgba(0,0,0,0.06);--text:#0f172a;--text-secondary:#64748b;--accent:#2563eb;--accent-secondary:#7c3aed;--positive:#059669;--negative:#e11d48;--warning:#d97706;--g1:#9ca3af;--g2:#d97706;--g3:#059669;--danger:#dc2626}
+body{font-family:'Noto Sans KR','Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
+h1,h2,h3,h4{color:var(--text);letter-spacing:-.03em;line-height:1.2}
+h1{font-weight:800;font-size:clamp(2rem,4vw,3rem);margin-bottom:16px}
+h2{font-weight:700;font-size:1.75rem;margin:48px 0 20px;padding-bottom:12px;border-bottom:2px solid var(--border)}
+h3{font-weight:600;font-size:1.25rem;margin:32px 0 12px;color:var(--accent)}
+h4{font-weight:600;font-size:1.05rem;margin:20px 0 8px}
+.ts{color:var(--text-secondary);font-size:.875rem}
+.ctn{max-width:900px;margin:0 auto;padding:48px 32px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;margin-bottom:24px}
+.hero{text-align:center;padding:48px 0 32px}.hero p{font-size:1.05rem;color:var(--text-secondary);margin-top:8px;max-width:700px;margin-left:auto;margin-right:auto}
+table{width:100%;border-collapse:collapse;font-size:.875rem;margin:16px 0}
+th{text-align:left;padding:10px 12px;border-bottom:2px solid var(--border);color:var(--text-secondary);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.04em}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:hover{background:var(--surface-hover)}
+ul,ol{margin:8px 0 16px 24px}li{margin-bottom:6px}
+strong{color:var(--text)}
+.tag{display:inline-block;padding:2px 10px;border-radius:6px;font-size:.75rem;font-weight:600;margin-right:4px}
+.tag-danger{background:rgba(220,38,38,.1);color:var(--danger)}
+.tag-warn{background:rgba(217,119,6,.1);color:var(--warning)}
+.tag-ok{background:rgba(5,150,105,.1);color:var(--positive)}
+.ins{border-left:4px solid var(--danger);padding:20px 24px;margin-bottom:16px;background:var(--surface);border-radius:0 12px 12px 0}.ins h3{color:var(--danger);margin:0 0 8px}.ins p{color:var(--text-secondary);font-size:.9375rem;line-height:1.8}
+.rec{border-left:4px solid var(--positive);padding:20px 24px;margin-bottom:16px;background:var(--surface);border-radius:0 12px 12px 0}.rec h3{color:var(--positive);margin:0 0 8px}.rec p{color:var(--text-secondary);font-size:.9375rem;line-height:1.8}
+.comp{border-left:4px solid var(--accent);padding:20px 24px;margin-bottom:16px;background:var(--surface);border-radius:0 12px 12px 0}.comp h3{color:var(--accent);margin:0 0 8px}.comp p{color:var(--text-secondary);font-size:.9375rem;line-height:1.8}
+.part-nav{display:flex;gap:8px;margin:24px 0;flex-wrap:wrap}
+.part-btn{padding:10px 20px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:.875rem;font-family:inherit;transition:all .15s}.part-btn:hover{background:var(--surface-hover)}.part-btn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.part-section{display:none}.part-section.active{display:block}
+blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;color:var(--text-secondary);font-style:italic;background:var(--surface)}
+.viz-menu{position:fixed;top:16px;right:16px;z-index:9999}.viz-menu-toggle{width:44px;height:44px;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px)}.viz-menu-toggle:hover{background:var(--surface-hover)}.viz-menu-dropdown{position:absolute;top:52px;right:0;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px;opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .2s;backdrop-filter:blur(16px)}.viz-menu-dropdown.open{opacity:1;visibility:visible;transform:translateY(0)}.viz-menu-dropdown button{width:100%;padding:10px 14px;border:none;border-radius:8px;background:transparent;color:var(--text);font-size:14px;font-family:inherit;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px}.viz-menu-dropdown button:hover{background:var(--surface-hover)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media print{body{background:#fff!important;color:#000!important}.viz-menu{display:none}*{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+@media(max-width:768px){.ctn{padding:24px 16px}h1{font-size:1.75rem}h2{font-size:1.5rem}.part-nav{gap:4px}.part-btn{padding:8px 14px;font-size:.8rem}}
+</style>
+</head>
+<body>
+<nav style="display:flex;justify-content:center;gap:8px;padding:16px 0;background:var(--surface);border-bottom:1px solid var(--border)">
+<a href="index.html" style="padding:10px 24px;border-radius:8px;border:1px solid var(--border);color:var(--text);text-decoration:none;font-size:.875rem">NCS 교재 (86권)</a>
+<a href="textbook.html" style="padding:10px 24px;border-radius:8px;border:1px solid var(--border);color:var(--text);text-decoration:none;font-size:.875rem">반도체고 교과서 (9권)</a>
+<a href="osha.html" style="padding:10px 24px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600;font-size:.875rem">OSHA 안전교육</a>
+</nav>
+<div class="viz-menu"><button class="viz-menu-toggle" onclick="document.getElementById('vizMenuDropdown').classList.toggle('open')" aria-label="Menu"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg></button><div class="viz-menu-dropdown" id="vizMenuDropdown"><button onclick="cycleTheme()"><span id="themeIcon">☀️</span><span id="themeLabel">Light</span></button><button onclick="downloadImage()"><span>📥</span><span>Download PNG</span></button><button onclick="window.print()"><span>🖨️</span><span>Print / PDF</span></button></div></div>
+
+<main><div class="ctn">
+
+<section class="hero">
+<h1>OSHA 반도체 화학물질 안전교육 과정</h1>
+<p>Semiconductor Chemical Safety (SCS) 3개 과정의 교육 내용을 분석하고, 한국 NCS 교재 및 반도체고 교과서와 비교합니다</p>
+<div style="display:flex;justify-content:center;gap:32px;margin-top:24px;flex-wrap:wrap">
+<div style="text-align:center"><div style="font-size:2.25rem;font-weight:800;color:var(--accent)">3</div><div class="ts">교육 과정</div></div>
+<div style="text-align:center"><div style="font-size:2.25rem;font-weight:800;color:var(--accent)">79분</div><div class="ts">총 교육시간</div></div>
+<div style="text-align:center"><div style="font-size:2.25rem;font-weight:800;color:var(--accent)">30+</div><div class="ts">교육 주제</div></div>
+</div>
+</section>
+
+<!-- Part Navigation -->
+<div class="part-nav">
+<button class="part-btn on" onclick="showPart('overview',this)">과정 개요</button>
+<button class="part-btn" onclick="showPart('part1a',this)">Part 1-A: GHS 소개</button>
+<button class="part-btn" onclick="showPart('part1b',this)">Part 1-B: 통제·비상절차</button>
+<button class="part-btn" onclick="showPart('part2',this)">Part 2: 위험·대응</button>
+<button class="part-btn" onclick="showPart('insight',this)">비교 인사이트</button>
+</div>
+
+<!-- ===================== OVERVIEW ===================== -->
+<div id="part-overview" class="part-section active">
+
+<h2>과정 구조</h2>
+<div class="card">
+<table>
+<thead><tr><th>과정</th><th>시간</th><th>주요 내용</th></tr></thead>
+<tbody>
+<tr><td><strong>Part 1-A</strong></td><td>22분</td><td>GHS 소개, 위험 분류 체계 (물리적·건강·환경 위험), 9개 픽토그램, 반도체 공정별 유해 화학물질</td></tr>
+<tr><td><strong>Part 1-B</strong></td><td>24분</td><td>SDS 16개 섹션, 라벨 요건, 위험 통제 5단계, 화학물질 취급·보관, 비상절차, 유해폐기물 처리</td></tr>
+<tr><td><strong>Part 2</strong></td><td>33분</td><td>인화성 액체·가스·고체, 자연발화성, 산화제, 부식성, 독성, 노출한계(PEL/TLV/IDLH), 화학물질 호환성, PPE</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>OSHA SCS 교육이 다루는 핵심 영역</h2>
+<div class="card">
+<table>
+<thead><tr><th>영역</th><th>세부 내용</th><th>한국 NCS/교과서 대응</th></tr></thead>
+<tbody>
+<tr><td><strong>위험 분류 체계</strong></td><td>GHS 9개 픽토그램, 물리적/건강/환경 3대 위험, 위험 등급(1~5)</td><td><span class="tag tag-danger">부재</span> NCS·교과서에 GHS 분류 체계 교육 없음</td></tr>
+<tr><td><strong>SDS/라벨</strong></td><td>SDS 16개 섹션 구조, GHS 라벨 요건, NFPA 색상 코드</td><td><span class="tag tag-warn">부분</span> MSDS 언급은 있으나 16개 섹션 구조 교육 없음</td></tr>
+<tr><td><strong>위험 통제 5단계</strong></td><td>제거→대체→공학적통제→행정적통제→PPE</td><td><span class="tag tag-danger">부재</span> 체계적 위험 통제 계층 교육 없음</td></tr>
+<tr><td><strong>화학물질별 위험</strong></td><td>인화성, 자연발화성, 산화성, 부식성, 독성 각각의 특성·통제·대응</td><td><span class="tag tag-warn">부분</span> 키워드 언급은 있으나 물질별 구체적 통제 방법 미흡</td></tr>
+<tr><td><strong>노출한계</strong></td><td>PEL, TLV, TWA, STEL, IDLH, LD50, LC50</td><td><span class="tag tag-danger">부재</span> 노출한계 개념 교육 전무</td></tr>
+<tr><td><strong>비상 대응</strong></td><td>눈세척(15분), 안전샤워(15분), HF 응급처치(칼슘글루코네이트), 유출 대응</td><td><span class="tag tag-danger">부재</span> 구체적 응급처치 절차 교육 없음</td></tr>
+<tr><td><strong>화학물질 보관·호환</strong></td><td>유형별 보관함, 호환성 차트 (5x5 매트릭스)</td><td><span class="tag tag-danger">부재</span> 화학물질 호환성 교육 없음</td></tr>
+<tr><td><strong>사고사례</strong></td><td>실제 반도체 공정 사례 (실란 가스 누출, HF 화상 등)</td><td><span class="tag tag-danger">극히 부족</span> NCS 7건, 교과서 0건</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- ===================== PART 1-A ===================== -->
+<div id="part-part1a" class="part-section">
+
+<h2>Part 1-A: GHS 소개 (22분)</h2>
+
+<h3>1. 반도체 화학물질 안전 개요</h3>
+<p>반도체 제조 공정은 액체 화학물질, 액화·압축 가스, 고체 물질 등 다양한 유해물질을 사용합니다. 안전 통제 시스템 덕분에 반도체 산업은 양호한 화학물질 안전 기록을 유지하고 있습니다.</p>
+
+<h4>직원 책임</h4>
+<ul>
+<li>안전 절차를 숙지하고 따를 것</li>
+<li>부상, 사고, 불안전 상태를 즉시 EHS 또는 관리자에게 보고</li>
+<li>위험을 감수하거나 편법을 사용하지 말 것</li>
+<li>불안전하다고 느끼면 행동 전에 멈추고 생각할 것</li>
+<li>모든 기계, 도구, 물질, PPE를 적절히 사용</li>
+<li>비상시 즉시 대피</li>
+</ul>
+
+<h4>고용주 책임</h4>
+<ul>
+<li>화학물질 안전관리 프로그램 개발 (공정, 장비, 위험 통제 조치)</li>
+<li>사업장의 모든 유해 화학물질 식별 (유해물질 목록 관리)</li>
+<li>SDS, 표지판, 라벨을 통해 화학물질 위험성을 근로자에게 전달</li>
+</ul>
+
+<h3>2. GHS (세계조화시스템)</h3>
+<p>화학 제품의 위험을 정의·분류하고, 라벨과 SDS를 통해 안전보건 정보를 전달하는 국제 표준 시스템입니다.</p>
+<ul>
+<li>국제적 위험 소통 접근법 표준화</li>
+<li>미국 OSHA의 HazCom 기준이 GHS 요건 충족</li>
+<li>유해 화학물질 정의 통일, 라벨 기준 설정, SDS 16개 섹션 형식 규정</li>
+</ul>
+
+<h3>3. 3가지 위험 유형과 GHS 픽토그램</h3>
+<table>
+<thead><tr><th>위험 유형</th><th>설명</th><th>예시</th></tr></thead>
+<tbody>
+<tr><td><strong>물리적 위험</strong></td><td>부식성, 인화성, 폭발 가능성</td><td>화재, 폭발, 가스 누출</td></tr>
+<tr><td><strong>건강 위험</strong></td><td>단기 또는 장기 건강 악영향</td><td>독성, 발암성, 생식독성</td></tr>
+<tr><td><strong>환경 위험</strong></td><td>하천, 호수 오염, 수생 생물 위협</td><td>할론, 은, 산화아연</td></tr>
+</tbody>
+</table>
+<p>GHS는 9개 표준화된 픽토그램을 사용합니다. 각각 빨간 다이아몬드 테두리 안에 검은 위험 기호가 있습니다.</p>
+
+<h3>4. 물리적 위험 상세</h3>
+
+<h4>인화성 액체</h4>
+<p>인화점(flash point) 93°C 이하에서 인화성 증기를 방출합니다. 사실상 항상 인화성 증기를 방출하고 있습니다.</p>
+<ul>
+<li><strong>반도체 사용 예:</strong> 이소프로필알코올(IPA), 아세톤, 포토레지스트, 광물 기반 펌프 오일</li>
+</ul>
+
+<h4>인화성 고체</h4>
+<p>불꽃, 마찰, 물과의 반응으로 발화합니다.</p>
+<ul><li><strong>예:</strong> 인(phosphorus) — 이온 주입기의 부산물</li></ul>
+
+<h4>인화성 가스</h4>
+<p>산소와 혼합되어야 발화하며, LEL(폭발하한)과 UEL(폭발상한) 사이의 농도 범위에서만 연소합니다.</p>
+<ul><li><strong>예:</strong> 수소, 메탄, 아세틸렌, 아르신</li></ul>
+
+<h4>자연발화성 물질 (Pyrophoric)</h4>
+<p>공기와 접촉만으로 자연 발화합니다. 불꽃이나 점화원이 불필요합니다.</p>
+<ul>
+<li><strong>예:</strong> 포스핀, 실란, 유기금속 물질(디메틸알루미늄하이드라이드)</li>
+<li><strong>주의:</strong> 물이나 CO₂로 진화 불가. 일부 소화제는 폭발을 유발할 수 있음</li>
+</ul>
+
+<h4>자기발열/자기반응성, 물반응 가스 방출, 폭발물, 고압가스</h4>
+<p>각각 부적절한 보관 시 발화, 물 접촉 시 인화성 가스 생성, 열·충격·마찰에 민감한 폭발, 실린더 손상 시 유도탄화 위험이 있습니다.</p>
+
+<h4>산화제</h4>
+<p>자체적으로 연소하지 않지만 연료의 연소를 촉진합니다. 일부는 점화원 없이도 화재를 일으킬 수 있으며, 질산·과산화수소·염소 등은 피부와 점막을 손상시킵니다.</p>
+
+<h3>5. 건강 위험 상세</h3>
+
+<h4>독성 화학물질</h4>
+<p>급성(단기) 또는 만성(장기) 건강 영향을 일으키며 사망에 이를 수 있습니다.</p>
+
+<h4>부식성 화학물질</h4>
+<table>
+<thead><tr><th>pH</th><th>분류</th><th>반도체 사용 예</th></tr></thead>
+<tbody>
+<tr><td>≤ 2</td><td>부식성 산</td><td>황산, 염산, 질산</td></tr>
+<tr><td>7</td><td>중성</td><td>물</td></tr>
+<tr><td>≥ 11.5</td><td>부식성 염기</td><td>수산화암모늄, TMAH</td></tr>
+</tbody>
+</table>
+
+<h4>불산(HF) — 특수 위험</h4>
+<p>반도체 식각 및 챔버 세정에 사용. 실리콘 화합물 용해에 탁월하지만 극도로 위험합니다.</p>
+<ul>
+<li>농축(50% 초과): 즉각적 심부 관통 화상</li>
+<li>희석 용액: 증상이 <strong>최대 24시간 지연</strong>될 수 있음</li>
+<li><strong>응급처치:</strong> 물로 5분 세척 → 칼슘글루코네이트 젤 도포 → 즉시 의료 조치</li>
+</ul>
+
+<h4>발암물질, 변이원성, 생식독성, 호흡기 민감화, 흡인독성, 표적장기독성, 피부/눈 자극, 피부 민감화</h4>
+<table>
+<thead><tr><th>유형</th><th>설명</th><th>반도체 예시</th></tr></thead>
+<tbody>
+<tr><td>발암물질</td><td>암을 유발하거나 발생률 증가</td><td>비소, 갈륨비소, 클로로포름</td></tr>
+<tr><td>변이원성</td><td>DNA를 변경하거나 돌연변이 유발</td><td>이온화 방사선, 플라즈마 식각 혼합물</td></tr>
+<tr><td>생식독성</td><td>성기능, 출산율, 자녀 발달에 악영향</td><td>갈륨비소, 아산화질소</td></tr>
+<tr><td>표적장기독성</td><td>특정 장기에 심각한 손상</td><td>염화구리(간), 삼불화질소(신장)</td></tr>
+<tr><td>피부/눈 자극</td><td>접촉 시 가역적 손상</td><td>희석 산/염기, IPA, 아세톤</td></tr>
+</tbody>
+</table>
+
+<h3>6. 환경 위험</h3>
+<p>수생 환경에 단기 또는 장기 손상을 줄 수 있는 화학물질입니다. 할론(소화기), 은, 산화아연 등이 해당됩니다. 환경 위험 픽토그램은 EU에서는 필수이지만 미국에서는 필수가 아닙니다.</p>
+
+</div>
+
+<!-- ===================== PART 1-B ===================== -->
+<div id="part-part1b" class="part-section">
+
+<h2>Part 1-B: 커뮤니케이션, 통제, 비상절차 (24분)</h2>
+
+<h3>1. 안전보건자료 (SDS)</h3>
+<h4>SDS 16개 섹션 (4개 범주)</h4>
+<table>
+<thead><tr><th>범주</th><th>포함 섹션</th></tr></thead>
+<tbody>
+<tr><td><strong>식별</strong></td><td>물질/혼합물 식별, 공급자, 위험성, 조성, 성분</td></tr>
+<tr><td><strong>비상·노출</strong></td><td>노출 경로, 응급조치, 소화, 누출 대응, 취급, 보관, 노출 통제</td></tr>
+<tr><td><strong>물성</strong></td><td>물리적/화학적 특성, 안정성, 반응성, 독성학적 정보</td></tr>
+<tr><td><strong>추가 정보</strong></td><td>생태학적 영향, 폐기, 운송, 규정, SDS 작성/개정</td></tr>
+</tbody>
+</table>
+
+<h4>SDS 주요 요건</h4>
+<ul>
+<li>제조업체/수입업체가 최초 선적 시 및 정보 변경 시 SDS 제공 의무</li>
+<li>SDS 미수령 시 고용주가 공급업체에 연락하여 확보해야 함</li>
+<li>사업장의 모든 유해 화학물질에 대해 사용 전에 SDS 확보 필수</li>
+<li>SDS는 쉽게 접근 가능해야 하며, 직원은 SDS 위치를 정확히 알아야 함</li>
+</ul>
+
+<h3>2. 라벨</h3>
+<ul>
+<li>GHS 위험 등급: <strong>1(최고 위험)</strong> ~ 5(최저 위험) — NFPA(0~4)와 반대</li>
+<li>NFPA 색상 코드: <span style="color:#3b82f6;font-weight:600">파랑(건강)</span>, <span style="color:#ef4444;font-weight:600">빨강(인화성)</span>, <span style="color:#eab308;font-weight:600">노랑(불안정/반응성)</span>, 흰색(특수 위험)</li>
+</ul>
+
+<h3>3. 위험 통제 5단계 (Hierarchy of Hazard Control)</h3>
+<table>
+<thead><tr><th>순위</th><th>방법</th><th>반도체 예시</th><th>효과</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>제거 (Elimination)</strong></td><td>무연 솔더 사용으로 납 노출 제거</td><td>최고</td></tr>
+<tr><td>2</td><td><strong>대체 (Substitution)</strong></td><td>글리콜에테르를 덜 유해한 포토리소그래피 화학물질로 대체</td><td>↑</td></tr>
+<tr><td>3</td><td><strong>공학적 통제</strong></td><td>기계적 환기/배기 후드, 자동화 웨트 벤치(로봇이 웨이퍼 담금), 인터로크 시스템, 독성 가스 모니터링</td><td>↑</td></tr>
+<tr><td>4</td><td><strong>행정적 통제</strong></td><td>직원 교육, 직무 순환, 경고 표지판, 유지보수 일정 조정(근로자 적을 때), 비상 계획</td><td>↓</td></tr>
+<tr><td>5</td><td><strong>PPE</strong></td><td>독성 가스 실린더 교체 시 공급식 호흡기, 화학 장갑+앞치마+보안경(웨트 벤치)</td><td>최저</td></tr>
+</tbody>
+</table>
+
+<h3>4. 안전한 화학물질 취급</h3>
+<ul>
+<li>클린룸에 음식, 음료, 껌, 담배 반입 금지</li>
+<li>유해 화학물질 취급 후 반드시 따뜻한 물과 비누로 손 세척</li>
+<li>손 씻기 전 얼굴이나 노출된 피부 만지지 말 것</li>
+<li>적절한 교육과 PPE 착용 후에만 화학물질 취급</li>
+<li>병 운반 시 고무 캐리어 사용, 여러 병은 화학물질 카트 사용</li>
+<li>작업대에는 공정에 필요한 양 또는 1일분만 비치</li>
+<li>유통기한 경과 화학물질은 유해폐기물로 적절히 처리</li>
+</ul>
+
+<h3>5. 화학물질 보관</h3>
+<ul>
+<li>비호환 화학물질은 별도 캐비닛/구역에 보관</li>
+<li>무거운 용기는 낮은 선반에 보관</li>
+<li>눈높이 이상에 화학물질 용기 보관 금지</li>
+<li>지진 위험 지역: 특수 선반 시스템, 캐비닛 고정</li>
+<li>작업 구역에 대량 보관 금지 — 즉시 필요한 양만</li>
+</ul>
+
+<h3>6. 비상 절차</h3>
+<h4>화학물질 노출 응급처치</h4>
+<table>
+<thead><tr><th>노출 유형</th><th>조치</th></tr></thead>
+<tbody>
+<tr><td>눈/얼굴에 화학물질</td><td>아이워시 스테이션에서 <strong>15분간</strong> 세척</td></tr>
+<tr><td>피부에 부식성/독성 화학물질</td><td>안전 샤워에서 <strong>15분간</strong> 세척</td></tr>
+<tr><td>독성/부식성 가스 흡입</td><td>안전하게 현장에서 이동, 신선한 공기로</td></tr>
+</tbody>
+</table>
+
+<h4>가스 누출 대응</h4>
+<ul>
+<li>독성 가스 경보 시 <strong>즉시 대피</strong></li>
+<li>훈련된 비상 대응 요원만 가스 경보에 대응</li>
+<li>불활성 가스는 밀폐 공간에서 산소를 치환 — 접근 금지, 비상 대응 호출</li>
+</ul>
+
+<h4>유출 대응</h4>
+<ul>
+<li><strong>소규모 유출:</strong> 화학물질과 위험을 알고, 안전하고, 교육받았고, 적절한 장비가 있을 때만 직접 처리</li>
+<li><strong>대규모 유출(470mL 이상):</strong> 즉시 현장 이탈 → 타인 접근 차단 → 비상번호 신고</li>
+</ul>
+
+<h3>7. 유해폐기물 처리</h3>
+<p>반도체 유해폐기물: 포토리소그래피 폐액(아세톤, 사용 포토레지스트), 비소 오염 장갑/와이프, 유출 청소 자재, 폐유.</p>
+<p>폐기물은 <strong>요람에서 무덤까지(cradle to grave)</strong> 관리해야 하며, 적절히 표시된 유해폐기물 용기에 폐기합니다. 불확실한 경우 EHS 부서 또는 관리자에게 문의합니다.</p>
+
+</div>
+
+<!-- ===================== PART 2 ===================== -->
+<div id="part-part2" class="part-section">
+
+<h2>Part 2: 화학물질 위험, 통제, 긴급 대응 (33분)</h2>
+
+<h3>1. 화재 삼각형</h3>
+<p>화재에는 3가지 요소가 필요합니다: <strong>연료</strong>(인화성 화학물질), <strong>산화제</strong>(공기 중 산소), <strong>열/점화원</strong>(스파크). 연소 지속에는 <strong>화학적 연쇄 반응</strong>이 추가로 필요합니다.</p>
+
+<h3>2. 인화성 액체</h3>
+<p>액체 자체가 아닌 <strong>증기</strong>가 공기와 혼합되어 연소합니다.</p>
+<ul>
+<li><strong>인화점 (Flash Point):</strong> 인화성 증기가 충분히 발생하여 점화될 수 있는 최저 온도</li>
+<li><strong>IPA 인화점:</strong> 53°F (11.7°C) — 실온에서 이미 인화점을 훨씬 초과하므로 소량 유출도 위험</li>
+</ul>
+
+<h3>3. 인화성 가스와 폭발 한계</h3>
+<table>
+<thead><tr><th>가스</th><th>LEL (하한)</th><th>UEL (상한)</th><th>폭발 범위</th></tr></thead>
+<tbody>
+<tr><td>메탄</td><td>5%</td><td>15%</td><td>좁음</td></tr>
+<tr><td>수소</td><td>4%</td><td>74%</td><td>매우 넓음</td></tr>
+<tr><td>아세틸렌</td><td>2%</td><td>100%</td><td>극히 넓음</td></tr>
+</tbody>
+</table>
+<p>수소와 아세틸렌은 폭발 범위가 넓어 <strong>어떤 누출이든 위험</strong>합니다.</p>
+
+<h4>통제 방법</h4>
+<ul>
+<li>인화성 가스 사용 구역 근처 점화원 제거</li>
+<li>폭발 방지 시설·장비 설치</li>
+<li>높은 환기율 확보</li>
+<li><strong>폐쇄 시스템</strong>으로 가스 이송 (배관을 통해 소스→공정 도구→저감 장비)</li>
+</ul>
+
+<h3>4. 인화성 고체</h3>
+<p>반도체 산업의 3가지 유형: 물 접촉 발화, 공기 접촉 발화/폭발, 스파크/마찰 발화.</p>
+<ul>
+<li><strong>예:</strong> 나트륨 금속, 백인(white phosphorus), 황인(yellow phosphorus), 다이클로로실란/트리클로로실란 부산물</li>
+<li>화재 시 <strong>Class D(금속) 소화기</strong> 전용, 훈련된 인원만 진화</li>
+</ul>
+
+<h3>5. 가연성 화학물질</h3>
+<p>실온에서 인화성 증기를 방출하지 않지만, 가열 시 발화 가능. 오일, 디젤(액체), 가구, 플라스틱, 골판지(고체).</p>
+
+<h3>6. 자연발화성 (Pyrophoric)</h3>
+<p>130°F (54°C) 이하에서 공기 중 자연 발화합니다.</p>
+<ul>
+<li><strong>비상 대응:</strong> 원격 수단(비상 차단 버튼, 화학물질 후드 닫기)으로 처리. <strong>소화기 사용 금지</strong>. 대피 후 전문 대응팀 호출</li>
+</ul>
+
+<h3>7. 화재 비상 대응 요약</h3>
+<table>
+<thead><tr><th>위험</th><th>대응</th></tr></thead>
+<tbody>
+<tr><td>인화성 액체 화재</td><td>가능하면 현장 이탈. 피부/의복에 묻으면 의복 제거 후 세척</td></tr>
+<tr><td>인화성 가스 누출/경보</td><td><strong>즉시 현장 이탈</strong></td></tr>
+<tr><td>인화성 고체 화재</td><td>훈련된 인원만 Class D 소화기로 진화. 미훈련 시 대피</td></tr>
+<tr><td>자연발화성 화재</td><td>소화기 사용 금지. 원격 차단 사용. 대피 후 전문팀 호출</td></tr>
+</tbody>
+</table>
+
+<h3>8. 산화제</h3>
+<p>자체 연소하지 않지만 연료 연소를 촉진. 일부는 점화원 없이도 화재 유발. 질산, 과산화수소, 염소, 100% 산소, 불소 등.</p>
+
+<h3>9. 부식성 화학물질</h3>
+<table>
+<thead><tr><th>화학물질</th><th>영향</th></tr></thead>
+<tbody>
+<tr><td><strong>불산 (HF)</strong></td><td>극도의 부식성. 심부 관통 화상. 호흡기 자극, 눈 손상, 폐부종, 뼈 손상</td></tr>
+<tr><td><strong>황산</strong></td><td>접촉 부위 화상. 실명 유발 가능. 섭취/흡입 시 비가역적 손상</td></tr>
+<tr><td><strong>질산</strong></td><td>접촉 즉시 극심한 통증의 화상. 흡입 시 치명적일 수 있음</td></tr>
+<tr><td><strong>수산화나트륨</strong></td><td>고농도에서 조직 화상. 접촉 시 통증이 없을 수 있음 (미끄러운 느낌 = 피하지방 용해)</td></tr>
+</tbody>
+</table>
+
+<h4>HF 노출 응급처치 (특수 절차)</h4>
+<ol>
+<li><strong>즉시 응급 서비스 호출</strong> — 가능한 빨리 응급실로 이송</li>
+<li>안전 샤워에서 <strong>최소 5분간</strong> 오염 부위 세척</li>
+<li>샤워 중 <strong>오염된 의복 모두 제거</strong> (의복이 산을 흡수하여 피부에 밀착)</li>
+<li>장갑 낀 손으로 화상 부위에 <strong>칼슘글루코네이트 젤 도포</strong></li>
+</ol>
+
+<h3>10. 독성 화학물질과 노출 한계</h3>
+<p><strong>반도체 독성 화학물질:</strong> 암모니아, 비소/아르신, 디보레인, 저메인, 포스핀, 오존</p>
+
+<h4>노출 한계 용어</h4>
+<table>
+<thead><tr><th>약어</th><th>명칭</th><th>설명</th></tr></thead>
+<tbody>
+<tr><td><strong>PEL</strong></td><td>허용 노출 한계</td><td>정부가 설정</td></tr>
+<tr><td><strong>TLV</strong></td><td>역치 한계값</td><td>독립 연구소가 매년 갱신. 가용 시 TLV 우선 사용</td></tr>
+<tr><td><strong>TWA</strong></td><td>시간가중평균</td><td>8시간 근무일 기준 허용 노출 수준</td></tr>
+<tr><td><strong>Ceiling</strong></td><td>천장값</td><td>어떤 시간에도 초과 불가</td></tr>
+<tr><td><strong>STEL</strong></td><td>단시간 노출 한계</td><td>15분간 허용 노출</td></tr>
+<tr><td><strong>IDLH</strong></td><td>즉시 생명·건강 위험</td><td>비가역적 건강 영향, 사망 가능 수준</td></tr>
+</tbody>
+</table>
+
+<blockquote>PEL, TLV, TWA, STEL = 상대적으로 안전한 허용 수준<br>IDLH = <strong>안전하지 않은</strong> 수준</blockquote>
+
+<h4>독성 화학물질 노출 경로별 대응</h4>
+<table>
+<thead><tr><th>노출 경로</th><th>대응</th></tr></thead>
+<tbody>
+<tr><td>흡입</td><td>신선한 공기로 이동, 응급 서비스 호출</td></tr>
+<tr><td>피부 흡수</td><td>물로 세척, 응급 서비스 호출</td></tr>
+<tr><td>섭취</td><td>독극물 센터 연락, 응급 서비스 호출</td></tr>
+<tr><td>주사(피부 관통)</td><td>출혈 통제, 응급 서비스 호출</td></tr>
+</tbody>
+</table>
+
+<h3>11. 화학물질 보관과 호환성</h3>
+<h4>호환성 차트</h4>
+<table>
+<thead><tr><th></th><th>인화성</th><th>산화제</th><th>산</th><th>염기</th><th>독성</th></tr></thead>
+<tbody>
+<tr><td><strong>인화성</strong></td><td style="color:var(--positive)">OK</td><td style="color:var(--danger)">NO</td><td style="color:var(--danger)">NO</td><td style="color:var(--danger)">NO</td><td style="color:var(--positive)">OK</td></tr>
+<tr><td><strong>산화제</strong></td><td style="color:var(--danger)">NO</td><td style="color:var(--positive)">OK</td><td style="color:var(--positive)">OK</td><td style="color:var(--danger)">NO</td><td style="color:var(--danger)">NO</td></tr>
+<tr><td><strong>산</strong></td><td style="color:var(--danger)">NO</td><td style="color:var(--positive)">OK</td><td style="color:var(--positive)">OK</td><td style="color:var(--danger)">NO</td><td style="color:var(--danger)">NO</td></tr>
+<tr><td><strong>염기</strong></td><td style="color:var(--danger)">NO</td><td style="color:var(--danger)">NO</td><td style="color:var(--danger)">NO</td><td style="color:var(--positive)">OK</td><td style="color:var(--danger)">NO</td></tr>
+<tr><td><strong>독성</strong></td><td style="color:var(--positive)">OK</td><td style="color:var(--danger)">NO</td><td style="color:var(--danger)">NO</td><td style="color:var(--danger)">NO</td><td style="color:var(--positive)">OK</td></tr>
+</tbody>
+</table>
+
+<h3>12. 개인보호장비 (PPE)</h3>
+<ul>
+<li>적절한 등급의 보안경, 고글, 안면 보호대</li>
+<li>화학물질 내성 장갑 (제조사 차트 확인)</li>
+<li>화학물질 호흡기 (전문 프로그램, 건강검진, 피팅, 교육 필요 가능)</li>
+<li>앞치마, 소매, 화학물질 보호복 (해당 화학물질 등급 확인)</li>
+<li>화학물질 취급 시 발가락 보호 신발</li>
+</ul>
+
+</div>
+
+<!-- ===================== INSIGHT ===================== -->
+<div id="part-insight" class="part-section">
+
+<h2>OSHA SCS vs 한국 NCS 교재·교과서 비교 인사이트</h2>
+
+<h3>핵심 Gap 분석</h3>
+
+<div class="ins">
+<h3>Gap 1. 체계적 위험 분류 체계의 부재</h3>
+<p>OSHA SCS는 GHS 기반 9개 픽토그램과 물리적/건강/환경 3대 위험 분류를 체계적으로 교육합니다. 한국 NCS 교재(86권)와 반도체고 교과서(9권)에는 <strong>GHS 분류 체계 자체에 대한 교육이 없습니다</strong>. 키워드 단위로 "안전", "위험" 등이 언급되지만, 위험의 유형과 등급을 구분하는 체계적 틀이 빠져 있습니다.</p>
+</div>
+
+<div class="ins">
+<h3>Gap 2. 위험 통제 계층 구조 (Hierarchy of Controls) 부재</h3>
+<p>OSHA SCS의 핵심인 <strong>제거→대체→공학적 통제→행정적 통제→PPE</strong> 5단계 위험 통제 계층은 NCS 교재와 교과서 어디에도 체계적으로 다루어지지 않습니다. NCS 교재의 등급2(구체적 대책) 항목에 보호구 착용, 환기 등이 언급되지만, 이것이 통제 계층의 <strong>가장 낮은 단계(PPE)</strong>라는 맥락이 빠져 있습니다. "제거"와 "대체"가 가장 효과적이라는 인식이 전혀 교육되지 않고 있습니다.</p>
+</div>
+
+<div class="ins">
+<h3>Gap 3. 노출 한계 개념의 완전한 부재</h3>
+<p>OSHA SCS는 PEL, TLV, TWA, STEL, IDLH, LD50, LC50 등 <strong>정량적 노출 한계</strong>를 구체적으로 교육합니다(예: IPA의 PEL은 400ppm/8시간 TWA). NCS 교재 7,769건과 교과서 982건 중 이런 정량적 노출 한계를 다루는 내용은 <strong>사실상 전무</strong>합니다. "유해하다", "주의해야 한다" 수준의 정성적 언급만 있습니다.</p>
+</div>
+
+<div class="ins">
+<h3>Gap 4. 비상 대응 절차의 구체성 격차</h3>
+<p>OSHA SCS는 <strong>"눈에 화학물질 → 아이워시 15분"</strong>, <strong>"HF 노출 → 5분 세척 → 칼슘글루코네이트 젤 도포"</strong>처럼 초 단위의 구체적 절차를 교육합니다. NCS 교재의 사고사례 7건, 교과서 0건이라는 수치가 보여주듯, 한국 교재는 <strong>"사고가 발생할 수 있다"는 경고</strong>는 하지만 <strong>"사고가 발생했을 때 무엇을 해야 하는지"</strong>는 교육하지 않습니다.</p>
+</div>
+
+<div class="ins">
+<h3>Gap 5. 화학물질 호환성 교육의 부재</h3>
+<p>OSHA SCS는 <strong>5x5 호환성 매트릭스</strong>(인화성/산화제/산/염기/독성)와 유형별 보관함 지정을 구체적으로 교육합니다. NCS 교재에서 "MSDS" 키워드가 333건 검출되었지만, 실제 화학물질 간 호환성이나 보관 분리 원칙을 다루는 내용은 없습니다.</p>
+</div>
+
+<h3>정량적 비교</h3>
+<div class="card">
+<table>
+<thead><tr><th>교육 항목</th><th>OSHA SCS (3과정)</th><th>NCS 교재 (86권)</th><th>교과서 (9권)</th></tr></thead>
+<tbody>
+<tr><td><strong>총 교육 시간</strong></td><td>79분</td><td>측정 불가 (분산)</td><td>측정 불가 (분산)</td></tr>
+<tr><td><strong>GHS 분류 체계</strong></td><td>9개 픽토그램 + 3대 위험</td><td>없음</td><td>없음</td></tr>
+<tr><td><strong>SDS 구조 교육</strong></td><td>16개 섹션 상세</td><td>MSDS 333건 (키워드만)</td><td>MSDS 0건</td></tr>
+<tr><td><strong>위험 통제 계층</strong></td><td>5단계 체계적 교육</td><td>없음 (PPE 단편적 언급)</td><td>없음</td></tr>
+<tr><td><strong>화학물질별 위험·통제</strong></td><td>7개 유형 × 각 통제·대응</td><td>키워드별 언급만</td><td>키워드별 언급만</td></tr>
+<tr><td><strong>노출 한계</strong></td><td>PEL/TLV/TWA/STEL/IDLH</td><td>없음</td><td>없음</td></tr>
+<tr><td><strong>비상 대응</strong></td><td>8가지 시나리오별 절차</td><td>극히 단편적</td><td>없음</td></tr>
+<tr><td><strong>화학물질 호환성</strong></td><td>5x5 매트릭스 + 보관 규칙</td><td>없음</td><td>없음</td></tr>
+<tr><td><strong>사고사례</strong></td><td>실란 가스, HF 화상 등</td><td>7건</td><td>0건</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>개선 권고안</h3>
+
+<div class="rec">
+<h3>1. GHS 분류 체계 단원 신설</h3>
+<p>OSHA SCS Part 1-A 수준의 GHS 교육을 반도체 특성화고 교과서에 독립 단원으로 포함해야 합니다. 9개 픽토그램, 물리적/건강/환경 위험 분류, SDS 16개 섹션 읽기 교육이 필수적입니다.</p>
+</div>
+
+<div class="rec">
+<h3>2. 위험 통제 계층 (Hierarchy of Controls) 도입</h3>
+<p>현재 NCS 교재와 교과서의 안전 교육은 "보호구 착용"(PPE, 5번째 = 최하위) 위주입니다. OSHA의 <strong>제거→대체→공학적→행정적→PPE</strong> 체계를 반도체 공정별 실제 사례와 함께 교육해야 학생들이 "왜 보호구가 마지막 수단인지" 이해할 수 있습니다.</p>
+</div>
+
+<div class="rec">
+<h3>3. 정량적 노출 한계 교육</h3>
+<p>PEL, TLV, TWA 등의 개념과 반도체 주요 화학물질(IPA, HF, 실란 등)의 구체적 노출 한계값을 교과서에 포함해야 합니다. "유해하다"는 정성적 경고에서 "8시간 TWA 400ppm 이하"라는 정량적 기준으로 전환이 필요합니다.</p>
+</div>
+
+<div class="rec">
+<h3>4. 비상 대응 절차 실습 교육</h3>
+<p>OSHA SCS 수준의 구체적 비상 대응 절차(아이워시 15분, 안전 샤워 15분, HF 칼슘글루코네이트 도포)를 교과서에 포함하고, 실습 과정에서 모의 비상 대응 훈련을 실시해야 합니다.</p>
+</div>
+
+<div class="rec">
+<h3>5. 화학물질 호환성 차트 및 보관 원칙 추가</h3>
+<p>OSHA SCS의 5x5 호환성 매트릭스와 유형별 보관함 지정 원칙을 교과서에 시각적 자료로 포함해야 합니다. 현재 "MSDS를 확인한다" 수준에서 "어떤 화학물질을 어떻게 분리 보관하는지" 수준으로 격상이 필요합니다.</p>
+</div>
+
+</div>
+
+<footer style="text-align:center;padding:32px 0;color:var(--text-secondary);font-size:.8125rem">OSHA 반도체 화학물질 안전교육 분석 | 청년노동자인권센터 | 2026년 교과서 기초연구</footer>
+</div></main>
+
+<script>
+var savedTheme=localStorage.getItem('viz-theme');var currentTheme=savedTheme||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+function applyTheme(t){document.documentElement.className='theme-'+t;document.getElementById('themeIcon').textContent=t==='dark'?'🌙':'☀️';document.getElementById('themeLabel').textContent=t==='dark'?'Dark':'Light';localStorage.setItem('viz-theme',t);currentTheme=t}
+function cycleTheme(){applyTheme(currentTheme==='dark'?'light':'dark')}
+async function downloadImage(){var m=document.querySelector('.viz-menu');m.style.display='none';try{var u=await htmlToImage.toPng(document.body,{quality:1,pixelRatio:2});var a=document.createElement('a');a.href=u;a.download='osha-scs-analysis.png';a.click()}catch(e){console.error(e)}m.style.display=''}
+function showPart(id,btn){document.querySelectorAll('.part-section').forEach(function(s){s.classList.remove('active')});document.getElementById('part-'+id).classList.add('active');document.querySelectorAll('.part-btn').forEach(function(b){b.classList.remove('on')});btn.classList.add('on');window.scrollTo({top:document.querySelector('.part-nav').offsetTop-80,behavior:'smooth'})}
+document.addEventListener('DOMContentLoaded',function(){applyTheme(currentTheme)});
+document.addEventListener('click',function(e){if(!e.target.closest('.viz-menu')){var d=document.getElementById('vizMenuDropdown');if(d)d.classList.remove('open')}});
+</script>
+</body>
+</html>
