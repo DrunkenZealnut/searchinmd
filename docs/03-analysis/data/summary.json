@@ -1,0 +1,47 @@
+{
+ "unified_grades": {
+  "1": "미흡·없음",
+  "2": "형식적 언급",
+  "3": "구체적 대책"
+ },
+ "ncs": {
+  "rows": 7769,
+  "pages": 1847,
+  "books": 86,
+  "mixed_grade_pages": 12,
+  "row_g": {
+   "1": 2076,
+   "2": 3465,
+   "3": 2228
+  },
+  "page_g": {
+   "1": 1267,
+   "2": 472,
+   "3": 108
+  },
+  "cases_rows": 28,
+  "cases_pages": 8,
+  "cases_books": 5
+ },
+ "textbook": {
+  "rows": 981,
+  "pages": 362,
+  "books": 9,
+  "mixed_grade_pages": 0,
+  "row_g": {
+   "1": 557,
+   "2": 360,
+   "3": 64
+  },
+  "page_g": {
+   "1": 309,
+   "2": 45,
+   "3": 8
+  },
+  "cases_rows": 0,
+  "cases_pages": 0,
+  "cases_books": 0,
+  "total_pages": 2055,
+  "undetected_pages": 1693
+ }
+}
