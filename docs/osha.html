@@ -23,6 +23,13 @@ h4{font-weight:600;font-size:1.0625rem;margin:20px 0 8px}
 /* Noto Sans KR 에는 이탤릭이 없어 브라우저가 기울여 그린다(합성 오블리크). 한글에서
    특히 지저분해서 굵기로 대체한다. */
 em{font-style:normal;font-weight:600;color:var(--text)}
+/* 포커스 링 — 이전에는 :focus-visible 규칙이 페이지 전체에 0개였다. 키보드로
+   훑으면 지금 어디에 있는지 알 방법이 없었다. */
+a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+/* 건너뛰기 링크는 left:-9999px 로 숨겨만 두고 포커스 시 되돌리지 않아, 키보드
+   사용자에게 영영 보이지 않았다. */
+.skip{position:absolute;left:-9999px;top:0;z-index:10000}
+.skip:focus{left:8px;top:8px;padding:10px 16px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:var(--fs-sm)}
 .ts{color:var(--text-secondary);font-size:var(--fs-sm)}
 .ctn{max-width:900px;margin:0 auto;padding:48px 32px}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;margin-bottom:24px}
@@ -51,6 +58,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 </style>
 </head>
 <body>
+<a href="#mc" class="skip">본문으로 건너뛰기</a>
 <nav style="display:flex;justify-content:center;gap:8px;padding:16px 0;background:var(--surface);border-bottom:1px solid var(--border)">
 <a href="index.html" style="padding:10px 24px;border-radius:8px;border:1px solid var(--border);color:var(--text);text-decoration:none;font-size:var(--fs-sm)">NCS 교재 (86권)</a>
 <a href="textbook.html" style="padding:10px 24px;border-radius:8px;border:1px solid var(--border);color:var(--text);text-decoration:none;font-size:var(--fs-sm)">반도체고 교과서 (9권)</a>
@@ -58,7 +66,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 </nav>
 <div class="viz-menu"><button class="viz-menu-toggle" onclick="document.getElementById('vizMenuDropdown').classList.toggle('open')" aria-label="Menu"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg></button><div class="viz-menu-dropdown" id="vizMenuDropdown"><button onclick="cycleTheme()"><span id="themeIcon">☀️</span><span id="themeLabel">Light</span></button><button onclick="downloadImage()"><span>📥</span><span>Download PNG</span></button><button onclick="window.print()"><span>🖨️</span><span>Print / PDF</span></button></div></div>
 
-<main><div class="ctn">
+<main id="mc" role="main"><div class="ctn">
 
 <section class="hero">
 <h1>OSHA 반도체 화학물질 안전교육 과정</h1>

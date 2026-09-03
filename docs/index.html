@@ -22,6 +22,13 @@ body{font-family:'Noto Sans KR','Inter',sans-serif;font-size:var(--fs-md);backgr
 em{font-style:normal;font-weight:600;color:var(--text)}
 h1,h2,h3{color:var(--text);letter-spacing:-.03em;line-height:1.15}
 h1{font-weight:800;font-size:clamp(2.5rem,5vw,3.5rem)}h2{font-weight:700;font-size:2rem;margin-bottom:24px}h3{font-weight:600;font-size:1.25rem}
+/* 포커스 링 — 이전에는 :focus-visible 규칙이 페이지 전체에 0개였다. 키보드로
+   훑으면 지금 어디에 있는지 알 방법이 없었다. */
+a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+/* 건너뛰기 링크는 left:-9999px 로 숨겨만 두고 포커스 시 되돌리지 않아, 키보드
+   사용자에게 영영 보이지 않았다. */
+.skip{position:absolute;left:-9999px;top:0;z-index:10000}
+.skip:focus{left:8px;top:8px;padding:10px 16px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:var(--fs-sm)}
 .ts{color:var(--text-secondary);font-size:var(--fs-sm)}
 .thsub{font-weight:400;font-size:var(--fs-xs);text-transform:none;letter-spacing:0;color:var(--text-secondary)}
 .ctn{max-width:1320px;margin:0 auto;padding:48px 32px}
@@ -34,7 +41,16 @@ h1{font-weight:800;font-size:clamp(2.5rem,5vw,3.5rem)}h2{font-weight:700;font-si
 .cc{height:380px;padding:16px}
 .ah{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.ap{font-size:2rem;font-weight:800}
 .bars{display:flex;flex-direction:column;gap:6px}.br{display:flex;align-items:center;gap:8px;font-size:var(--fs-sm)}.br .lb{width:64px;text-align:right;color:var(--text-secondary)}.br .b{flex:1;height:22px;border-radius:4px;background:var(--border);overflow:hidden}.br .bf{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:6px;font-size:var(--fs-xs);font-weight:600;color:#fff;min-width:20px}.br .ct{width:42px;font-weight:600;font-size:var(--fs-sm)}
-.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm)}.tbl th{text-align:left;padding:10px 12px;border-bottom:2px solid var(--border);color:var(--text-secondary);font-weight:600;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}.tbl.sortable th{cursor:pointer;user-select:none}.tbl.sortable th:hover{color:var(--text)}.tbl.sortable th::after{content:' ↕';opacity:.3;font-size:.75em}.tbl td{padding:10px 12px;border-bottom:1px solid var(--border)}.tbl tr:hover{background:var(--surface-hover)}
+.tbl{width:100%;border-collapse:collapse;font-size:var(--fs-sm)}.tbl th{text-align:left;padding:10px 12px;border-bottom:2px solid var(--border);color:var(--text-secondary);font-weight:600;font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+/* 정렬 헤더는 th 의 onclick 뿐이라 마우스로만 눌렸다(th[onclick] 9개, tabindex 0개).
+   th > button 은 WAI-ARIA 표 정렬 패턴 그대로라 키보드·포커스·역할이 전부 따라온다. */
+.tbl.sortable th{padding:0}
+.tbl.sortable th .sortbtn{display:block;width:100%;min-height:44px;padding:10px 12px;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.tbl.sortable th .sortbtn:hover{color:var(--text)}
+.tbl.sortable th .sortbtn::after{content:' \2195';opacity:.3;font-size:.75em}
+.tbl.sortable th[aria-sort=ascending] .sortbtn::after{content:' \2191';opacity:1;color:var(--accent)}
+.tbl.sortable th[aria-sort=descending] .sortbtn::after{content:' \2193';opacity:1;color:var(--accent)}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--border)}.tbl tr:hover{background:var(--surface-hover)}
 code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word-break:break-all;background:var(--surface-hover);padding:1px 4px;border-radius:4px}
 .pb{display:inline-block;height:6px;border-radius:3px;vertical-align:middle;margin-right:6px}
 .fb{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}.fbtn{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:var(--fs-sm);font-family:inherit;transition:background .15s,color .15s,border-color .15s}.fbtn:hover{background:var(--surface-hover)}.fbtn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -54,7 +70,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 </style>
 </head>
 <body>
-<a href="#mc" style="position:absolute;left:-9999px">Skip to content</a>
+<a href="#mc" class="skip">본문으로 건너뛰기</a>
 <div class="viz-menu"><button class="viz-menu-toggle" onclick="toggleMenu()" aria-label="Menu"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg></button><div class="viz-menu-dropdown" id="vizMenuDropdown"><button onclick="cycleTheme()"><span id="themeIcon">☀️</span><span id="themeLabel">Light</span></button><button onclick="downloadImage()"><span>📥</span><span>Download PNG</span></button><button onclick="window.print()"><span>🖨️</span><span>Print / PDF</span></button></div></div>
 <nav style="display:flex;justify-content:center;gap:8px;padding:16px 0;background:var(--surface);border-bottom:1px solid var(--border)">
 <a href="index.html" style="padding:10px 24px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600;font-size:var(--fs-sm)">NCS 교재 (86권)</a>
@@ -99,8 +115,8 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 </section>
 
 <section style="margin-bottom:48px"><h2>키워드 x 영역 상세</h2>
-<div class="fb"><button class="fbtn on" onclick="fK('all',this)">전체</button><button class="fbtn" onclick="fK('high',this)">상위15</button><button class="fbtn" onclick="fK('case',this)">사고사례있음</button></div>
-<div class="card" style="overflow-x:auto"><table class="tbl sortable"><thead><tr><th onclick="sK('k')">키워드</th><th onclick="sK('t')">검출건수</th><th onclick="sK('pg')">검출쪽</th><th onclick="sK('dev')">개발</th><th onclick="sK('mfg')">제조</th><th onclick="sK('eq')">장비</th><th onclick="sK('mat')">재료</th><th onclick="sK('g3')">등급3 비율<br><span class="thsub">(검출건수 기준)</span></th><th onclick="sK('cs')">사고사례<br><span class="thsub">(키워드 검출수)</span></th></tr></thead><tbody id="kb"></tbody></table></div>
+<div class="fb"><button type="button" class="fbtn on" aria-pressed="true" onclick="fK('all',this)">전체</button><button type="button" class="fbtn" aria-pressed="false" onclick="fK('high',this)">상위15</button><button type="button" class="fbtn" aria-pressed="false" onclick="fK('case',this)">사고사례있음</button></div>
+<div class="card" style="overflow-x:auto"><table class="tbl sortable"><thead><tr><th data-k="k" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('k')">키워드</button></th><th data-k="t" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('t')">검출건수</button></th><th data-k="pg" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('pg')">검출쪽</button></th><th data-k="dev" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('dev')">개발</button></th><th data-k="mfg" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('mfg')">제조</button></th><th data-k="eq" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('eq')">장비</button></th><th data-k="mat" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('mat')">재료</button></th><th data-k="g3" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('g3')">등급3 비율<br><span class="thsub">(검출건수 기준)</span></button></th><th data-k="cs" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('cs')">사고사례<br><span class="thsub">(키워드 검출수)</span></button></th></tr></thead><tbody id="kb"></tbody></table></div>
 <p class="ts" style="margin-top:12px">* <strong>검출건수</strong>는 키워드×페이지 조합 수, <strong>검출쪽</strong>은 그 고유 페이지 수입니다. 영역별 수치와 등급3 비율은 검출건수 기준이므로 페이지 기준 비율(상단 KPI)과 다릅니다.<br>
 * <strong>사고사례</strong>는 자동 판정(<code>사고사례여부=예</code>) 검출수입니다. 전체 28건이 8개 페이지에 중복 검출되었고, 원문 대조 결과 실제 사고사례 서술은 3쪽, 그중 반도체 산업재해는 <strong>1건</strong>(구미 불산 사고, 2권 중복 게재)입니다. 아래 표 참조.</p>
 </section>
@@ -173,14 +189,15 @@ function onThemeChange(){chartsBuilt=false;buildCharts()}
 
 document.addEventListener('DOMContentLoaded',function(){
   applyTheme(currentTheme);
-  buildCharts();rKT();
+  buildCharts();updSortIndicators();rKT();
 });
 
 
 var kF='all',kS='t',kD=-1;
 function rKT(){var d=KW.slice();if(kF==='high')d=d.slice(0,15);if(kF==='case')d=d.filter(function(x){return x.cs>0});d.sort(function(a,b){if(kS==='k')return kD*(a.k<b.k?-1:a.k>b.k?1:0);return kD*((a[kS]||0)-(b[kS]||0))});var h='';d.forEach(function(r){var gp=r.t?Math.round(r.g3/r.t*100):0;h+='<tr><td><strong>'+r.k+'</strong></td><td>'+r.t.toLocaleString()+'</td><td>'+r.pg.toLocaleString()+'</td><td>'+(r.dev||'-')+'</td><td>'+(r.mfg||'-')+'</td><td>'+(r.eq||'-')+'</td><td>'+(r.mat||'-')+'</td><td><span class="pb" style="width:'+Math.min(gp,100)+'px;max-width:80px;background:var(--g3)"></span>'+gp+'%</td><td style="color:'+(r.cs>0?'var(--danger)':'var(--text-secondary)')+'">'+r.cs+'</td></tr>'});document.getElementById('kb').innerHTML=h}
-function fK(f,el){kF=f;document.querySelectorAll('.fb .fbtn').forEach(function(b){b.classList.remove('on')});el.classList.add('on');rKT()}
-function sK(c){if(kS===c)kD*=-1;else{kS=c;kD=-1}rKT()}
+function fK(f,el){kF=f;document.querySelectorAll('.fb .fbtn').forEach(function(b){b.classList.remove('on');b.setAttribute('aria-pressed','false')});el.classList.add('on');el.setAttribute('aria-pressed','true');rKT()}
+function updSortIndicators(){document.querySelectorAll('.tbl.sortable th[data-k]').forEach(function(th){th.setAttribute('aria-sort',th.dataset.k===kS?(kD===1?'ascending':'descending'):'none')})}
+function sK(c){if(kS===c)kD*=-1;else{kS=c;kD=-1}updSortIndicators();rKT()}
 </script>
 </body>
 </html>

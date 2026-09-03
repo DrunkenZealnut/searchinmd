@@ -200,7 +200,13 @@ check('D6c 토글 결과가 서로 역순', pgDesc[0] === pgAsc[pgAsc.length - 1
 N.sK('k');
 check('D6e sK("k") 키워드 문자열 정렬', order(N.__els['kb'].innerHTML).length === 30);
 
-const fakeBtn = { classList: { add() {}, remove() {} } };
+// fK 는 눌린 버튼에 aria-pressed 를 쓴다. 스텁이 attrs 에 받아 둬야
+// 그 호출이 실제로 일어났는지 확인할 수 있다.
+const fakeBtn = {
+  attrs: {},
+  classList: { add() {}, remove() {} },
+  setAttribute(k, v) { this.attrs[k] = v; },
+};
 N.fK('case', fakeBtn);
 const caseOnly = order(N.__els['kb'].innerHTML);
 check('D7a fK("case") cs>0 만 노출', caseOnly.length === NKW.filter(r => r.cs > 0).length, caseOnly.length);
@@ -208,6 +214,7 @@ N.fK('high', fakeBtn);
 check('D7b fK("high") 상위 15개', order(N.__els['kb'].innerHTML).length === 15);
 N.fK('all', fakeBtn);
 check('D7c fK("all") 전체 복귀', order(N.__els['kb'].innerHTML).length === 30);
+check('D7f fK() 가 누른 버튼에 aria-pressed=true', fakeBtn.attrs['aria-pressed'] === 'true', fakeBtn.attrs['aria-pressed']);
 
 // =====================================================================
 // docs/textbook.html (교과서)
