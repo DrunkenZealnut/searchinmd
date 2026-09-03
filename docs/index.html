@@ -106,10 +106,11 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 <div class="card kpi"><div class="kpi-v" style="color:var(--danger)">8</div><div class="kpi-l">사고사례 판정 페이지</div><div class="kpi-bar"><i style="width:0.4%;background:var(--danger);min-width:8px"></i></div><div class="ts" style="margin-top:8px">0.4% · 5권 · 오탐 제외 시 1건</div></div>
 </section>
 
-<section class="g2 ani d2">
+<section class="ani d2"><h2>전체 분포</h2>
+<div class="g2">
 <div class="card"><h3 style="margin-bottom:4px">영역별 안전 관련 비율</h3><p class="ts" style="margin-bottom:8px">(등급2+3) ÷ 영역 검출 페이지</p><div class="cc" role="img" aria-label="영역별 안전관련 비율"><canvas id="c1"></canvas></div></div>
 <div class="card"><h3 style="margin-bottom:4px">전체 등급 분포</h3><p class="ts" style="margin-bottom:8px">고유 페이지 1,847쪽 기준</p><div class="cc" role="img" aria-label="등급 분포 도넛"><canvas id="c2"></canvas></div></div>
-</section>
+</div></section>
 
 <section><h2 class="ani d3">영역별 현황</h2>
 <div class="g4 tight ani d3" id="areaCardsGrid">
@@ -118,12 +119,11 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 <div class="card"><div class="ah"><h3>반도체장비</h3><div class="ap" style="color:var(--a3)">23.2%</div></div><div class="ts" style="margin-bottom:12px">19권 · 검출 422쪽(2,203건) — 사고사례 3쪽</div><div class="bars"><div class="br"><span class="lb">등급1</span><div class="b"><i class="bf" style="width:76.8%;background:var(--g1)"></i></div><span class="cn">324</span><span class="ct">76.8%</span></div><div class="br"><span class="lb">등급2</span><div class="b"><i class="bf" style="width:18.7%;background:var(--g2)"></i></div><span class="cn">79</span><span class="ct">18.7%</span></div><div class="br"><span class="lb">등급3</span><div class="b"><i class="bf" style="width:4.5%;background:var(--g3)"></i></div><span class="cn">19</span><span class="ct">4.5%</span></div></div></div>
 <div class="card"><div class="ah"><h3>반도체재료</h3><div class="ap" style="color:var(--a4)">45.5%</div></div><div class="ts" style="margin-bottom:12px">24권 · 검출 807쪽(3,784건) — 최상위</div><div class="bars"><div class="br"><span class="lb">등급1</span><div class="b"><i class="bf" style="width:54.5%;background:var(--g1)"></i></div><span class="cn">440</span><span class="ct">54.5%</span></div><div class="br"><span class="lb">등급2</span><div class="b"><i class="bf" style="width:37.2%;background:var(--g2)"></i></div><span class="cn">300</span><span class="ct">37.2%</span></div><div class="br"><span class="lb">등급3</span><div class="b"><i class="bf" style="width:8.3%;background:var(--g3)"></i></div><span class="cn">67</span><span class="ct">8.3%</span></div></div></div>
 </div>
-<p class="ts note">상단 % = <strong>안전 관련 비율</strong> = (등급2 + 등급3) ÷ 해당 영역 검출 페이지. 막대는 영역 내 등급별 페이지 수와 구성비.</p></section>
-
-<section class="g2">
+<p class="ts note">상단 % = <strong>안전 관련 비율</strong> = (등급2 + 등급3) ÷ 해당 영역 검출 페이지. 막대는 영역 내 등급별 페이지 수와 구성비.</p>
+<div class="g2">
 <div class="card"><h3 style="margin-bottom:4px">영역별 등급 구성</h3><p class="ts" style="margin-bottom:8px">단위: 페이지(쪽)</p><div class="cc" role="img" aria-label="영역별 등급 스택 바"><canvas id="c3"></canvas></div></div>
 <div class="card"><h3 style="margin-bottom:4px">상위 키워드 — 영역별 분포</h3><p class="ts" style="margin-bottom:8px">단위: 검출 건수(키워드×쪽)</p><div class="cc" role="img" aria-label="키워드별 영역 분포"><canvas id="c4"></canvas></div></div>
-</section>
+</div></section>
 
 <section style="margin-bottom:48px"><h2>키워드 x 영역 상세</h2>
 <div class="fb"><button type="button" class="fbtn on" aria-pressed="true" onclick="fK('all',this)">전체</button><button type="button" class="fbtn" aria-pressed="false" onclick="fK('high',this)">상위15</button><button type="button" class="fbtn" aria-pressed="false" onclick="fK('case',this)">사고사례있음</button></div>
