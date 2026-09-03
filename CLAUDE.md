@@ -154,7 +154,7 @@ node   outputs/test-dashboard-data.js       # 92 assertions — docs/ dashboard 
 python3 outputs/test-recount-grades.py      # 87 assertions — recount_grades.py logic
 
 node   outputs/run-core-logic-tests.js       # 32 assertions — headless runner for test-core-logic.html
-node   outputs/test-sri.js                  # 35 assertions — SRI on external scripts (--online to verify against the CDN)
+node   outputs/test-sri.js                  # 41 assertions — SRI on external scripts (--online to verify against the CDN)
 
 # Or open it in a browser and read the tab title: "PASS: N/N tests passed"
 open outputs/test-core-logic.html

@@ -25,6 +25,8 @@ const crypto = require('crypto');
 const PAGES = ['docs/index.html', 'docs/textbook.html', 'docs/osha.html', 'outputs/markdown-search-app.html'];
 const ROOT = path.join(__dirname, '..');
 const ONLINE = process.argv.includes('--online');
+// CDN 응답이 멈추면 CI 잡이 매달린다. 넉넉하되 유한하게.
+const FETCH_TIMEOUT_MS = Number(process.env.SRI_FETCH_TIMEOUT_MS || 20000);
 
 let pass = 0, fail = 0;
 function check(name, cond, detail) {
@@ -39,6 +41,7 @@ function externalScripts(html) {
     url: m[1],
     integrity: (m[0].match(/\bintegrity="([^"]+)"/) || [])[1] || null,
     crossorigin: /\bcrossorigin=/.test(m[0]),
+    referrerpolicy: (m[0].match(/\breferrerpolicy="([^"]+)"/) || [])[1] || null,
   }));
 }
 
@@ -58,6 +61,8 @@ for (const s of all) {
   check(`sha384 이상 사용: ${where}`, /^sha(384|512)-/.test(s.integrity || ''), s.integrity);
   // 버전이 고정돼 있지 않으면 CDN 이 내용을 바꿔 SRI 가 페이지를 깨뜨린다.
   check(`버전 고정: ${where}`, /@\d+\.\d+\.\d+\//.test(s.url) || /\/\d+\.\d+\.\d+\//.test(s.url), s.url);
+  // 태그에서 지워도 페이지는 멀쩡히 돌아 눈에 띄지 않는다. 검사로 고정한다.
+  check(`referrerpolicy 있음: ${where}`, s.referrerpolicy === 'no-referrer', s.referrerpolicy);
 }
 
 // 같은 URL 은 어느 페이지에서든 같은 해시여야 한다. 한 곳만 갱신하는 실수를 잡는다.
@@ -82,8 +87,12 @@ async function online() {
   for (const [url, hashes] of byUrl) {
     const want = [...hashes][0];
     if (!want) continue;
+    // CI 가 이 경로를 돈다. 타임아웃이 없으면 CDN 이 헤더만 주고 본문을 멈출 때
+    // 잡이 무한정 대기한다. abort 는 fetch 와 arrayBuffer() 양쪽을 덮어야 한다.
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
     try {
-      const res = await fetch(url, { redirect: 'follow' });
+      const res = await fetch(url, { redirect: 'follow', signal: ctrl.signal });
       if (!res.ok) { check(`받기: ${url}`, false, 'HTTP ' + res.status); continue; }
       const buf = Buffer.from(await res.arrayBuffer());
       // 선언된 알고리즘으로 계산해야 한다. sha512 로 선언된 태그를 sha384 로 재면
@@ -92,7 +101,10 @@ async function online() {
       const got = algo + '-' + crypto.createHash(algo).update(buf).digest('base64');
       check(`실제 응답과 일치: ${url.replace(/^https:\/\//, '')}`, got === want, `기대 ${want} / 실제 ${got}`);
     } catch (e) {
-      check(`받기: ${url}`, false, e.message);
+      const why = e.name === 'AbortError' ? `${FETCH_TIMEOUT_MS}ms 안에 응답이 끝나지 않음` : e.message;
+      check(`받기: ${url}`, false, why);
+    } finally {
+      clearTimeout(timer);
     }
   }
 }
