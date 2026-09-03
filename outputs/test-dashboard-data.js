@@ -423,11 +423,19 @@ PAGES.forEach(([name, html]) => {
 console.log('\n[첫 페인트] 지연 진입 애니메이션');
 PAGES.forEach(([name, html]) => {
   const style = (html.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
-  check(`D12a ${name} — animation-delay 로 콘텐츠를 미루지 않음`,
-    !/animation-delay/.test(style),
+  // 시작 상태를 지연 구간에 투영하는 조합만 막는다. both/backwards 는 애니메이션이
+  // 시작하기 전부터 from 프레임을 적용하므로, 지연이 붙으면 그 시간만큼 콘텐츠가
+  // 시작 상태(투명·이동)로 붙들린다. 지연 자체는 죄가 없다 — 스피너나 hover
+  // 애니메이션의 지연은 첫 페인트를 막지 않는다.
+  const backwardsFill = /animation:[^;}]*\b(both|backwards)\b/.test(style)
+    || /animation-fill-mode:\s*(both|backwards)/.test(style);
+  check(`D12a ${name} — 지연 + 역방향 fill 로 시작 상태를 붙들지 않음`,
+    !(backwardsFill && /animation-delay/.test(style)),
     (style.match(/animation-delay:[^;}]*/g) || []).join(', '));
-  check(`D12b ${name} — opacity:0 으로 시작하는 @keyframes 없음`,
-    !/@keyframes[^{]*\{[^@]*?opacity:\s*0[^.]/.test(style),
+  // 시작 프레임(from / 0%)의 opacity:0 만 본다. from{opacity:1}to{opacity:0} 같은
+  // 종료 페이드는 첫 페인트를 막지 않으므로 걸리면 안 된다 (CodeRabbit 지적).
+  check(`D12b ${name} — 시작 프레임이 opacity:0 인 @keyframes 없음`,
+    !/@keyframes[^{]*\{\s*(?:from|0%)\s*\{[^{}]*\bopacity\s*:\s*0(?:\s*[;}])/.test(style),
     (style.match(/@keyframes\s+[\w-]+/g) || []).join(', '));
   const staged = [...html.matchAll(/class="([^"]*)"/g)]
     .map(m => m[1]).filter(c => /\b(ani|reveal|d[123])\b/.test(c));
