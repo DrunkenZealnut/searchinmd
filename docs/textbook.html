@@ -77,7 +77,11 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 .rec{border-left:4px solid var(--positive);padding:20px 24px;margin-bottom:16px;background:var(--surface);border-radius:0 12px 12px 0}.rec h3{color:var(--fg-ok);margin-bottom:8px;font-size:var(--fs-lg)}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}.ani{animation:fadeInUp .6s ease-out both}.d1{animation-delay:.1s}.d2{animation-delay:.2s}.d3{animation-delay:.3s}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-@media print{body{background:#fff!important;color:#000!important}.viz-menu{display:none}.card{break-inside:avoid}*{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+/* 인쇄와 PNG 내보내기에서는 스크롤 창 밖의 열이 잘린다. 이 페이지들은 메뉴에
+   Print/PDF 와 Download PNG 를 달고 있으므로 그 두 경로에서만 표를 펼친다.
+   .exporting 은 화면 캡처용이라 print 미디어 밖에 있어야 한다. */
+.exporting .scroll-x{overflow:visible!important}
+@media print{body{background:#fff!important;color:#000!important}.scroll-x{overflow:visible!important}.viz-menu{display:none}.card{break-inside:avoid}*{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
 @media(max-width:768px){.g4,.g3x{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}.ctn{padding:24px 16px}}
 @media(max-width:375px){body{overflow-x:hidden}.g4,.g3x{grid-template-columns:1fr}.hs-row{flex-direction:column;gap:16px}}
 .viz-menu{position:fixed;top:16px;right:16px;z-index:9999}.viz-menu-toggle{width:44px;height:44px;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px)}.viz-menu-toggle:hover{background:var(--surface-hover)}.viz-menu-dropdown{position:absolute;top:52px;right:0;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px;opacity:0;visibility:hidden;transform:translateY(-8px);transition:opacity .2s,visibility .2s,transform .2s;backdrop-filter:blur(16px)}.viz-menu-dropdown.open{opacity:1;visibility:visible;transform:translateY(0)}.viz-menu-dropdown button{width:100%;min-height:44px;padding:10px 14px;border:none;border-radius:8px;background:transparent;color:var(--text);font-size:var(--fs-sm);font-family:inherit;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px}.viz-menu-dropdown button:hover{background:var(--surface-hover)}
@@ -171,7 +175,7 @@ document.addEventListener('click',function(e){if(!e.target.closest('.viz-menu'))
 var savedTheme=localStorage.getItem('viz-theme');var currentTheme=savedTheme||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
 function applyTheme(t){document.documentElement.className='theme-'+t;document.getElementById('themeIcon').textContent=t==='dark'?'🌙':'☀️';document.getElementById('themeLabel').textContent=t==='dark'?'Dark':'Light';localStorage.setItem('viz-theme',t);currentTheme=t;if(typeof onThemeChange==='function')onThemeChange()}
 function cycleTheme(){applyTheme(currentTheme==='dark'?'light':'dark')}
-async function downloadImage(){var m=document.querySelector('.viz-menu');m.style.display='none';try{var u=await htmlToImage.toPng(document.body,{quality:1,pixelRatio:2});var a=document.createElement('a');a.href=u;a.download='textbook-safety-dashboard.png';a.click()}catch(e){console.error(e)}m.style.display=''}
+async function downloadImage(){var m=document.querySelector('.viz-menu');m.style.display='none';document.body.classList.add('exporting');try{var u=await htmlToImage.toPng(document.body,{quality:1,pixelRatio:2});var a=document.createElement('a');a.href=u;a.download='textbook-safety-dashboard.png';a.click()}catch(e){console.error(e)}document.body.classList.remove('exporting');m.style.display=''}
 
 // 출처: data/ncs_keywords_in_markdown_results_교과서_results_20260415.xlsx 전수 재집계
 // 원본 등급(1기본언급/2구체적대책/3관련없음) → 통일 등급(1미흡·없음/2형식적/3구체적)으로 재매핑. pg=고유 검출쪽

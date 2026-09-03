@@ -70,7 +70,11 @@ strong{color:var(--text)}
 blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;color:var(--text-secondary);background:var(--surface)}
 .viz-menu{position:fixed;top:16px;right:16px;z-index:9999}.viz-menu-toggle{width:44px;height:44px;border-radius:12px;background:var(--surface);border:1px solid var(--border);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(12px)}.viz-menu-toggle:hover{background:var(--surface-hover)}.viz-menu-dropdown{position:absolute;top:52px;right:0;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px;opacity:0;visibility:hidden;transform:translateY(-8px);transition:opacity .2s,visibility .2s,transform .2s;backdrop-filter:blur(16px)}.viz-menu-dropdown.open{opacity:1;visibility:visible;transform:translateY(0)}.viz-menu-dropdown button{width:100%;min-height:44px;padding:10px 14px;border:none;border-radius:8px;background:transparent;color:var(--text);font-size:var(--fs-sm);font-family:inherit;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px}.viz-menu-dropdown button:hover{background:var(--surface-hover)}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-@media print{body{background:#fff!important;color:#000!important}.viz-menu{display:none}*{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+/* 인쇄와 PNG 내보내기에서는 스크롤 창 밖의 열이 잘린다. 이 페이지들은 메뉴에
+   Print/PDF 와 Download PNG 를 달고 있으므로 그 두 경로에서만 표를 펼친다.
+   .exporting 은 화면 캡처용이라 print 미디어 밖에 있어야 한다. */
+.exporting .scroll-x{overflow:visible!important}
+@media print{body{background:#fff!important;color:#000!important}.scroll-x{overflow:visible!important}.viz-menu{display:none}*{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
 @media(max-width:768px){.ctn{padding:24px 16px}h1{font-size:1.75rem}h2{font-size:1.5rem}.part-nav{gap:4px}.part-btn{padding:8px 14px;font-size:var(--fs-sm)}}
 </style>
 </head>
@@ -1197,7 +1201,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 var savedTheme=localStorage.getItem('viz-theme');var currentTheme=savedTheme||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
 function applyTheme(t){document.documentElement.className='theme-'+t;document.getElementById('themeIcon').textContent=t==='dark'?'🌙':'☀️';document.getElementById('themeLabel').textContent=t==='dark'?'Dark':'Light';localStorage.setItem('viz-theme',t);currentTheme=t}
 function cycleTheme(){applyTheme(currentTheme==='dark'?'light':'dark')}
-async function downloadImage(){var m=document.querySelector('.viz-menu');m.style.display='none';try{var u=await htmlToImage.toPng(document.body,{quality:1,pixelRatio:2});var a=document.createElement('a');a.href=u;a.download='osha-scs-analysis.png';a.click()}catch(e){console.error(e)}m.style.display=''}
+async function downloadImage(){var m=document.querySelector('.viz-menu');m.style.display='none';document.body.classList.add('exporting');try{var u=await htmlToImage.toPng(document.body,{quality:1,pixelRatio:2});var a=document.createElement('a');a.href=u;a.download='osha-scs-analysis.png';a.click()}catch(e){console.error(e)}document.body.classList.remove('exporting');m.style.display=''}
 function showPart(id,btn){document.querySelectorAll('.part-section').forEach(function(s){s.classList.remove('active')});document.getElementById('part-'+id).classList.add('active');document.querySelectorAll('.part-btn').forEach(function(b){b.classList.remove('on')});btn.classList.add('on');window.scrollTo({top:document.querySelector('.part-nav').offsetTop-80,behavior:'smooth'})}
 document.addEventListener('DOMContentLoaded',function(){applyTheme(currentTheme)});
 document.addEventListener('click',function(e){if(!e.target.closest('.viz-menu')){var d=document.getElementById('vizMenuDropdown');if(d)d.classList.remove('open')}});
