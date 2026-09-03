@@ -42,6 +42,67 @@ def kappa(a, b, cats=(1, 2, 3)):
     return (po - pe) / (1 - pe) if pe < 1 else float('nan')
 
 
+def score_variants(A, B, key, dis, ctl):
+    """규칙 변형들을 코더 라벨로 채점한다. 원본 엑셀이 있을 때만 돈다.
+
+    ## 순환논증 경고
+
+    이 69쪽은 규칙을 **고르는** 데 쓰면 안 된다. 라벨에 맞춰 임계를 조정한 뒤
+    같은 라벨로 검증하면 아무것도 검증하지 않은 것이다. D4 의 'round' 는 라벨을
+    보기 전에 "연속 임계를 정수에 맞추는 중립적 방식" 으로 고른 값이고, 아래
+    표는 그 사전 선택이 실제로 개선인지 확인하는 용도다. 표에서 가장 높은 F1 을
+    골라 채택하는 것은 이 표본에 과적합하는 것이다.
+    """
+    sys.path.insert(0, HERE)
+    try:
+        import regrade as RG
+        pages = RG.load_pages(os.path.join(RG.DATA_DIR, RG.NCS_FILE))
+    except (ImportError, SystemExit, OSError):
+        return                                   # 원본이나 openpyxl이 없으면 조용히 건너뛴다
+
+    med = RG.median_length(pages)
+    old = RG.run(pages, word_boundary=False, normalize=False)
+    dis_keys = {(key[i]['file'], key[i]['page']) for i in dis}
+
+    variants = [
+        ('현행(결함 유지)', dict(word_boundary=False, normalize=False)),
+        ('D1+D2 (ceil, 현재)', dict(word_boundary=True, normalize=True)),
+        ('D1+D2+D5 조건부면제',
+         dict(word_boundary=True, normalize=True, exempt=True)),
+        ('D1+D2+D4 round',
+         dict(word_boundary=True, normalize=True, how='round')),
+        ('D1+D2+D4 floor',
+         dict(word_boundary=True, normalize=True, how='floor')),
+    ]
+
+    print('\n=== 5. 규칙 변형별 채점 (코더 라벨 기준) ===')
+    print('  주의: 이 표에서 최고 F1 을 골라 채택하면 69쪽에 과적합하는 것이다.')
+    print('  %-22s %6s %8s %7s %7s %7s' %
+          ('변형', '등급3', '전체비율', '정밀도', '재현율', 'F1'))
+    for nm, G in (('A', A), ('B', B)):
+        # 합집합(현행의 등급3) 안 진짜 등급3 — 변형과 무관한 고정 분모
+        agr_pop = len({k for k in old if old[k]['g'] == 3} - dis_keys)
+        true_all = (sum(1 for i in dis if G[i] == 3)
+                    + sum(1 for i in ctl if G[i] == 3) / float(len(ctl)) * agr_pop)
+        print('  --- 코더 %s (진짜 등급3 추정 %.1f쪽) ---' % (nm, true_all))
+        for name, kw in variants:
+            g = RG.run(pages, base=med, **kw)
+            pred = {k for k in g if g[k]['g'] == 3}
+            if not pred:
+                continue
+            tp_dis = sum(1 for i in dis
+                         if (key[i]['file'], key[i]['page']) in pred and G[i] == 3)
+            hit = [i for i in ctl if (key[i]['file'], key[i]['page']) in pred]
+            rate = sum(1 for i in hit if G[i] == 3) / float(len(hit)) if hit else 0.0
+            tp = tp_dis + rate * len(pred - dis_keys)
+            p = tp / len(pred)
+            r = tp / true_all if true_all else 0.0
+            f1 = 2 * p * r / (p + r) if (p + r) else 0.0
+            print('  %-22s %6d %7.1f%% %6.1f%% %6.1f%% %7.3f'
+                  % (name, len(pred), len(pred) * 100.0 / len(pages),
+                     p * 100, r * 100, f1))
+
+
 def population():
     """모집단 수치는 regrade.py 산출물에서 읽는다. 여기 손으로 적지 않는다."""
     p = os.path.join(HERE, 'docs/03-analysis/data/regrade_impact.json')
@@ -139,6 +200,9 @@ def main():
                  (N_DISPUTED + N_AGREED) * 100.0 / TOTAL_PAGES,
                  N_AGREED * 100.0 / TOTAL_PAGES,
                  true_total * 100.0 / TOTAL_PAGES))
+
+    if os.path.exists(os.path.join(HERE, 'data')):
+        score_variants(A, B, key, dis, ctl)
 
     print('\n주의 1: 현행의 재현율 100%는 측정된 값이 아니라 표본 설계의 산물이다.')
     print('        수정본은 강등만 하므로 그 등급3은 현행 등급3의 부분집합이고,')

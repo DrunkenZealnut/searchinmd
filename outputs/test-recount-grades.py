@@ -526,6 +526,81 @@ check('R9n 같은 안전어 수라도 긴 페이지는 승급하지 않는다',
 check('R9o 사유 문자열은 상위 5개만 나열한다 (원본과 같은 절단)',
       G.grade_page('안전 ' * 6 + '위험 사고 누출 폭발 화재 진동 ')[3].count('(') <= 6)
 
+# ---------------------------------------------------------------------------
+# R10 regrade D4/D5 — 이산화 보정과 조건부 정규화
+#
+# D4 는 정규화 임계를 정수 카운트에 맞춰 자르는 방식이다. 기본값 'ceil' 은 현재
+# 발행된 동작이며 여기서 바뀌면 coding_key.json 이 무효가 되므로 고정해 둔다.
+# D5 는 기각된 가설이지만 재현을 위해 코드가 남아 있어 동작은 검증한다.
+# ---------------------------------------------------------------------------
+print('\n[R10] regrade D4/D5 — 이산화 · 조건부 정규화')
+
+check('R10a 기본 이산화는 ceil (현재 발행된 동작을 조용히 바꾸지 않는다)',
+      G.DISCRETIZE == 'ceil', G.DISCRETIZE)
+
+# 5.02 는 실측에서 나온 값이다. an=5 인 페이지가 중앙값보다 7자 길다는 이유로
+# 떨어졌다 — 정수 카운트에는 6건을 요구하는 것과 같다.
+check('R10b ceil 은 5.02 를 6 으로 올린다 (한 자 차이에 요구치 20% 증가)',
+      G.discretize(5.02, 'ceil') == 6, G.discretize(5.02, 'ceil'))
+check('R10c round 는 5.02 를 5 로 둔다 (계단이 중간점에 온다)',
+      G.discretize(5.02, 'round') == 5, G.discretize(5.02, 'round'))
+check('R10d round 는 5.5 를 6 으로 (은행가 반올림이 아니라 통상 반올림)',
+      G.discretize(5.5, 'round') == 6, G.discretize(5.5, 'round'))
+check('R10e floor 는 임계가 정수에 완전히 도달해야 올린다',
+      G.discretize(5.99, 'floor') == 5 and G.discretize(6.0, 'floor') == 6)
+check('R10f 세 방식의 엄격도 순서는 floor <= round <= ceil',
+      all(G.discretize(x, 'floor') <= G.discretize(x, 'round') <=
+          G.discretize(x, 'ceil') for x in (5.0, 5.02, 5.4, 5.5, 5.9, 6.0, 7.3)))
+check('R10g 배율 1.0 이면 세 방식 모두 원본 임계와 같다',
+      all(G.discretize(G.ACTION_MIN * 1.0, h) == G.ACTION_MIN
+          for h in ('ceil', 'round', 'floor')))
+
+# 실측 사례 재현: 조치어 5건, 중앙값보다 근소하게 긴 페이지.
+# ceil 이면 6건을 요구해 등급2 로 떨어지고, round 면 등급3 을 유지한다.
+_knife = '위험 ' * 10 + '방지 예방 착용 환기 차단 ' + 'x' * 965      # 1,010자 = 기준의 1.01배
+_sc = G.length_scale(len(_knife), 1000)
+check('R10h 근소 초과 페이지가 ceil 에서는 강등되고 round 에서는 살아남는다',
+      1.0 < _sc < 1.2
+      and G.grade_page(_knife, True, _sc, 'ceil')[0] == 2
+      and G.grade_page(_knife, True, _sc, 'round')[0] == 3,
+      (round(_sc, 3), G.grade_page(_knife, True, _sc, 'ceil')[0],
+       G.grade_page(_knife, True, _sc, 'round')[0]))
+
+check('R10i 크게 초과한 페이지는 이산화 방식과 무관하게 강등된다',
+      all(G.grade_page('위험 ' * 10 + '방지 예방 착용 환기 차단 ' + 'x' * 30000,
+                       True, G.length_scale(30000, 1000), h)[0] != 3
+          for h in ('ceil', 'round', 'floor')))
+
+# D5 — 조치어가 ACTION_EXEMPT 이상이면 길이와 무관하게 임계를 정규화하지 않는다
+_many = '위험 ' * 40 + ('방지 예방 착용 환기 차단 대피 격리 소화기 보안경 안전모 '
+                        ) + 'x' * 12000
+_sc2 = G.length_scale(len(_many), 1000)
+check('R10j 조치어가 면제 임계 이상이면 D5 가 등급3 을 되살린다',
+      G.grade_page(_many, True, _sc2, 'ceil')[2] >= G.ACTION_EXEMPT
+      and G.grade_page(_many, True, _sc2, 'ceil', False)[0] != 3
+      and G.grade_page(_many, True, _sc2, 'ceil', True)[0] == 3,
+      (G.grade_page(_many, True, _sc2, 'ceil')[2],
+       G.grade_page(_many, True, _sc2, 'ceil', False)[0],
+       G.grade_page(_many, True, _sc2, 'ceil', True)[0]))
+check('R10k 면제 임계 미만이면 D5 는 아무것도 바꾸지 않는다',
+      G.grade_page(_knife, True, _sc, 'ceil', True)[0]
+      == G.grade_page(_knife, True, _sc, 'ceil', False)[0])
+check('R10l 면제는 안전어 게이트까지 풀어주지는 않는다',
+      G.grade_page('방지 예방 착용 환기 차단 대피 격리 소화기 보안경 안전모 '
+                   + 'x' * 12000, True,
+                   G.length_scale(12000, 1000), 'ceil', True)[0] == 1)
+
+# run() 이 파라미터를 실제로 흘려보내는지 (기본값만 쓰고 무시하면 안 된다)
+_pages = {('f', 1): {'text': _knife, 'grade': None}}
+check('R10m run() 이 how 를 grade_page 까지 전달한다',
+      G.run(_pages, True, True, 1000, 'ceil')[('f', 1)]['g'] == 2
+      and G.run(_pages, True, True, 1000, 'round')[('f', 1)]['g'] == 3)
+check('R10n run() 이 exempt 를 grade_page 까지 전달한다',
+      G.run({('f', 1): {'text': _many, 'grade': None}},
+            True, True, 1000, 'ceil', True)[('f', 1)]['g'] == 3)
+check('R10o D5 는 기각됐으므로 기본값은 꺼져 있다',
+      G.grade_page.__defaults__[-1] is False, G.grade_page.__defaults__)
+
 print('\n결과: %d/%d PASS%s%s' % (
     PASS, PASS + FAIL, ', %d FAIL' % FAIL if FAIL else '',
     ', %d KNOWN ISSUE' % KNOWN if KNOWN else ''))

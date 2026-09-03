@@ -24,8 +24,20 @@ D2 길이 정규화 없음 — 임계 5건이 페이지 길이와 무관하다. 
    커서(43%가 1,000자 미만, 최대 32,767자) 긴 페이지가 그냥 승급한다.
 D3 총계 off-by-one — 3쪽(0.16%). 나머지 168쪽의 "불일치" 는 사유 문자열이
    상위 5개만 보여주는 표시 절단이지 채점 버그가 아니다.
+D4 이산화 부작용 — 카운트는 정수인데 정규화 임계는 연속값이라 비교가 사실상
+   ceil() 로 동작한다. 중앙값보다 1자 긴 페이지가 조치어를 5건이 아니라 6건
+   요구받는다. 실측 분쟁군 39쪽 중 11쪽이 임계와의 차이 -2.3 이내에서 떨어졌고
+   그중 7쪽은 코더 두 명이 모두 "진짜 등급3" 이라고 판정했다. DISCRETIZE 참조.
+D5 조건부 정규화 — **기각됨**. "안전 전담 페이지는 원래 길고 조치가 많으니
+   정규화가 부당하게 깎는다" 는 가설이었으나 데이터가 반대였다. 코더가 진짜
+   등급3이라 한 쪽은 조치어 중앙 5건·길이 중앙 1,268자로 짧았고, 강등이 정당한
+   쪽이 조치어 중앙 8건·길이 중앙 6,436자로 길었다. 면제를 켜면 4쪽이 되살아나는데
+   코더는 그 4쪽 모두 등급3이 아니라고 했다(F1 0.813→0.790). 재현을 위해 코드는
+   남기되 켜지 않는다. ACTION_EXEMPT 참조.
 
-각 결함을 따로 켜고 끌 수 있어 영향도를 항목별로 뗄 수 있다.
+각 결함을 따로 켜고 끌 수 있어 영향도를 항목별로 뗄 수 있다. 기본값은 현재
+발행된 동작(ceil, 면제 없음)이며, 채택 여부는 별도 판단이다 — 산출물의 숫자를
+조용히 바꾸지 않는다.
 """
 import argparse
 import json
@@ -64,6 +76,21 @@ ACTION_TERMS = [
 SAFETY_MIN = 6          # 이 이상이어야 등급1을 벗어난다 (원본의 "5건 이하" 경계)
 ACTION_MIN = 5          # 이 이상이면 등급3
 DENSITY_BASE = 1000     # D2: 1,000자당으로 환산
+
+# D4: 정규화 임계의 이산화 방식. 카운트는 정수인데 임계는 연속값이라, 비교
+# `an >= 5*배율` 은 실제로는 `an >= ceil(5*배율)` 로 동작한다. 그래서 중앙값보다
+# 1자만 긴 페이지도 요구치가 5건에서 6건으로 뛴다 — 길이 0.1% 차이에 요구치가
+# 20% 오르는 것이고, 설계된 동작이 아니라 부작용이다.
+#   'ceil'  현재 동작. 중앙값을 넘는 순간 즉시 1건을 더 요구한다(가장 가혹).
+#   'round' 계단을 중간점에 둔다. 라벨을 보기 전에 고를 수 있는 중립적 선택.
+#   'floor' 임계가 다음 정수에 완전히 도달해야 1건을 더 요구한다(가장 관대).
+DISCRETIZE = 'ceil'
+
+# D5: 조건부 정규화 — 조치어 절대수가 이만큼이면 길이와 무관하게 등급3을 준다.
+# "안전 전담 페이지는 원래 길고 원래 조치가 많으므로 정규화가 부당하게 깎는다"
+# 는 가설에서 나온 값이다. ACTION_MIN 의 2배를 사전에 정한 것이고 라벨에서
+# 역산하지 않았다. 검증 결과는 docs 를 볼 것 — 가설은 기각됐다.
+ACTION_EXEMPT = 2 * ACTION_MIN
 
 # D1: 반도체 문맥에서 안전과 무관하게 쓰이는 출현. 용어 자체를 버리지 않고
 # 이 문맥에서 나온 것만 뺀다 — 진동·소음은 실제 직업병 인자이기도 하다.
@@ -121,10 +148,24 @@ def length_scale(text_len, base):
     return math.sqrt(max(text_len, base) / base)
 
 
-def grade_page(text, word_boundary=False, normalize=False):
+def discretize(x, how):
+    """연속 임계를 정수 카운트에 맞춰 자른다. D4 주석 참조."""
+    import math
+    if how == 'floor':
+        return math.floor(x)
+    if how == 'round':
+        return math.floor(x + 0.5)          # 은행가 반올림을 피한다
+    return math.ceil(x)                     # 'ceil' — 현재 동작
+
+
+def grade_page(text, word_boundary=False, normalize=False,
+               how=DISCRETIZE, exempt=False):
     """페이지 본문 하나에 등급을 매긴다. 반환: (등급, 안전수, 조치수, 사유)
 
     normalize 는 False 이거나 length_scale() 이 돌려준 배율(float)이다.
+    how     는 정규화 임계의 이산화 방식(D4).
+    exempt  가 True 면 조치어 절대수 >= ACTION_EXEMPT 인 페이지는 조치어
+            임계를 정규화하지 않는다(D5, 조건부 정규화).
     """
     s = count_terms(text, SAFETY_TERMS, word_boundary)
     a = count_terms(text, ACTION_TERMS, word_boundary)
@@ -132,7 +173,11 @@ def grade_page(text, word_boundary=False, normalize=False):
 
     s_min, a_min = SAFETY_MIN, ACTION_MIN
     if normalize:
-        s_min, a_min = SAFETY_MIN * normalize, ACTION_MIN * normalize
+        s_min = discretize(SAFETY_MIN * normalize, how)
+        if exempt and an >= ACTION_EXEMPT:
+            a_min = ACTION_MIN              # 길이와 무관하게 원래 임계
+        else:
+            a_min = discretize(ACTION_MIN * normalize, how)
 
     if sn < s_min:
         g = 1
@@ -197,12 +242,14 @@ def median_length(pages):
     return L[len(L) // 2] if L else DENSITY_BASE
 
 
-def run(pages, word_boundary, normalize, base=None):
+def run(pages, word_boundary, normalize, base=None,
+        how=DISCRETIZE, exempt=False):
     """normalize=True 면 페이지별 길이 배율을 적용한다."""
     out = {}
     for key, rec in pages.items():
         scale = length_scale(len(rec['text']), base) if normalize else False
-        g, sn, an, reason = grade_page(rec['text'], word_boundary, scale)
+        g, sn, an, reason = grade_page(rec['text'], word_boundary, scale,
+                                       how, exempt)
         out[key] = {'g': g, 'sn': sn, 'an': an, 'reason': reason,
                     'len': len(rec['text'])}
     return out
@@ -255,18 +302,24 @@ def main():
     print('  페이지 길이 중앙값 %d자 (D2 기준 길이로 사용)' % med)
 
     variants = [
-        ('D1 단어 경계', True, False),
-        ('D2 길이 정규화', False, True),
-        ('D1+D2 둘 다', True, True),
+        ('D1 단어 경계', dict(word_boundary=True, normalize=False)),
+        ('D2 길이 정규화', dict(word_boundary=False, normalize=True)),
+        ('D1+D2 둘 다', dict(word_boundary=True, normalize=True)),
+        ('D1+D2+D5 조건부면제',
+         dict(word_boundary=True, normalize=True, exempt=True)),
+        ('D1+D2+D4 round',
+         dict(word_boundary=True, normalize=True, how='round')),
+        ('D1+D2+D4 floor',
+         dict(word_boundary=True, normalize=True, how='floor')),
     ]
     print('\n=== 항목별 영향도 (재현 기준 대비) ===')
     results = {}
-    for name, wb_, nm in variants:
-        g = run(pages, wb_, nm, med)
+    for name, kw in variants:
+        g = run(pages, base=med, **kw)
         results[name] = g
         moved = sum(1 for k in g if g[k]['g'] != base[k]['g'])
         d = dist(g)
-        print('  %-16s 분포 %s  등급3 %.1f%%  변동 %d쪽 (%.1f%%)'
+        print('  %-20s 분포 %s  등급3 %.1f%%  변동 %d쪽 (%.1f%%)'
               % (name, d, d[3] * 100.0 / len(g), moved, moved * 100.0 / max(len(g), 1)))
 
     final = results['D1+D2 둘 다']
@@ -289,7 +342,8 @@ def main():
         'pages': len(pages),
         'median_page_len': med,
         'rule': {'safety_min': SAFETY_MIN, 'action_min': ACTION_MIN,
-                 'normalize': 'sqrt(len/median)'},
+                 'normalize': 'sqrt(len/median)',
+                 'discretize': DISCRETIZE, 'action_exempt': ACTION_EXEMPT},
         'reproduction': {'agree': ok, 'total': tot,
                          'rate': round(ok * 100.0 / max(tot, 1), 2)},
         'dist': {'baseline': dist(base),
