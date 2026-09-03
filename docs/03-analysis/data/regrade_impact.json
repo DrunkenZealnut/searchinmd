@@ -5,7 +5,9 @@
   "rule": {
     "safety_min": 6,
     "action_min": 5,
-    "normalize": "sqrt(len/median)"
+    "normalize": "sqrt(len/median)",
+    "discretize": "ceil",
+    "action_exempt": 10
   },
   "reproduction": {
     "agree": 1839,
@@ -32,6 +34,21 @@
       "1": 1407,
       "2": 371,
       "3": 69
+    },
+    "D1+D2+D5 조건부면제": {
+      "1": 1407,
+      "2": 367,
+      "3": 73
+    },
+    "D1+D2+D4 round": {
+      "1": 1386,
+      "2": 386,
+      "3": 75
+    },
+    "D1+D2+D4 floor": {
+      "1": 1367,
+      "2": 401,
+      "3": 79
     }
   },
   "moves_vs_original": {

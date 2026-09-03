@@ -16,15 +16,25 @@
   One claim in the earlier version of this entry was wrong: the "total disagrees with its own itemised list" is **not** a scoring bug. 168 of the 171 mismatches list exactly five terms — the reason string truncates to the top five. Only 3 pages (0.16%) are genuinely off, each by one.
 - **Status**: `regrade.py` reproduces the rule and fixes the two real defects; per-defect impact is in `docs/03-analysis/data/regrade_impact.json`. **The dashboards still publish the old numbers** — applying the correction is a research-facing decision, not a code one.
 
-  | | 등급1 | 등급2 | 등급3 | 등급3 비율 |
-  |---|---:|---:|---:|---:|
-  | 발표 중 (원본) | 1,270 | 469 | 108 | 5.8% |
-  | 재현 (규칙 확인용) | 1,261 | 478 | 108 | 5.8% |
-  | + 단어 경계 | 1,304 | 442 | 101 | 5.5% |
-  | + 길이 정규화 | 1,371 | 404 | 72 | 3.9% |
-  | **둘 다** | **1,407** | **371** | **69** | **3.7%** |
+  | | 등급1 | 등급2 | 등급3 | 등급3 비율 | F1 (코더 A / B) |
+  |---|---:|---:|---:|---:|---:|
+  | 발표 중 (원본) | 1,270 | 469 | 108 | 5.8% | 0.803 / 0.810 |
+  | 재현 (규칙 확인용) | 1,261 | 478 | 108 | 5.8% | — |
+  | + 단어 경계 (D1) | 1,304 | 442 | 101 | 5.5% | — |
+  | + 길이 정규화 (D2) | 1,371 | 404 | 72 | 3.9% | — |
+  | D1+D2 | 1,407 | 371 | 69 | 3.7% | 0.813 / 0.807 |
+  | D1+D2 + 조건부면제 (D5) | 1,407 | 367 | 73 | 4.0% | 0.790 / 0.785 |
+  | **D1+D2 + 이산화 (D4 round)** | **1,386** | **386** | **75** | **4.1%** | **0.834 / 0.828** |
+  | D1+D2 + 이산화 (D4 floor) | 1,367 | 401 | 79 | 4.3% | 0.851 / 0.846 |
 
-- **Depends on**: A decision on whether to republish at 3.7%. Length normalisation uses `sqrt(len / median)`; the form and base are defensible but chosen, and within a reasonable base range (1,000-3,000 chars) the 등급3 share lands between 2.9% and 5.2%. That band should be stated wherever the number is published.
+- **Validation**: 69쪽 맹검 이중코딩(분쟁군 39 전수 + 대조군 30). 두 AI 코더 일치 88.4%, Cohen κ 0.796. F1 은 모집단 비중으로 보정한 값 — 표본에서 분쟁군이 과대표집돼 있어 그냥 세면 안 된다. `score_coding.py` 5번 섹션.
+- **D5 조건부 정규화는 기각.** "안전 전담 페이지는 길고 조치가 많으니 정규화가 부당하게 깎는다"는 가설이 데이터와 반대였다. 코더가 진짜 등급3이라 한 쪽은 조치어 중앙 5건·길이 중앙 1,268자로 **짧았고**, 강등이 정당한 쪽이 조치어 중앙 8건·길이 중앙 6,436자로 **길었다**. 면제가 되살린 4쪽은 코더가 전부 등급3이 아니라고 했다.
+- **D4 이산화가 진짜 원인.** 카운트는 정수인데 임계는 연속값이라 비교가 사실상 `ceil()` 로 동작한다. 중앙값보다 1자 긴 페이지가 조치어 5건이 아니라 6건을 요구받는다. 분쟁군 11쪽이 임계 차이 -2.3 이내에서 떨어졌고 그중 7쪽을 코더 둘 다 진짜 등급3이라 판정했다.
+- **Depends on**: A decision on whether to republish, and at which number. 열려 있는 것 셋:
+  1. `floor` 가 F1 은 가장 높지만 **이 69쪽에서 골라 채택하면 과적합**이다. `round` 는 라벨을 보기 전에 중립적 이산화로 고른 값이라 그 문제가 없다. floor 채택은 별도 홀드아웃이 필요하다.
+  2. **현행의 재현율은 측정된 적이 없다.** 표본이 현행의 등급3 108쪽 안에서만 뽑혀서, 등급1·2로 떨어진 1,739쪽에 진짜 등급3이 얼마나 묻혀 있는지 모른다. 위 F1 은 전부 상한이다.
+  3. AI 두 코더의 일치는 사람 이중코딩이 아니다. κ 0.796 이 정확도인지 공통 편향인지 사람 코딩 30~40쪽으로만 갈린다.
+- **Base sensitivity**: 길이 정규화는 `sqrt(len / median)` 이고 형태와 기준값 모두 선택이다. 기준값 1,000~3,000자 범위에서 등급3 비율은 2.9~5.2% 에 걸친다. 발행하는 곳마다 이 폭을 함께 적어야 한다.
 
 ## Completed
 
