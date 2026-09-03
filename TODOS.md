@@ -20,11 +20,6 @@
 - **Context**: Colour ramp direction (grade 1 = grey rather than red) was reviewed and deliberately kept — grey reads as "not safety-related", and red stays reserved for accident cases.
 - **Depends on**: Nothing.
 
-## P3 — No CI
-- **Why**: The only defence for the published numbers is four harnesses a human has to remember to run. `recount_grades.py --force` can write artifacts that failed the regression check.
-- **Context**: Add `.github/workflows/test.yml` running the three Node/Python harnesses on push and pull_request. `test-core-logic.html` needs a headless shim.
-- **Depends on**: Nothing.
-
 ## P3 — Add SRI to CDN scripts on the public dashboards
 - **Why**: `docs/*.html` load Chart.js, html-to-image, and Google Fonts with no `integrity=`. The search app already pins XLSX with SRI, so the dashboards are the inconsistent ones.
 - **Depends on**: Nothing.
@@ -41,3 +36,8 @@
 - **Why**: The comment claimed GC invalidated entries, but `markdownFiles` holds strong references for the whole session, so nothing was collected. It also computed tables/images with those toggles off, and rule-based sentences in hybrid LLM mode where they are discarded.
 - **Completed:** PR #4 (2026-09-03) — `sentences`/`tables`/`images` are now memoising lazy getters; `lines`/`pageMap` stay eager because result rendering always needs them. Call sites needed no change (they already guarded on the search toggles). Measured on a 200-page doc scaled to 86 books: 74 MB with everything on, 30 MB in hybrid mode, 19 MB with sentences-only + hybrid. Comment corrected — the WeakMap does invalidate on re-scan, it just has no bound within a session. Covered by `test-search-equivalence.js` T9a-T9h (mutation-verified).
 - **Not done**: no LRU byte cap. Measured worst case is 74 MB for the largest known corpus, which a browser tab handles; a cap would also undo FR-1's "re-search is free" property. Revisit if a corpus grows past a few hundred books.
+
+### No CI
+- **Why**: The only defence for the published numbers was four harnesses a human had to remember to run.
+- **Completed:** PR #5 (2026-09-03) — `.github/workflows/test.yml` runs all four on push and pull_request. `run-core-logic-tests.js` added so the browser harness can be gated too (mutation-verified: a broken assertion and a mid-run exception both exit 1). Verified against a `git archive` clean clone with no `data/` and no pip packages. The last step installs `openpyxl` on purpose — without it `recount_grades.py` stops at the import guard and never reaches the missing-source branch the step is checking.
+- **Not done**: `--force` can still write artifacts that failed the regression check; CI cannot catch that because it has no `data/` to run the recount against.

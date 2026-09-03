@@ -152,12 +152,15 @@ node   outputs/test-search-equivalence.js   # 24 assertions — search equivalen
 node   outputs/test-dashboard-data.js       # 92 assertions — docs/ dashboard data + table render/sort
 python3 outputs/test-recount-grades.py      # 87 assertions — recount_grades.py logic
 
-# Open in browser to run core logic unit tests (isHeadingLine, isStandaloneTitle, normalizeHeading, NFC)
+node   outputs/run-core-logic-tests.js       # 32 assertions — headless runner for test-core-logic.html
+
+# Or open it in a browser and read the tab title: "PASS: N/N tests passed"
 open outputs/test-core-logic.html
-# Check browser title: "PASS: N/N tests passed" or "FAIL: ..."
 ```
 
-`test-core-logic.html` copies shared helper functions from the main app and runs assertions in-browser. When adding or changing heading detection / normalization logic, update both files and verify tests pass.
+All four run in CI on every push and pull request (`.github/workflows/test.yml`). The workflow installs nothing for the harnesses themselves; it installs `openpyxl` only for the last step, which checks that `recount_grades.py` exits with a readable message instead of a traceback when `data/` is absent (the default state of a fresh clone).
+
+`test-core-logic.html` copies shared helper functions from the main app and runs assertions in-browser. When adding or changing heading detection / normalization logic, update both files and verify tests pass. `run-core-logic-tests.js` runs that same HTML headlessly (minimal DOM + `vm`, reads `document.title`) so CI can gate on it — it holds no copy of the assertions.
 
 `test-search-equivalence.js` and `test-dashboard-data.js` load the real `<script>` blocks out of the HTML files via `vm` + a DOM mock, so they carry no copy-paste debt. `test-recount-grades.py` stubs `openpyxl` in `sys.modules` and monkeypatches `load_workbook` with a fake workbook, so it runs without pip packages and without the gitignored `data/` originals.
 

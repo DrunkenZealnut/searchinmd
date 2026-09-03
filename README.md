@@ -67,16 +67,16 @@ python3 recount_grades.py --data /other/path # 다른 위치 지정
 
 ## 테스트
 
-프레임워크는 없습니다. 자체 하니스 4종입니다. 앞 3종은 Node·Python 표준 라이브러리만 쓰고 exit 0/1 을 내므로 CI 에 그대로 걸 수 있습니다. `test-core-logic.html` 은 브라우저에서 열어 탭 제목을 확인하는 방식입니다.
+프레임워크는 없습니다. 자체 하니스 4종이고 Node·Python 표준 라이브러리만 씁니다. 전부 exit 0/1 을 내며 **push·PR 마다 CI 에서 돕니다**(`.github/workflows/test.yml`).
 
 ```bash
 node    outputs/test-search-equivalence.js   # 24 — 검색 동치성 + 청크 렌더 + 지연 캐시
 node    outputs/test-dashboard-data.js       # 92 — 대시보드 데이터·표 렌더·정렬
 python3 outputs/test-recount-grades.py       # 87 — recount_grades.py 로직
-open    outputs/test-core-logic.html         # 32 — 제목 판정·정규화 (브라우저, 탭 제목 확인)
+node    outputs/run-core-logic-tests.js       # 32 — 제목 판정·정규화 (헤드리스)
 ```
 
-앞의 두 하니스는 HTML 안의 실제 `<script>` 블록을 `vm` + DOM mock으로 불러옵니다. 복사해 붙인 사본을 테스트하지 않습니다. `test-recount-grades.py`는 `openpyxl`을 스텁으로 주입해 pip 패키지 없이도, 원본 엑셀 없이도 돕니다.
+네 하니스 모두 HTML 안의 실제 `<script>` 블록을 `vm` + DOM mock으로 불러옵니다. 복사해 붙인 사본을 테스트하지 않습니다. `test-core-logic.html` 은 브라우저에서 열어 탭 제목으로 봐도 됩니다 — `run-core-logic-tests.js` 는 같은 HTML 을 헤드리스로 돌릴 뿐입니다. `test-recount-grades.py`는 `openpyxl`을 스텁으로 주입해 pip 패키지 없이도, 원본 엑셀 없이도 돕니다.
 
 대시보드의 하드코딩 데이터 배열은 **자기 자신이 아니라 `summary.json`에 대조**합니다.
 
