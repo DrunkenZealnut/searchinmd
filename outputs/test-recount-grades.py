@@ -546,6 +546,11 @@ check('R10c round 는 5.02 를 5 로 둔다 (계단이 중간점에 온다)',
       G.discretize(5.02, 'round') == 5, G.discretize(5.02, 'round'))
 check('R10d round 는 5.5 를 6 으로 (은행가 반올림이 아니라 통상 반올림)',
       G.discretize(5.5, 'round') == 6, G.discretize(5.5, 'round'))
+# 5.5 는 은행가 반올림으로도 6 이라 둘을 구분하지 못한다. 6.5 에서 갈린다 —
+# 파이썬 round(6.5) 는 짝수인 6 을 준다. 안전어 임계 6 x 배율 1.083 이 실제로
+# 여기에 걸리므로 가상의 경계가 아니다.
+check('R10p round 는 6.5 를 7 로 (파이썬 round 는 6 을 준다)',
+      G.discretize(6.5, 'round') == 7, G.discretize(6.5, 'round'))
 check('R10e floor 는 임계가 정수에 완전히 도달해야 올린다',
       G.discretize(5.99, 'floor') == 5 and G.discretize(6.0, 'floor') == 6)
 check('R10f 세 방식의 엄격도 순서는 floor <= round <= ceil',
@@ -589,6 +594,21 @@ check('R10l 면제는 안전어 게이트까지 풀어주지는 않는다',
       G.grade_page('방지 예방 착용 환기 차단 대피 격리 소화기 보안경 안전모 '
                    + 'x' * 12000, True,
                    G.length_scale(12000, 1000), 'ceil', True)[0] == 1)
+# R10l 의 페이지는 안전어가 0건이라 게이트를 풀든 말든 등급1 이다. 면제가
+# 안전어 임계까지 건드리는지 보려면 정규화 전에는 통과하고 정규화 후에는
+# 떨어지는 구간(6 <= 안전어 < 6*배율)에 있으면서 조치어는 면제 임계를
+# 넘는 페이지가 필요하다.
+_gate = '위험 ' * 10 + '방지 예방 착용 환기 차단 대피 격리 소화기 보안경 안전모 ' \
+        + 'x' * 8900                                      # 약 9,000자 -> 배율 3.0
+_sc3 = G.length_scale(len(_gate), 1000)
+check('R10q 안전어가 원본 임계는 넘고 정규화 임계는 못 넘으면 면제해도 등급1',
+      _sc3 > 2.5
+      and G.SAFETY_MIN <= G.grade_page(_gate, True, _sc3, 'ceil')[1]
+          < G.SAFETY_MIN * _sc3
+      and G.grade_page(_gate, True, _sc3, 'ceil')[2] >= G.ACTION_EXEMPT
+      and G.grade_page(_gate, True, _sc3, 'ceil', True)[0] == 1,
+      (round(_sc3, 2), G.grade_page(_gate, True, _sc3, 'ceil')[1:3],
+       G.grade_page(_gate, True, _sc3, 'ceil', True)[0]))
 
 # run() 이 파라미터를 실제로 흘려보내는지 (기본값만 쓰고 무시하면 안 된다)
 _pages = {('f', 1): {'text': _knife, 'grade': None}}
