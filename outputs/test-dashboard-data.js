@@ -377,5 +377,37 @@ check('D9 osha.html 에 구(舊) 사고사례 "7건" 잔존 없음', !/사고사
 check('D9 osha.html 에 구(舊) 교과서 "982건" 잔존 없음', !osha.includes('982건'));
 check('D9a index.html 이 등급3 108쪽 인용', idxHtml.includes('108'));
 
+// =====================================================================
+// D11 — 가로 스크롤 영역의 구조 회귀
+//
+// .scroll-x 를 .card 와 같은 요소에 얹으면 스타일시트에서 뒤에 오는 .card 의
+// background 가(특이도 동률) 그라데이션을 통째로 덮어 어포던스가 사라진다.
+// 실제로 그렇게 짰다가 실측 backgroundImage 레이어 0 으로 잡혔고, 그때 이
+// 하니스는 아무 것도 눈치채지 못했다. 구조 자체를 고정한다.
+// =====================================================================
+console.log('\n[구조] 가로 스크롤 영역');
+const PAGES = ['docs/index.html', 'docs/textbook.html', 'docs/osha.html']
+  .map(rel => [rel, fs.readFileSync(path.join(ROOT, rel), 'utf8')]);
+PAGES.forEach(([name, html]) => {
+  const classAttrs = [...html.matchAll(/class="([^"]*)"/g)].map(m => m[1].split(/\s+/));
+  const both = classAttrs.filter(c => c.includes('card') && c.includes('scroll-x'));
+  check(`D11a ${name} — .card 와 .scroll-x 를 같은 요소에 얹지 않음`,
+    both.length === 0, both.map(c => c.join(' ')).join(' | '));
+
+  // 넓은 표는 전부 스크롤 영역 안에 있어야 한다. 바깥에 있으면 좁은 화면에서
+  // 페이지가 통째로 가로로 밀린다.
+  const tables = (html.match(/<table\b/g) || []).length;
+  const wrapped = (html.match(/<div class="scroll-x"[^>]*>\s*<table\b/g) || []).length;
+  check(`D11b ${name} — 표 ${tables}개가 전부 .scroll-x 래퍼 안`,
+    wrapped === tables, `wrapped=${wrapped} / tables=${tables}`);
+
+  // 스크롤 가능 영역은 키보드로 도달할 수 있어야 하고 이름이 있어야 한다.
+  const regions = [...html.matchAll(/<div class="scroll-x"([^>]*)>/g)].map(m => m[1]);
+  check(`D11c ${name} — 스크롤 영역 ${regions.length}개 전부 tabindex+role+aria-label`,
+    regions.length > 0 && regions.every(a =>
+      /tabindex="0"/.test(a) && /role="region"/.test(a) && /aria-label="[^"]+"/.test(a)),
+    regions.filter(a => !/aria-label="[^"]+"/.test(a)).length + '개 누락');
+});
+
 console.log(`\n결과: ${pass}/${pass + fail} PASS${fail ? `, ${fail} FAIL` : ''}${warned ? `, ${warned} KNOWN ISSUE` : ''}`);
 process.exit(fail ? 1 : 0);
