@@ -1312,6 +1312,26 @@ ${numberedContent}`;
             return lines.slice(start, end).join('\n');
         }
 
+        // FR-1/FR-2: 파일별 파싱 결과 캐시 (재검색 시 split/extract/pageMap 재계산 0회)
+        // 캐시는 file 객체에 WeakMap으로 결속 → markdownFiles 재할당 시 옛 객체 GC로 자동 무효화.
+        const __parseCache = new WeakMap(); // file -> { lines, pageMap, sentences, tables, images }
+        function getParsedDoc(file) {
+            let p = __parseCache.get(file);
+            if (p) return p; // 캐시 히트
+            const lines = file.content.split('\n');
+            const pageMap = buildPageMapping(lines, file.metadata != null ? file.metadata : null);
+            const sentences = extractSentencesWithLineNumbers(lines);
+            const tables = extractTablesWithLineNumbers(lines);
+            const images = extractImagesWithLineNumbers(lines);
+            // FR-2: 소문자본 1회 precompute (검색·키워드와 무관, 파일당 1회)
+            for (const s of sentences) s.lower = s.sentence.toLowerCase();
+            for (const t of tables) t.lower = t.table.toLowerCase();
+            for (const im of images) im.lower = im.searchText.toLowerCase();
+            p = { lines, pageMap, sentences, tables, images };
+            __parseCache.set(file, p);
+            return p;
+        }
+
         // Search functionality
         searchBtn.addEventListener('click', performSearch);
 
@@ -1327,6 +1347,9 @@ ${numberedContent}`;
             const searchTables = document.getElementById('searchTables').checked;
             const searchImages = document.getElementById('searchImages').checked;
 
+            // FR-3(D4): 키워드 소문자본을 파일 루프 밖에서 1회 준비(파일·item 무관)
+            const kwPrep = keywords.map(k => ({ raw: k, needle: caseSensitive ? k : k.toLowerCase() }));
+
             progressBar.classList.add('active');
             searchBtn.disabled = true;
 
@@ -1336,134 +1359,137 @@ ${numberedContent}`;
                 progressFill.style.width = `${progress}%`;
                 statusText.textContent = `검색 중: ${file.name} (${i + 1}/${markdownFiles.length})`;
 
-                // Split lines once per file
-                const lines = file.content.split('\n');
+                // FR-1/FR-2: 파일 파싱 결과를 캐시에서 조회(재검색 시 재계산 0회)
+                const parsed = getParsedDoc(file);
+                const lines = parsed.lines;
+                const pageMap = parsed.pageMap;
+                const pageContentCache = new Map(); // 페이지 전체내용 캐시(검색 단위, 결과 부착용)
 
-                // Build page mapping from metadata if available
-                const pageMap = buildPageMapping(lines, file.metadata);
-                const pageContentCache = new Map(); // Cache full page content per page number
-
-                // Extract content once per file (keyword-independent)
+                // 추출은 캐시본 재사용. LLM(hybrid) 모드만 문장을 별도 경로로 교체.
                 const useHybrid = useHybridLLMCheckbox.checked && llmAvailable;
                 let sentencesWithLines = [];
                 if (searchSentences) {
                     if (useHybrid) {
                         statusText.textContent = `LLM 분석 중: ${file.name} (${i + 1}/${markdownFiles.length})`;
                         sentencesWithLines = await extractSentencesWithLLM(lines, file.name);
+                        // LLM 결과에도 소문자본 precompute(FR-2 일관)
+                        for (const s of sentencesWithLines) if (s.lower === undefined) s.lower = s.sentence.toLowerCase();
                     } else {
-                        sentencesWithLines = extractSentencesWithLineNumbers(lines);
+                        sentencesWithLines = parsed.sentences;
                     }
                 }
-                const tablesWithLines = searchTables ? extractTablesWithLineNumbers(lines) : [];
-                const imagesWithLines = searchImages ? extractImagesWithLineNumbers(lines) : [];
+                const tablesWithLines = searchTables ? parsed.tables : [];
+                const imagesWithLines = searchImages ? parsed.images : [];
 
-                for (const keyword of keywords) {
-                    const searchKeyword = caseSensitive ? keyword : keyword.toLowerCase();
+                // Search sentences — item 1회 순회, item당 소문자화 ≤1회 (kwPrep는 파일 루프 밖에서 준비됨)
+                if (searchSentences) {
+                    sentencesWithLines.forEach((item, idx) => {
+                        const hay = caseSensitive ? item.sentence
+                            : (item.lower !== undefined ? item.lower : item.sentence.toLowerCase());
+                        for (const { raw, needle } of kwPrep) {
+                            if (!hay.includes(needle)) continue;
+                            const pageNum = pageMap ? pageMap.get(item.lineNumber) : null;
+                            let content;
 
-                    // Search sentences with line/page numbers
-                    if (searchSentences) {
-                        sentencesWithLines.forEach((item, idx) => {
-                            const sentenceToSearch = caseSensitive ? item.sentence : item.sentence.toLowerCase();
-                            if (sentenceToSearch.includes(searchKeyword)) {
-                                const pageNum = pageMap ? pageMap.get(item.lineNumber) : null;
-                                let content;
-
-                                if (item.isHeading) {
-                                    // Heading match: include up to 5 subsequent content lines
-                                    let subLines = [item.sentence.trim()];
-                                    for (let si = idx + 1; si < sentencesWithLines.length && subLines.length <= 5; si++) {
-                                        const sub = sentencesWithLines[si];
-                                        if (sub.isHeading) break;
-                                        subLines.push(sub.sentence.trim());
-                                    }
-                                    content = subLines.join('\n');
-                                } else {
-                                    // Regular content match: show with heading context
-                                    content = item.headingContext
-                                        ? `[${item.headingContext}]\n${item.sentence.trim()}`
-                                        : item.sentence.trim();
+                            if (item.isHeading) {
+                                // Heading match: include up to 5 subsequent content lines
+                                let subLines = [item.sentence.trim()];
+                                for (let si = idx + 1; si < sentencesWithLines.length && subLines.length <= 5; si++) {
+                                    const sub = sentencesWithLines[si];
+                                    if (sub.isHeading) break;
+                                    subLines.push(sub.sentence.trim());
                                 }
-
-                                // Get full page content (with cache)
-                                let fullPageContent;
-                                const cacheKey = pageNum || `L${item.lineNumber}`;
-                                if (pageContentCache.has(cacheKey)) {
-                                    fullPageContent = pageContentCache.get(cacheKey);
-                                } else {
-                                    fullPageContent = extractPageContent(lines, pageMap, pageNum, item.lineNumber);
-                                    pageContentCache.set(cacheKey, fullPageContent);
-                                }
-
-                                searchResults[keyword].push({
-                                    type: '문장',
-                                    filename: file.name,
-                                    content: content,
-                                    lineNumber: item.lineNumber,
-                                    pageNumber: pageNum || item.lineNumber,
-                                    hasPage: !!pageNum,
-                                    headingContext: item.headingContext || null,
-                                    fullPageContent: fullPageContent
-                                });
+                                content = subLines.join('\n');
+                            } else {
+                                content = item.headingContext
+                                    ? `[${item.headingContext}]\n${item.sentence.trim()}`
+                                    : item.sentence.trim();
                             }
-                        });
-                    }
 
-                    // Search tables with line/page numbers
-                    if (searchTables) {
-                        tablesWithLines.forEach(item => {
-                            const tableToSearch = caseSensitive ? item.table : item.table.toLowerCase();
-                            if (tableToSearch.includes(searchKeyword)) {
-                                const pageNum = pageMap ? pageMap.get(item.lineNumber) : null;
-                                const tCacheKey = pageNum || `L${item.lineNumber}`;
-                                let tFullPage;
-                                if (pageContentCache.has(tCacheKey)) {
-                                    tFullPage = pageContentCache.get(tCacheKey);
-                                } else {
-                                    tFullPage = extractPageContent(lines, pageMap, pageNum, item.lineNumber);
-                                    pageContentCache.set(tCacheKey, tFullPage);
-                                }
-                                searchResults[keyword].push({
-                                    type: '표',
-                                    filename: file.name,
-                                    content: item.table.trim(),
-                                    lineNumber: item.lineNumber,
-                                    pageNumber: pageNum || item.lineNumber,
-                                    hasPage: !!pageNum,
-                                    fullPageContent: tFullPage
-                                });
+                            // Get full page content (with cache)
+                            let fullPageContent;
+                            const cacheKey = pageNum || `L${item.lineNumber}`;
+                            if (pageContentCache.has(cacheKey)) {
+                                fullPageContent = pageContentCache.get(cacheKey);
+                            } else {
+                                fullPageContent = extractPageContent(lines, pageMap, pageNum, item.lineNumber);
+                                pageContentCache.set(cacheKey, fullPageContent);
                             }
-                        });
-                    }
 
-                    // Search images with line/page numbers
-                    if (searchImages) {
-                        imagesWithLines.forEach(img => {
-                            const imgSearchText = caseSensitive ? img.searchText : img.searchText.toLowerCase();
-                            if (imgSearchText.includes(searchKeyword)) {
-                                const pageNum = pageMap ? pageMap.get(img.lineNumber) : null;
-                                const iCacheKey = pageNum || `L${img.lineNumber}`;
-                                let iFullPage;
-                                if (pageContentCache.has(iCacheKey)) {
-                                    iFullPage = pageContentCache.get(iCacheKey);
-                                } else {
-                                    iFullPage = extractPageContent(lines, pageMap, pageNum, img.lineNumber);
-                                    pageContentCache.set(iCacheKey, iFullPage);
-                                }
-                                searchResults[keyword].push({
-                                    type: '이미지',
-                                    filename: file.name,
-                                    content: img.content,
-                                    lineNumber: img.lineNumber,
-                                    pageNumber: pageNum || img.lineNumber,
-                                    hasPage: !!pageNum,
-                                    fullPageContent: iFullPage
-                                });
-                            }
-                        });
-                    }
+                            searchResults[raw].push({
+                                type: '문장',
+                                filename: file.name,
+                                content: content,
+                                lineNumber: item.lineNumber,
+                                pageNumber: pageNum || item.lineNumber,
+                                hasPage: !!pageNum,
+                                headingContext: item.headingContext || null,
+                                fullPageContent: fullPageContent
+                            });
+                        }
+                    });
                 }
 
-                await new Promise(r => setTimeout(r, 1));
+                // Search tables
+                if (searchTables) {
+                    tablesWithLines.forEach(item => {
+                        const hay = caseSensitive ? item.table
+                            : (item.lower !== undefined ? item.lower : item.table.toLowerCase());
+                        for (const { raw, needle } of kwPrep) {
+                            if (!hay.includes(needle)) continue;
+                            const pageNum = pageMap ? pageMap.get(item.lineNumber) : null;
+                            const tCacheKey = pageNum || `L${item.lineNumber}`;
+                            let tFullPage;
+                            if (pageContentCache.has(tCacheKey)) {
+                                tFullPage = pageContentCache.get(tCacheKey);
+                            } else {
+                                tFullPage = extractPageContent(lines, pageMap, pageNum, item.lineNumber);
+                                pageContentCache.set(tCacheKey, tFullPage);
+                            }
+                            searchResults[raw].push({
+                                type: '표',
+                                filename: file.name,
+                                content: item.table.trim(),
+                                lineNumber: item.lineNumber,
+                                pageNumber: pageNum || item.lineNumber,
+                                hasPage: !!pageNum,
+                                fullPageContent: tFullPage
+                            });
+                        }
+                    });
+                }
+
+                // Search images
+                if (searchImages) {
+                    imagesWithLines.forEach(img => {
+                        const hay = caseSensitive ? img.searchText
+                            : (img.lower !== undefined ? img.lower : img.searchText.toLowerCase());
+                        for (const { raw, needle } of kwPrep) {
+                            if (!hay.includes(needle)) continue;
+                            const pageNum = pageMap ? pageMap.get(img.lineNumber) : null;
+                            const iCacheKey = pageNum || `L${img.lineNumber}`;
+                            let iFullPage;
+                            if (pageContentCache.has(iCacheKey)) {
+                                iFullPage = pageContentCache.get(iCacheKey);
+                            } else {
+                                iFullPage = extractPageContent(lines, pageMap, pageNum, img.lineNumber);
+                                pageContentCache.set(iCacheKey, iFullPage);
+                            }
+                            searchResults[raw].push({
+                                type: '이미지',
+                                filename: file.name,
+                                content: img.content,
+                                lineNumber: img.lineNumber,
+                                pageNumber: pageNum || img.lineNumber,
+                                hasPage: !!pageNum,
+                                fullPageContent: iFullPage
+                            });
+                        }
+                    });
+                }
+
+                // FR-6: 8파일마다 UI에 양보(was: 매 파일 setTimeout(1) → 클램프 지연 누적)
+                if ((i + 1) % 8 === 0) await new Promise(r => setTimeout(r));
             }
 
             progressFill.style.width = '100%';
@@ -1664,6 +1690,11 @@ ${numberedContent}`;
         function renderResultsTable(keyword) {
             const results = searchResults[keyword];
 
+            // 이전 렌더의 옵서버 정리(탭 전환 누수 방지).
+            // 빈 결과 조기 반환보다 위에 있어야 한다 — 아래에 있으면 결과 많은 탭에서
+            // 0건 탭으로 넘어갈 때 옵서버가 떨어져 나간 sentinel 을 계속 관찰한 채 남는다.
+            if (resultsContent.__io) { resultsContent.__io.disconnect(); resultsContent.__io = null; }
+
             if (results.length === 0) {
                 resultsContent.innerHTML = `
                     <div class="empty-state">
@@ -1680,8 +1711,34 @@ ${numberedContent}`;
             const hasAnyPageInfo = results.some(r => r.hasPage);
             const locationHeader = hasAnyPageInfo ? '페이지/줄' : '줄 번호';
 
+            // FR-4: 하이라이트 정규식을 렌더당 1회 생성(was: 행마다 new RegExp)
+            const hlRegex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+
+            // 한 행 HTML 생성(절대 인덱스 i 사용 → 청크 append 시에도 id/번호 일관)
+            function rowHtml(r, i) {
+                const fp = r.fullPageContent || '';
+                const fpPreview = escapeHtml(fp.substring(0, 200));
+                const fpNeedsToggle = fp.length > 200;
+                const inner = escapeHtml(r.headingContext ? r.content.replace(`[${r.headingContext}]\n`, '') : r.content).substring(0, 500);
+                return `
+                                <tr>
+                                    <td>${i + 1}</td>
+                                    <td><span class="type-badge type-${r.type === '문장' ? 'sentence' : r.type === '표' ? 'table' : 'image'}">${r.type}</span></td>
+                                    <td title="${escapeHtml(r.filename)}">${escapeHtml(r.filename.length > 30 ? '...' + r.filename.slice(-27) : r.filename)}</td>
+                                    <td><div class="content-preview">${r.headingContext ? `<span class="heading-context">[${escapeHtml(r.headingContext)}]</span>` : ''}${highlightWith(inner, hlRegex)}</div></td>
+                                    <td>${r.hasPage ? `<strong>p.${r.pageNumber}</strong>` : `L${r.lineNumber}`}</td>
+                                    <td class="fullpage-cell">${fp ? `<div class="fullpage-preview" id="fp-${i}">${fpPreview}</div>${fpNeedsToggle ? `<button class="fullpage-toggle" data-idx="${i}">[더보기]</button>` : ''}` : '-'}</td>
+                                </tr>`;
+            }
+
+            // FR-5: 청크 렌더 — 초기 청크만 그리고 스크롤 근접 시 다음 청크 append
+            const RENDER_CHUNK = 200;
+            const firstCount = Math.min(RENDER_CHUNK, results.length);
+            let firstRows = '';
+            for (let i = 0; i < firstCount; i++) firstRows += rowHtml(results[i], i);
+
             resultsContent.innerHTML = `
-                <div class="results-table-wrapper">
+                <div class="results-table-wrapper" id="resultsWrapper">
                     <table class="results-table">
                         <thead>
                             <tr>
@@ -1693,48 +1750,64 @@ ${numberedContent}`;
                                 <th style="width: 300px;">페이지 전체</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            ${results.map((r, i) => {
-                                const fp = r.fullPageContent || '';
-                                const fpPreview = escapeHtml(fp.substring(0, 200));
-                                const fpNeedsToggle = fp.length > 200;
-                                return `
-                                <tr>
-                                    <td>${i + 1}</td>
-                                    <td><span class="type-badge type-${r.type === '문장' ? 'sentence' : r.type === '표' ? 'table' : 'image'}">${r.type}</span></td>
-                                    <td title="${escapeHtml(r.filename)}">${escapeHtml(r.filename.length > 30 ? '...' + r.filename.slice(-27) : r.filename)}</td>
-                                    <td><div class="content-preview">${r.headingContext ? `<span class="heading-context">[${escapeHtml(r.headingContext)}]</span>` : ''}${highlightKeyword(escapeHtml(r.headingContext ? r.content.replace(`[${r.headingContext}]\n`, '') : r.content).substring(0, 500), keyword)}</div></td>
-                                    <td>${r.hasPage ? `<strong>p.${r.pageNumber}</strong>` : `L${r.lineNumber}`}</td>
-                                    <td class="fullpage-cell">${fp ? `<div class="fullpage-preview" id="fp-${i}">${fpPreview}</div>${fpNeedsToggle ? `<button class="fullpage-toggle" data-idx="${i}">[더보기]</button>` : ''}` : '-'}</td>
-                                </tr>`;
-                            }).join('')}
-                        </tbody>
+                        <tbody id="resultsTbody">${firstRows}</tbody>
                     </table>
+                    <div id="resultsSentinel" style="height:1px"></div>
                 </div>
             `;
 
-            // Bind toggle events for full page content
-            document.querySelectorAll('.fullpage-toggle').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const idx = parseInt(btn.dataset.idx);
-                    const preview = document.getElementById('fp-' + idx);
-                    const full = results[idx].fullPageContent || '';
-                    if (preview.classList.contains('expanded')) {
-                        preview.classList.remove('expanded');
-                        preview.textContent = full.substring(0, 200);
-                        btn.textContent = '[더보기]';
-                    } else {
-                        preview.classList.add('expanded');
-                        preview.textContent = full;
-                        btn.textContent = '[접기]';
-                    }
-                });
+            const tbody = document.getElementById('resultsTbody');
+            const wrapper = document.getElementById('resultsWrapper');
+
+            // FR-5: 토글을 이벤트 위임으로 처리(append 행도 자동 커버, 리스너 누수 방지)
+            tbody.addEventListener('click', (e) => {
+                const btn = e.target.closest('.fullpage-toggle');
+                if (!btn || !tbody.contains(btn)) return;
+                const idx = parseInt(btn.dataset.idx);
+                const preview = document.getElementById('fp-' + idx);
+                const full = results[idx].fullPageContent || '';
+                if (preview.classList.contains('expanded')) {
+                    preview.classList.remove('expanded');
+                    preview.textContent = full.substring(0, 200);
+                    btn.textContent = '[더보기]';
+                } else {
+                    preview.classList.add('expanded');
+                    preview.textContent = full;
+                    btn.textContent = '[접기]';
+                }
             });
+
+            // 나머지를 청크 단위로 점진 렌더
+            let rendered = firstCount;
+            const sentinel = document.getElementById('resultsSentinel');
+            if (rendered < results.length) {
+                // sentinel 은 스크롤 컨테이너(.results-table-wrapper, max-height:400px) **안에**
+                // 있어야 하고 옵서버의 root 도 그 컨테이너여야 한다. 바깥에 두면 행을 아무리
+                // append 해도 sentinel 위치가 변하지 않아 교차 상태가 그대로고, 콜백이 한 번
+                // 발화한 뒤 다시 발화하지 않는다 → 결과가 400행에서 조용히 멈춘다.
+                const io = new IntersectionObserver((entries) => {
+                    if (!entries[0].isIntersecting) return;
+                    const next = Math.min(rendered + RENDER_CHUNK, results.length);
+                    let html = '';
+                    for (let i = rendered; i < next; i++) html += rowHtml(results[i], i);
+                    tbody.insertAdjacentHTML('beforeend', html);
+                    rendered = next;
+                    if (rendered >= results.length) { io.disconnect(); sentinel.remove(); resultsContent.__io = null; }
+                }, { root: wrapper, rootMargin: '200px' });
+                io.observe(sentinel);
+                resultsContent.__io = io;
+            } else {
+                sentinel.remove();
+            }
         }
 
-        function highlightKeyword(text, keyword) {
-            const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+        // FR-4: 정규식을 받아 재사용(렌더 루프에서 호이스팅된 regex 전달). g플래그 상태 가드.
+        function highlightWith(text, regex) {
+            regex.lastIndex = 0;
             return text.replace(regex, '<span class="highlight">$1</span>');
+        }
+        function highlightKeyword(text, keyword) {
+            return highlightWith(text, new RegExp(`(${escapeRegex(keyword)})`, 'gi'));
         }
 
         // Export to Excel (preserving original format)
@@ -1783,11 +1856,11 @@ ${numberedContent}`;
                         });
                         const ws = XLSX.utils.aoa_to_sheet(wsData);
                         ws['!cols'] = [{ wch: 8 }, { wch: 40 }, { wch: 80 }, { wch: 8 }, { wch: 8 }, { wch: 100 }];
-                        let sheetName = keyword.substring(0, 31).replace(/[\\\/\?\*\[\]]/g, '_');
+                        let sheetName = keyword.substring(0, 31).replace(/[\\\/\?\*\[\]:]/g, '_');
                         let sfx = 2;
                         while (usedNames.has(sheetName)) {
                             const sfxStr = `_${sfx}`;
-                            sheetName = keyword.substring(0, 31 - sfxStr.length).replace(/[\\\/\?\*\[\]]/g, '_') + sfxStr;
+                            sheetName = keyword.substring(0, 31 - sfxStr.length).replace(/[\\\/\?\*\[\]:]/g, '_') + sfxStr;
                             sfx++;
                         }
                         usedNames.add(sheetName);
@@ -1910,11 +1983,11 @@ ${numberedContent}`;
                     }
 
                     // Add sheet to output workbook (with collision detection)
-                    let safeName = keyword.substring(0, 31).replace(/[\\\/\?\*\[\]]/g, '_');
+                    let safeName = keyword.substring(0, 31).replace(/[\\\/\?\*\[\]:]/g, '_');
                     let suffix = 2;
                     while (usedSheetNames.has(safeName)) {
                         const suffixStr = `_${suffix}`;
-                        safeName = keyword.substring(0, 31 - suffixStr.length).replace(/[\\\/\?\*\[\]]/g, '_') + suffixStr;
+                        safeName = keyword.substring(0, 31 - suffixStr.length).replace(/[\\\/\?\*\[\]:]/g, '_') + suffixStr;
                         suffix++;
                     }
                     usedSheetNames.add(safeName);
