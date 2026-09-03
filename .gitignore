@@ -16,3 +16,6 @@ __pycache__/
 .gstack-audit/
 .vscode/
 venv/
+
+# 다운로더 기본 저장 위치 (DOWNLOAD_ROOT 미설정 시)
+/downloads/
