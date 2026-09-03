@@ -134,23 +134,23 @@ Every page in the analysis corpus carries a grade. **The shipped scheme is:**
 | **2** | 형식적 언급 | 안전 키워드 다수, 구체적 조치 없음 |
 | **3** | 구체적 대책 | 안전 키워드 + 조치·대책 제시 |
 
-The two source workbooks in `data/` disagree: the NCS one already uses this numbering, the textbook one is reversed. `recount_grades.py` remaps the textbook side `{1→2, 2→3, 3→1}` so both land on the scheme above. `docs/03-analysis/grade-recount.analysis.md` §2 shows the evidence (grade-reason strings, 100% consistent per dataset).
+The two source workbooks in `data/` disagree: the NCS one already uses this numbering, the textbook one is rotated by one (not reversed — `{1→2, 2→3, 3→1}` is a cycle). `recount_grades.py` remaps the textbook side so both land on the scheme above. `docs/03-analysis/grade-recount.analysis.md` §2 shows the evidence (grade-reason strings, 100% consistent per dataset).
 
 Two rules that are easy to get wrong:
 
 - **Grade is a page property, not a keyword-hit property.** Counting rows double-counts pages that many keywords land on, which systematically inflates the top grade — NCS 등급3 is 2,228 hits but only 108 pages. Always aggregate per unique (교재, 페이지).
 - **When a page's rows disagree, take the lowest grade.** Majority voting loses: a buggy sheet records the same wrong verdict on several rows, and the duplicate count becomes votes. 12 NCS pages hit this.
 
-⚠️ `docs/01-plan/features/safety-grading.plan.md` and `feature-proposals.plan.md` describe **older, conflicting** numbering. They are kept for provenance and carry a banner. This section is authoritative.
+⚠️ `docs/01-plan/features/safety-grading.plan.md` describes **older, conflicting** numbering (1 기본언급 / 2 구체적대책 / 3 관련없음). `feature-proposals.plan.md` has the same numbering as shipped but an old label for grade 2 ("기본 언급" → now "형식적 언급"). Both carry a banner and are kept for provenance. This section is authoritative.
 
 ## Testing
 
 There is no test framework (no `package.json` / `pyproject.toml`). The project ships its own harnesses — all exit 0/1 and depend only on Node and the Python standard library.
 
 ```bash
-node   outputs/test-search-equivalence.js   # 11 assertions — search routine equivalence
+node   outputs/test-search-equivalence.js   # 16 assertions — search routine equivalence + chunked render
 node   outputs/test-dashboard-data.js       # 92 assertions — docs/ dashboard data + table render/sort
-python3 outputs/test-recount-grades.py      # 86 assertions — recount_grades.py logic
+python3 outputs/test-recount-grades.py      # 87 assertions — recount_grades.py logic
 
 # Open in browser to run core logic unit tests (isHeadingLine, isStandaloneTitle, normalizeHeading, NFC)
 open outputs/test-core-logic.html
@@ -161,7 +161,7 @@ open outputs/test-core-logic.html
 
 `test-search-equivalence.js` and `test-dashboard-data.js` load the real `<script>` blocks out of the HTML files via `vm` + a DOM mock, so they carry no copy-paste debt. `test-recount-grades.py` stubs `openpyxl` in `sys.modules` and monkeypatches `load_workbook` with a fake workbook, so it runs without pip packages and without the gitignored `data/` originals.
 
-Both new harnesses carry a `known()` helper for **known issues**: an assertion that documents a real defect, prints `⚠ KNOWN ISSUE` on every run, but does not fail the suite. Use it when you find a defect you are not fixing in the same change; promote the call back to `check()` once fixed. Currently zero known issues are outstanding.
+`test-dashboard-data.js` and `test-recount-grades.py` carry a `known()` helper for **known issues**: an assertion that documents a real defect, prints `⚠ KNOWN ISSUE` on every run, but does not fail the suite. Use it when you find a defect you are not fixing in the same change; promote the call back to `check()` once fixed. Currently zero known issues are outstanding.
 
 For manual E2E testing, use `outputs/test-samples/` with sample `.md` files. For real-world testing with `_meta.json` files, use NCS 반도체 documents in `/Users/zealnutkim/Documents/개발/pinecone_agent/documents/ncs/`.
 
@@ -184,6 +184,8 @@ For manual E2E testing, use `outputs/test-samples/` with sample `.md` files. For
 - `docs/03-analysis/data/` — machine-readable output of `recount_grades.py`. `ncs_pages.csv` and `txt_pages.csv` are one row per unique (교재, 페이지) with its grade, grade reason, and accident-case flag; `summary.json` carries the aggregate counts plus `kw_pages` (unique detected pages per keyword — the dashboards' `pg` column is validated against this, never against itself) and `page_grade_digest` (a hash of the whole page→grade assignment, so a reassignment that leaves the totals unchanged still fails the regression check).
 - `docs/archive/YYYY-MM/` — retired PDCA feature docs, kept for provenance. `_INDEX.md` lists what moved and when.
 - `docs/NCS_교재_노동안전_분석보고서.md` — **superseded**. Built on the older 3,552-row dataset with a different grade numbering; carries a deprecation banner. Kept for provenance; cite the dashboards or `grade-recount.analysis.md` instead.
+- `키워드기반_문서분류분석_방법론.hwpx` (repo root) — the methodology of record for the search pipeline: the 6 stages, the heading-detection rules, and the line-number→PDF-page alignment algorithm. Read it before changing `extractSentencesWithLineNumbers` or `buildPageMapping`. It does **not** define the grading scheme (see the section above).
+- `docs/03-analysis/D2-C2.analysis.md` — gap analysis for the page-marker + dashboard-upload features (100% match).
 
 ## Development Notes
 

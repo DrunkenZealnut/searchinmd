@@ -9,10 +9,12 @@
 | 페이지 | 내용 |
 |---|---|
 | [NCS 교재 86권](https://drunkenzealnut.github.io/searchinmd/) | 검출 1,847쪽의 등급 분포, 영역별 현황, 사고사례 원문 대조 |
-| [반도체고 교과서 9권](https://drunkenzealnut.github.io/searchinmd/textbook.html) | 전체 2,055쪽 기준 분석, NCS 대비 비교 |
+| [반도체고 교과서 9권](https://drunkenzealnut.github.io/searchinmd/textbook.html) | 검출 362쪽·전체 2,055쪽 두 분모를 병기, NCS 대비 비교는 검출쪽 기준 |
 | [OSHA 안전교육](https://drunkenzealnut.github.io/searchinmd/osha.html) | 미국 OSHA 반도체 화학물질 안전교육 과정과의 비교 |
 
-핵심 수치 하나만 옮기면: NCS 교재에서 **구체적 안전대책이 담긴 페이지는 검출 1,847쪽 중 108쪽(5.8%)** 이고, 교과서는 **전체 2,055쪽 중 8쪽(0.39%)** 입니다.
+핵심 수치 하나만 옮기면 — **구체적 안전대책이 담긴 페이지 비율은 NCS 5.8%, 교과서 2.2%** 입니다(둘 다 키워드 검출 페이지 분모: 108/1,847 과 8/362).
+
+교과서는 전체 쪽수를 알기에 다른 각도로도 볼 수 있습니다 — **9권 2,055쪽 중 구체적 대책은 8쪽(0.39%)** 이고, 그중 6권은 0쪽입니다. NCS 는 교재 원본 총 쪽수를 모르므로 같은 계산을 할 수 없습니다. 분모가 다른 두 값을 나란히 빼면 안 됩니다.
 
 ## 검색 앱 실행
 
@@ -35,13 +37,16 @@ python3 outputs/server.py 9000     # 포트 지정
 
 방법론 전체는 `키워드기반_문서분류분석_방법론.hwpx`에 있습니다 — 6단계 파이프라인, 제목 판정 규칙, 행번호를 PDF 페이지로 맞추는 위치 정합 알고리즘.
 
-## 분석 재현
+## 산출물 재생성 (원본 보유 시)
 
 대시보드 수치는 손으로 넣지 않았습니다. 원본 엑셀에서 스크립트로 뽑습니다.
 
+**원본이 있어야 실행됩니다.** 없으면 커밋된 `docs/03-analysis/data/` 가 곧 산출물입니다 — 스크립트는 원본을 못 찾으면 안내 메시지를 내고 종료합니다.
+
 ```bash
 pip install openpyxl
-python3 recount_grades.py
+python3 recount_grades.py                    # data/ 에서 읽는다
+python3 recount_grades.py --data /other/path # 다른 위치 지정
 ```
 
 원본 워크북 2종을 읽어 통일 등급체계로 재매핑하고, **고유 페이지 단위로** 집계해 `docs/03-analysis/data/`에 CSV와 `summary.json`을 씁니다. 기대값 회귀 검증이 내장돼 있어 수치가 어긋나면 산출물을 쓰지 않고 멈춥니다.
@@ -62,13 +67,13 @@ python3 recount_grades.py
 
 ## 테스트
 
-프레임워크는 없습니다. Node와 Python 표준 라이브러리만 쓰는 자체 하니스 4종이고, 모두 exit 0/1을 냅니다.
+프레임워크는 없습니다. 자체 하니스 4종입니다. 앞 3종은 Node·Python 표준 라이브러리만 쓰고 exit 0/1 을 내므로 CI 에 그대로 걸 수 있습니다. `test-core-logic.html` 은 브라우저에서 열어 탭 제목을 확인하는 방식입니다.
 
 ```bash
 node    outputs/test-search-equivalence.js   # 16 — 검색 루틴 동치성 + 청크 렌더
 node    outputs/test-dashboard-data.js       # 92 — 대시보드 데이터·표 렌더·정렬
 python3 outputs/test-recount-grades.py       # 87 — recount_grades.py 로직
-open    outputs/test-core-logic.html         # 32 — 제목 판정·정규화 (브라우저)
+open    outputs/test-core-logic.html         # 32 — 제목 판정·정규화 (브라우저, 탭 제목 확인)
 ```
 
 앞의 두 하니스는 HTML 안의 실제 `<script>` 블록을 `vm` + DOM mock으로 불러옵니다. 복사해 붙인 사본을 테스트하지 않습니다. `test-recount-grades.py`는 `openpyxl`을 스텁으로 주입해 pip 패키지 없이도, 원본 엑셀 없이도 돕니다.
@@ -101,6 +106,7 @@ python3 osha_downloader.py
 - 부분 문자열 일치라 동의어·표기 변형을 놓칩니다. 반도체 문맥의 동음이의(장비 진동, 파티클 먼지)도 걸러지지 않습니다.
 - 원본 채점 알고리즘에 총계/내역 불일치 버그가 있습니다. `recount_grades.py`는 보수적 규칙으로 우회할 뿐 원본을 고치지 않습니다.
 - 분류 정확도 검증(이중 코딩, precision/recall)이 아직 없습니다.
+- 일부 교재에 마크다운 변환·페이지 매핑 결손이 있습니다. `반도체 장비 안전관리` 는 검출 페이지가 p.46 과 p.136~154 20쪽뿐이고 p.47~135 가 통째로 비어 있습니다. 등급3 108쪽과 사고사례 판정의 신뢰도에 영향을 줍니다.
 
 남은 과제는 `TODOS.md`에 있습니다.
 
