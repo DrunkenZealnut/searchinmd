@@ -16,6 +16,8 @@ recount_grades.load_workbook 을 가짜 워크북으로 몽키패치해 scan() �
   R4 check      회귀 검증 통과/실패
   R5 매핑 상수  NCS_MAP / TXT_MAP / EXPECTED 정합
   R6 경계·에러  빈 입력, 원본 파일 부재, 0쪽 영역
+  R7 kw_pages   키워드별 고유 (교재,쪽) 수
+  R8 insert_page_markers  마커 주입, --force 재삽입, 손상 방지 가드
 """
 import io
 import os
@@ -368,6 +370,101 @@ with tempfile.TemporaryDirectory() as empty:
         R.sys.argv = argv
 check('R6c2 원본 부재 시 트레이스백 대신 안내 메시지로 종료',
       exited and msg and '원본 엑셀을 찾을 수 없습니다' in msg, msg)
+
+# =====================================================================
+# R8 insert_page_markers — 마커 주입 / --force 재삽입
+#
+# --force 는 argparse 에 선언만 되고 process_file 로 전달되지 않아 무동작이었다.
+# 그냥 가드만 풀면 안 된다 — 기존 마커가 남아 있으면 build_page_map 이
+# Strategy 1 로 그 마커를 읽어 목차 재유도 없이 같은 값을 한 번 더 심는다.
+# 걷어낸 뒤 재유도하는 순서가 지켜지는지, 그리고 되돌릴 수 없는 손상을 내지
+# 않는지(메타 없음 / 본문에 낀 마커)를 고정한다.
+# =====================================================================
+print('\n[R8] insert_page_markers — 마커 주입 · --force 재삽입')
+
+import shutil as _shutil                                       # noqa: E402
+import insert_page_markers as IPM                              # noqa: E402
+
+_META = '{"table_of_contents":[{"title":"적용범위","page_id":1},' \
+        '{"title":"안전 유의 사항","page_id":4}]}'
+_BODY = '# 적용범위\n\n본문 한 줄.\n\n## 안전 유의 사항\n\n보호구 착용.\n'
+
+
+@contextlib.contextmanager
+def _fixture(body=_BODY, meta=_META, name='a'):
+    """.md 와 짝이 되는 _meta.json 을 임시 폴더에 만든다."""
+    d = tempfile.mkdtemp()
+    try:
+        md = os.path.join(d, name + '.md')
+        with open(md, 'w', encoding='utf-8') as f:
+            f.write(body)
+        if meta is not None:
+            with open(os.path.join(d, name + '_meta.json'), 'w', encoding='utf-8') as f:
+                f.write(meta)
+        yield md
+    finally:
+        _shutil.rmtree(d, ignore_errors=True)
+
+
+def _read(p):
+    with open(p, encoding='utf-8') as f:
+        return f.read()
+
+
+with _fixture() as md:
+    r1 = IPM.process_file(md)
+    after1 = _read(md)
+    check('R8a 마커 없는 파일에 삽입', r1 == 'inserted_2_pages', r1)
+    check('R8b page_id 는 0-based, 마커는 +1 (1 -> 2, 4 -> 5)',
+          '<!-- page: 2 -->' in after1 and '<!-- page: 5 -->' in after1,
+          [l for l in after1.split('\n') if 'page:' in l])
+    check('R8c 끝 줄바꿈을 보존한다', after1.endswith('보호구 착용.\n')
+          and not after1.endswith('\n\n'), repr(after1[-14:]))
+
+    # --force 없이 다시 → 건너뛴다
+    check('R8d force 없으면 이미 마커 있는 파일은 건너뛴다',
+          IPM.process_file(md) == 'skip_has_markers')
+
+    # --force 로 여러 번 → 결과가 변하지 않아야 한다(멱등)
+    r2 = IPM.process_file(md, force=True)
+    IPM.process_file(md, force=True)
+    after3 = _read(md)
+    check('R8e force 는 재삽입을 보고한다', r2 == 'remarked_2_pages', r2)
+    check('R8f force 를 반복해도 파일이 변하지 않는다(마커 중복·줄 증식 없음)',
+          after3 == after1,
+          'len %d -> %d, 마커 %d -> %d' % (
+              len(after1), len(after3),
+              after1.count('<!-- page:'), after3.count('<!-- page:')))
+
+with _fixture(body='# 적용범위\n\n본문.') as md:                  # 끝 줄바꿈 없음
+    IPM.process_file(md)
+    check('R8g 끝 줄바꿈이 없던 파일에 줄바꿈을 붙이지 않는다',
+          _read(md).endswith('본문.'), repr(_read(md)[-10:]))
+
+with _fixture(meta=None) as md:                                  # meta 없음
+    with open(md, 'w', encoding='utf-8') as f:                   # 마커가 이미 있는 상태로
+        f.write('<!-- page: 9 -->\n# 적용범위\n')
+    before = _read(md)
+    # 가드가 사라지면 process_file 이 open(None) 에서 터진다. 예외까지 잡아
+    # 어서션 하나의 실패로 보고한다 — 그대로 두면 하니스 전체가 죽어 무엇이
+    # 깨졌는지 알 수 없다.
+    try:
+        r = IPM.process_file(md, force=True)
+    except Exception as e:                                     # noqa: BLE001
+        r = '%s: %s' % (type(e).__name__, e)
+    check('R8h meta 없으면 force 여도 마커를 걷어내지 않는다',
+          r == 'skip_no_meta' and _read(md) == before, r)
+
+with _fixture(body='# 적용범위\n\n본문 <!-- page: 7 --> 중간.\n') as md:
+    before = _read(md)
+    r = IPM.process_file(md, force=True)
+    check('R8i 본문 줄에 낀 마커는 건드리지 않고 건너뛴다',
+          r == 'skip_inline_marker' and _read(md) == before, r)
+
+check('R8j strip_page_markers 는 마커 줄만 지운다',
+      IPM.strip_page_markers(['<!-- page: 3 -->', '본문', '  <!-- page: 4 -->  ',
+                              '본문 <!-- page: 5 --> 안']) ==
+      ['본문', '본문 <!-- page: 5 --> 안'])
 
 print('\n결과: %d/%d PASS%s%s' % (
     PASS, PASS + FAIL, ', %d FAIL' % FAIL if FAIL else '',
