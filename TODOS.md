@@ -25,14 +25,15 @@
 ### P2 — Dashboard design system pass
 - **Why**: Deferred from the /ship design review. Type scale is fragmented into 6 steps below 16px (`.65rem` labels are below the legibility floor for Hangul). No `:focus-visible` anywhere, and sortable `<th>` are not keyboard reachable. Chart `c4` hardcodes a palette that collides with the grade tokens. Explanatory footnotes repeat the same denominator sentence six times, burying the ones that carry unique information.
 - **Context**: Colour ramp direction (grade 1 = grey rather than red) was reviewed and deliberately kept — grey reads as "not safety-related", and red stays reserved for accident cases. That decision was honoured; the area palette added in FINDING-004 is a separate blue→purple→pink family so it cannot be mistaken for a grade.
-- **Completed:** `/design-review` on `design/dashboard-system-pass` (2026-09-03), 8 atomic fixes across all three dashboards. Measured before → after:
+- **Completed:** `/design-review` on `design/dashboard-system-pass` (2026-09-03), 10 atomic fixes across all three dashboards. Measured before → after:
 
   | | before | after |
   |---|---|---|
   | sub-16px type steps | 7 (10.4/11.2/12/12.6/13/14/15px) | 2 (12/14) |
   | `:focus-visible` rules | 0 | present on all 3 pages |
   | keyboard-reachable sort headers | 0 of 9 | 9 of 9 (`th > button` + `aria-sort`) |
-  | bar-label contrast | 2.15–3.77:1 (white on colour) | text moved out of bars; row min 4.76:1 |
+  | text failing WCAG AA (both themes, alpha-composited) | 29 elements | 0 |
+  | white-on-colour bar labels | 12, at 2.15–3.77:1 | 0 (moved beside the bar) |
   | chart colours ∩ grade tokens | 2 (`#f59e0b`, `#10b981`) | 0, both themes |
   | denominator restated | 4× (hero + 3 footnotes) | 1× (hero) |
   | heading-level skips | `h1→h3` on 2 pages | 0 |
@@ -40,6 +41,8 @@
   | page horizontal scroll @375/480px | 31px | 0 |
 
   Also fixed along the way: the skip link was hidden at `left:-9999px` and never restored on focus (invisible to keyboard users on every page); `osha.html` had no skip link or `main` landmark at all; its 41 tables had no scroll wrapper and pushed the page 72px sideways at 375px; `.case-detail` hid the 교재/분야 columns below 480px, which removes each row's identity; a `td { max-width }` that `table-layout: auto` ignores; the `margin:-32px` footnote/grid coupling; `transition: all` in 3 places; and `--g1` drifting to `#9ca3af` in `osha.html` only.
+
+  The contrast work needed a token split that is worth knowing about: `--warning` / `--positive` / `--g2` / `--g3` were chosen as **fill** colours, so they clear the 3:1 bar for graphical objects but not the 4.5:1 bar for 14px text. `--fg-warn` / `--fg-ok` are the text-safe counterparts and `--accent-strong` is for filled backgrounds carrying white text; the fill values themselves did not change, so no chart or bar shifted colour.
 
   Not changed: the grade colour ramp direction, and the entrance animation (see the open item above).
 

@@ -193,7 +193,8 @@ The three dashboards each carry their own copy of the same `<style>` block. When
 | Token group | Values | Rule |
 |---|---|---|
 | Type scale | `--fs-xs .75rem` / `--fs-sm .875rem` / `--fs-md 1rem` / `--fs-lg 1.125rem` | Nothing below 16px may use a literal size. `xs` (12px) is the floor — Hangul falls apart below it. Prose bodies use `md`; tables, captions and buttons use `sm`; only uppercase labels use `xs`. |
-| Grade ramp | `--g1` grey / `--g2` amber / `--g3` green | **Grade only.** Never use these for a value that is not a 1/2/3 grade. `--danger` red is reserved for accident cases. |
+| Grade ramp | `--g1` grey / `--g2` amber / `--g3` green | **Grade only.** Never use these for a value that is not a 1/2/3 grade. `--danger` red is reserved for accident cases. These are **fill** values — see the row below before using one as a text colour. |
+| Text-safe semantics | `--fg-warn` / `--fg-ok` / `--accent-strong` | The fill colours clear 3:1 (graphical objects) but not 4.5:1 (text) at 14px in the light theme — measured `--warning` 3.19:1, `--g3` 3.77:1, white-on-`--accent` 3.68:1 in dark. Use `--fg-*` whenever the colour lands on glyphs, `--accent-strong` for a filled background under white text. Large numbers (`.kpi-v`, 36px bold) stay on the fill token so the card reads as one block. |
 | Area palette | `--a1` 개발 / `--a2` 제조 / `--a3` 장비 / `--a4` 재료 | Blue→purple→pink, per theme. Deliberately disjoint from the grade ramp so the two encodings can sit side by side (`c3` grade-stacked next to `c4` area-stacked). |
 | `--scrim` | theme-dependent | Edge shadow for `.scroll-x`. |
 
