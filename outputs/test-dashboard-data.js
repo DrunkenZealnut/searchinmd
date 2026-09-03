@@ -423,20 +423,27 @@ PAGES.forEach(([name, html]) => {
 console.log('\n[첫 페인트] 지연 진입 애니메이션');
 PAGES.forEach(([name, html]) => {
   const style = (html.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
-  // 시작 상태를 지연 구간에 투영하는 조합만 막는다. both/backwards 는 애니메이션이
-  // 시작하기 전부터 from 프레임을 적용하므로, 지연이 붙으면 그 시간만큼 콘텐츠가
-  // 시작 상태(투명·이동)로 붙들린다. 지연 자체는 죄가 없다 — 스피너나 hover
-  // 애니메이션의 지연은 첫 페인트를 막지 않는다.
-  const backwardsFill = /animation:[^;}]*\b(both|backwards)\b/.test(style)
-    || /animation-fill-mode:\s*(both|backwards)/.test(style);
-  check(`D12a ${name} — 지연 + 역방향 fill 로 시작 상태를 붙들지 않음`,
-    !(backwardsFill && /animation-delay/.test(style)),
-    (style.match(/animation-delay:[^;}]*/g) || []).join(', '));
-  // 시작 프레임(from / 0%)의 opacity:0 만 본다. from{opacity:1}to{opacity:0} 같은
-  // 종료 페이드는 첫 페인트를 막지 않으므로 걸리면 안 된다 (CodeRabbit 지적).
-  check(`D12b ${name} — 시작 프레임이 opacity:0 인 @keyframes 없음`,
-    !/@keyframes[^{]*\{\s*(?:from|0%)\s*\{[^{}]*\bopacity\s*:\s*0(?:\s*[;}])/.test(style),
-    (style.match(/@keyframes\s+[\w-]+/g) || []).join(', '));
+  // 시작 프레임(from / 0%)의 선언만 모은다. 그룹 선택자(`from,0%{...}`)와
+  // 뒤집힌 순서(`to{...}from{...}`) 양쪽을 처리한다 — 둘 다 정규식 하나로는
+  // 새어 나간다(CodeRabbit 지적).
+  //
+  // 규칙 간 조합(예: `.ani{...both}` + `.d1{animation-delay}`)은 일부러 보지
+  // 않는다. 원래 결함이 정확히 그 모양 — 서로 다른 두 규칙을 두 클래스로 한
+  // 요소에 얹은 것 — 이라 "같은 규칙 안" 으로 좁히면 잡아야 할 버그를 놓치고,
+  // 스타일시트 전체를 보면 무관한 규칙끼리 엮여 오탐이 난다. 대신 해로운 결과
+  // 자체(시작 프레임이 숨기거나 밀어냄)를 본다. 시작 프레임이 멀쩡하면
+  // fill 이나 지연이 무엇이든 첫 페인트를 막지 못한다.
+  const startFrames = [];
+  for (const kf of style.matchAll(/@keyframes[^{]*\{((?:[^{}]*\{[^{}]*\})*)\s*\}/g))
+    for (const blk of kf[1].matchAll(/([^{}]*)\{([^{}]*)\}/g))
+      if (/(^|,)\s*(?:from|0%)\s*(?:,|$)/.test(blk[1].trim())) startFrames.push(blk[2]);
+
+  check(`D12a ${name} — 시작 프레임이 transform 으로 콘텐츠를 밀어내지 않음`,
+    !startFrames.some(d => /\btransform\s*:[^;}]*\b(?:translate|scale)/.test(d)),
+    startFrames.filter(d => /\btransform\s*:[^;}]*\b(?:translate|scale)/.test(d)).join(' | '));
+  check(`D12b ${name} — 시작 프레임이 opacity:0 이 아님`,
+    !startFrames.some(d => /\bopacity\s*:\s*0(?:\s*[;}]|\s*$)/.test(d)),
+    startFrames.filter(d => /\bopacity\s*:\s*0(?:\s*[;}]|\s*$)/.test(d)).join(' | '));
   const staged = [...html.matchAll(/class="([^"]*)"/g)]
     .map(m => m[1]).filter(c => /\b(ani|reveal|d[123])\b/.test(c));
   check(`D12c ${name} — 진입 애니메이션 클래스가 마크업에 남아 있지 않음`,
