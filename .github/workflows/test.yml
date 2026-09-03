@@ -1,0 +1,60 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# 같은 브랜치에 새 푸시가 오면 이전 실행을 취소한다.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 하니스는 Node·Python 표준 라이브러리만 쓴다. 설치할 의존성이 없다.
+      # (test-recount-grades.py 는 openpyxl 을 sys.modules 스텁으로 주입한다.)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 검색 루틴 동치성 · 청크 렌더 · 지연 캐시
+        run: node outputs/test-search-equivalence.js
+
+      - name: 대시보드 데이터 · 표 렌더 · 정렬
+        run: node outputs/test-dashboard-data.js
+
+      - name: recount_grades.py 로직
+        run: python3 outputs/test-recount-grades.py
+
+      - name: 핵심 로직 (제목 판정 · 정규화)
+        run: node outputs/run-core-logic-tests.js
+
+      # 원본 엑셀(data/)은 비공개라 저장소에 없다. 재집계 자체는 CI 에서 돌릴 수
+      # 없으므로, 대신 원본이 없을 때 트레이스백 대신 안내로 종료하는지 확인한다.
+      # 산출물 자체의 정합성은 위 두 하니스가 summary.json 과 대조해 검증한다.
+      #
+      # openpyxl 을 설치해야 그 경로까지 간다. 안 깔면 import 단계에서 먼저 멈춰
+      # "openpyxl이 필요합니다" 로 끝나고, 정작 확인하려던 분기를 태우지 못한다.
+      - name: openpyxl 설치 (원본 부재 경로 검증용)
+        run: python3 -m pip install --disable-pip-version-check --quiet openpyxl
+
+      - name: 원본 부재 시 안내 종료
+        run: |
+          set -o pipefail
+          if python3 recount_grades.py --data "$(mktemp -d)" 2>&1 | tee /tmp/out.txt; then
+            echo "::error::원본이 없는데 성공으로 끝났습니다"; exit 1
+          fi
+          grep -q "원본 엑셀을 찾을 수 없습니다" /tmp/out.txt \
+            || { echo "::error::안내 메시지 없이 실패했습니다"; cat /tmp/out.txt; exit 1; }
