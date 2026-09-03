@@ -12,7 +12,7 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html.theme-dark{--bg:#0A0A0A;--surface:#141414;--surface-hover:#1C1C1C;--border:rgba(255,255,255,0.06);--text:#EDEDED;--text-secondary:#888;--accent:#3b82f6;--accent-secondary:#8b5cf6;--positive:#10b981;--negative:#f43f5e;--warning:#f59e0b;--g1:#6b7280;--g2:#f59e0b;--g3:#10b981;--danger:#ef4444}
-html.theme-light{--bg:#FAFAF9;--surface:#FFFFFF;--surface-hover:#F5F5F4;--border:rgba(0,0,0,0.06);--text:#0f172a;--text-secondary:#64748b;--accent:#2563eb;--accent-secondary:#7c3aed;--positive:#059669;--negative:#e11d48;--warning:#d97706;--g1:#9ca3af;--g2:#d97706;--g3:#059669;--danger:#dc2626}
+html.theme-light{--bg:#FAFAF9;--surface:#FFFFFF;--surface-hover:#F5F5F4;--border:rgba(0,0,0,0.06);--text:#0f172a;--text-secondary:#64748b;--accent:#2563eb;--accent-secondary:#7c3aed;--positive:#059669;--negative:#e11d48;--warning:#d97706;--g1:#6b7280;--g2:#d97706;--g3:#059669;--danger:#dc2626}
 body{font-family:'Noto Sans KR','Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased;transition:background .3s,color .3s}
 h1,h2,h3{color:var(--text);letter-spacing:-.03em;line-height:1.15}
 h1{font-weight:800;font-size:clamp(2.5rem,5vw,3.5rem)}h2{font-weight:700;font-size:2rem;margin-bottom:24px}h3{font-weight:600;font-size:1.25rem}
@@ -26,7 +26,8 @@ h1{font-weight:800;font-size:clamp(2.5rem,5vw,3.5rem)}h2{font-weight:700;font-si
 .kpi{text-align:center}.kpi-v{font-size:2.25rem;font-weight:800}.kpi-l{font-size:.75rem;color:var(--text-secondary);margin-top:4px;text-transform:uppercase;letter-spacing:.05em}.kpi-bar{height:4px;border-radius:2px;background:var(--border);margin-top:12px;overflow:hidden}.kpi-bar i{display:block;height:100%;border-radius:2px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:48px}
 .cc{height:380px;padding:16px}
-.tbl{width:100%;border-collapse:collapse;font-size:.8125rem}.tbl th{text-align:left;padding:10px 12px;border-bottom:2px solid var(--border);color:var(--text-secondary);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;cursor:pointer;user-select:none;white-space:nowrap}.tbl th:hover{color:var(--text)}.tbl th::after{content:' ↕';opacity:.3;font-size:.6rem}.tbl td{padding:10px 12px;border-bottom:1px solid var(--border)}.tbl tr:hover{background:var(--surface-hover)}
+.tbl{width:100%;border-collapse:collapse;font-size:.8125rem}.tbl th{text-align:left;padding:10px 12px;border-bottom:2px solid var(--border);color:var(--text-secondary);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}.tbl.sortable th{cursor:pointer;user-select:none}.tbl.sortable th:hover{color:var(--text)}.tbl.sortable th::after{content:' ↕';opacity:.3;font-size:.6rem}.tbl td{padding:10px 12px;border-bottom:1px solid var(--border)}.tbl tr:hover{background:var(--surface-hover)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word-break:break-all;background:var(--surface-hover);padding:1px 4px;border-radius:4px}
 .pb{display:inline-block;height:6px;border-radius:3px;vertical-align:middle;margin-right:6px}
 .fb{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}.fbtn{padding:8px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:.8125rem;font-family:inherit;transition:all .15s}.fbtn:hover{background:var(--surface-hover)}.fbtn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .ins{border-left:4px solid var(--danger);padding:20px 24px;margin-bottom:16px;background:var(--surface);border-radius:0 12px 12px 0}.ins h3{color:var(--danger);margin-bottom:8px;font-size:1.125rem}.ins p,.rec p{color:var(--text-secondary);font-size:.9375rem;line-height:1.8}.ins p strong,.rec p strong{color:var(--text)}
@@ -60,7 +61,7 @@ h1{font-weight:800;font-size:clamp(2.5rem,5vw,3.5rem)}h2{font-weight:700;font-si
 <div class="card kpi"><div class="kpi-v" style="color:var(--g1)">309</div><div class="kpi-l">등급1 — 미흡·없음</div><div class="kpi-bar"><i style="width:85.4%;background:var(--g1)"></i></div><div class="ts" style="font-size:.7rem;margin-top:8px">검출쪽의 85.4% · 전체의 15.0% · 557건</div></div>
 <div class="card kpi"><div class="kpi-v" style="color:var(--g2)">45</div><div class="kpi-l">등급2 — 형식적 언급</div><div class="kpi-bar"><i style="width:12.4%;background:var(--g2)"></i></div><div class="ts" style="font-size:.7rem;margin-top:8px">검출쪽의 12.4% · 전체의 2.2% · 360건</div></div>
 <div class="card kpi"><div class="kpi-v" style="color:var(--g3)">8</div><div class="kpi-l">등급3 — 구체적 대책</div><div class="kpi-bar"><i style="width:2.2%;background:var(--g3);min-width:8px"></i></div><div class="ts" style="font-size:.7rem;margin-top:8px">검출쪽의 2.2% · <strong>전체 2,055쪽의 0.39%</strong> · 64건</div></div>
-<div class="card kpi"><div class="kpi-v" style="color:var(--text-secondary)">1,693</div><div class="kpi-l">키워드 미검출</div><div class="kpi-bar"><i style="width:82.4%;background:var(--border)"></i></div><div class="ts" style="font-size:.7rem;margin-top:8px">전체 2,055쪽의 82.4%</div></div>
+<div class="card kpi"><div class="kpi-v" style="color:var(--text-secondary)">1,693</div><div class="kpi-l">키워드 미검출</div><div class="kpi-bar"><i style="width:82.4%;background:var(--text-secondary);opacity:.35"></i></div><div class="ts" style="font-size:.7rem;margin-top:8px">전체 2,055쪽의 82.4%</div></div>
 </section>
 <p class="ts" style="margin:-32px 0 48px">단위는 <strong>페이지(쪽)</strong>. 등급1+2+3 = 362쪽(검출) + 미검출 1,693쪽 = 2,055쪽. 괄호 안 "N건"은 같은 페이지가 여러 키워드에 중복 계수된 검출 항목 수다.</p>
 
@@ -71,7 +72,7 @@ h1{font-weight:800;font-size:clamp(2.5rem,5vw,3.5rem)}h2{font-weight:700;font-si
 
 <section style="margin-bottom:48px"><h2>키워드별 상세</h2>
 <div class="fb"><button class="fbtn on" onclick="fK('all',this)">전체</button><button class="fbtn" onclick="fK('detected',this)">검출된 키워드</button></div>
-<div class="card" style="overflow-x:auto"><table class="tbl"><thead><tr><th onclick="sK('k')">키워드</th><th onclick="sK('t')">검출건수</th><th onclick="sK('pg')">검출쪽</th><th onclick="sK('tp')">검출쪽 비율<br><span style="font-weight:400;font-size:.65rem">(÷2,055쪽)</span></th><th onclick="sK('g1')">등급1<br><span style="font-weight:400;font-size:.65rem">미흡·없음</span></th><th onclick="sK('g2')">등급2<br><span style="font-weight:400;font-size:.65rem">형식적</span></th><th onclick="sK('g3')">등급3<br><span style="font-weight:400;font-size:.65rem">구체적</span></th><th onclick="sK('cs')">사고사례</th></tr></thead><tbody id="kb"></tbody></table></div>
+<div class="card" style="overflow-x:auto"><table class="tbl sortable"><thead><tr><th onclick="sK('k')">키워드</th><th onclick="sK('t')">검출건수</th><th onclick="sK('pg')">검출쪽</th><th onclick="sK('tp')">검출쪽 비율<br><span style="font-weight:400;font-size:.65rem">(÷2,055쪽)</span></th><th onclick="sK('g1')">등급1<br><span style="font-weight:400;font-size:.65rem">미흡·없음</span></th><th onclick="sK('g2')">등급2<br><span style="font-weight:400;font-size:.65rem">형식적</span></th><th onclick="sK('g3')">등급3<br><span style="font-weight:400;font-size:.65rem">구체적</span></th><th onclick="sK('cs')">사고사례</th></tr></thead><tbody id="kb"></tbody></table></div>
 <p class="ts" style="margin-top:12px">* <strong>검출건수</strong>는 키워드×페이지 조합 수(합계 981), <strong>검출쪽</strong>은 그 고유 페이지 수다. 서로 다른 키워드가 같은 페이지에 걸리므로 검출쪽의 단순 합(362)은 각 행의 합과 다르다. 등급 열은 검출건수 기준이다.</p></section>
 
 <section style="margin-bottom:48px"><h2>교과서 목록</h2>
@@ -102,8 +103,8 @@ h1{font-weight:800;font-size:clamp(2.5rem,5vw,3.5rem)}h2{font-weight:700;font-si
 <tr><td><strong>전체 페이지</strong></td><td>미상</td><td>2,055쪽</td><td>-</td></tr>
 <tr><td><strong>키워드 검출 페이지</strong></td><td>1,847쪽</td><td>362쪽</td><td>-</td></tr>
 <tr><td><strong>검출 항목 (키워드×쪽)</strong></td><td>7,769건</td><td>981건</td><td>-</td></tr>
-<tr><td><strong>등급1 (미흡·없음)</strong></td><td>1,267쪽 (68.6%)</td><td>309쪽 (85.4%)</td><td style="color:var(--danger)">+16.8%p</td></tr>
-<tr><td><strong>등급2 (형식적 언급)</strong></td><td>472쪽 (25.6%)</td><td>45쪽 (12.4%)</td><td style="color:var(--danger)">-13.2%p</td></tr>
+<tr><td><strong>등급1 (미흡·없음)</strong></td><td>1,270쪽 (68.8%)</td><td>309쪽 (85.4%)</td><td style="color:var(--danger)">+16.6%p</td></tr>
+<tr><td><strong>등급2 (형식적 언급)</strong></td><td>469쪽 (25.4%)</td><td>45쪽 (12.4%)</td><td style="color:var(--danger)">-13.0%p</td></tr>
 <tr><td><strong>등급3 (구체적 대책)</strong></td><td>108쪽 (5.8%)</td><td>8쪽 (2.2%)</td><td style="color:var(--danger)">-3.6%p</td></tr>
 <tr><td><strong>등급3이 0쪽인 교재</strong></td><td>49/86권 (57%)</td><td>6/9권 (67%)</td><td style="color:var(--danger)">+10%p</td></tr>
 <tr><td><strong>사고사례 (원문 대조 후)</strong></td><td>1건 (구미 불산, 2권 중복)</td><td>0건</td><td style="color:var(--danger)">-1건</td></tr>
@@ -140,7 +141,7 @@ if(s('g1')+s('g2')+s('g3')!==s('t'))console.error('[KW] 등급합 ≠ 총건수'
 function GC(){var s=getComputedStyle(document.documentElement);return{t:s.getPropertyValue('--text').trim(),ts:s.getPropertyValue('--text-secondary').trim(),bd:s.getPropertyValue('--border').trim(),g1:s.getPropertyValue('--g1').trim(),g2:s.getPropertyValue('--g2').trim(),g3:s.getPropertyValue('--g3').trim(),dn:s.getPropertyValue('--danger').trim(),ac:s.getPropertyValue('--accent').trim()}}
 function RC(id){var o=document.getElementById(id);if(!o)return null;var p=o.parentNode,c=document.createElement('canvas');c.id=id;c.setAttribute('role','img');p.replaceChild(c,o);return c}
 
-function buildCharts(){if(typeof Chart==='undefined')return;var c=GC();
+function buildCharts(){if(typeof Chart==='undefined')return;['c1','c2'].forEach(function(id){var ch=Chart.getChart&&Chart.getChart(id);if(ch&&ch.destroy)ch.destroy()});var c=GC();
 var x1=RC('c1');if(x1)new Chart(x1,{type:'doughnut',data:{labels:['등급1: 미흡·없음 (309쪽)','등급2: 형식적 언급 (45쪽)','등급3: 구체적 대책 (8쪽)','키워드 미검출 (1,693쪽)'],datasets:[{data:[309,45,8,1693],backgroundColor:[c.g1,c.g2,c.g3,c.bd],borderWidth:0,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{tooltip:{enabled:true,padding:12,cornerRadius:8,callbacks:{label:function(x){return x.label+' — 전체의 '+(x.raw/2055*100).toFixed(1)+'%'}}},legend:{position:'bottom',labels:{color:c.t,padding:16,font:{size:12}}}},layout:{padding:10}}});
 var t10=KW.filter(function(d){return d.t>0}).slice(0,12);
 var x2=RC('c2');if(x2)new Chart(x2,{type:'bar',data:{labels:t10.map(function(d){return d.k}),datasets:[{label:'등급1 미흡·없음',data:t10.map(function(d){return d.g1}),backgroundColor:c.g1},{label:'등급2 형식적',data:t10.map(function(d){return d.g2}),backgroundColor:c.g2},{label:'등급3 구체적',data:t10.map(function(d){return d.g3}),backgroundColor:c.g3}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{tooltip:{enabled:true,mode:'index',intersect:false,padding:12,cornerRadius:8},legend:{position:'top',labels:{color:c.t,font:{size:11},padding:12}}},scales:{x:{stacked:true,ticks:{color:c.ts},grid:{color:c.bd}},y:{stacked:true,ticks:{color:c.t,font:{size:11}},grid:{display:false}}},layout:{padding:10}}});
