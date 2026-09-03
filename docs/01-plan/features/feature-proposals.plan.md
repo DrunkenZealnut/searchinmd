@@ -1,5 +1,10 @@
 # Plan: SearchInMD 기능 확장 제안
 
+> ⚠️ **구버전 등급 정의 — 이 문서의 등급 번호를 그대로 쓰지 마십시오.**
+> 출하된 체계는 `1 미흡·없음 / 2 형식적 언급 / 3 구체적 대책` 입니다(이 문서와 다릅니다).
+> 정본은 `CLAUDE.md` 의 **Safety Grading Scheme** 절, 근거는 `docs/03-analysis/grade-recount.analysis.md` §2 입니다.
+> 이 문서는 당시 설계 의도를 남기기 위해 보존합니다.
+
 ## Executive Summary
 
 | 항목 | 내용 |
