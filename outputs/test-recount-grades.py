@@ -621,6 +621,62 @@ check('R10n run() 이 exempt 를 grade_page 까지 전달한다',
 check('R10o D5 는 기각됐으므로 기본값은 꺼져 있다',
       G.grade_page.__defaults__[-1] is False, G.grade_page.__defaults__)
 
+# ---------------------------------------------------------------------------
+# R11 count_terms 구간 매칭 — 외부감사 C-2 회귀
+#
+# 이전 구현은 `n -= text.count(ctx)` 로 총계끼리 빼서 별개 위치의 정상 출현을
+# 삭제했다. `max(n, 0)` 이 음수를 삼켜 드러나지도 않았다. 아래 5건은 감사가
+# 실측으로 제시한 케이스 그대로다. R9g·R9h 는 하필 과다차감이 발동하지 않는
+# 입력이라 이 결함을 통과시켰다 — 그래서 별도 절로 둔다.
+# ---------------------------------------------------------------------------
+print('\n[R11] count_terms 구간 매칭 (감사 C-2 회귀)')
+
+
+def _s(text, term=None):
+    c = G.count_terms(text, G.SAFETY_TERMS, True)
+    return c[term] if term else sum(c.values())
+
+
+check('R11a 별개 위치의 먼지는 파티클이 아무리 많아도 살아남는다',
+      _s('먼지 ' * 3 + '파티클 ' * 10, '먼지') == 3,
+      _s('먼지 ' * 3 + '파티클 ' * 10, '먼지'))
+check('R11b 별개 위치의 소음은 "신호 대 잡음"에 지워지지 않는다',
+      _s('소음 ' * 4 + '신호 대 잡음 ' * 5, '소음') == 4,
+      _s('소음 ' * 4 + '신호 대 잡음 ' * 5, '소음'))
+check('R11c 동음이의는 그 출현만 빠지고 독립 출현은 남는다',
+      _s('진동 ' * 2 + '초음파 진동수 ' * 2, '진동') == 2,
+      _s('진동 ' * 2 + '초음파 진동수 ' * 2, '진동'))
+check('R11d 산업안전보건법이 독립 안전 3건을 잡아먹지 않는다',
+      _s('산업안전보건법 ' + '안전 ' * 3, '안전') == 3,
+      _s('산업안전보건법 ' + '안전 ' * 3, '안전'))
+# 안전보건 은 SAFETY_TERMS 에 없다. 흡수만 하면 0이 되는데 안전 내용이므로 1이다.
+check('R11e 계수 목록에 없는 흡수어(안전보건)는 0이 아니라 1건으로 센다',
+      _s('안전보건') == 1, _s('안전보건'))
+
+check('R11f 같은 중첩을 두 사전 항목이 각각 빼지 않는다 (이중 차감)',
+      # 산업안전보건법 은 CONTAINING 의 안전·보건 양쪽에 있다. 총계 뺄셈이던
+      # 이전 구현은 한 출현을 두 번 뺐다.
+      _s('산업안전보건법') == 1, _s('산업안전보건법'))
+check('R11g 어떤 입력에도 음수가 나오지 않는다 (max(n,0) 없이)',
+      all(v >= 0 for v in G.count_terms(
+          '파티클 ' * 50 + '신호 대 잡음 ' * 50 + '진동자 ' * 50,
+          G.SAFETY_TERMS, True).values()))
+check('R11h 최장일치 — 긴 용어가 짧은 용어보다 먼저 구간을 가져간다',
+      _s('물질안전보건자료') == 1, _s('물질안전보건자료'))
+check('R11i naive 경로는 원본 재현용이라 그대로 중복 계수한다',
+      sum(G.count_terms('산업안전보건법', G.SAFETY_TERMS, False).values()) == 3)
+check('R11j 조치어 사전에는 안전 계열 CONTAINING 이 새지 않는다',
+      # CONTAINING 의 기저어(안전·보건)가 ACTION_TERMS 에 없으므로 안전보건이
+      # 조치어로 잡히면 안 된다
+      G.count_terms('안전보건', G.ACTION_TERMS, True).get('안전', 0) == 0
+      and sum(G.count_terms('안전보건', G.ACTION_TERMS, True).values()) == 0)
+check('R11k 비포함형 동음이의는 어휘에서 빠진다 (흡수 불가라 버림)',
+      all(c not in G.build_vocab(tuple(G.SAFETY_TERMS))[1]
+          for c in ('파티클', '미세 입자', '신호 대 잡음', '노이즈 비')))
+check('R11l 포함형 동음이의는 어휘에 있고 귀속이 None 이다',
+      all(G.build_vocab(tuple(G.SAFETY_TERMS))[1].get(c, 'X') is None
+          for c in ('진동자', '진동수', '격자 진동', '먼지 입자 수', '소음 지수')))
+
 print('\n결과: %d/%d PASS%s%s' % (
     PASS, PASS + FAIL, ', %d FAIL' % FAIL if FAIL else '',
     ', %d KNOWN ISSUE' % KNOWN if KNOWN else ''))

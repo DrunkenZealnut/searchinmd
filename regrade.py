@@ -111,24 +111,84 @@ CONTAINING = {
 }
 
 
+_VOCAB_CACHE = {}
+
+
+def build_vocab(terms):
+    """D1 어휘를 만든다. 반환: (정규식, {매칭문자열: 귀속term 또는 None})
+
+    귀속이 None 이면 그 구간은 소비하되 세지 않는다(동음이의).
+
+    ## 왜 총계 뺄셈이 아니라 구간 매칭인가
+
+    이전 구현은 `n -= text.count(ctx)` 로 총계끼리 뺐다. 위치 대응이 없어서
+    별개 위치의 정상 출현이 삭제됐다 — `먼지`×3 과 `파티클`×10 이 같은 페이지에
+    있으면 먼지가 0이 됐다. `max(n, 0)` 이 음수를 삼켜 드러나지도 않았다.
+    실제 분진·소음 유해성을 서술하거나 산업안전보건법을 인용한 페이지가 표적으로
+    0점 처리됐고, 오차 방향이 전부 강등이라 보고서 논지에 유리했다.
+
+    구간 매칭은 각 출현의 위치를 보고 판정하므로 이 오류가 구조적으로 불가능하다.
+    정규식 교차(긴 것 우선)로 왼쪽부터 겹치지 않게 소비한다.
+
+    ## 세 부류
+
+    1. `terms` 자기 자신 → 자신에게 귀속
+    2. `CONTAINING` 의 더 긴 용어 → **1건으로 센다.** `안전보건` 은 안전 내용이므로
+       0이 아니라 1이어야 한다. 계수 대상 용어면 자신에게, 아니면 기저어에 귀속한다.
+       원래 의도는 같은 출현을 두 번 세지 말자는 것이지 지우자는 것이 아니었다.
+    3. `HOMONYM_CONTEXTS` 중 **기저어를 문자열로 포함하는 것**만 → 귀속 None
+
+    비포함형 동음이의(`파티클`, `미세 입자`, `신호 대 잡음`, `노이즈 비`,
+    `파티클 카운트`)는 **버린다.** 기저어를 포함하지 않으므로 어떤 출현도 흡수하지
+    못한다. 이것을 살리려면 "같은 문장/줄 안에 있으면 제외" 같은 근접성 규칙이
+    필요한데, 창 크기라는 새 임의 파라미터가 생긴다. 버리는 쪽이 안전어를 더 많이
+    세므로 등급이 올라가는 방향이고, 논지에 불리한 쪽이라 편향 통제에도 낫다.
+    """
+    key = tuple(terms)
+    hit = _VOCAB_CACHE.get(key)
+    if hit is not None:
+        return hit
+
+    attr = {}
+    for t in terms:
+        attr.setdefault(t, t)
+    for base, longers in CONTAINING.items():
+        if base not in attr:
+            continue                     # 이 사전에 없는 기저어는 건드리지 않는다
+        for lg in longers:
+            if lg != base:
+                attr.setdefault(lg, lg if lg in key else base)
+    for base, ctxs in HOMONYM_CONTEXTS.items():
+        if base not in attr:
+            continue
+        for ctx in ctxs:
+            if base in ctx:              # 포함형만. 비포함형은 흡수할 수 없다
+                attr.setdefault(ctx, None)
+
+    # 긴 것 우선 — 파이썬 정규식 교차는 왼쪽 우선이라 정렬이 최장일치를 만든다
+    pat = re.compile('|'.join(re.escape(s) for s in
+                              sorted(attr, key=len, reverse=True)))
+    _VOCAB_CACHE[key] = (pat, attr)
+    return pat, attr
+
+
 def count_terms(text, terms, word_boundary=False):
     """용어별 출현 수. word_boundary=True 면 D1 보정을 적용한다."""
     out = Counter()
-    for t in terms:
-        n = text.count(t)
-        if not n:
-            continue
-        if word_boundary:
-            # 더 긴 용어에 흡수된 출현을 뺀다
-            for longer in CONTAINING.get(t, []):
-                if longer != t:
-                    n -= text.count(longer)
-            # 반도체 문맥의 동음이의 출현을 뺀다
-            for ctx in HOMONYM_CONTEXTS.get(t, []):
-                n -= text.count(ctx)
-            n = max(n, 0)
-        if n:
-            out[t] = n
+    if not word_boundary:
+        # 원본 규칙 그대로. 부분 문자열 중복 계수를 포함한다 — 재현용이므로
+        # 고치지 않는다. 이 경로는 구간 매칭을 타지 않으므로 D1 결함과 무관하다.
+        for t in terms:
+            n = text.count(t)
+            if n:
+                out[t] = n
+        return out
+
+    pat, attr = build_vocab(terms)
+    for m in pat.finditer(text):
+        a = attr[m.group(0)]
+        if a is not None:
+            out[a] += 1
     return out
 
 
