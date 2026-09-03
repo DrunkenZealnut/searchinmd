@@ -116,11 +116,11 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 
 <section style="margin-bottom:48px"><h2>키워드별 상세</h2>
 <div class="fb"><button type="button" class="fbtn on" aria-pressed="true" onclick="fK('all',this)">전체</button><button type="button" class="fbtn" aria-pressed="false" onclick="fK('detected',this)">검출된 키워드</button></div>
-<div class="card scroll-x" tabindex="0" role="region" aria-label="키워드별 상세 표 (가로 스크롤)"><table class="tbl sortable"><thead><tr><th data-k="k" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('k')">키워드</button></th><th data-k="t" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('t')">검출건수</button></th><th data-k="pg" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('pg')">검출쪽</button></th><th data-k="tp" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('tp')">검출쪽 비율<br><span class="thsub">(÷2,055쪽)</span></button></th><th data-k="g1" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('g1')">등급1<br><span class="thsub">미흡·없음</span></button></th><th data-k="g2" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('g2')">등급2<br><span class="thsub">형식적</span></button></th><th data-k="g3" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('g3')">등급3<br><span class="thsub">구체적</span></button></th><th data-k="cs" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('cs')">사고사례</button></th></tr></thead><tbody id="kb"></tbody></table></div>
+<div class="card"><div class="scroll-x" tabindex="0" role="region" aria-label="키워드별 상세 표 (가로 스크롤)"><table class="tbl sortable"><thead><tr><th data-k="k" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('k')">키워드</button></th><th data-k="t" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('t')">검출건수</button></th><th data-k="pg" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('pg')">검출쪽</button></th><th data-k="tp" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('tp')">검출쪽 비율<br><span class="thsub">(÷2,055쪽)</span></button></th><th data-k="g1" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('g1')">등급1<br><span class="thsub">미흡·없음</span></button></th><th data-k="g2" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('g2')">등급2<br><span class="thsub">형식적</span></button></th><th data-k="g3" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('g3')">등급3<br><span class="thsub">구체적</span></button></th><th data-k="cs" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('cs')">사고사례</button></th></tr></thead><tbody id="kb"></tbody></table></div></div>
 <p class="ts" style="margin-top:12px">* <strong>검출건수</strong>는 키워드×페이지 조합 수(합계 981), <strong>검출쪽</strong>은 그 고유 페이지 수다. 서로 다른 키워드가 같은 페이지에 걸리므로 검출쪽의 단순 합(362)은 각 행의 합과 다르다. 등급 열은 검출건수 기준이다.</p></section>
 
 <section style="margin-bottom:48px"><h2>교과서 목록</h2>
-<div class="card scroll-x" tabindex="0" role="region" aria-label="교과서 목록 표 (가로 스크롤)"><table class="tbl"><thead><tr><th>#</th><th>교과서명</th><th>출판사/기관</th><th>총 페이지</th><th>검출쪽</th><th>등급1<br><span class="thsub">미흡·없음</span></th><th>등급2<br><span class="thsub">형식적</span></th><th>등급3<br><span class="thsub">구체적 대책</span></th></tr></thead><tbody>
+<div class="card"><div class="scroll-x" tabindex="0" role="region" aria-label="교과서 목록 표 (가로 스크롤)"><table class="tbl"><thead><tr><th>#</th><th>교과서명</th><th>출판사/기관</th><th>총 페이지</th><th>검출쪽</th><th>등급1<br><span class="thsub">미흡·없음</span></th><th>등급2<br><span class="thsub">형식적</span></th><th>등급3<br><span class="thsub">구체적 대책</span></th></tr></thead><tbody>
 <tr><td>1</td><td>반도체 기초기술 1</td><td>크리아트</td><td>172</td><td>20</td><td>19</td><td>1</td><td style="color:var(--danger);font-weight:600">0</td></tr>
 <tr><td>2</td><td>반도체 기초기술 2</td><td>크리아트</td><td>232</td><td>38</td><td>37</td><td>1</td><td style="color:var(--danger);font-weight:600">0</td></tr>
 <tr><td>3</td><td>반도체 기초</td><td>렛유인</td><td>235</td><td>15</td><td>15</td><td>0</td><td style="color:var(--danger);font-weight:600">0</td></tr>
@@ -131,7 +131,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 <tr><td>8</td><td>반도체 조립검사</td><td>에이치앤지</td><td>256</td><td>32</td><td>30</td><td>2</td><td style="color:var(--danger);font-weight:600">0</td></tr>
 <tr><td>9</td><td>반도체 박막확산</td><td>에이치앤지</td><td>248</td><td>44</td><td>41</td><td>2</td><td style="color:var(--fg-ok);font-weight:600">1</td></tr>
 <tr style="font-weight:700;border-top:2px solid var(--border)"><td></td><td>합계</td><td></td><td>2,055</td><td>362</td><td>309</td><td>45</td><td>8</td></tr>
-</tbody></table></div>
+</tbody></table></div></div>
 <p class="ts" style="margin-top:12px">9권 중 <strong>6권</strong>(기초기술1·2, 기초, 공정기초, 포토에칭, 조립검사)이 구체적 안전대책 페이지를 <strong>단 한 쪽도 갖고 있지 않다</strong>. 등급3 8쪽은 장비 유지보수 3쪽(p.91·172·185), 인프라 일반 4쪽(p.155·162·180·186), 박막확산 1쪽(p.66)에 집중돼 있다.</p></section>
 
 <section style="margin-bottom:48px"><h2>문제점과 시사점</h2>
@@ -143,7 +143,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 
 <section style="margin-bottom:48px"><h2>NCS 교재 vs 교과서 비교</h2>
 <p class="ts" style="margin-bottom:16px">두 데이터셋은 원본 엑셀의 등급 코딩이 서로 반대여서, 아래 표는 <strong>통일 등급체계(1 미흡·없음 / 2 형식적 / 3 구체적)</strong>로 재매핑한 값이다. 또한 비율은 양쪽 모두 <strong>키워드 검출 페이지</strong>를 분모로 맞췄다(NCS는 교재 원본 총 쪽수를 알 수 없어 전체 대비 비율을 산출할 수 없다).</p>
-<div class="card scroll-x" tabindex="0" role="region" aria-label="NCS 교재 vs 교과서 비교 표 (가로 스크롤)"><table class="tbl"><thead><tr><th>항목</th><th>NCS 교재 (86권)</th><th>교과서 (9권)</th><th>차이</th></tr></thead><tbody>
+<div class="card"><div class="scroll-x" tabindex="0" role="region" aria-label="NCS 교재 vs 교과서 비교 표 (가로 스크롤)"><table class="tbl"><thead><tr><th>항목</th><th>NCS 교재 (86권)</th><th>교과서 (9권)</th><th>차이</th></tr></thead><tbody>
 <tr><td><strong>전체 페이지</strong></td><td>미상</td><td>2,055쪽</td><td>-</td></tr>
 <tr><td><strong>키워드 검출 페이지</strong></td><td>1,847쪽</td><td>362쪽</td><td>-</td></tr>
 <tr><td><strong>검출 항목 (키워드×쪽)</strong></td><td>7,769건</td><td>981건</td><td>-</td></tr>
@@ -153,7 +153,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 <tr><td><strong>등급3이 0쪽인 교재</strong></td><td>49/86권 (57%)</td><td>6/9권 (67%)</td><td style="color:var(--danger)">+10%p</td></tr>
 <tr><td><strong>사고사례 (원문 대조 후)</strong></td><td>1건 (구미 불산, 2권 중복)</td><td>0건</td><td style="color:var(--danger)">-1건</td></tr>
 <tr><td><strong>검출 키워드</strong></td><td>30/30</td><td>22/30</td><td style="color:var(--danger)">8개 누락</td></tr>
-</tbody></table></div>
+</tbody></table></div></div>
 <p class="ts" style="margin-top:12px">이전 버전이 제시한 "구체적 대책 -41.5%p"는 ① 두 데이터셋의 등급 코딩이 반대인 것을 반영하지 않았고 ② 분모가 서로 다른 값(NCS 검출 항목 7,769 vs 교과서 전체 2,055쪽)을 뺀 것이어서 성립하지 않는다. 동일 스키마·동일 분모로 맞춘 값은 <strong>-3.6%p</strong>다. 다만 절대량으로 보면 교과서 9권 2,055쪽 중 구체적 대책은 8쪽뿐이다.</p></section>
 
 <section style="margin-bottom:48px"><h2>개선 권고안</h2>
