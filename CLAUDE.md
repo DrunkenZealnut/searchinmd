@@ -106,7 +106,7 @@ The root-level Python scripts are an offline data pipeline that feeds the search
 `osha_downloader.py`, `kosha_downloader.py`, `niosh_downloader.py`, `eu_osha_downloader.py`, `safework_au_downloader.py` — each scrapes one occupational-safety agency's publication list and bulk-downloads PDFs. They share a common shape:
 
 - **Resumable**: each writes a `_download_progress.json` (`{downloaded, failed, articles}`) into its `SAVE_DIR`; rerunning skips completed items.
-- **Hardcoded `SAVE_DIR`** pointing outside the repo (e.g. `.../청년노동자인권센터/교과서/...`) — edit the constant at the top before running on another machine.
+- **`SAVE_DIR` comes from the `DOWNLOAD_ROOT` env var** — `export DOWNLOAD_ROOT="/path/to/안전보건공단"` once, and each script appends its own agency subdirectory. Unset, it falls back to `downloads/` inside the repo (gitignored). Previously each script hardcoded an absolute local path.
 - Spoof a desktop `User-Agent`, throttle with a `DELAY` constant, and `sanitize_filename()` for filesystem-safe names.
 - Year/count filters via `MIN_YEAR`, `TOTAL_PAGES`, `ARTICLE_LIMIT` constants near the top.
 
@@ -119,7 +119,7 @@ These bridge the PDF→markdown→Excel workflow and mirror the HTML app's page 
 - `add_fullpage.py` — reads page numbers from an Excel column, then writes each row's full page content back into the next column (`EXCEL_MAX_CHARS = 32767` cell cap).
 - `outputs/reclassify_accident_cases.py` — re-judges "사고사례여부" per-row from cell contents rather than whole-page text.
 
-Like the downloaders, these have **hardcoded absolute paths** (`EXCEL_PATH`, `NCS_BASES`, `DEFAULT_NCS_DIRS`) — edit the constants before running.
+These still have **hardcoded absolute paths** (`EXCEL_PATH`, `NCS_BASES`, `DEFAULT_NCS_DIRS`) — edit the constants before running. (The downloaders no longer do; see `DOWNLOAD_ROOT` above.)
 
 ## Testing
 
