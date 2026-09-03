@@ -26,7 +26,15 @@ const PAGES = ['docs/index.html', 'docs/textbook.html', 'docs/osha.html', 'outpu
 const ROOT = path.join(__dirname, '..');
 const ONLINE = process.argv.includes('--online');
 // CDN 응답이 멈추면 CI 잡이 매달린다. 넉넉하되 유한하게.
-const FETCH_TIMEOUT_MS = Number(process.env.SRI_FETCH_TIMEOUT_MS || 20000);
+// Node 의 setTimeout 은 delay 가 NaN·1 미만·2147483647 초과면 조용히 1ms 로
+// 클램프한다. 정규화하지 않으면 SRI_FETCH_TIMEOUT_MS=0 이 "타임아웃 없음" 이
+// 아니라 "1ms 후 즉시 abort" 가 되어 온라인 검사가 통째로 실패한다.
+const MAX_TIMEOUT_MS = 2147483647;   // setTimeout 상한 (2^31-1)
+function normalizeTimeout(raw, fallback) {
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 1 && n <= MAX_TIMEOUT_MS ? Math.trunc(n) : fallback;
+}
+const FETCH_TIMEOUT_MS = normalizeTimeout(process.env.SRI_FETCH_TIMEOUT_MS, 20000);
 
 let pass = 0, fail = 0;
 function check(name, cond, detail) {
@@ -39,9 +47,9 @@ function externalScripts(html) {
   return [...html.matchAll(/<script\b[^>]*\bsrc="(https?:\/\/[^"]+)"[^>]*>/g)].map((m) => ({
     tag: m[0],
     url: m[1],
-    integrity: (m[0].match(/\bintegrity="([^"]+)"/) || [])[1] || null,
-    crossorigin: /\bcrossorigin=/.test(m[0]),
-    referrerpolicy: (m[0].match(/\breferrerpolicy="([^"]+)"/) || [])[1] || null,
+    integrity: (m[0].match(/(?:^|\s)integrity\s*=\s*["']([^"']+)["']/i) || [])[1] || null,
+    crossorigin: /(?:^|\s)crossorigin(?:\s*=|[\s>])/i.test(m[0]),
+    referrerpolicy: (m[0].match(/(?:^|\s)referrerpolicy\s*=\s*["']([^"']+)["']/i) || [])[1] || null,
   }));
 }
 
