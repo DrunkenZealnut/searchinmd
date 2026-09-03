@@ -9,8 +9,8 @@
 <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js" integrity="sha384-UbfRVKN3/elS1r7JcK2FhmPP+KlJ4CvYwbyYD7tH+uTkbT9bNJr9eJeQ0FoFbAgz" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html.theme-dark{--bg:#0A0A0A;--surface:#141414;--surface-hover:#1C1C1C;--border:rgba(255,255,255,0.06);--text:#EDEDED;--text-secondary:#888;--accent:#3b82f6;--accent-secondary:#8b5cf6;--positive:#10b981;--negative:#f43f5e;--warning:#f59e0b;--g1:#6b7280;--g2:#f59e0b;--g3:#10b981;--danger:#ef4444}
-html.theme-light{--bg:#FAFAF9;--surface:#FFFFFF;--surface-hover:#F5F5F4;--border:rgba(0,0,0,0.06);--text:#0f172a;--text-secondary:#64748b;--accent:#2563eb;--accent-secondary:#7c3aed;--positive:#059669;--negative:#e11d48;--warning:#d97706;--g1:#9ca3af;--g2:#d97706;--g3:#059669;--danger:#dc2626}
+html.theme-dark{--bg:#0A0A0A;--surface:#141414;--surface-hover:#1C1C1C;--border:rgba(255,255,255,0.06);--text:#EDEDED;--text-secondary:#888;--accent:#3b82f6;--accent-secondary:#8b5cf6;--positive:#10b981;--negative:#f43f5e;--warning:#f59e0b;--g1:#6b7280;--g2:#f59e0b;--g3:#10b981;--danger:#ef4444;--scrim:rgba(255,255,255,.20)}
+html.theme-light{--bg:#FAFAF9;--surface:#FFFFFF;--surface-hover:#F5F5F4;--border:rgba(0,0,0,0.06);--text:#0f172a;--text-secondary:#64748b;--accent:#2563eb;--accent-secondary:#7c3aed;--positive:#059669;--negative:#e11d48;--warning:#d97706;--g1:#9ca3af;--g2:#d97706;--g3:#059669;--danger:#dc2626;--scrim:rgba(0,0,0,.16)}
 /* 타입 스케일 — 16px 미만은 이 3단계뿐이다. 한글은 10~11px 에서 자소가 뭉개져
    본문으로 못 쓴다. xs 는 대문자 라벨·캡션 전용 바닥값. */
 :root{--fs-xs:.75rem;--fs-sm:.875rem;--fs-md:1rem;--fs-lg:1.125rem}
@@ -31,6 +31,16 @@ a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid 
 .skip{position:absolute;left:-9999px;top:0;z-index:10000}
 .skip:focus{left:8px;top:8px;padding:10px 16px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:var(--fs-sm)}
 .ts{color:var(--text-secondary);font-size:var(--fs-sm)}
+/* 가로 스크롤 영역 — 9열 표가 좁은 화면에서 잘리는데 오른쪽에 더 있다는 신호가
+   전혀 없었다(macOS 는 스크롤바를 숨긴다). 양끝 그라데이션은 끝에 닿으면 스스로
+   사라진다(background-attachment:local). tabindex 는 스크롤 가능 영역의 요건 —
+   없으면 키보드로는 가려진 열에 아예 닿을 수 없다. */
+.scroll-x{overflow-x:auto;
+  background:linear-gradient(var(--surface),var(--surface)) left/20px 100% no-repeat,
+             linear-gradient(var(--surface),var(--surface)) right/20px 100% no-repeat,
+             linear-gradient(to right,var(--scrim),transparent) left/14px 100% no-repeat,
+             linear-gradient(to left,var(--scrim),transparent) right/14px 100% no-repeat;
+  background-attachment:local,local,scroll,scroll}
 .ctn{max-width:900px;margin:0 auto;padding:48px 32px}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;margin-bottom:24px}
 .hero{text-align:center;padding:48px 0 32px}.hero p{font-size:var(--fs-lg);color:var(--text-secondary);margin-top:8px;max-width:700px;margin-left:auto;margin-right:auto}
@@ -94,7 +104,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 
 <h2>과정 구조</h2>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="과정 구조 표 (가로 스크롤)"><table>
 <thead><tr><th>과정</th><th>시간</th><th>주요 내용</th></tr></thead>
 <tbody>
 <tr><td><strong>Part 1-A</strong></td><td>22분</td><td>GHS 소개, 위험 분류 체계 (물리적·건강·환경 위험), 9개 픽토그램, 반도체 공정별 유해 화학물질</td></tr>
@@ -103,12 +113,12 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td><strong>Part 3</strong></td><td>24분</td><td>극도 유해 화학물질 9개 범주 (독성수소화물, 부식성·산화성·자연발화성 가스, 실란, 유기금속, 부식성 액체, 유해 부산물), 데이터시트 활용</td></tr>
 <tr><td><strong>Part 4</strong></td><td>26분</td><td>불활성 가스와 산소결핍, 극저온 실린더(Dewar), 압축 가스 실린더 위험, 유해 가스 통제 시스템 12단계, NFPA 등급, MAQ, 비상 대응(EMO)</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 
 <h2>OSHA SCS 교육이 다루는 핵심 영역</h2>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="OSHA SCS 교육이 다루는 핵심 영역 표 (가로 스크롤)"><table>
 <thead><tr><th>영역</th><th>세부 내용</th><th>한국 NCS/교과서 대응</th></tr></thead>
 <tbody>
 <tr><td><strong>위험 분류 체계</strong></td><td>GHS 9개 픽토그램, 물리적/건강/환경 3대 위험, 위험 등급(1~5)</td><td><span class="tag tag-danger">부재</span> NCS·교과서에 GHS 분류 체계 교육 없음</td></tr>
@@ -123,7 +133,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td><strong>산소 결핍·극저온</strong></td><td>불활성 가스 질식 위험, Dewar 팽창계수 700배, 실린더 발사체화</td><td><span class="tag tag-danger">부재</span> 산소 결핍 위험 교육 없음</td></tr>
 <tr><td><strong>사고사례</strong></td><td>실란 폭발 사망, HF 화상, 가스 누출 등 다수</td><td><span class="tag tag-danger">극히 부족</span> NCS 1건(구미 불산, 2권 중복), 교과서 0건</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 </div>
 
@@ -161,14 +171,14 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 </ul>
 
 <h3>3. 3가지 위험 유형과 GHS 픽토그램</h3>
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="3. 3가지 위험 유형과 GHS 픽토그램 표 (가로 스크롤)"><table>
 <thead><tr><th>위험 유형</th><th>설명</th><th>예시</th></tr></thead>
 <tbody>
 <tr><td><strong>물리적 위험</strong></td><td>부식성, 인화성, 폭발 가능성</td><td>화재, 폭발, 가스 누출</td></tr>
 <tr><td><strong>건강 위험</strong></td><td>단기 또는 장기 건강 악영향</td><td>독성, 발암성, 생식독성</td></tr>
 <tr><td><strong>환경 위험</strong></td><td>하천, 호수 오염, 수생 생물 위협</td><td>할론, 은, 산화아연</td></tr>
 </tbody>
-</table>
+</table></div>
 <p>GHS는 9개 표준화된 픽토그램을 사용합니다. 각각 빨간 다이아몬드 테두리 안에 검은 위험 기호가 있습니다.</p>
 
 <h3>4. 물리적 위험 상세</h3>
@@ -206,14 +216,14 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <p>급성(단기) 또는 만성(장기) 건강 영향을 일으키며 사망에 이를 수 있습니다.</p>
 
 <h4>부식성 화학물질</h4>
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="부식성 화학물질 표 (가로 스크롤)"><table>
 <thead><tr><th>pH</th><th>분류</th><th>반도체 사용 예</th></tr></thead>
 <tbody>
 <tr><td>≤ 2</td><td>부식성 산</td><td>황산, 염산, 질산</td></tr>
 <tr><td>7</td><td>중성</td><td>물</td></tr>
 <tr><td>≥ 11.5</td><td>부식성 염기</td><td>수산화암모늄, TMAH</td></tr>
 </tbody>
-</table>
+</table></div>
 
 <h4>불산(HF) — 특수 위험</h4>
 <p>반도체 식각 및 챔버 세정에 사용. 실리콘 화합물 용해에 탁월하지만 극도로 위험합니다.</p>
@@ -224,7 +234,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 </ul>
 
 <h4>발암물질, 변이원성, 생식독성, 호흡기 민감화, 흡인독성, 표적장기독성, 피부/눈 자극, 피부 민감화</h4>
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="발암물질, 변이원성, 생식독성, 호흡기 민감화, 흡인독성, 표적장기독성, 표 (가로 스크롤)"><table>
 <thead><tr><th>유형</th><th>설명</th><th>반도체 예시</th></tr></thead>
 <tbody>
 <tr><td>발암물질</td><td>암을 유발하거나 발생률 증가</td><td>비소, 갈륨비소, 클로로포름</td></tr>
@@ -233,7 +243,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td>표적장기독성</td><td>특정 장기에 심각한 손상</td><td>염화구리(간), 삼불화질소(신장)</td></tr>
 <tr><td>피부/눈 자극</td><td>접촉 시 가역적 손상</td><td>희석 산/염기, IPA, 아세톤</td></tr>
 </tbody>
-</table>
+</table></div>
 
 <h3>6. 환경 위험</h3>
 <p>수생 환경에 단기 또는 장기 손상을 줄 수 있는 화학물질입니다. 할론(소화기), 은, 산화아연 등이 해당됩니다. 환경 위험 픽토그램은 EU에서는 필수이지만 미국에서는 필수가 아닙니다.</p>
@@ -243,14 +253,14 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <div class="comp">
 <h3>GHS 물질 상태 정의</h3>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="GHS 물질 상태 정의 표 (가로 스크롤)"><table>
 <thead><tr><th>상태</th><th>정의</th></tr></thead>
 <tbody>
 <tr><td><strong>기체 (Gas)</strong></td><td>50°C에서 증기압 &gt;300kPa</td></tr>
 <tr><td><strong>액체 (Liquid)</strong></td><td>50°C에서 증기압 ≤300kPa, 녹는점 ≤20°C</td></tr>
 <tr><td><strong>고체 (Solid)</strong></td><td>기체 또는 액체에 해당하지 않는 물질</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 </div>
 
@@ -265,14 +275,14 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <div class="comp">
 <h3>건강 위험 — 부식성 pH 기준</h3>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="건강 위험 — 부식성 pH 기준 표 (가로 스크롤)"><table>
 <thead><tr><th>pH 범위</th><th>분류</th></tr></thead>
 <tbody>
 <tr><td>≤ 2</td><td>부식성 산 (Acid)</td></tr>
 <tr><td>7</td><td>중성 (Neutral)</td></tr>
 <tr><td>≥ 11.5</td><td>부식성 염기 (Base)</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 <p><strong>HF 응급처치:</strong> 물로 5분간 세척 → 칼슘글루코네이트(calcium gluconate) 젤 도포</p>
 </div>
@@ -303,7 +313,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 
 <h3>1. 안전보건자료 (SDS)</h3>
 <h4>SDS 16개 섹션 (4개 범주)</h4>
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="SDS 16개 섹션 (4개 범주) 표 (가로 스크롤)"><table>
 <thead><tr><th>범주</th><th>포함 섹션</th></tr></thead>
 <tbody>
 <tr><td><strong>식별</strong></td><td>물질/혼합물 식별, 공급자, 위험성, 조성, 성분</td></tr>
@@ -311,7 +321,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td><strong>물성</strong></td><td>물리적/화학적 특성, 안정성, 반응성, 독성학적 정보</td></tr>
 <tr><td><strong>추가 정보</strong></td><td>생태학적 영향, 폐기, 운송, 규정, SDS 작성/개정</td></tr>
 </tbody>
-</table>
+</table></div>
 
 <h4>SDS 주요 요건</h4>
 <ul>
@@ -328,7 +338,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 </ul>
 
 <h3>3. 위험 통제 5단계 (Hierarchy of Hazard Control)</h3>
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="3. 위험 통제 5단계 (Hierarchy of Hazard Contro 표 (가로 스크롤)"><table>
 <thead><tr><th>순위</th><th>방법</th><th>반도체 예시</th><th>효과</th></tr></thead>
 <tbody>
 <tr><td>1</td><td><strong>제거 (Elimination)</strong></td><td>무연 솔더 사용으로 납 노출 제거</td><td>최고</td></tr>
@@ -337,7 +347,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td>4</td><td><strong>행정적 통제</strong></td><td>직원 교육, 직무 순환, 경고 표지판, 유지보수 일정 조정(근로자 적을 때), 비상 계획</td><td>↓</td></tr>
 <tr><td>5</td><td><strong>PPE</strong></td><td>독성 가스 실린더 교체 시 공급식 호흡기, 화학 장갑+앞치마+보안경(웨트 벤치)</td><td>최저</td></tr>
 </tbody>
-</table>
+</table></div>
 
 <h3>4. 안전한 화학물질 취급</h3>
 <ul>
@@ -361,14 +371,14 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 
 <h3>6. 비상 절차</h3>
 <h4>화학물질 노출 응급처치</h4>
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="화학물질 노출 응급처치 표 (가로 스크롤)"><table>
 <thead><tr><th>노출 유형</th><th>조치</th></tr></thead>
 <tbody>
 <tr><td>눈/얼굴에 화학물질</td><td>아이워시 스테이션에서 <strong>15분간</strong> 세척</td></tr>
 <tr><td>피부에 부식성/독성 화학물질</td><td>안전 샤워에서 <strong>15분간</strong> 세척</td></tr>
 <tr><td>독성/부식성 가스 흡입</td><td>안전하게 현장에서 이동, 신선한 공기로</td></tr>
 </tbody>
-</table>
+</table></div>
 
 <h4>가스 누출 대응</h4>
 <ul>
@@ -416,13 +426,13 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <div class="comp">
 <h3>GHS vs NFPA 등급 비교 (반대 척도)</h3>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="GHS vs NFPA 등급 비교 (반대 척도) 표 (가로 스크롤)"><table>
 <thead><tr><th>체계</th><th>등급 범위</th><th>최고 위험</th><th>최저 위험</th></tr></thead>
 <tbody>
 <tr><td><strong>GHS</strong></td><td>1 ~ 5</td><td style="color:var(--danger);font-weight:700">1 (최고 위험)</td><td>5</td></tr>
 <tr><td><strong>NFPA</strong></td><td>0 ~ 4</td><td style="color:var(--danger);font-weight:700">4 (최고 위험)</td><td>0</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 <p><strong>주의:</strong> 두 체계의 숫자 방향이 정반대입니다. GHS 1등급 = 가장 위험, NFPA 4등급 = 가장 위험.</p>
 </div>
@@ -485,14 +495,14 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 </ul>
 
 <h3>3. 인화성 가스와 폭발 한계</h3>
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="3. 인화성 가스와 폭발 한계 표 (가로 스크롤)"><table>
 <thead><tr><th>가스</th><th>LEL (하한)</th><th>UEL (상한)</th><th>폭발 범위</th></tr></thead>
 <tbody>
 <tr><td>메탄</td><td>5%</td><td>15%</td><td>좁음</td></tr>
 <tr><td>수소</td><td>4%</td><td>74%</td><td>매우 넓음</td></tr>
 <tr><td>아세틸렌</td><td>2%</td><td>100%</td><td>극히 넓음</td></tr>
 </tbody>
-</table>
+</table></div>
 <p>수소와 아세틸렌은 폭발 범위가 넓어 <strong>어떤 누출이든 위험</strong>합니다.</p>
 
 <h4>통제 방법</h4>
@@ -520,7 +530,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 </ul>
 
 <h3>7. 화재 비상 대응 요약</h3>
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="7. 화재 비상 대응 요약 표 (가로 스크롤)"><table>
 <thead><tr><th>위험</th><th>대응</th></tr></thead>
 <tbody>
 <tr><td>인화성 액체 화재</td><td>가능하면 현장 이탈. 피부/의복에 묻으면 의복 제거 후 세척</td></tr>
@@ -528,13 +538,13 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td>인화성 고체 화재</td><td>훈련된 인원만 Class D 소화기로 진화. 미훈련 시 대피</td></tr>
 <tr><td>자연발화성 화재</td><td>소화기 사용 금지. 원격 차단 사용. 대피 후 전문팀 호출</td></tr>
 </tbody>
-</table>
+</table></div>
 
 <h3>8. 산화제</h3>
 <p>자체 연소하지 않지만 연료 연소를 촉진. 일부는 점화원 없이도 화재 유발. 질산, 과산화수소, 염소, 100% 산소, 불소 등.</p>
 
 <h3>9. 부식성 화학물질</h3>
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="9. 부식성 화학물질 표 (가로 스크롤)"><table>
 <thead><tr><th>화학물질</th><th>영향</th></tr></thead>
 <tbody>
 <tr><td><strong>불산 (HF)</strong></td><td>극도의 부식성. 심부 관통 화상. 호흡기 자극, 눈 손상, 폐부종, 뼈 손상</td></tr>
@@ -542,7 +552,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td><strong>질산</strong></td><td>접촉 즉시 극심한 통증의 화상. 흡입 시 치명적일 수 있음</td></tr>
 <tr><td><strong>수산화나트륨</strong></td><td>고농도에서 조직 화상. 접촉 시 통증이 없을 수 있음 (미끄러운 느낌 = 피하지방 용해)</td></tr>
 </tbody>
-</table>
+</table></div>
 
 <h4>HF 노출 응급처치 (특수 절차)</h4>
 <ol>
@@ -556,7 +566,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <p><strong>반도체 독성 화학물질:</strong> 암모니아, 비소/아르신, 디보레인, 저메인, 포스핀, 오존</p>
 
 <h4>노출 한계 용어</h4>
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="노출 한계 용어 표 (가로 스크롤)"><table>
 <thead><tr><th>약어</th><th>명칭</th><th>설명</th></tr></thead>
 <tbody>
 <tr><td><strong>PEL</strong></td><td>허용 노출 한계</td><td>정부가 설정</td></tr>
@@ -566,12 +576,12 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td><strong>STEL</strong></td><td>단시간 노출 한계</td><td>15분간 허용 노출</td></tr>
 <tr><td><strong>IDLH</strong></td><td>즉시 생명·건강 위험</td><td>비가역적 건강 영향, 사망 가능 수준</td></tr>
 </tbody>
-</table>
+</table></div>
 
 <blockquote>PEL, TLV, TWA, STEL = 상대적으로 안전한 허용 수준<br>IDLH = <strong>안전하지 않은</strong> 수준</blockquote>
 
 <h4>독성 화학물질 노출 경로별 대응</h4>
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="독성 화학물질 노출 경로별 대응 표 (가로 스크롤)"><table>
 <thead><tr><th>노출 경로</th><th>대응</th></tr></thead>
 <tbody>
 <tr><td>흡입</td><td>신선한 공기로 이동, 응급 서비스 호출</td></tr>
@@ -579,11 +589,11 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td>섭취</td><td>독극물 센터 연락, 응급 서비스 호출</td></tr>
 <tr><td>주사(피부 관통)</td><td>출혈 통제, 응급 서비스 호출</td></tr>
 </tbody>
-</table>
+</table></div>
 
 <h3>11. 화학물질 보관과 호환성</h3>
 <h4>호환성 차트</h4>
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="호환성 차트 표 (가로 스크롤)"><table>
 <thead><tr><th></th><th>인화성</th><th>산화제</th><th>산</th><th>염기</th><th>독성</th></tr></thead>
 <tbody>
 <tr><td><strong>인화성</strong></td><td style="color:var(--positive)">OK</td><td style="color:var(--danger)">NO</td><td style="color:var(--danger)">NO</td><td style="color:var(--danger)">NO</td><td style="color:var(--positive)">OK</td></tr>
@@ -592,7 +602,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td><strong>염기</strong></td><td style="color:var(--danger)">NO</td><td style="color:var(--danger)">NO</td><td style="color:var(--danger)">NO</td><td style="color:var(--positive)">OK</td><td style="color:var(--danger)">NO</td></tr>
 <tr><td><strong>독성</strong></td><td style="color:var(--positive)">OK</td><td style="color:var(--danger)">NO</td><td style="color:var(--danger)">NO</td><td style="color:var(--danger)">NO</td><td style="color:var(--positive)">OK</td></tr>
 </tbody>
-</table>
+</table></div>
 
 <h3>12. 개인보호장비 (PPE)</h3>
 <ul>
@@ -608,7 +618,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <div class="comp">
 <h3>화학물질 보관 방법</h3>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="화학물질 보관 방법 표 (가로 스크롤)"><table>
 <thead><tr><th>위험 분류</th><th>보관 방법</th></tr></thead>
 <tbody>
 <tr><td><strong>인화성 액체</strong></td><td>인화성 화학물질 캐비닛</td></tr>
@@ -622,14 +632,14 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td><strong>독성 액체</strong></td><td>화학물질 캐비닛</td></tr>
 <tr><td><strong>독성 가스</strong></td><td>승인된 가스 캐비닛</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 </div>
 
 <div class="comp">
 <h3>개인보호장비 (PPE) 상세</h3>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="개인보호장비 (PPE) 상세 표 (가로 스크롤)"><table>
 <thead><tr><th>장비</th><th>권장 사항</th></tr></thead>
 <tbody>
 <tr><td><strong>보안경</strong></td><td>적절한 등급의 보안경, 고글, 안면 보호대</td></tr>
@@ -638,14 +648,14 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td><strong>의복</strong></td><td>제조사 등급 확인 (앞치마, 소매, 보호복)</td></tr>
 <tr><td><strong>신발</strong></td><td>화학물질 취급 시 발가락 보호 신발</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 </div>
 
 <div class="comp">
 <h3>화학물질 호환성 차트 (5x5 매트릭스)</h3>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="화학물질 호환성 차트 (5x5 매트릭스) 표 (가로 스크롤)"><table>
 <thead><tr><th></th><th>인화성</th><th>산화제</th><th>산</th><th>염기</th><th>독성</th></tr></thead>
 <tbody>
 <tr><td><strong>인화성</strong></td><td style="color:var(--positive);font-weight:700">OK</td><td style="color:var(--danger);font-weight:700">No</td><td style="color:var(--danger);font-weight:700">No</td><td style="color:var(--danger);font-weight:700">No</td><td style="color:var(--positive);font-weight:700">OK</td></tr>
@@ -654,7 +664,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td><strong>염기</strong></td><td style="color:var(--danger);font-weight:700">No</td><td style="color:var(--danger);font-weight:700">No</td><td style="color:var(--danger);font-weight:700">No</td><td style="color:var(--positive);font-weight:700">OK</td><td style="color:var(--danger);font-weight:700">No</td></tr>
 <tr><td><strong>독성</strong></td><td style="color:var(--positive);font-weight:700">OK</td><td style="color:var(--danger);font-weight:700">No</td><td style="color:var(--danger);font-weight:700">No</td><td style="color:var(--danger);font-weight:700">No</td><td style="color:var(--positive);font-weight:700">OK</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 </div>
 
@@ -671,7 +681,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <div class="comp">
 <h3>노출 한계 용어 정리</h3>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="노출 한계 용어 정리 표 (가로 스크롤)"><table>
 <thead><tr><th>약어</th><th>명칭</th><th>설명</th></tr></thead>
 <tbody>
 <tr><td><strong>PEL</strong></td><td>허용 노출 한계 (Permissible Exposure Limit)</td><td>정부(OSHA)가 설정한 법적 한계</td></tr>
@@ -683,7 +693,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td><strong>LD50</strong></td><td>반수치사량 (Lethal Dose 50%)</td><td>시험 동물의 50%가 사망하는 경구/경피 용량</td></tr>
 <tr><td><strong>LC50</strong></td><td>반수치사농도 (Lethal Concentration 50%)</td><td>시험 동물의 50%가 사망하는 흡입 농도</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 </div>
 
@@ -698,7 +708,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 
 <h3>9개 극도 유해 화학물질 범주 개요</h3>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="9개 극도 유해 화학물질 범주 개요 표 (가로 스크롤)"><table>
 <thead><tr><th>#</th><th>범주</th><th>주요 위험</th><th>핵심 특성</th><th>대표 화학물질</th></tr></thead>
 <tbody>
 <tr><td>1</td><td><strong>독성 수소화물 가스</strong></td><td>독성 (흡입)</td><td>인화성, 일부 자연발화성. 안전 노출 수준이 냄새 역치보다 낮아 <strong>냄새로 감지 불가</strong></td><td>아르신(AsH₃), 디보레인(B₂H₆), 포스핀(PH₃), 저메인(GeH₄), 셀렌화수소(H₂Se), 황화수소(H₂S)</td></tr>
@@ -711,7 +721,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td>8</td><td><strong>부식성 액체</strong></td><td>부식성</td><td>심부 관통 화상. 다른 화학물질과 격렬한 발열 반응. 용기/배관 부식</td><td>염산(HCl), 불산(HF), 황산(H₂SO₄), 질산(HNO₃), 인산(H₃PO₄)</td></tr>
 <tr><td>9</td><td><strong>유해 부산물</strong></td><td>복합</td><td>챔버 벽, 배기관, 펌프에 퇴적. 원재료와 동일한 위험 + <strong>결합 시 새로운 위험 생성</strong> (자연발화, 물반응, 독성 등)</td><td>증착·확산·주입 공정 잔류물</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 
 <h3>실란 (Silane) — 특별 경고</h3>
@@ -729,7 +739,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 </ul>
 
 <h3>비상 대응</h3>
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="비상 대응 표 (가로 스크롤)"><table>
 <thead><tr><th>상황</th><th>대응</th></tr></thead>
 <tbody>
 <tr><td>경보 발동</td><td><strong>지정 집결지로 즉시 대피</strong></td></tr>
@@ -738,7 +748,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td>화학물질 흡입</td><td>신선한 공기로 이동</td></tr>
 <tr><td>화학 화상</td><td>안전 샤워 이용</td></tr>
 </tbody>
-</table>
+</table></div>
 <blockquote><strong>자신의 안전을 먼저 확보</strong>한 후 타인을 지원. 추가 사상자가 되는 것을 피해야 합니다.</blockquote>
 
 <h3 style="color:var(--accent)">공식 Data Sheet 상세 데이터</h3>
@@ -746,7 +756,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <div class="comp">
 <h3>9개 범주별 핵심 데이터</h3>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="9개 범주별 핵심 데이터 표 (가로 스크롤)"><table>
 <thead><tr><th>범주</th><th>TLV (ppm)</th><th>IDLH (ppm)</th><th>LC50 (ppm)</th><th>LEL (%)</th><th>UEL (%)</th><th>냄새</th></tr></thead>
 <tbody>
 <tr><td><strong>독성 수소화물</strong></td><td>&lt;10</td><td>&lt;100</td><td>&lt;200</td><td>0-4</td><td>75-100</td><td>노출 역치 이상에서 감지</td></tr>
@@ -759,7 +769,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td><strong>부식성 액체</strong></td><td>0.1-2</td><td>15-50</td><td>-</td><td>-</td><td>-</td><td>날카롭고 자극적, 후각 피로 유발</td></tr>
 <tr><td><strong>유해 부산물</strong></td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>원재료와 동일한 위험 + 복합 반응 위험</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 </div>
 
@@ -768,7 +778,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 
 <h4>1. 독성 수소화물 가스</h4>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="1. 독성 수소화물 가스 표 (가로 스크롤)"><table>
 <thead><tr><th>화학물질</th><th>화학식</th><th>반도체 용도</th></tr></thead>
 <tbody>
 <tr><td>아르신</td><td>AsH₃</td><td>이온 주입 (Implant), 에피택시 (Diffusion)</td></tr>
@@ -778,12 +788,12 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td>셀렌화수소</td><td>H₂Se</td><td>증착 (Deposition)</td></tr>
 <tr><td>황화수소</td><td>H₂S</td><td>증착 (Deposition)</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 
 <h4>2. 부식성 가스</h4>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="2. 부식성 가스 표 (가로 스크롤)"><table>
 <thead><tr><th>화학물질</th><th>화학식</th><th>반도체 용도</th></tr></thead>
 <tbody>
 <tr><td>암모니아</td><td>NH₃</td><td>증착 (Deposition), 세정 (Cleaning)</td></tr>
@@ -795,12 +805,12 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td>포스겐</td><td>COCl₂</td><td>부산물 (By-product)</td></tr>
 <tr><td>육불화텅스텐</td><td>WF₆</td><td>증착 (Deposition)</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 
 <h4>3. 산화성 가스</h4>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="3. 산화성 가스 표 (가로 스크롤)"><table>
 <thead><tr><th>화학물질</th><th>화학식</th><th>반도체 용도</th></tr></thead>
 <tbody>
 <tr><td>염소</td><td>Cl₂</td><td>식각 (Etch)</td></tr>
@@ -813,45 +823,45 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td>산소</td><td>O₂</td><td>확산, 식각 (Diffusion, Etch)</td></tr>
 <tr><td>오존</td><td>O₃</td><td>세정 (Cleaning)</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 
 <h4>4. 자연발화성 가스</h4>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="4. 자연발화성 가스 표 (가로 스크롤)"><table>
 <thead><tr><th>화학물질</th><th>화학식</th><th>반도체 용도</th></tr></thead>
 <tbody>
 <tr><td>실란</td><td>SiH₄</td><td>증착 (Deposition)</td></tr>
 <tr><td>디실란</td><td>Si₂H₆</td><td>증착 (Deposition)</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 
 <h4>5. 실란 (특별 항목)</h4>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="5. 실란 (특별 항목) 표 (가로 스크롤)"><table>
 <thead><tr><th>화학물질</th><th>화학식</th><th>반도체 용도</th></tr></thead>
 <tbody>
 <tr><td>실란</td><td>SiH₄</td><td>실리콘 증착 (CVD, PECVD)</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 
 <h4>6. 인화성 가스</h4>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="6. 인화성 가스 표 (가로 스크롤)"><table>
 <thead><tr><th>화학물질</th><th>화학식</th><th>반도체 용도</th></tr></thead>
 <tbody>
 <tr><td>수소</td><td>H₂</td><td>확산, 증착, 세정 (Diffusion, Deposition, Cleaning)</td></tr>
 <tr><td>메탄</td><td>CH₄</td><td>증착 (Deposition)</td></tr>
 <tr><td>프로판</td><td>C₃H₈</td><td>에피택시 (Epitaxy)</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 
 <h4>7. 고에너지 물질 (유기금속)</h4>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="7. 고에너지 물질 (유기금속) 표 (가로 스크롤)"><table>
 <thead><tr><th>화학물질</th><th>화학식</th><th>반도체 용도</th></tr></thead>
 <tbody>
 <tr><td>디에틸아연</td><td>DEZ</td><td>증착 (MOCVD)</td></tr>
@@ -859,12 +869,12 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td>트리메틸갈륨</td><td>TMG</td><td>증착 (MOCVD)</td></tr>
 <tr><td>트리메틸인듐</td><td>TMI</td><td>증착 (MOCVD)</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 
 <h4>8. 부식성 액체</h4>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="8. 부식성 액체 표 (가로 스크롤)"><table>
 <thead><tr><th>화학물질</th><th>화학식</th><th>반도체 용도</th></tr></thead>
 <tbody>
 <tr><td>염산</td><td>HCl</td><td>세정 (Cleaning)</td></tr>
@@ -873,12 +883,12 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td>질산</td><td>HNO₃</td><td>세정 (Cleaning)</td></tr>
 <tr><td>인산</td><td>H₃PO₄</td><td>식각 (Etch)</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 
 <h4>9. 유해 부산물</h4>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="9. 유해 부산물 표 (가로 스크롤)"><table>
 <thead><tr><th>발생원</th><th>위험</th></tr></thead>
 <tbody>
 <tr><td>증착 (Deposition) 공정</td><td>챔버 벽/배기관에 퇴적. 공기/수분 반응 시 자연발화 또는 독성 증기 생성</td></tr>
@@ -886,7 +896,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td>이온 주입 (Implant) 공정</td><td>비소·인 등 독성 잔류물. 유지보수 시 노출 위험</td></tr>
 <tr><td>식각 (Etch) 공정</td><td>부식성·독성 부산물. 펌프·밸브·저감 장비에 퇴적</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 </div>
 
@@ -904,7 +914,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 
 <h4>산소 결핍 효과</h4>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="산소 결핍 효과 표 (가로 스크롤)"><table>
 <thead><tr><th>산소 농도</th><th>영향</th></tr></thead>
 <tbody>
 <tr><td>23.5% ~ 19.5%</td><td>정상, 신체 증상 없음</td></tr>
@@ -912,7 +922,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td>10% ~ 6%</td><td>오심, 구토, 의식 상실</td></tr>
 <tr><td style="color:var(--danger);font-weight:700">6% 이하</td><td style="color:var(--danger);font-weight:700">사망</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 
 <h3>2. 극저온 실린더 (Dewar)</h3>
@@ -934,14 +944,14 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <p>압축 가스 실린더 내부 압력은 <strong>2,000 PSI 이상</strong>에 달할 수 있습니다.</p>
 
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="3. 압축 가스 실린더 위험 표 (가로 스크롤)"><table>
 <thead><tr><th>위험</th><th>설명</th></tr></thead>
 <tbody>
 <tr><td><strong>가스 방출</strong></td><td>노즐/밸브에서 고속 가스 방출 — 분진·파편이 비산 위험</td></tr>
 <tr><td><strong>핀홀 누출</strong></td><td>100 PSI만으로 핀홀 누출이 피부를 관통 가능. <strong>절대 손으로 점검하지 말 것</strong> — 승인된 누출 검사 방법만 사용</td></tr>
 <tr><td><strong>실린더 발사체화</strong></td><td>밸브 스템이 손상되어 절단되면 전체 압력이 순간적으로 방출되어 실린더가 <strong>고속 발사체</strong>로 변환</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 
 <h4>실린더 취급 수칙</h4>
@@ -955,7 +965,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 
 <h3>4. NFPA 등급 시스템과 MAQ</h3>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="4. NFPA 등급 시스템과 MAQ 표 (가로 스크롤)"><table>
 <thead><tr><th>NFPA 등급</th><th>위험 수준</th></tr></thead>
 <tbody>
 <tr><td>0</td><td>무위험</td></tr>
@@ -964,7 +974,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td>3</td><td>심각</td></tr>
 <tr><td style="font-weight:700;color:var(--danger)">4</td><td style="font-weight:700;color:var(--danger)">고위험</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 <ul>
 <li>NFPA 다이아몬드 필드에서 <strong>3 또는 4</strong>에 해당하는 가스는 더 엄격한 통제 적용</li>
@@ -974,7 +984,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 
 <h3>5. 유해 가스 통제 시스템 — 12단계 구축</h3>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="5. 유해 가스 통제 시스템 — 12단계 구축 표 (가로 스크롤)"><table>
 <thead><tr><th>단계</th><th>구성 요소</th><th>기능</th></tr></thead>
 <tbody>
 <tr><td>1</td><td><strong>원료 가스 실린더</strong></td><td>유해 가스 저장</td></tr>
@@ -990,7 +1000,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td>11</td><td><strong>가스 제어 패널</strong></td><td>하류 장비로의 안전한 가스 흐름 관리</td></tr>
 <tr><td>12</td><td><strong>과유량 차단 장치</strong></td><td>유량이 설정값 초과 시 자동 차단 — 파손된 배관의 비제어 누출 방지</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 
 <h4>불활성 퍼지 가스</h4>
@@ -998,13 +1008,13 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 
 <h3>6. 비상 절차</h3>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="6. 비상 절차 표 (가로 스크롤)"><table>
 <thead><tr><th>상황</th><th>대응</th></tr></thead>
 <tbody>
 <tr><td><strong>경보 발동</strong></td><td>항상 <strong>즉시 대피</strong> — 경보는 허용 노출 수준보다 낮게 설정되어 있어 대피 시간 확보됨</td></tr>
 <tr><td><strong>가스 문제 직접 목격</strong></td><td><strong>EMO(비상 기계 정지) 버튼</strong> 사용 — 장비 정지 및 누출 차단</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 <blockquote>경보 시 <strong>먼저 대피</strong>. EMO 버튼은 특정 문제를 직접 목격했을 때 사용하며, 모든 경보에 대한 첫 번째 대응이 아닙니다.</blockquote>
 
@@ -1013,7 +1023,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <div class="comp">
 <h3>반도체 가스 분류표</h3>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="반도체 가스 분류표 표 (가로 스크롤)"><table>
 <thead><tr><th>독성 수소화물</th><th>부식성 가스</th><th>산화성 가스</th><th>자연발화성 가스</th><th>인화성 가스</th><th>불활성 가스</th></tr></thead>
 <tbody>
 <tr><td>아르신</td><td>암모니아</td><td>염소</td><td>디실란</td><td>수소</td><td>아르곤</td></tr>
@@ -1026,7 +1036,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td></td><td></td><td>산소</td><td></td><td></td><td></td></tr>
 <tr><td></td><td></td><td>오존</td><td></td><td></td><td></td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 </div>
 
@@ -1052,7 +1062,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <div class="comp">
 <h3>공통 유해 가스 통제 장치 목록</h3>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="공통 유해 가스 통제 장치 목록 표 (가로 스크롤)"><table>
 <thead><tr><th>통제 장치</th><th>기능</th></tr></thead>
 <tbody>
 <tr><td><strong>경보 (Alarms)</strong></td><td>가스 농도 초과 시 경고음·시각 경보 발동</td></tr>
@@ -1065,7 +1075,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td><strong>지진 센서 (Seismic sensor)</strong></td><td>지진 감지 시 가스 시스템 자동 차단</td></tr>
 <tr><td><strong>환기 (Ventilation)</strong></td><td>누출 가스를 안전하게 배출, 농도 희석</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 </div>
 
@@ -1116,7 +1126,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <h3>정량적 비교</h3>
 <p class="ts" style="margin-bottom:16px">주의: 한국 측 열의 "없음"은 <strong>30개 안전보건 키워드 검색 범위 내에서 확인되지 않았다</strong>는 뜻이다. GHS·픽토그램·PEL·TLV·TWA·통제 계층·호환성 등은 검색 키워드에 포함되지 않았으므로, 해당 개념 전용 검색으로 재확인이 필요하다.</p>
 <div class="card">
-<table>
+<div class="scroll-x" tabindex="0" role="region" aria-label="정량적 비교 표 (가로 스크롤)"><table>
 <thead><tr><th>교육 항목</th><th>OSHA SCS (5과정)</th><th>NCS 교재 (86권)</th><th>교과서 (9권)</th></tr></thead>
 <tbody>
 <tr><td><strong>총 교육 시간</strong></td><td>129분 (5과정)</td><td>측정 불가 (분산)</td><td>측정 불가 (분산)</td></tr>
@@ -1131,7 +1141,7 @@ blockquote{border-left:3px solid var(--border);padding:12px 20px;margin:16px 0;c
 <tr><td><strong>극저온·압축가스 위험</strong></td><td>Dewar, 실린더 취급, 산소결핍</td><td>없음</td><td>없음</td></tr>
 <tr><td><strong>사고사례</strong></td><td>실란 폭발(TNT 9배), HF 화상 등</td><td>1건 (구미 불산, 2권 중복)</td><td>0건</td></tr>
 </tbody>
-</table>
+</table></div>
 </div>
 
 <h3>개선 권고안</h3>
