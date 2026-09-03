@@ -35,6 +35,7 @@ NCS(7,769행)와 교과서(981행)는 원본 엑셀의 등급 코딩이 서로 �
 import argparse
 import collections
 import csv
+import hashlib
 import json
 import os
 import re
@@ -45,7 +46,9 @@ try:
 except ImportError:
     sys.exit('openpyxl이 필요합니다:  pip install openpyxl')
 
-DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+_HERE = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(_HERE, 'data')
+OUT_DIR = os.path.join(_HERE, 'docs', '03-analysis', 'data')
 
 NCS_FILE = 'ncs_keywords_in_markdown_results_20260402.xlsx'
 TXT_FILE = 'ncs_keywords_in_markdown_results_교과서_results_20260415.xlsx'
@@ -57,6 +60,35 @@ TXT_MAP = {1: 2, 2: 3, 3: 1}
 GRADE_LABEL = {1: '미흡·없음', 2: '형식적 언급', 3: '구체적 대책'}
 
 TXT_TOTAL_PAGES = 2055           # 교과서 9권 원본 총 쪽수
+
+# 교과서는 비공개 상용 교재다. 산출 CSV 에는 변환 파이프라인 경로 대신
+# 사람이 읽는 제목만 싣는다(대시보드 교재 목록과 동일한 표기).
+TXT_TITLES = {
+    '반도체기초기술1_크리아트': '반도체 기초기술 1 (크리아트)',
+    '반도체기초기술2_크리아트': '반도체 기초기술 2 (크리아트)',
+    '반도체기초_렛유인': '반도체 기초 (렛유인)',
+    '반도체공정기초_렛유인': '반도체 공정기초 (렛유인)',
+    '반도체장비유지보수_충남반도체고': '반도체 장비 유지보수 (충남반도체고)',
+    '반도체인프라일반_서울시교육청': '반도체 인프라 일반 (서울시교육청)',
+    '반도체_포토에칭_에이치앤지': '반도체 포토에칭 (에이치앤지)',
+    '반도체조립검사_에이치앤지': '반도체 조립검사 (에이치앤지)',
+    '반도체박막확산_에이치앤지': '반도체 박막확산 (에이치앤지)',
+}
+
+
+def txt_title(fn):
+    """교과서 파일 경로를 공개 가능한 제목으로.
+
+    매핑에 없으면 즉시 중단한다. 원본을 그대로 반환하면 비공개 상용 교재의
+    변환 파이프라인 경로가 공개 저장소의 CSV 로 새어나간다.
+    """
+    for key, title in TXT_TITLES.items():
+        if fn and key in fn:
+            return title
+    sys.exit('TXT_TITLES 에 없는 교과서입니다: %r\n'
+             '공개 CSV 에 원본 경로가 실리지 않도록 매핑을 추가하십시오.' % fn)
+
+
 AREAS = ['반도체개발', '반도체제조', '반도체장비', '반도체재료']
 
 YN = {'예', '아니오'}
@@ -66,24 +98,50 @@ FN_RE = re.compile(r'^(LM\d|20\d{6}_\d{6}_)')   # NCS: LM…, 교과서: 2026041
 EXPECTED = {
     'ncs': {'rows': 7769, 'pages': 1847, 'books': 86,
             'row_g': {1: 2076, 2: 3465, 3: 2228},
-            'page_g': {1: 1267, 2: 472, 3: 108}},
+            'page_g': {1: 1270, 2: 469, 3: 108},
+            'page_grade_digest': '3461b416055291a5'},
     'txt': {'rows': 981, 'pages': 362, 'books': 9,
             'row_g': {1: 557, 2: 360, 3: 64},
-            'page_g': {1: 309, 2: 45, 3: 8}},
+            'page_g': {1: 309, 2: 45, 3: 8},
+            'page_grade_digest': '9186a08609cec321'},
 }
 
 
+def as_page(y):
+    """페이지 셀을 정수로. openpyxl 이 숫자 셀을 19 또는 19.0 으로 돌려주므로 둘 다 받는다.
+
+    실패 시 None. 다음은 모두 거절한다 — 페이지가 아닌 셀이 조용히 페이지로
+    승격되면 고유쪽수가 오염되고 그대로 공개 대시보드에 실린다.
+      · nan / inf              (int() 가 예외를 던진다)
+      · 과학표기 '1e3', 불리언  (숫자처럼 보이지만 페이지 표기가 아니다)
+      · 전각 숫자 '１９'        (원본에 없는 표기 — 통과시키면 오검출 통로가 된다)
+    """
+    if y is None or isinstance(y, bool):
+        return None
+    t = str(y).strip()
+    if not t or not re.fullmatch(r'[0-9]{1,4}(\.0+)?', t):
+        return None
+    n = int(float(t))
+    return n if 0 < n <= 9999 else None
+
+
 def parse_row(vals):
-    """시트마다 열 구성이 달라, 행 끝의 (사고사례여부, 등급, 등급사유) 3연속을 앵커로 파싱한다."""
+    """시트마다 열 구성이 달라, 행 끝의 (사고사례여부, 등급, 등급사유) 3연속을 앵커로 파싱한다.
+
+    앵커는 뒤에서부터 찾는다. 본문·비고 열에 우연히 ('예', '2') 같은 값이 있어도
+    실제 꼬리 3연속을 우선하기 위해서다.
+    """
     v = [None if x is None else str(x).strip() for x in vals]
-    for i, x in enumerate(v):
+    for i in range(len(v) - 1, -1, -1):
+        x = v[i]
         if x in YN and i + 1 < len(v) and v[i + 1] in ('1', '2', '3'):
             fn = next((y for y in v[:i] if y and FN_RE.match(y)), None)
             area = next((y for y in v[:i] if y and y.startswith('반도체') and len(y) <= 8), None)
             page = None
             for y in v[:i]:                       # page는 number 뒤에 오므로 마지막 숫자 셀
-                if y and y.isdigit() and len(y) <= 4:
-                    page = int(y)
+                n = as_page(y)
+                if n is not None:
+                    page = n
             return dict(case=x, raw=int(v[i + 1]),
                         reason=v[i + 2] if i + 2 < len(v) else None,
                         fn=fn, area=area, page=page)
@@ -114,15 +172,38 @@ def scan(path, gmap, drop_ncs_residue=False):
     return rows
 
 
+def page_record(page_rows):
+    """한 페이지의 여러 키워드 행을 페이지 단위 레코드 1건으로 축약한다.
+
+    등급은 페이지 속성이지만 채점 버그(`인화` 시트의 총계/내역 불일치)로 12쪽이
+    시트마다 다른 등급을 받았다. 스캔 순서에 의존하지 않도록 규칙을 명시한다.
+
+      등급     충돌하면 **가장 낮은 등급**을 택한다(보수적).
+               다수결은 쓸 수 없다. 등급이 갈리는 12쪽은 전부 `인화` 등 특정
+               시트가 총계를 부풀린 결과인데, 같은 오류 판정이 여러 행에
+               중복 기록되거나(예: LM1903060425 p.28 은 4:1) 같은 오류의
+               변형이 둘로 갈려(예: p.83 은 "안전 6건"과 "안전 8건") 정확한
+               행을 이긴다. 중복 수와 변형 수는 정확성과 무관한 값이다.
+               "총계 == 내역 합" 검사도 쓸 수 없다 — 사유 문자열이 상위
+               키워드만 싣고 잘리는 정상 행이 41%라 신호가 되지 못한다.
+               충돌 시 최저 등급은 이 보고서의 논지(안전 내용 과대평가 방지)와
+               같은 방향이고, 판정 근거를 스캔 순서에서 완전히 떼어낸다.
+      사고사례  한 행이라도 '예'면 '예' (OR). 이전 구현은 마지막 행만 남겨
+               사고사례 8쪽이 CSV에서 전부 '아니오'로 유실됐다
+      등급사유  채택된 등급을 가진 행 중 첫 번째
+    """
+    grade = min(x['g'] for x in page_rows)
+    case = '예' if any(x['case'] == '예' for x in page_rows) else '아니오'
+    rep = next(x for x in page_rows if x['g'] == grade)
+    return dict(rep, g=grade, case=case)
+
+
 def aggregate(rows, total_pages=None):
-    by_page = {}
+    grouped = collections.defaultdict(list)
     for x in rows:
-        by_page[(x['fn'], x['page'])] = x
-    mixed = 0
-    seen = collections.defaultdict(set)
-    for x in rows:
-        seen[(x['fn'], x['page'])].add(x['g'])
-    mixed = sum(1 for v in seen.values() if len(v) > 1)
+        grouped[(x['fn'], x['page'])].append(x)
+    by_page = {k: page_record(v) for k, v in grouped.items()}
+    mixed = sum(1 for v in grouped.values() if len(set(x['g'] for x in v)) > 1)
     out = {
         'rows': len(rows),
         'pages': len(by_page),
@@ -133,11 +214,44 @@ def aggregate(rows, total_pages=None):
         'cases_rows': sum(1 for x in rows if x['case'] == '예'),
         'cases_pages': len(set((x['fn'], x['page']) for x in rows if x['case'] == '예')),
         'cases_books': len(set(x['fn'] for x in rows if x['case'] == '예')),
+        # 집계값만 비교하면 페이지 간 등급 재배정이 상쇄되어 검출되지 않는다.
+        # (교재,페이지)→등급 전체의 해시를 함께 고정한다.
+        'page_grade_digest': hashlib.sha256(
+            '\n'.join('%s|%s|%s' % (fn, pg, x['g'])
+                       for (fn, pg), x in sorted(by_page.items(),
+                                                 key=lambda z: (str(z[0][0]), z[0][1] or 0))
+                       ).encode('utf-8')).hexdigest()[:16],
     }
     if total_pages:
         out['total_pages'] = total_pages
-        out['undetected_pages'] = total_pages - out['pages']
+        # 검출쪽이 총쪽수를 넘으면(페이지 매핑 오류) 음수 대신 0으로 클램프
+        out['undetected_pages'] = max(0, total_pages - out['pages'])
     return out, by_page
+
+
+def write_atomic(path, write_fn, newline=None, encoding='utf-8'):
+    """임시 파일에 쓰고 os.replace 로 교체한다.
+
+    3개 산출물을 순차로 덮어쓰던 중 예외·Ctrl-C 가 나면 새 CSV 와 옛 summary.json
+    이 섞인 상태가 남고, 그대로 커밋되면 대시보드 교차검증이 거짓으로 통과한다.
+    """
+    tmp = path + '.tmp'
+    try:
+        with open(tmp, 'w', newline=newline, encoding=encoding) as f:
+            write_fn(f)
+        os.replace(tmp, path)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.remove(tmp)
+        raise
+
+
+def kw_pages(rows):
+    """키워드별 고유 검출쪽 수. 대시보드 KW 배열의 pg 컬럼 대조용."""
+    d = collections.defaultdict(set)
+    for x in rows:
+        d[x['kw']].add((x['fn'], x['page']))
+    return {k: len(v) for k, v in sorted(d.items())}
 
 
 def check(name, got, exp):
@@ -151,18 +265,29 @@ def check(name, got, exp):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--out', default=os.path.join('docs', '03-analysis', 'data'),
-                    help='CSV/JSON 출력 디렉터리')
+    ap.add_argument('--out', default=OUT_DIR, help='CSV/JSON 출력 디렉터리')
     ap.add_argument('--data', default=DATA_DIR, help='원본 엑셀 디렉터리')
+    ap.add_argument('--force', action='store_true',
+                    help='회귀 검증에 실패해도 산출물을 덮어쓴다 (원본이 갱신돼 EXPECTED 를 바꿀 때)')
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
 
     print('원본 읽는 중...')
+    missing = [f for f in (NCS_FILE, TXT_FILE)
+               if not os.path.isfile(os.path.join(args.data, f))]
+    if missing:
+        sys.exit('원본 엑셀을 찾을 수 없습니다 (%s):\n  %s\n'
+                 'data/ 는 .gitignore 대상이라 새로 클론한 환경에는 없습니다. '
+                 '원본을 두거나 --data 로 경로를 지정하십시오.'
+                 % (args.data, '\n  '.join(missing)))
     ncs = scan(os.path.join(args.data, NCS_FILE), NCS_MAP)
     txt = scan(os.path.join(args.data, TXT_FILE), TXT_MAP, drop_ncs_residue=True)
 
     ncs_agg, ncs_pages = aggregate(ncs)
     txt_agg, txt_pages = aggregate(txt, TXT_TOTAL_PAGES)
+    # 대시보드 KW 배열의 pg(검출쪽) 컬럼이 자기 자신을 근거로 삼지 않도록 독립 산출한다
+    ncs_agg['kw_pages'] = kw_pages(ncs)
+    txt_agg['kw_pages'] = kw_pages(txt)
 
     print('\n회귀 검증')
     ok = check('NCS', ncs_agg, EXPECTED['ncs']) & check('교과서', txt_agg, EXPECTED['txt'])
@@ -174,8 +299,8 @@ def main():
         for g in (1, 2, 3):
             p, r = agg['page_g'][g], agg['row_g'][g]
             line = '  등급%d %-7s %5d쪽 (%5.1f%%)  행 %5d건 (%5.1f%%)  증폭 %4.1f배' % (
-                g, GRADE_LABEL[g], p, p / agg['pages'] * 100,
-                r, r / agg['rows'] * 100, r / p if p else 0)
+                g, GRADE_LABEL[g], p, p / agg['pages'] * 100 if agg['pages'] else 0,
+                r, r / agg['rows'] * 100 if agg['rows'] else 0, r / p if p else 0)
             if 'total_pages' in agg:
                 line += '  전체대비 %4.1f%%' % (p / agg['total_pages'] * 100)
             print(line)
@@ -189,15 +314,16 @@ def main():
         pl = [x for x in ncs_pages.values() if x['area'] == a]
         g = [sum(1 for x in pl if x['g'] == i) for i in (1, 2, 3)]
         bk = len(set(x['fn'] for x in ncs if x['area'] == a))
+        pct = (g[1] + g[2]) / len(pl) * 100 if pl else 0.0
         print('  %-10s %4d %6d %7d %7d %7d %8.1f%%'
-              % (a, bk, len(pl), g[0], g[1], g[2], (g[1] + g[2]) / len(pl) * 100))
+              % (a, bk, len(pl), g[0], g[1], g[2], pct))
 
     # 교재별 (교과서)
     print('\n교과서 교재별 (페이지 기준)')
     for f in sorted(set(x['fn'] for x in txt)):
         pl = [x for x in txt_pages.values() if x['fn'] == f]
         g = [sum(1 for x in pl if x['g'] == i) for i in (1, 2, 3)]
-        nm = '_'.join(f.split('_')[2:]).replace('_', ' ')
+        nm = txt_title(f)          # 콘솔 요약에도 원본 경로를 찍지 않는다
         print('  %-34s 검출 %3d쪽  등급1 %3d  등급2 %3d  등급3 %d'
               % (nm[:34], len(pl), g[0], g[1], g[2]))
 
@@ -209,22 +335,31 @@ def main():
         zero = [b for b, c in bybook.items() if c[3] == 0]
         print('\n%s 등급3(구체적 대책) 0쪽 교재: %d / %d권' % (label, len(zero), len(bybook)))
 
+    if not ok and not args.force:
+        sys.exit('\n회귀 검증에 실패해 산출물을 쓰지 않습니다. '
+                 '원본이 갱신돼 기대값이 바뀐 것이라면 EXPECTED 를 고치고 다시 실행하거나 '
+                 '--force 로 덮어쓰십시오.')
+
     # 산출물
     for nm, pages_, cols in (('ncs_pages', ncs_pages, ['영역', '교재', '페이지', '등급', '등급명', '사고사례', '등급사유']),
                              ('txt_pages', txt_pages, ['교재', '페이지', '등급', '등급명', '사고사례', '등급사유'])):
         path = os.path.join(args.out, nm + '.csv')
-        with open(path, 'w', newline='', encoding='utf-8-sig') as f:
+
+        def _write(f, pages_=pages_, cols=cols):
             w = csv.writer(f)
             w.writerow(cols)
             for (fn, pg), x in sorted(pages_.items(), key=lambda z: (str(z[0][0]), z[0][1] or 0)):
                 row = [x['area']] if '영역' in cols else []
-                row += [fn, pg, x['g'], GRADE_LABEL[x['g']], x['case'], x['reason']]
+                label = fn if '영역' in cols else txt_title(fn)
+                row += [label, pg, x['g'], GRADE_LABEL[x['g']], x['case'], x['reason']]
                 w.writerow(row)
+
+        write_atomic(path, _write, newline='', encoding='utf-8-sig')
         print('저장: %s (%d행)' % (path, len(pages_)))
 
     summary = {'unified_grades': GRADE_LABEL, 'ncs': ncs_agg, 'textbook': txt_agg}
     sp = os.path.join(args.out, 'summary.json')
-    json.dump(summary, open(sp, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    write_atomic(sp, lambda f: json.dump(summary, f, ensure_ascii=False, indent=1))
     print('저장: %s' % sp)
 
     return 0 if ok else 1
