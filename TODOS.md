@@ -36,7 +36,7 @@
 
 ## Completed
 
-## Chunked result rendering stops at 400 rows (`outputs/markdown-search-app.html`)
+### Chunked result rendering stops at 400 rows (`outputs/markdown-search-app.html`)
 - **Why**: Functional regression. The `IntersectionObserver` sentinel is appended to `resultsContent`, outside `.results-table-wrapper` (`max-height:400px; overflow-y:auto`). Appending rows never moves the sentinel, so the observer fires once and never again. A keyword like `안전` (3,405 hits) renders 400 rows while the tab count says 3,405, with no truncation notice. Pre-change behaviour rendered everything.
 - **Context**: Found by the /ship adversarial pass. Fix: move the sentinel inside the wrapper and pass `root: wrapper`, or switch to a scroll handler. `test-search-equivalence.js` mocks `IntersectionObserver` as a no-op and never calls `renderResultsTable`, so coverage is zero.
 - **Depends on**: Nothing. Lives in the currently-uncommitted `markdown-search-app.html` changes.
