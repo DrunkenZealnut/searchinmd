@@ -28,6 +28,8 @@ python3 outputs/server.py 9000     # 포트 지정
 
 **Chrome 또는 Edge가 필요합니다** — 폴더 선택에 File System Access API(`showDirectoryPicker`)를 씁니다. Safari·Firefox는 지원하지 않습니다.
 
+처음이라면 [**첫 검색 튜토리얼**](docs/tutorial-first-search.md)이 저장소에 든 샘플 문서로 검색부터 내보내기까지 10분 만에 한 바퀴 돌려줍니다. 준비할 자료가 없습니다.
+
 쓰는 법:
 
 1. 키워드 하나당 시트 하나인 Excel 파일을 올립니다. **시트 이름이 곧 검색 키워드**이고, 각 시트의 1행 헤더가 결과 열 구성이 됩니다.
@@ -100,7 +102,18 @@ export DOWNLOAD_ROOT="/path/to/안전보건공단"
 python3 osha_downloader.py
 ```
 
-미설정 시 저장소 안 `downloads/`(gitignore)로 받습니다. `requests`와 `beautifulsoup4`가 필요하고 `requirements.txt`는 없습니다.
+미설정 시 저장소 안 `downloads/`(gitignore)로 받습니다. `requests`와 `beautifulsoup4`가 필요하고 `requirements.txt`는 없습니다. 기관별 저장 위치·수집 범위·중단 후 재개는 [발간물 수집 how-to](docs/howto-download-publications.md)에 있습니다.
+
+## 문서
+
+| 문서 | 종류 | 내용 |
+|---|---|---|
+| [첫 검색 튜토리얼](docs/tutorial-first-search.md) | 튜토리얼 | 샘플 문서로 검색 → 내보내기까지 처음부터 끝까지 |
+| [발간물 수집 how-to](docs/howto-download-publications.md) | How-to | OSHA·KOSHA·NIOSH·EU-OSHA·SafeWork AU 발간물 대량 수집 |
+| [페이지 마커 주입 how-to](docs/howto-page-markers.md) | How-to | 검색 결과의 줄 번호를 실제 PDF 쪽수로 바꾸기 |
+| [등급 재집계 분석](docs/03-analysis/grade-recount.analysis.md) | 설명 | 등급 체계를 왜 이렇게 통일했는지, 페이지 단위 집계가 왜 필요한지 |
+| [`CLAUDE.md`](CLAUDE.md) | 레퍼런스 | 아키텍처, 페이지 매핑 알고리즘, 제목 판정 규칙, 디자인 토큰 |
+| `키워드기반_문서분류분석_방법론.hwpx` | 설명 | 방법론 원본 — 6단계 파이프라인과 위치 정합 알고리즘 |
 
 ## 알려진 한계
 
