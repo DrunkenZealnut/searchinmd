@@ -151,7 +151,7 @@ There is no test framework (no `package.json` / `pyproject.toml`). The project s
 ```bash
 node   outputs/test-search-equivalence.js   # 24 assertions — search equivalence, chunked render, lazy parse cache
 node   outputs/test-dashboard-data.js       # 117 assertions — docs/ dashboard data + table render/sort
-python3 outputs/test-recount-grades.py      # 87 assertions — recount_grades.py logic
+python3 outputs/test-recount-grades.py      # 97 assertions — recount_grades.py logic
 
 node   outputs/run-core-logic-tests.js       # 32 assertions — headless runner for test-core-logic.html
 node   outputs/test-sri.js                  # 41 assertions — SRI on external scripts (--online to verify against the CDN)
@@ -209,7 +209,7 @@ Other invariants worth not breaking:
 - **User-facing guides** (`docs/*.md`, linked from README's `## 문서` table):
   - `docs/tutorial-first-search.md` — the only tutorial. Runs on `outputs/test-samples/` so it needs no private data. If you change the app's step labels, the Excel header aliases in `exportToExcel`, or the sample files, this doc goes stale.
   - `docs/howto-download-publications.md` — the downloaders' `DOWNLOAD_ROOT`, per-agency save dirs, range constants, and resume semantics. Note that `eu_osha_downloader.py` alone has no `DELAY` constant (it hardcodes `time.sleep(2)`).
-  - `docs/howto-page-markers.md` — `insert_page_markers.py`. Documents two traps verified against the script: `page_id` in `_meta.json` is 0-based and the marker is written +1, and `--force` is declared but never read, so re-marking requires deleting the markers by hand.
+  - `docs/howto-page-markers.md` — `insert_page_markers.py`. `page_id` in `_meta.json` is 0-based and the marker is written +1. `--force` strips the existing markers before re-deriving from the TOC (leaving them in place would make `build_page_map` read them via Strategy 1 and re-emit the same values, doubling the markers); it refuses to touch a file whose `_meta.json` is missing or whose marker sits mid-line, because neither is recoverable. Covered by `R8a`-`R8j` in `test-recount-grades.py`.
 - `docs/01-plan/`, `docs/02-design/`, `docs/03-analysis/`, `docs/04-report/` — feature PDCA documents (`features/` subdirs hold per-feature plan/design/analysis/report `.md`)
 - `docs/03-analysis/data/` — machine-readable output of `recount_grades.py`. `ncs_pages.csv` and `txt_pages.csv` are one row per unique (교재, 페이지) with its grade, grade reason, and accident-case flag; `summary.json` carries the aggregate counts plus `kw_pages` (unique detected pages per keyword — the dashboards' `pg` column is validated against this, never against itself) and `page_grade_digest` (a hash of the whole page→grade assignment, so a reassignment that leaves the totals unchanged still fails the regression check).
 - `docs/archive/YYYY-MM/` — retired PDCA feature docs, kept for provenance. `_INDEX.md` lists what moved and when.
