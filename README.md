@@ -70,7 +70,7 @@ python3 recount_grades.py --data /other/path # 다른 위치 지정
 프레임워크는 없습니다. 자체 하니스 4종입니다. 앞 3종은 Node·Python 표준 라이브러리만 쓰고 exit 0/1 을 내므로 CI 에 그대로 걸 수 있습니다. `test-core-logic.html` 은 브라우저에서 열어 탭 제목을 확인하는 방식입니다.
 
 ```bash
-node    outputs/test-search-equivalence.js   # 16 — 검색 루틴 동치성 + 청크 렌더
+node    outputs/test-search-equivalence.js   # 24 — 검색 동치성 + 청크 렌더 + 지연 캐시
 node    outputs/test-dashboard-data.js       # 92 — 대시보드 데이터·표 렌더·정렬
 python3 outputs/test-recount-grades.py       # 87 — recount_grades.py 로직
 open    outputs/test-core-logic.html         # 32 — 제목 판정·정규화 (브라우저, 탭 제목 확인)

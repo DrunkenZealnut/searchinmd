@@ -1313,21 +1313,55 @@ ${numberedContent}`;
         }
 
         // FR-1/FR-2: 파일별 파싱 결과 캐시 (재검색 시 split/extract/pageMap 재계산 0회)
-        // 캐시는 file 객체에 WeakMap으로 결속 → markdownFiles 재할당 시 옛 객체 GC로 자동 무효화.
-        const __parseCache = new WeakMap(); // file -> { lines, pageMap, sentences, tables, images }
+        //
+        // 수명: file 객체에 WeakMap 으로 결속한다. 폴더를 다시 고르면 markdownFiles 가
+        // 재할당되어 옛 file 객체가 GC 되고 캐시 항목도 함께 사라진다. 다만 **한 세션
+        // 안에서는 상한이 없다** — markdownFiles 가 살아 있는 동안 항목은 회수되지 않는다.
+        // 실측: 캐시본은 원문 대비 약 3.7배(NCS 86권이면 원문 23MB에 캐시 87MB).
+        //
+        // 그래서 문장·표·이미지는 **지연 계산**한다. 검색 옵션에 따라 안 쓰이는 것이 있고,
+        // LLM 하이브리드 모드에서는 규칙기반 sentences 를 계산해도 그대로 버려진다
+        // (그 한 항목이 캐시의 약 59%). lines·pageMap 은 결과 부착에 항상 필요해 즉시 만든다.
+        // 호출부는 이미 `searchTables ? parsed.tables : []` 처럼 가드하고 있어 그대로 둔다.
+        const __parseCache = new WeakMap(); // file -> { lines, pageMap, sentences?, tables?, images? }
+
+        // 첫 접근 때 계산하고 그 자리에 값으로 굳힌다(두 번째 접근부터는 게터 호출도 없음).
+        // enumerable 을 유지해 이전과 객체 모양이 같다 — 다만 그 탓에 spread/JSON.stringify 로
+        // 통째 열거하면 지연이 무의미해진다. T9 가 그 회귀를 잡는다.
+        function __defineLazy(obj, key, compute) {
+            Object.defineProperty(obj, key, {
+                configurable: true,
+                enumerable: true,
+                get() {
+                    const value = compute();
+                    Object.defineProperty(obj, key, { value, enumerable: true, writable: false, configurable: false });
+                    return value;
+                }
+            });
+        }
+
         function getParsedDoc(file) {
             let p = __parseCache.get(file);
             if (p) return p; // 캐시 히트
             const lines = file.content.split('\n');
             const pageMap = buildPageMapping(lines, file.metadata != null ? file.metadata : null);
-            const sentences = extractSentencesWithLineNumbers(lines);
-            const tables = extractTablesWithLineNumbers(lines);
-            const images = extractImagesWithLineNumbers(lines);
+            p = { lines, pageMap };
             // FR-2: 소문자본 1회 precompute (검색·키워드와 무관, 파일당 1회)
-            for (const s of sentences) s.lower = s.sentence.toLowerCase();
-            for (const t of tables) t.lower = t.table.toLowerCase();
-            for (const im of images) im.lower = im.searchText.toLowerCase();
-            p = { lines, pageMap, sentences, tables, images };
+            __defineLazy(p, 'sentences', () => {
+                const v = extractSentencesWithLineNumbers(lines);
+                for (const s of v) s.lower = s.sentence.toLowerCase();
+                return v;
+            });
+            __defineLazy(p, 'tables', () => {
+                const v = extractTablesWithLineNumbers(lines);
+                for (const t of v) t.lower = t.table.toLowerCase();
+                return v;
+            });
+            __defineLazy(p, 'images', () => {
+                const v = extractImagesWithLineNumbers(lines);
+                for (const im of v) im.lower = im.searchText.toLowerCase();
+                return v;
+            });
             __parseCache.set(file, p);
             return p;
         }
