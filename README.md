@@ -74,6 +74,7 @@ node    outputs/test-search-equivalence.js   # 24 — 검색 동치성 + 청크 
 node    outputs/test-dashboard-data.js       # 92 — 대시보드 데이터·표 렌더·정렬
 python3 outputs/test-recount-grades.py       # 87 — recount_grades.py 로직
 node    outputs/run-core-logic-tests.js       # 32 — 제목 판정·정규화 (헤드리스)
+node    outputs/test-sri.js                  # 35 — 외부 스크립트 SRI (--online 이면 CDN 대조)
 ```
 
 Node 기반 하니스 세 개는 HTML 안의 실제 `<script>` 블록을 `vm` + DOM mock으로 불러옵니다. 복사해 붙인 사본을 테스트하지 않습니다. `test-core-logic.html` 은 브라우저에서 열어 탭 제목으로 봐도 됩니다 — `run-core-logic-tests.js` 는 같은 HTML 을 헤드리스로 돌릴 뿐입니다. `test-recount-grades.py`는 `openpyxl`을 스텁으로 주입해 pip 패키지 없이도, 원본 엑셀 없이도 돕니다.

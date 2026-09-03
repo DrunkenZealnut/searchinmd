@@ -20,10 +20,6 @@
 - **Context**: Colour ramp direction (grade 1 = grey rather than red) was reviewed and deliberately kept — grey reads as "not safety-related", and red stays reserved for accident cases.
 - **Depends on**: Nothing.
 
-## P3 — Add SRI to CDN scripts on the public dashboards
-- **Why**: `docs/*.html` load Chart.js, html-to-image, and Google Fonts with no `integrity=`. The search app already pins XLSX with SRI, so the dashboards are the inconsistent ones.
-- **Depends on**: Nothing.
-
 ## Completed
 
 ### Chunked result rendering stops at 400 rows (`outputs/markdown-search-app.html`)
@@ -41,3 +37,9 @@
 - **Why**: The only defence for the published numbers was four harnesses a human had to remember to run.
 - **Completed:** PR #5 (2026-09-03) — `.github/workflows/test.yml` runs all four on push and pull_request. `run-core-logic-tests.js` added so the browser harness can be gated too (mutation-verified: a broken assertion and a mid-run exception both exit 1). Verified against a `git archive` clean clone with no `data/` and no pip packages. The last step installs `openpyxl` on purpose — without it `recount_grades.py` stops at the import guard and never reaches the missing-source branch the step is checking.
 - **Not done**: `--force` can still write artifacts that failed the regression check; CI cannot catch that because it has no `data/` to run the recount against.
+
+### Add SRI to CDN scripts on the public dashboards
+- **Why**: `docs/*.html` loaded Chart.js and html-to-image with no `integrity`, while the search app already pinned XLSX. A compromised CDN could run arbitrary script on the published pages.
+- **Completed:** PR #6 (2026-09-03) — all five external `<script>` tags across the three dashboards now carry `integrity` + `crossorigin` + `referrerpolicy`. Hashes were taken from the npm registry tarball, not just the CDN response, so a CDN that was already tampered with could not be baked in. `test-sri.js` (35 assertions) guards it and CI runs the `--online` form. Mutation-verified: removing `integrity`, removing `crossorigin`, drifting one page's hash, and a wrong hash all fail.
+- **Deliberately not done — Google Fonts.** The `css2` response differs per User-Agent (measured: Chrome and Firefox return different sha384), so an `integrity` there would block fonts in some browsers. Pinning it means self-hosting the woff2 files.
+- **Note**: `docs/*.html` switched from `chart.umd.min.js` to `chart.umd.js`. The minified file does not exist in the npm package — jsDelivr generates it, so there is no upstream to verify the hash against. The unminified file is byte-identical to the tarball and costs 158 more bytes gzipped.

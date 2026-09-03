@@ -41,6 +41,11 @@ jobs:
       - name: 핵심 로직 (제목 판정 · 정규화)
         run: node outputs/run-core-logic-tests.js
 
+      # SRI 는 해시가 틀리면 스크립트가 통째로 차단돼 페이지가 죽는다. 오프라인 검사는
+      # 속성 유무만 보고 값이 틀린 건 못 잡으므로(뮤테이션으로 확인) --online 으로 돌린다.
+      - name: SRI 무결성 (CDN 응답 대조)
+        run: node outputs/test-sri.js --online
+
       # 원본 엑셀(data/)은 비공개라 저장소에 없다. 재집계 자체는 CI 에서 돌릴 수
       # 없으므로, 대신 원본이 없을 때 트레이스백 대신 안내로 종료하는지 확인한다.
       # 산출물 자체의 정합성은 위 두 하니스가 summary.json 과 대조해 검증한다.
