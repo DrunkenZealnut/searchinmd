@@ -409,5 +409,31 @@ PAGES.forEach(([name, html]) => {
     regions.filter(a => !/aria-label="[^"]+"/.test(a)).length + '개 누락');
 });
 
+// =====================================================================
+// D12 — 헤드라인이 첫 페인트에 보인다
+//
+// 예전에는 .ani{animation:fadeInUp .6s both} 에 .1/.2/.3초 스태거가 붙어
+// KPI 와 영역 카드가 ~0.9초 동안 opacity:0 이었다(실측: t=91ms 에 0).
+// 데이터 대시보드에서 3초 첫인상 창의 1/3 을 헤드라인 없이 보내는 셈이고,
+// 인쇄·PNG 내보내기도 타이밍에 따라 빈 화면을 잡았다.
+//
+// 상호작용 트랜지션(hover, 테마 전환, 메뉴 열기)은 대상이 아니다 — 사용자
+// 입력에 대한 피드백이라 첫 페인트를 막지 않는다.
+// =====================================================================
+console.log('\n[첫 페인트] 지연 진입 애니메이션');
+PAGES.forEach(([name, html]) => {
+  const style = (html.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+  check(`D12a ${name} — animation-delay 로 콘텐츠를 미루지 않음`,
+    !/animation-delay/.test(style),
+    (style.match(/animation-delay:[^;}]*/g) || []).join(', '));
+  check(`D12b ${name} — opacity:0 으로 시작하는 @keyframes 없음`,
+    !/@keyframes[^{]*\{[^@]*?opacity:\s*0[^.]/.test(style),
+    (style.match(/@keyframes\s+[\w-]+/g) || []).join(', '));
+  const staged = [...html.matchAll(/class="([^"]*)"/g)]
+    .map(m => m[1]).filter(c => /\b(ani|reveal|d[123])\b/.test(c));
+  check(`D12c ${name} — 진입 애니메이션 클래스가 마크업에 남아 있지 않음`,
+    staged.length === 0, staged.join(' | '));
+});
+
 console.log(`\n결과: ${pass}/${pass + fail} PASS${fail ? `, ${fail} FAIL` : ''}${warned ? `, ${warned} KNOWN ISSUE` : ''}`);
 process.exit(fail ? 1 : 0);

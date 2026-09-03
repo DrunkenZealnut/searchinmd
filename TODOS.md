@@ -15,12 +15,15 @@
 - **Context**: `recount_grades.py` works around this with a conservative lowest-grade rule, but the source data stays wrong. See `docs/03-analysis/grade-recount.analysis.md` §6.
 - **Depends on**: Access to the original grading script (not in this repo).
 
-## Dashboard entrance animation hides the headline for ~0.9s
-- **Why**: `.ani` uses `animation-fill-mode: both` with `.1s`/`.2s`/`.3s` stagger on a `.6s` fade-up, so the KPI block and area cards sit at `opacity: 0` until ~900ms. Measured: `#areaCardsGrid` is `opacity: 0` at t=91ms and t=126ms after load. On a dashboard whose entire job is "show me the number", the headline is blank for a third of the 3-second first-impression window.
-- **Context**: Surfaced during the P2 design pass but deliberately **not** changed — the entrance animation is an intentional visual choice the user has already reviewed, and altering it is a motion-character decision, not a design-system cleanup. The PNG export path is unaffected (computed opacity is 1 long before a user clicks Download). `prefers-reduced-motion` already neutralises it correctly.
-- **Depends on**: A call on whether the stagger is worth the delay.
-
 ## Completed
+
+### Dashboard entrance animation hides the headline for ~0.9s
+- **Why**: `.ani` uses `animation-fill-mode: both` with `.1s`/`.2s`/`.3s` stagger on a `.6s` fade-up, so the KPI block and area cards sit at `opacity: 0` until ~900ms. Measured: `#areaCardsGrid` is `opacity: 0` at t=91ms and t=126ms after load. On a dashboard whose entire job is "show me the number", the headline is blank for a third of the 3-second first-impression window.
+- **Context**: Surfaced during the P2 design pass and left open there, because removing it is a motion-character decision rather than a design-system cleanup — the animation was a deliberate visual choice. Raised with the user, who chose to drop it.
+- **Completed:** `design/drop-entrance-animation` (2026-09-03) — 진입 애니메이션을 걷어냈다. `@keyframes fadeInUp`, `.ani`, `.d1`-`.d3` 를 `index.html`·`textbook.html` 에서 제거하고 마크업의 해당 클래스도 지웠다(`osha.html` 에는 원래 없었다). `index.html` 의 `.reveal`/`.reveal.visible` 은 마크업 사용처 0, JS 참조 0 인 데드 코드여서 함께 제거했다.
+  실측: `goto` 직후 t=68ms 에 전 섹션 `opacity: 1`, 실행 중 애니메이션 0개. 이전에는 `#areaCardsGrid` 가 t=91ms·t=126ms 에 `opacity: 0` 이었다.
+  hover·테마 전환·메뉴 열기 트랜지션은 남겼다 — 사용자 입력에 대한 피드백이라 첫 페인트를 막지 않는다. `prefers-reduced-motion` 블록도 그대로라 세 페이지가 동일하다.
+  회귀: `D12a`-`D12c` (애니메이션을 되돌리는 뮤테이션에서 3건 모두 FAIL 확인).
 
 ### P2 — Dashboard design system pass
 - **Why**: Deferred from the /ship design review. Type scale is fragmented into 6 steps below 16px (`.65rem` labels are below the legibility floor for Hangul). No `:focus-visible` anywhere, and sortable `<th>` are not keyboard reachable. Chart `c4` hardcodes a palette that collides with the grade tokens. Explanatory footnotes repeat the same denominator sentence six times, burying the ones that carry unique information.
@@ -51,7 +54,7 @@
 
   The contrast work needed a token split that is worth knowing about: `--warning` / `--positive` / `--g2` / `--g3` were chosen as **fill** colours, so they clear the 3:1 bar for graphical objects but not the 4.5:1 bar for 14px text. `--fg-warn` / `--fg-ok` are the text-safe counterparts and `--accent-strong` is for filled backgrounds carrying white text; the fill values themselves did not change, so no chart or bar shifted colour.
 
-  Not changed: the grade colour ramp direction, and the entrance animation (see the open item above).
+  Not changed in that pass: the grade colour ramp direction (reviewed and kept), and the entrance animation — the latter was raised as a separate item and removed afterwards on `design/drop-entrance-animation` (see above).
 
 ### Chunked result rendering stops at 400 rows (`outputs/markdown-search-app.html`)
 - **Why**: Functional regression. The `IntersectionObserver` sentinel is appended to `resultsContent`, outside `.results-table-wrapper` (`max-height:400px; overflow-y:auto`). Appending rows never moves the sentinel, so the observer fires once and never again. A keyword like `안전` (3,405 hits) renders 400 rows while the tab count says 3,405, with no truncation notice. Pre-change behaviour rendered everything.

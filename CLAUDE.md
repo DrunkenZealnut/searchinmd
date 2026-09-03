@@ -150,7 +150,7 @@ There is no test framework (no `package.json` / `pyproject.toml`). The project s
 
 ```bash
 node   outputs/test-search-equivalence.js   # 24 assertions — search equivalence, chunked render, lazy parse cache
-node   outputs/test-dashboard-data.js       # 108 assertions — docs/ dashboard data + table render/sort
+node   outputs/test-dashboard-data.js       # 117 assertions — docs/ dashboard data + table render/sort
 python3 outputs/test-recount-grades.py      # 87 assertions — recount_grades.py logic
 
 node   outputs/run-core-logic-tests.js       # 32 assertions — headless runner for test-core-logic.html
@@ -204,6 +204,7 @@ Other invariants worth not breaking:
 - Wide tables go in an **inner** `<div class="scroll-x">` inside the card, with `tabindex="0"`, `role="region"` and an `aria-label`. Never put `scroll-x` on the `.card` element itself: `.card` is defined later at equal specificity, so its `background` silently wipes the scroll-shadow gradients. Do not solve narrow viewports by hiding columns — those tables identify a row by 교재 and 쪽. `@media print` and `body.exporting` unclip these regions so Print/PDF and Download PNG do not cut off columns.
 - Grid children carry `min-width: 0`. Without it, chart cards refuse to shrink and the page scrolls sideways below 768px.
 - No text on top of a coloured fill. Numbers go beside the bar, not inside it.
+- **No deferred entrance animation on content.** `.ani{animation:fadeInUp .6s both}` with a `.1s`/`.2s`/`.3s` stagger held the KPI block and area cards at `opacity: 0` for ~0.9s (measured `opacity: 0` at t=91ms), which is a third of the three-second first-impression window on a dashboard whose whole job is showing the number. It also made print and PNG export race the animation. Removed; `D12a`-`D12c` keep it out. Interaction transitions (hover, theme switch, menu open) are unaffected — they respond to input and never block first paint.
 
 - `docs/01-plan/`, `docs/02-design/`, `docs/03-analysis/`, `docs/04-report/` — feature PDCA documents (`features/` subdirs hold per-feature plan/design/analysis/report `.md`)
 - `docs/03-analysis/data/` — machine-readable output of `recount_grades.py`. `ncs_pages.csv` and `txt_pages.csv` are one row per unique (교재, 페이지) with its grade, grade reason, and accident-case flag; `summary.json` carries the aggregate counts plus `kw_pages` (unique detected pages per keyword — the dashboards' `pg` column is validated against this, never against itself) and `page_grade_digest` (a hash of the whole page→grade assignment, so a reassignment that leaves the totals unchanged still fails the regression check).
