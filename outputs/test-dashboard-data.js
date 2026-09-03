@@ -59,6 +59,17 @@ function loadDash(file) {
     getElementById: getEl, querySelector: () => mkEl('q'), querySelectorAll: () => [],
     createElement: (t) => mkEl('new-' + t), addEventListener: () => {}, body: mkEl('body')
   };
+  // 정렬 헤더 스텁 — 열 목록을 손으로 적지 않고 마크업의 data-k 에서 뽑는다.
+  // 페이지에 열이 늘면 스텁도 따라 늘어나므로 사본을 유지할 필요가 없다.
+  const sortThs = [...html.matchAll(/<th data-k="([^"]+)"/g)].map((m) => {
+    const attrs = {};
+    return {
+      dataset: { k: m[1] },
+      setAttribute(n, v) { attrs[n] = v; },
+      getAttribute(n) { return n in attrs ? attrs[n] : null; },
+    };
+  });
+  document.querySelectorAll = (sel) => (sel === '.tbl.sortable th[data-k]' ? sortThs : []);
   const ctx = {
     document, JSON, Math, Object, Array, String, Number, Date, RegExp, Intl,
     parseInt, parseFloat, isNaN, setTimeout, clearTimeout, performance: { now: () => 0 },
@@ -79,7 +90,7 @@ function loadDash(file) {
   ctx.window = ctx; ctx.globalThis = ctx;
   vm.createContext(ctx);
   vm.runInContext(js, ctx, { filename: file });
-  ctx.__els = els; ctx.__errors = errors;
+  ctx.__els = els; ctx.__errors = errors; ctx.__sortThs = sortThs;
   return ctx;
 }
 
@@ -200,7 +211,44 @@ check('D6c 토글 결과가 서로 역순', pgDesc[0] === pgAsc[pgAsc.length - 1
 N.sK('k');
 check('D6e sK("k") 키워드 문자열 정렬', order(N.__els['kb'].innerHTML).length === 30);
 
-const fakeBtn = { classList: { add() {}, remove() {} } };
+// D6f-D6i — aria-sort 가 실제 정렬 상태와 일치하는지.
+// 헤더의 화살표 글리프는 CSS 가 aria-sort 만 보고 그리므로, 이 속성이 어긋나면
+// 화면과 스크린리더가 서로 다른 말을 하게 된다. 선언만 보지 않고 렌더된 행
+// 순서까지 대조해야 "descending 이라고 써 놓고 오름차순으로 그리는" 경우를 잡는다.
+const ariaOf = (ctx, key) => {
+  const th = ctx.__sortThs.find(t => t.dataset.k === key);
+  return th ? th.getAttribute('aria-sort') : null;
+};
+check('D6s1 정렬 헤더 스텁을 마크업에서 뽑았다', N.__sortThs.length === 9, N.__sortThs.length);
+N.sK('pg');
+check('D6s2 sK("pg") 활성 열 aria-sort=descending', ariaOf(N, 'pg') === 'descending', ariaOf(N, 'pg'));
+check('D6s3 비활성 열은 전부 aria-sort=none',
+  N.__sortThs.filter(t => t.dataset.k !== 'pg').every(t => t.getAttribute('aria-sort') === 'none'));
+// 렌더된 행에서 실제 방향을 되읽어, 선언된 aria-sort 와 대조한다. 정렬 순서만
+// 보는 어서션은 라벨이 뒤집혀도 통과하므로(뮤테이션으로 확인) 대조가 필요하다.
+const dirOf = (keys, field) => {
+  const v = keys.map(k => NKW.find(r => r.k === k)[field]);
+  const nonInc = v.every((x, i) => i === 0 || v[i - 1] >= x);
+  const nonDec = v.every((x, i) => i === 0 || v[i - 1] <= x);
+  if (nonInc && nonDec) return 'flat';        // 값이 전부 같으면 방향을 못 읽는다
+  return nonInc ? 'descending' : nonDec ? 'ascending' : 'unsorted';
+};
+const nDesc = order(N.__els['kb'].innerHTML);
+check('D6s4 내림차순 선언이 렌더된 행 방향과 일치',
+  ariaOf(N, 'pg') === dirOf(nDesc, 'pg'), ariaOf(N, 'pg') + ' vs 실제 ' + dirOf(nDesc, 'pg'));
+N.sK('pg');                                   // 같은 열 재클릭 → 토글
+check('D6s5 같은 열 재클릭 시 aria-sort=ascending', ariaOf(N, 'pg') === 'ascending', ariaOf(N, 'pg'));
+const nAsc = order(N.__els['kb'].innerHTML);
+check('D6s6 오름차순 선언이 렌더된 행 방향과 일치',
+  ariaOf(N, 'pg') === dirOf(nAsc, 'pg'), ariaOf(N, 'pg') + ' vs 실제 ' + dirOf(nAsc, 'pg'));
+
+// fK 는 눌린 버튼에 aria-pressed 를 쓴다. 스텁이 attrs 에 받아 둬야
+// 그 호출이 실제로 일어났는지 확인할 수 있다.
+const fakeBtn = {
+  attrs: {},
+  classList: { add() {}, remove() {} },
+  setAttribute(k, v) { this.attrs[k] = v; },
+};
 N.fK('case', fakeBtn);
 const caseOnly = order(N.__els['kb'].innerHTML);
 check('D7a fK("case") cs>0 만 노출', caseOnly.length === NKW.filter(r => r.cs > 0).length, caseOnly.length);
@@ -208,6 +256,7 @@ N.fK('high', fakeBtn);
 check('D7b fK("high") 상위 15개', order(N.__els['kb'].innerHTML).length === 15);
 N.fK('all', fakeBtn);
 check('D7c fK("all") 전체 복귀', order(N.__els['kb'].innerHTML).length === 30);
+check('D7f fK() 가 누른 버튼에 aria-pressed=true', fakeBtn.attrs['aria-pressed'] === 'true', fakeBtn.attrs['aria-pressed']);
 
 // =====================================================================
 // docs/textbook.html (교과서)
@@ -327,6 +376,38 @@ const num = (n) => n.toLocaleString('en-US');
 check('D9 osha.html 에 구(舊) 사고사례 "7건" 잔존 없음', !/사고사례[^<]{0,12}7건/.test(osha));
 check('D9 osha.html 에 구(舊) 교과서 "982건" 잔존 없음', !osha.includes('982건'));
 check('D9a index.html 이 등급3 108쪽 인용', idxHtml.includes('108'));
+
+// =====================================================================
+// D11 — 가로 스크롤 영역의 구조 회귀
+//
+// .scroll-x 를 .card 와 같은 요소에 얹으면 스타일시트에서 뒤에 오는 .card 의
+// background 가(특이도 동률) 그라데이션을 통째로 덮어 어포던스가 사라진다.
+// 실제로 그렇게 짰다가 실측 backgroundImage 레이어 0 으로 잡혔고, 그때 이
+// 하니스는 아무 것도 눈치채지 못했다. 구조 자체를 고정한다.
+// =====================================================================
+console.log('\n[구조] 가로 스크롤 영역');
+const PAGES = ['docs/index.html', 'docs/textbook.html', 'docs/osha.html']
+  .map(rel => [rel, fs.readFileSync(path.join(ROOT, rel), 'utf8')]);
+PAGES.forEach(([name, html]) => {
+  const classAttrs = [...html.matchAll(/class="([^"]*)"/g)].map(m => m[1].split(/\s+/));
+  const both = classAttrs.filter(c => c.includes('card') && c.includes('scroll-x'));
+  check(`D11a ${name} — .card 와 .scroll-x 를 같은 요소에 얹지 않음`,
+    both.length === 0, both.map(c => c.join(' ')).join(' | '));
+
+  // 넓은 표는 전부 스크롤 영역 안에 있어야 한다. 바깥에 있으면 좁은 화면에서
+  // 페이지가 통째로 가로로 밀린다.
+  const tables = (html.match(/<table\b/g) || []).length;
+  const wrapped = (html.match(/<div class="scroll-x"[^>]*>\s*<table\b/g) || []).length;
+  check(`D11b ${name} — 표 ${tables}개가 전부 .scroll-x 래퍼 안`,
+    wrapped === tables, `wrapped=${wrapped} / tables=${tables}`);
+
+  // 스크롤 가능 영역은 키보드로 도달할 수 있어야 하고 이름이 있어야 한다.
+  const regions = [...html.matchAll(/<div class="scroll-x"([^>]*)>/g)].map(m => m[1]);
+  check(`D11c ${name} — 스크롤 영역 ${regions.length}개 전부 tabindex+role+aria-label`,
+    regions.length > 0 && regions.every(a =>
+      /tabindex="0"/.test(a) && /role="region"/.test(a) && /aria-label="[^"]+"/.test(a)),
+    regions.filter(a => !/aria-label="[^"]+"/.test(a)).length + '개 누락');
+});
 
 console.log(`\n결과: ${pass}/${pass + fail} PASS${fail ? `, ${fail} FAIL` : ''}${warned ? `, ${warned} KNOWN ISSUE` : ''}`);
 process.exit(fail ? 1 : 0);
