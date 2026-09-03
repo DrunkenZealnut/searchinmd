@@ -150,7 +150,7 @@ There is no test framework (no `package.json` / `pyproject.toml`). The project s
 
 ```bash
 node   outputs/test-search-equivalence.js   # 24 assertions — search equivalence, chunked render, lazy parse cache
-node   outputs/test-dashboard-data.js       # 92 assertions — docs/ dashboard data + table render/sort
+node   outputs/test-dashboard-data.js       # 93 assertions — docs/ dashboard data + table render/sort
 python3 outputs/test-recount-grades.py      # 87 assertions — recount_grades.py logic
 
 node   outputs/run-core-logic-tests.js       # 32 assertions — headless runner for test-core-logic.html
@@ -185,6 +185,25 @@ For manual E2E testing, use `outputs/test-samples/` with sample `.md` files. For
   - `docs/index.html` — NCS 반도체 교재 안전보건 분석
   - `docs/textbook.html` — 반도체고 교과서 안전보건 분석 (KPI 는 검출 362쪽과 전체 2,055쪽 두 분모를 병기, 비교표는 검출쪽 기준)
   - `docs/osha.html` — OSHA 반도체 화학물질 안전교육 과정 분석
+
+### Dashboard design tokens (`docs/*.html`)
+
+The three dashboards each carry their own copy of the same `<style>` block. When you change one of these, change all three — they are meant to stay byte-identical in the token area.
+
+| Token group | Values | Rule |
+|---|---|---|
+| Type scale | `--fs-xs .75rem` / `--fs-sm .875rem` / `--fs-md 1rem` / `--fs-lg 1.125rem` | Nothing below 16px may use a literal size. `xs` (12px) is the floor — Hangul falls apart below it. Prose bodies use `md`; tables, captions and buttons use `sm`; only uppercase labels use `xs`. |
+| Grade ramp | `--g1` grey / `--g2` amber / `--g3` green | **Grade only.** Never use these for a value that is not a 1/2/3 grade. `--danger` red is reserved for accident cases. |
+| Area palette | `--a1` 개발 / `--a2` 제조 / `--a3` 장비 / `--a4` 재료 | Blue→purple→pink, per theme. Deliberately disjoint from the grade ramp so the two encodings can sit side by side (`c3` grade-stacked next to `c4` area-stacked). |
+| `--scrim` | theme-dependent | Edge shadow for `.scroll-x`. |
+
+Other invariants worth not breaking:
+
+- Interactive controls have `min-height: 44px`. Sortable headers are `th > button.sortbtn`, never `th[onclick]` — the button is what makes them keyboard-reachable, and `sK()` must keep `aria-sort` in sync (the arrow glyph is drawn from that attribute, so the visual and the assistive-tech state cannot diverge).
+- Wide tables go in `.scroll-x` with `tabindex="0"`, `role="region"` and an `aria-label`. Do not solve narrow viewports by hiding columns — those tables identify a row by 교재 and 쪽.
+- Grid children carry `min-width: 0`. Without it, chart cards refuse to shrink and the page scrolls sideways below 768px.
+- No text on top of a coloured fill. Numbers go beside the bar, not inside it.
+
 - `docs/01-plan/`, `docs/02-design/`, `docs/03-analysis/`, `docs/04-report/` — feature PDCA documents (`features/` subdirs hold per-feature plan/design/analysis/report `.md`)
 - `docs/03-analysis/data/` — machine-readable output of `recount_grades.py`. `ncs_pages.csv` and `txt_pages.csv` are one row per unique (교재, 페이지) with its grade, grade reason, and accident-case flag; `summary.json` carries the aggregate counts plus `kw_pages` (unique detected pages per keyword — the dashboards' `pg` column is validated against this, never against itself) and `page_grade_digest` (a hash of the whole page→grade assignment, so a reassignment that leaves the totals unchanged still fails the regression check).
 - `docs/archive/YYYY-MM/` — retired PDCA feature docs, kept for provenance. `_INDEX.md` lists what moved and when.
