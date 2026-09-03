@@ -91,13 +91,45 @@ All state is held in module-level variables: `selectedFolder`, `markdownFiles`, 
 
 ### External Dependencies
 
-- **XLSX (SheetJS) 0.18.5** loaded via CDN — the only external dependency
-- **Python 3 standard library** for the dev server (no pip packages)
+- **XLSX (SheetJS) 0.18.5** loaded via CDN — the search app's only runtime dependency
+- **Python 3 standard library** for the dev server (`server.py` has no pip dependencies)
 - **LM Studio** (optional) — local LLM server on port 1234 for hybrid search
+
+The **data pipeline scripts** (see below) are a separate story: they require pip packages — `requests` + `beautifulsoup4` (downloaders) and `openpyxl` (Excel/page utilities). There is no `requirements.txt`; install ad hoc.
+
+## Data Pipeline (Python, repo root)
+
+The root-level Python scripts are an offline data pipeline that feeds the search app — they are **not** part of the web app and run independently. Two distinct groups:
+
+### 1. Publication downloaders (web scrapers)
+
+`osha_downloader.py`, `kosha_downloader.py`, `niosh_downloader.py`, `eu_osha_downloader.py`, `safework_au_downloader.py` — each scrapes one occupational-safety agency's publication list and bulk-downloads PDFs. They share a common shape:
+
+- **Resumable**: each writes a `_download_progress.json` (`{downloaded, failed, articles}`) into its `SAVE_DIR`; rerunning skips completed items.
+- **Hardcoded `SAVE_DIR`** pointing outside the repo (e.g. `.../청년노동자인권센터/교과서/...`) — edit the constant at the top before running on another machine.
+- Spoof a desktop `User-Agent`, throttle with a `DELAY` constant, and `sanitize_filename()` for filesystem-safe names.
+- Year/count filters via `MIN_YEAR`, `TOTAL_PAGES`, `ARTICLE_LIMIT` constants near the top.
+
+### 2. Page-mapping & Excel utilities
+
+These bridge the PDF→markdown→Excel workflow and mirror the HTML app's page logic in Python:
+
+- `page_utils.py` — shared lib: `nfc()`, `find_md_and_meta()`, `build_page_map()`, `extract_page_content()`. `build_page_map()` is the Python counterpart of the app's `buildPageMapping`.
+- `insert_page_markers.py` — walks NCS markdown dirs and injects `<!-- page: N -->` comments from `_meta.json`. **This is what produces the Strategy-1 markers** that `buildPageMapping` prefers (see `TODOS.md` — once all docs have markers, the app's DP fallback becomes dead code). Supports `--dry-run`, `--backup`, and an explicit dir arg.
+- `add_fullpage.py` — reads page numbers from an Excel column, then writes each row's full page content back into the next column (`EXCEL_MAX_CHARS = 32767` cell cap).
+- `outputs/reclassify_accident_cases.py` — re-judges "사고사례여부" per-row from cell contents rather than whole-page text.
+
+Like the downloaders, these have **hardcoded absolute paths** (`EXCEL_PATH`, `NCS_BASES`, `DEFAULT_NCS_DIRS`) — edit the constants before running.
 
 ## Testing
 
+There is no test framework (no `package.json` / `pyproject.toml`). The project ships its own harnesses — all exit 0/1 and depend only on Node and the Python standard library.
+
 ```bash
+node   outputs/test-search-equivalence.js   # 11 assertions — search routine equivalence
+node   outputs/test-dashboard-data.js       # 92 assertions — docs/ dashboard data + table render/sort
+python3 outputs/test-recount-grades.py      # 86 assertions — recount_grades.py logic
+
 # Open in browser to run core logic unit tests (isHeadingLine, isStandaloneTitle, normalizeHeading, NFC)
 open outputs/test-core-logic.html
 # Check browser title: "PASS: N/N tests passed" or "FAIL: ..."
@@ -105,12 +137,28 @@ open outputs/test-core-logic.html
 
 `test-core-logic.html` copies shared helper functions from the main app and runs assertions in-browser. When adding or changing heading detection / normalization logic, update both files and verify tests pass.
 
+`test-search-equivalence.js` and `test-dashboard-data.js` load the real `<script>` blocks out of the HTML files via `vm` + a DOM mock, so they carry no copy-paste debt. `test-recount-grades.py` stubs `openpyxl` in `sys.modules` and monkeypatches `load_workbook` with a fake workbook, so it runs without pip packages and without the gitignored `data/` originals.
+
+Both new harnesses carry a `known()` helper for **known issues**: an assertion that documents a real defect, prints `⚠ KNOWN ISSUE` on every run, but does not fail the suite. Use it when you find a defect you are not fixing in the same change; promote the call back to `check()` once fixed. Currently zero known issues are outstanding.
+
 For manual E2E testing, use `outputs/test-samples/` with sample `.md` files. For real-world testing with `_meta.json` files, use NCS 반도체 documents in `/Users/zealnutkim/Documents/개발/pinecone_agent/documents/ncs/`.
+
+## Test Coverage
+
+**Minimum 60% / target 80%** of changed code paths must be covered by an automated harness before landing.
+
+- New logic in `outputs/*.html` (search app) → extend `test-search-equivalence.js` or `test-core-logic.html`.
+- New data or table/sort logic in `docs/*.html` (dashboards) → extend `test-dashboard-data.js`. Hardcoded data arrays must be cross-validated against `docs/03-analysis/data/summary.json`, never asserted against themselves.
+- New logic in `recount_grades.py` or the page-mapping utilities → extend `test-recount-grades.py`.
+- Paths that genuinely cannot be automated here (browser chart rendering, File System Access API, real `.xlsx` parsing) are documented as `[→E2E]` gaps in the PR body rather than silently skipped.
 
 ## Other Artifacts
 
-- `docs/index.html` — NCS 반도체 안전보건 분석 대시보드 (GitHub Pages로 배포, Chart.js + XLSX.js 사용). 검색 앱과 별도의 독립 HTML 파일.
-- `docs/01-plan/`, `docs/02-design/`, `docs/03-analysis/`, `docs/04-report/` — feature PDCA documents
+- **Analysis dashboards** (`docs/`, GitHub Pages) — standalone single-file HTML dashboards using Chart.js 4.4.7 via CDN, independent of the search app:
+  - `docs/index.html` — NCS 반도체 교재 안전보건 분석
+  - `docs/textbook.html` — 반도체고 교과서 안전보건 분석 (KPI 는 검출 362쪽과 전체 2,055쪽 두 분모를 병기, 비교표는 검출쪽 기준)
+  - `docs/osha.html` — OSHA 반도체 화학물질 안전교육 과정 분석
+- `docs/01-plan/`, `docs/02-design/`, `docs/03-analysis/`, `docs/04-report/` — feature PDCA documents (`features/` subdirs hold per-feature plan/design/analysis/report `.md`)
 
 ## Development Notes
 

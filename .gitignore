@@ -3,3 +3,16 @@
 .claude/
 audit.jsonl
 uploads/
+.gstack/
+
+# 원본 연구 데이터 (67MB) — 공개 저장소에 올리지 않고 로컬 보관
+# recount_grades.py 가 data/ 에서 읽어 docs/03-analysis/data/ 로 산출물을 만든다
+/data/
+
+# 백업·캐시
+.git.bak-*/
+*.bak-*
+__pycache__/
+.gstack-audit/
+.vscode/
+venv/
