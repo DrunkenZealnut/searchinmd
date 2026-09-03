@@ -150,6 +150,88 @@ const p1 = A.getParsedDoc(f7), p2 = A.getParsedDoc(f7);
 check('T7a 동일 file 2회 호출 → 동일 참조(재계산 0)', p1 === p2);
 check('T7b sentences 전부 .lower precompute 보유', p1.sentences.every(s => typeof s.lower === 'string'));
 
+// ===== T8: 청크 렌더 (FR-5) — sentinel 이 스크롤 컨테이너 안에 있고 root 가 그 컨테이너인가 =====
+// 회귀 배경: sentinel 을 .results-table-wrapper(max-height:400px; overflow-y:auto) *밖* 에 붙이면
+// 행을 append 해도 sentinel 이 움직이지 않아 교차 상태가 불변이고, 콜백이 1회 발화 후 다시
+// 발화하지 않는다 → 결과가 400행에서 조용히 멈춘다. 이 테스트가 그 구조를 고정한다.
+console.log('\n[T8] 청크 렌더 sentinel');
+
+function loadAppForRender() {
+  const h = fs.readFileSync(path.join(__dirname, 'markdown-search-app.html'), 'utf8');
+  const js = [...h.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]).join('\n');
+  const rec = { ios: [], nodes: {} };
+  const mkNode = (id) => (rec.nodes[id] = rec.nodes[id] || {
+    id, innerHTML: '', textContent: '', style: {}, dataset: {}, children: [],
+    classList: { add() {}, remove() {}, contains: () => false },
+    addEventListener() {}, appendChild(c) { this.children.push(c); },
+    insertAdjacentHTML(_, html) { this.innerHTML += html; }, remove() { this.removed = true; },
+    closest: () => null, contains: () => true, querySelector: () => null,
+  });
+  const document = {
+    getElementById: mkNode, querySelector: mkNode, querySelectorAll: () => [],
+    createElement: () => mkNode('created'), addEventListener() {}, body: mkNode('body'),
+  };
+  const ctx = {
+    document, console: { log() {}, warn() {}, error() {} }, setTimeout, clearTimeout,
+    Promise, Map, Set, WeakMap, JSON, Math, RegExp, Array, Object, String, Number,
+    parseInt, parseFloat, Intl, XLSX: { utils: {} }, navigator: { language: 'ko' }, alert() {},
+    fetch: () => Promise.reject(new Error('no net')),
+    localStorage: { getItem: () => null, setItem() {} },
+    IntersectionObserver: function (cb, opts) {
+      rec.ios.push({ cb, opts, observed: [] });
+      this.observe = (el) => rec.ios[rec.ios.length - 1].observed.push(el);
+      this.disconnect = () => {};
+    },
+    FileReader: function () {},
+  };
+  ctx.window = ctx; ctx.globalThis = ctx; vm.createContext(ctx);
+  // searchResults 는 `let` 이라 컨텍스트 프로퍼티로 덮을 수 없다. 주입 헬퍼를 덧붙인다.
+  vm.runInContext(js + '\n;globalThis.__setResults = (k, v) => { searchResults[k] = v; };',
+                  ctx, { filename: 'render' });
+  return { ctx, rec };
+}
+
+const { ctx: RC, rec } = loadAppForRender();
+// RENDER_CHUNK(200) 을 넘겨야 청크 경로가 켜진다
+const many = Array.from({ length: 450 }, (_, i) => ({
+  type: '문장', filename: 'a.md', content: '안전 ' + i, lineNumber: i + 1,
+  pageNumber: i + 1, hasPage: false, headingContext: null, fullPageContent: 'x',
+}));
+RC.__setResults('안전', many);
+RC.renderResultsTable('안전');
+
+const wrapperHtml = rec.nodes['resultsContent'].innerHTML;
+// wrapper 의 여는 태그부터 div 중첩을 세어 *짝이 맞는* 닫는 태그를 찾는다.
+// lastIndexOf('</div>') 를 쓰면 sentinel 이 밖으로 나가도 그 자신의 닫는 태그를 잡아
+// 검사가 통과해 버린다(실제로 그랬다).
+function wrapperRange(html) {
+  const open = html.indexOf('<div class="results-table-wrapper"');
+  if (open < 0) return null;
+  const tag = /<div\b|<\/div>/g;
+  tag.lastIndex = open;
+  let depth = 0, m;
+  while ((m = tag.exec(html))) {
+    depth += m[0] === '</div>' ? -1 : 1;
+    if (depth === 0) return [open, m.index];
+  }
+  return null;
+}
+const range = wrapperRange(wrapperHtml);
+const sentinelAt = wrapperHtml.indexOf('id="resultsSentinel"');
+check('T8a sentinel 이 .results-table-wrapper 안에 렌더된다',
+  !!range && sentinelAt > range[0] && sentinelAt < range[1]);
+check('T8b IntersectionObserver 가 1개 생성된다', rec.ios.length === 1);
+const io = rec.ios[0] || {};
+check('T8c IO 의 root 가 스크롤 컨테이너(resultsWrapper)다',
+  !!io.opts && io.opts.root === rec.nodes['resultsWrapper']);
+check('T8d IO 가 sentinel 을 관찰한다',
+  (io.observed || []).length === 1 && io.observed[0] === rec.nodes['resultsSentinel']);
+// 콜백을 발화시켜 다음 청크가 실제로 append 되는지
+const before = rec.nodes['resultsTbody'].innerHTML.length;
+if (io.cb) io.cb([{ isIntersecting: true }]);
+check('T8e 콜백 발화 시 다음 청크가 tbody 에 append 된다',
+  rec.nodes['resultsTbody'].innerHTML.length > before);
+
 // ===== 결과 =====
 console.log(`\n결과: ${pass}/${pass + fail} PASS${fail ? `, ${fail} FAIL` : ''}`);
 process.exit(fail ? 1 : 0);
