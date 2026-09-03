@@ -19,3 +19,10 @@ venv/
 
 # 다운로더 기본 저장 위치 (DOWNLOAD_ROOT 미설정 시)
 /downloads/
+
+# 수기 코딩 시트 — 비공개 교재 본문이 들어간다
+/coding_sheet.json
+/coding_sheet.md
+/coding_key.json
+/coding_*.json
+
