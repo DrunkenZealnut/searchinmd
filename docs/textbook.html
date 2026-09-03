@@ -11,8 +11,8 @@
 <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js" integrity="sha384-UbfRVKN3/elS1r7JcK2FhmPP+KlJ4CvYwbyYD7tH+uTkbT9bNJr9eJeQ0FoFbAgz" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html.theme-dark{--bg:#0A0A0A;--surface:#141414;--surface-hover:#1C1C1C;--border:rgba(255,255,255,0.06);--text:#EDEDED;--text-secondary:#888;--accent:#3b82f6;--accent-secondary:#8b5cf6;--positive:#10b981;--negative:#f43f5e;--warning:#f59e0b;--g1:#6b7280;--g2:#f59e0b;--g3:#10b981;--danger:#ef4444;--scrim:rgba(255,255,255,.20)}
-html.theme-light{--bg:#FAFAF9;--surface:#FFFFFF;--surface-hover:#F5F5F4;--border:rgba(0,0,0,0.06);--text:#0f172a;--text-secondary:#64748b;--accent:#2563eb;--accent-secondary:#7c3aed;--positive:#059669;--negative:#e11d48;--warning:#d97706;--g1:#6b7280;--g2:#d97706;--g3:#059669;--danger:#dc2626;--scrim:rgba(0,0,0,.16)}
+html.theme-dark{--bg:#0A0A0A;--surface:#141414;--surface-hover:#1C1C1C;--border:rgba(255,255,255,0.06);--text:#EDEDED;--text-secondary:#888;--accent:#3b82f6;--accent-secondary:#8b5cf6;--positive:#10b981;--negative:#f43f5e;--warning:#f59e0b;--g1:#6b7280;--g2:#f59e0b;--g3:#10b981;--danger:#ef4444;--scrim:rgba(255,255,255,.20);--fg-warn:#fbbf24;--fg-ok:#34d399;--accent-strong:#1d4ed8}
+html.theme-light{--bg:#FAFAF9;--surface:#FFFFFF;--surface-hover:#F5F5F4;--border:rgba(0,0,0,0.06);--text:#0f172a;--text-secondary:#64748b;--accent:#2563eb;--accent-secondary:#7c3aed;--positive:#059669;--negative:#e11d48;--warning:#d97706;--g1:#6b7280;--g2:#d97706;--g3:#059669;--danger:#dc2626;--scrim:rgba(0,0,0,.16);--fg-warn:#b45309;--fg-ok:#047857;--accent-strong:#1d4ed8}
 /* 타입 스케일 — 16px 미만은 이 3단계뿐이다. 한글은 10~11px 에서 자소가 뭉개져
    본문으로 못 쓴다. xs 는 대문자 라벨·캡션 전용 바닥값. */
 :root{--fs-xs:.75rem;--fs-sm:.875rem;--fs-md:1rem;--fs-lg:1.125rem}
@@ -29,6 +29,11 @@ a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid 
    사용자에게 영영 보이지 않았다. */
 .skip{position:absolute;left:-9999px;top:0;z-index:10000;color:var(--text)}
 .skip:focus{left:8px;top:8px;min-height:44px;display:flex;align-items:center;padding:10px 16px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:var(--fs-sm)}
+/* 텍스트 전용 시맨틱 색 — --warning/--positive/--g2/--g3 는 막대·차트 채움용
+   값이라 그래픽 3:1 은 넘지만 글자로 쓰면 라이트 테마에서 4.5:1 을 못 넘긴다
+   (실측 --warning 3.19:1, --positive/--g3 3.77:1 @14px). 채움값은 그대로 두고
+   글자용만 분리한다. --accent-strong 은 흰 글자를 얹는 채워진 배경 전용 —
+   다크의 --accent(#3b82f6) 위 흰 글자는 3.68:1 이었다. */
 .ts{color:var(--text-secondary);font-size:var(--fs-sm)}
 .thsub{font-weight:400;font-size:var(--fs-xs);text-transform:none;letter-spacing:0;color:var(--text-secondary)}
 /* 가로 스크롤 영역 — 9열 표가 좁은 화면에서 잘리는데 오른쪽에 더 있다는 신호가
@@ -65,11 +70,11 @@ a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid 
 .tbl.sortable th[aria-sort=ascending] .sortbtn::after{content:' \2191';opacity:1;color:var(--accent)}
 .tbl.sortable th[aria-sort=descending] .sortbtn::after{content:' \2193';opacity:1;color:var(--accent)}
 .tbl td{padding:10px 12px;border-bottom:1px solid var(--border)}.tbl tr:hover{background:var(--surface-hover)}
-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word-break:break-all;background:var(--surface-hover);padding:1px 4px;border-radius:4px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word-break:break-all;background:var(--surface-hover);padding:1px 4px;border-radius:4px;color:var(--text)}
 .pb{display:inline-block;height:6px;border-radius:3px;vertical-align:middle;margin-right:6px}
-.fb{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}.fbtn{padding:8px 14px;min-height:44px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:var(--fs-sm);font-family:inherit;transition:background .15s,color .15s,border-color .15s}.fbtn:hover{background:var(--surface-hover)}.fbtn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.fb{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}.fbtn{padding:8px 14px;min-height:44px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:var(--fs-sm);font-family:inherit;transition:background .15s,color .15s,border-color .15s}.fbtn:hover{background:var(--surface-hover)}.fbtn.on{background:var(--accent-strong);color:#fff;border-color:var(--accent-strong)}
 .ins{border-left:4px solid var(--danger);padding:20px 24px;margin-bottom:16px;background:var(--surface);border-radius:0 12px 12px 0}.ins h3{color:var(--danger);margin-bottom:8px;font-size:var(--fs-lg)}.ins p,.rec p{color:var(--text-secondary);font-size:var(--fs-md);line-height:1.8}.ins p strong,.rec p strong{color:var(--text)}
-.rec{border-left:4px solid var(--positive);padding:20px 24px;margin-bottom:16px;background:var(--surface);border-radius:0 12px 12px 0}.rec h3{color:var(--positive);margin-bottom:8px;font-size:var(--fs-lg)}
+.rec{border-left:4px solid var(--positive);padding:20px 24px;margin-bottom:16px;background:var(--surface);border-radius:0 12px 12px 0}.rec h3{color:var(--fg-ok);margin-bottom:8px;font-size:var(--fs-lg)}
 @keyframes fadeInUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}.ani{animation:fadeInUp .6s ease-out both}.d1{animation-delay:.1s}.d2{animation-delay:.2s}.d3{animation-delay:.3s}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media print{body{background:#fff!important;color:#000!important}.viz-menu{display:none}.card{break-inside:avoid}*{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
@@ -82,7 +87,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 <a href="#mc" class="skip">본문으로 건너뛰기</a>
 <nav style="display:flex;justify-content:center;gap:8px;padding:16px 0;background:var(--surface);border-bottom:1px solid var(--border)">
 <a href="index.html" style="padding:10px 24px;border-radius:8px;border:1px solid var(--border);color:var(--text);text-decoration:none;font-size:var(--fs-sm)">NCS 교재 (86권)</a>
-<a href="textbook.html" style="padding:10px 24px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600;font-size:var(--fs-sm)">반도체고 교과서 (9권)</a>
+<a href="textbook.html" style="padding:10px 24px;border-radius:8px;background:var(--accent-strong);color:#fff;text-decoration:none;font-weight:600;font-size:var(--fs-sm)">반도체고 교과서 (9권)</a>
 <a href="osha.html" style="padding:10px 24px;border-radius:8px;border:1px solid var(--border);color:var(--text);text-decoration:none;font-size:var(--fs-sm)">OSHA 안전교육</a>
 </nav>
 <div class="viz-menu"><button class="viz-menu-toggle" onclick="toggleMenu()" aria-label="Menu"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg></button><div class="viz-menu-dropdown" id="vizMenuDropdown"><button onclick="cycleTheme()"><span id="themeIcon">☀️</span><span id="themeLabel">Light</span></button><button onclick="downloadImage()"><span>📥</span><span>Download PNG</span></button><button onclick="window.print()"><span>🖨️</span><span>Print / PDF</span></button></div></div>
@@ -120,11 +125,11 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 <tr><td>2</td><td>반도체 기초기술 2</td><td>크리아트</td><td>232</td><td>38</td><td>37</td><td>1</td><td style="color:var(--danger);font-weight:600">0</td></tr>
 <tr><td>3</td><td>반도체 기초</td><td>렛유인</td><td>235</td><td>15</td><td>15</td><td>0</td><td style="color:var(--danger);font-weight:600">0</td></tr>
 <tr><td>4</td><td>반도체 공정기초</td><td>렛유인</td><td>224</td><td>18</td><td>18</td><td>0</td><td style="color:var(--danger);font-weight:600">0</td></tr>
-<tr><td>5</td><td>반도체 장비 유지보수</td><td>충남반도체고</td><td>217</td><td>72</td><td>57</td><td>12</td><td style="color:var(--positive);font-weight:600">3</td></tr>
-<tr><td>6</td><td>반도체 인프라 일반</td><td>서울시교육청</td><td>197</td><td>71</td><td>48</td><td>19</td><td style="color:var(--positive);font-weight:600">4</td></tr>
+<tr><td>5</td><td>반도체 장비 유지보수</td><td>충남반도체고</td><td>217</td><td>72</td><td>57</td><td>12</td><td style="color:var(--fg-ok);font-weight:600">3</td></tr>
+<tr><td>6</td><td>반도체 인프라 일반</td><td>서울시교육청</td><td>197</td><td>71</td><td>48</td><td>19</td><td style="color:var(--fg-ok);font-weight:600">4</td></tr>
 <tr><td>7</td><td>반도체 포토에칭</td><td>에이치앤지</td><td>274</td><td>52</td><td>44</td><td>8</td><td style="color:var(--danger);font-weight:600">0</td></tr>
 <tr><td>8</td><td>반도체 조립검사</td><td>에이치앤지</td><td>256</td><td>32</td><td>30</td><td>2</td><td style="color:var(--danger);font-weight:600">0</td></tr>
-<tr><td>9</td><td>반도체 박막확산</td><td>에이치앤지</td><td>248</td><td>44</td><td>41</td><td>2</td><td style="color:var(--positive);font-weight:600">1</td></tr>
+<tr><td>9</td><td>반도체 박막확산</td><td>에이치앤지</td><td>248</td><td>44</td><td>41</td><td>2</td><td style="color:var(--fg-ok);font-weight:600">1</td></tr>
 <tr style="font-weight:700;border-top:2px solid var(--border)"><td></td><td>합계</td><td></td><td>2,055</td><td>362</td><td>309</td><td>45</td><td>8</td></tr>
 </tbody></table></div>
 <p class="ts" style="margin-top:12px">9권 중 <strong>6권</strong>(기초기술1·2, 기초, 공정기초, 포토에칭, 조립검사)이 구체적 안전대책 페이지를 <strong>단 한 쪽도 갖고 있지 않다</strong>. 등급3 8쪽은 장비 유지보수 3쪽(p.91·172·185), 인프라 일반 4쪽(p.155·162·180·186), 박막확산 1쪽(p.66)에 집중돼 있다.</p></section>

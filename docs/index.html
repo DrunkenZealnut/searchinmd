@@ -11,8 +11,8 @@
 <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js" integrity="sha384-UbfRVKN3/elS1r7JcK2FhmPP+KlJ4CvYwbyYD7tH+uTkbT9bNJr9eJeQ0FoFbAgz" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html.theme-dark{--bg:#0A0A0A;--surface:#141414;--surface-hover:#1C1C1C;--border:rgba(255,255,255,0.06);--text:#EDEDED;--text-secondary:#888;--accent:#3b82f6;--accent-secondary:#8b5cf6;--positive:#10b981;--negative:#f43f5e;--warning:#f59e0b;--g1:#6b7280;--g2:#f59e0b;--g3:#10b981;--danger:#ef4444;--scrim:rgba(255,255,255,.20);--a1:#93c5fd;--a2:#3b82f6;--a3:#c084fc;--a4:#ec4899}
-html.theme-light{--bg:#FAFAF9;--surface:#FFFFFF;--surface-hover:#F5F5F4;--border:rgba(0,0,0,0.06);--text:#0f172a;--text-secondary:#64748b;--accent:#2563eb;--accent-secondary:#7c3aed;--positive:#059669;--negative:#e11d48;--warning:#d97706;--g1:#6b7280;--g2:#d97706;--g3:#059669;--danger:#dc2626;--scrim:rgba(0,0,0,.16);--a1:#1e40af;--a2:#3b82f6;--a3:#7e22ce;--a4:#db2777}
+html.theme-dark{--bg:#0A0A0A;--surface:#141414;--surface-hover:#1C1C1C;--border:rgba(255,255,255,0.06);--text:#EDEDED;--text-secondary:#888;--accent:#3b82f6;--accent-secondary:#8b5cf6;--positive:#10b981;--negative:#f43f5e;--warning:#f59e0b;--g1:#6b7280;--g2:#f59e0b;--g3:#10b981;--danger:#ef4444;--scrim:rgba(255,255,255,.20);--fg-warn:#fbbf24;--fg-ok:#34d399;--accent-strong:#1d4ed8;--a1:#93c5fd;--a2:#3b82f6;--a3:#c084fc;--a4:#ec4899}
+html.theme-light{--bg:#FAFAF9;--surface:#FFFFFF;--surface-hover:#F5F5F4;--border:rgba(0,0,0,0.06);--text:#0f172a;--text-secondary:#64748b;--accent:#2563eb;--accent-secondary:#7c3aed;--positive:#059669;--negative:#e11d48;--warning:#d97706;--g1:#6b7280;--g2:#d97706;--g3:#059669;--danger:#dc2626;--scrim:rgba(0,0,0,.16);--fg-warn:#b45309;--fg-ok:#047857;--accent-strong:#1d4ed8;--a1:#1e40af;--a2:#3b82f6;--a3:#7e22ce;--a4:#db2777}
 /* 영역 팔레트(--a1 개발 / a2 제조 / a3 장비 / a4 재료). 등급 램프는 회색·주황·초록,
    사고사례는 빨강이라 영역 인코딩은 파랑~보라~분홍만 쓴다. 예전에는 c4 가
    #f59e0b·#10b981 을 직접 박아 바로 옆 c3 의 등급2·등급3 색과 정확히 같았다. */
@@ -32,6 +32,11 @@ a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid 
    사용자에게 영영 보이지 않았다. */
 .skip{position:absolute;left:-9999px;top:0;z-index:10000;color:var(--text)}
 .skip:focus{left:8px;top:8px;min-height:44px;display:flex;align-items:center;padding:10px 16px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:var(--fs-sm)}
+/* 텍스트 전용 시맨틱 색 — --warning/--positive/--g2/--g3 는 막대·차트 채움용
+   값이라 그래픽 3:1 은 넘지만 글자로 쓰면 라이트 테마에서 4.5:1 을 못 넘긴다
+   (실측 --warning 3.19:1, --positive/--g3 3.77:1 @14px). 채움값은 그대로 두고
+   글자용만 분리한다. --accent-strong 은 흰 글자를 얹는 채워진 배경 전용 —
+   다크의 --accent(#3b82f6) 위 흰 글자는 3.68:1 이었다. */
 .ts{color:var(--text-secondary);font-size:var(--fs-sm)}
 .thsub{font-weight:400;font-size:var(--fs-xs);text-transform:none;letter-spacing:0;color:var(--text-secondary)}
 /* 가로 스크롤 영역 — 9열 표가 좁은 화면에서 잘리는데 오른쪽에 더 있다는 신호가
@@ -78,12 +83,12 @@ a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid 
 .tbl.sortable th[aria-sort=ascending] .sortbtn::after{content:' \2191';opacity:1;color:var(--accent)}
 .tbl.sortable th[aria-sort=descending] .sortbtn::after{content:' \2193';opacity:1;color:var(--accent)}
 .tbl td{padding:10px 12px;border-bottom:1px solid var(--border)}.tbl tr:hover{background:var(--surface-hover)}
-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word-break:break-all;background:var(--surface-hover);padding:1px 4px;border-radius:4px}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word-break:break-all;background:var(--surface-hover);padding:1px 4px;border-radius:4px;color:var(--text)}
 .pb{display:inline-block;height:6px;border-radius:3px;vertical-align:middle;margin-right:6px}
-.fb{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}.fbtn{padding:8px 14px;min-height:44px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:var(--fs-sm);font-family:inherit;transition:background .15s,color .15s,border-color .15s}.fbtn:hover{background:var(--surface-hover)}.fbtn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.fb{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}.fbtn{padding:8px 14px;min-height:44px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:var(--fs-sm);font-family:inherit;transition:background .15s,color .15s,border-color .15s}.fbtn:hover{background:var(--surface-hover)}.fbtn.on{background:var(--accent-strong);color:#fff;border-color:var(--accent-strong)}
 
 .ins{border-left:4px solid var(--danger);padding:20px 24px;margin-bottom:16px;background:var(--surface);border-radius:0 12px 12px 0}.ins h3{color:var(--danger);margin-bottom:8px;font-size:var(--fs-lg)}.ins p,.rec p{color:var(--text-secondary);font-size:var(--fs-md);line-height:1.8}.ins p strong,.rec p strong{color:var(--text)}
-.rec{border-left:4px solid var(--positive);padding:20px 24px;margin-bottom:16px;background:var(--surface);border-radius:0 12px 12px 0}.rec h3{color:var(--positive);margin-bottom:8px;font-size:var(--fs-lg)}
+.rec{border-left:4px solid var(--positive);padding:20px 24px;margin-bottom:16px;background:var(--surface);border-radius:0 12px 12px 0}.rec h3{color:var(--fg-ok);margin-bottom:8px;font-size:var(--fs-lg)}
 /* 원문 발췌 열은 max-width 를 걸어 뒀는데 table-layout:auto 에서는 td 의
    max-width 가 무시된다(들어 있으나 마나였다). auto 레이아웃이 실제로 참고하는
    건 width 라서 그쪽으로 바꿨다. */
@@ -106,7 +111,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 <a href="#mc" class="skip">본문으로 건너뛰기</a>
 <div class="viz-menu"><button class="viz-menu-toggle" onclick="toggleMenu()" aria-label="Menu"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg></button><div class="viz-menu-dropdown" id="vizMenuDropdown"><button onclick="cycleTheme()"><span id="themeIcon">☀️</span><span id="themeLabel">Light</span></button><button onclick="downloadImage()"><span>📥</span><span>Download PNG</span></button><button onclick="window.print()"><span>🖨️</span><span>Print / PDF</span></button></div></div>
 <nav style="display:flex;justify-content:center;gap:8px;padding:16px 0;background:var(--surface);border-bottom:1px solid var(--border)">
-<a href="index.html" style="padding:10px 24px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600;font-size:var(--fs-sm)">NCS 교재 (86권)</a>
+<a href="index.html" style="padding:10px 24px;border-radius:8px;background:var(--accent-strong);color:#fff;text-decoration:none;font-weight:600;font-size:var(--fs-sm)">NCS 교재 (86권)</a>
 <a href="textbook.html" style="padding:10px 24px;border-radius:8px;border:1px solid var(--border);color:var(--text);text-decoration:none;font-size:var(--fs-sm)">반도체고 교과서 (9권)</a>
 <a href="osha.html" style="padding:10px 24px;border-radius:8px;border:1px solid var(--border);color:var(--text);text-decoration:none;font-size:var(--fs-sm)">OSHA 안전교육</a>
 </nav>
@@ -156,9 +161,9 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 <section style="margin-bottom:48px"><h2>사고사례 판정 페이지 (8쪽) 원문 검증</h2>
 <p class="ts" style="margin-bottom:16px">자동 판정(<code>사고사례여부=예</code>)으로 걸린 8개 페이지 전부를 원문과 대조했습니다. 실제 사고사례를 서술한 것은 3쪽이며, 반도체 산업재해는 <strong>구미 불산 사고 1건</strong>(2권에 중복 게재)뿐입니다. 나머지 5쪽은 오탐입니다.</p>
 <div class="card scroll-x" tabindex="0" role="region" aria-label="사고사례 판정 페이지 (8쪽) 원문 검증 표 (가로 스크롤)"><table class="tbl case-detail"><thead><tr><th style="width:30px">#</th><th>교재</th><th>분야</th><th>쪽</th><th>원문 발췌</th><th>검출 키워드</th><th>원문 대조 판정</th></tr></thead><tbody>
-<tr><td>1</td><td>반도체 장비 안전관리</td><td>장비</td><td>46</td><td>[사례: 사고 사례 제시하기] ○○년 경북 구미 H사 공장에서 탱크로리로 불산 가스를 주입하던 중 밸브 개방으로 가스 누출…</td><td>사망, 부상</td><td style="color:var(--positive);font-weight:600">사고사례 ✓<br><span class="ts">구미 불산(2012)</span></td></tr>
-<tr><td>2</td><td>반도체 재료 안전관리</td><td>재료</td><td>28</td><td>[수행 순서] ○○년 경북 구미 H사 공장에서 탱크로리로 불산가스를 주입하던 중 밸브 개방으로 가스 누출…</td><td>사망</td><td style="color:var(--warning);font-weight:600">사고사례 ✓<br><span class="ts">#1과 동일 사건</span></td></tr>
-<tr><td>3</td><td>반도체 재료 안전관리</td><td>재료</td><td>33</td><td>[(다) 사고 지역의 도면 확보하기] 2014년 공연을 관람하던 행인 16명 사망, 11명 부상… 환풍구에 40명이 올라간 것이 원인</td><td>안전</td><td style="color:var(--warning);font-weight:600">사고사례이나<br><span class="ts">반도체 산업재해 아님</span></td></tr>
+<tr><td>1</td><td>반도체 장비 안전관리</td><td>장비</td><td>46</td><td>[사례: 사고 사례 제시하기] ○○년 경북 구미 H사 공장에서 탱크로리로 불산 가스를 주입하던 중 밸브 개방으로 가스 누출…</td><td>사망, 부상</td><td style="color:var(--fg-ok);font-weight:600">사고사례 ✓<br><span class="ts">구미 불산(2012)</span></td></tr>
+<tr><td>2</td><td>반도체 재료 안전관리</td><td>재료</td><td>28</td><td>[수행 순서] ○○년 경북 구미 H사 공장에서 탱크로리로 불산가스를 주입하던 중 밸브 개방으로 가스 누출…</td><td>사망</td><td style="color:var(--fg-warn);font-weight:600">사고사례 ✓<br><span class="ts">#1과 동일 사건</span></td></tr>
+<tr><td>3</td><td>반도체 재료 안전관리</td><td>재료</td><td>33</td><td>[(다) 사고 지역의 도면 확보하기] 2014년 공연을 관람하던 행인 16명 사망, 11명 부상… 환풍구에 40명이 올라간 것이 원인</td><td>안전</td><td style="color:var(--fg-warn);font-weight:600">사고사례이나<br><span class="ts">반도체 산업재해 아님</span></td></tr>
 <tr><td>4</td><td>반도체 장비 안전관리</td><td>장비</td><td>143</td><td>[(3) 무재해운동] 무재해란 근로자가 업무에 기인하여 사망 또는 4일 이상의 요양이 필요한 부상·질병에 이환되지 않는 것…</td><td>사망</td><td style="color:var(--danger)">오탐 — 용어 정의</td></tr>
 <tr><td>5</td><td>반도체 장비 안전관리</td><td>장비</td><td>154</td><td>[3) 용액 보충, 점검, 유지보수 작업] 호흡용 보호구, 보호 장갑, 보호 앞치마, 보안경 등을 착용하고 작업해야 한다…</td><td>안전, 사망, 누출, 작업환경, 화학물질, 중독, 방사선, 보호구 (20건)</td><td style="color:var(--danger)">오탐 — 예방 지침</td></tr>
 <tr><td>6</td><td>반도체용 리소그래피 재료 제조</td><td>재료</td><td>91</td><td>[(1) 톨루엔] 톨루엔(C6H5CH3, CAS 108-88-3)은 천연 수지 톨루 발삼의 건류로 얻어진 "toluol"에서 유래한 이름으로…</td><td>사망</td><td style="color:var(--danger)">오탐 — 물질 설명</td></tr>
