@@ -39,6 +39,9 @@ a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid 
 .hero{text-align:center;padding:64px 0 32px}.hero p{font-size:var(--fs-lg);color:var(--text-secondary);margin-top:12px;max-width:700px;margin-left:auto;margin-right:auto}
 .hs-row{display:flex;justify-content:center;gap:48px;margin-top:36px;flex-wrap:wrap}.hs{text-align:center}.hs-v{font-size:2.75rem;font-weight:800;color:var(--accent)}.hs-l{font-size:var(--fs-sm);color:var(--text-secondary);margin-top:2px}
 .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:48px}
+/* 각주를 바로 뒤에 붙일 때는 그리드 하단 여백을 줄인다. 예전에는 각주 쪽에
+   margin:-32px 를 걸어 상쇄했는데, .g4 여백을 건드리면 같이 어긋났다. */
+.g4.tight{margin-bottom:16px}.note{margin:0 0 48px}
 .kpi{text-align:center}.kpi-v{font-size:2.25rem;font-weight:800}.kpi-l{font-size:var(--fs-xs);color:var(--text-secondary);margin-top:4px;text-transform:uppercase;letter-spacing:.05em}.kpi-bar{height:4px;border-radius:2px;background:var(--border);margin-top:12px;overflow:hidden}.kpi-bar i{display:block;height:100%;border-radius:2px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:48px}
 .cc{height:380px;padding:16px}
@@ -102,7 +105,6 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 <div class="card kpi"><div class="kpi-v" style="color:var(--g3)">108</div><div class="kpi-l">등급3 — 구체적 대책</div><div class="kpi-bar"><i style="width:5.8%;background:var(--g3);min-width:8px"></i></div><div class="ts" style="margin-top:8px">5.8% of 1,847쪽 · 검출 2,228건</div></div>
 <div class="card kpi"><div class="kpi-v" style="color:var(--danger)">8</div><div class="kpi-l">사고사례 판정 페이지</div><div class="kpi-bar"><i style="width:0.4%;background:var(--danger);min-width:8px"></i></div><div class="ts" style="margin-top:8px">0.4% · 5권 · 오탐 제외 시 1건</div></div>
 </section>
-<p class="ts" style="margin:-32px 0 48px">단위는 <strong>고유 페이지(쪽)</strong>이며, "검출 N건"은 같은 페이지가 여러 키워드에 중복 계수된 값이다. 등급1+2+3 = 1,847쪽 = 검출 7,769건.</p>
 
 <section class="g2 ani d2">
 <div class="card"><h3 style="margin-bottom:4px">영역별 안전 관련 비율</h3><p class="ts" style="margin-bottom:8px">(등급2+3) ÷ 영역 검출 페이지</p><div class="cc" role="img" aria-label="영역별 안전관련 비율"><canvas id="c1"></canvas></div></div>
@@ -110,13 +112,13 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 </section>
 
 <section><h2 class="ani d3">영역별 현황</h2>
-<div class="g4 ani d3" id="areaCardsGrid">
+<div class="g4 tight ani d3" id="areaCardsGrid">
 <div class="card"><div class="ah"><h3>반도체개발</h3><div class="ap" style="color:var(--a1)">12.5%</div></div><div class="ts" style="margin-bottom:12px">30권 · 검출 376쪽(794건) — 최하위</div><div class="bars"><div class="br"><span class="lb">등급1</span><div class="b"><i class="bf" style="width:87.5%;background:var(--g1)"></i></div><span class="cn">329</span><span class="ct">87.5%</span></div><div class="br"><span class="lb">등급2</span><div class="b"><i class="bf" style="width:9.8%;background:var(--g2)"></i></div><span class="cn">37</span><span class="ct">9.8%</span></div><div class="br"><span class="lb">등급3</span><div class="b"><i class="bf" style="width:2.7%;background:var(--g3)"></i></div><span class="cn">10</span><span class="ct">2.7%</span></div></div></div>
 <div class="card"><div class="ah"><h3>반도체제조</h3><div class="ap" style="color:var(--a2)">26.9%</div></div><div class="ts" style="margin-bottom:12px">13권 · 검출 242쪽(988건)</div><div class="bars"><div class="br"><span class="lb">등급1</span><div class="b"><i class="bf" style="width:73.1%;background:var(--g1)"></i></div><span class="cn">177</span><span class="ct">73.1%</span></div><div class="br"><span class="lb">등급2</span><div class="b"><i class="bf" style="width:21.9%;background:var(--g2)"></i></div><span class="cn">53</span><span class="ct">21.9%</span></div><div class="br"><span class="lb">등급3</span><div class="b"><i class="bf" style="width:5.0%;background:var(--g3)"></i></div><span class="cn">12</span><span class="ct">5.0%</span></div></div></div>
 <div class="card"><div class="ah"><h3>반도체장비</h3><div class="ap" style="color:var(--a3)">23.2%</div></div><div class="ts" style="margin-bottom:12px">19권 · 검출 422쪽(2,203건) — 사고사례 3쪽</div><div class="bars"><div class="br"><span class="lb">등급1</span><div class="b"><i class="bf" style="width:76.8%;background:var(--g1)"></i></div><span class="cn">324</span><span class="ct">76.8%</span></div><div class="br"><span class="lb">등급2</span><div class="b"><i class="bf" style="width:18.7%;background:var(--g2)"></i></div><span class="cn">79</span><span class="ct">18.7%</span></div><div class="br"><span class="lb">등급3</span><div class="b"><i class="bf" style="width:4.5%;background:var(--g3)"></i></div><span class="cn">19</span><span class="ct">4.5%</span></div></div></div>
 <div class="card"><div class="ah"><h3>반도체재료</h3><div class="ap" style="color:var(--a4)">45.5%</div></div><div class="ts" style="margin-bottom:12px">24권 · 검출 807쪽(3,784건) — 최상위</div><div class="bars"><div class="br"><span class="lb">등급1</span><div class="b"><i class="bf" style="width:54.5%;background:var(--g1)"></i></div><span class="cn">440</span><span class="ct">54.5%</span></div><div class="br"><span class="lb">등급2</span><div class="b"><i class="bf" style="width:37.2%;background:var(--g2)"></i></div><span class="cn">300</span><span class="ct">37.2%</span></div><div class="br"><span class="lb">등급3</span><div class="b"><i class="bf" style="width:8.3%;background:var(--g3)"></i></div><span class="cn">67</span><span class="ct">8.3%</span></div></div></div>
 </div>
-<p class="ts" style="margin-top:-32px;margin-bottom:48px">상단 % = <strong>안전 관련 비율</strong> = (등급2 + 등급3) ÷ 해당 영역 검출 페이지. 막대는 영역 내 등급별 페이지 수와 구성비. 4개 영역 합 = 1,847쪽 = 검출 7,769건.</p></section>
+<p class="ts note">상단 % = <strong>안전 관련 비율</strong> = (등급2 + 등급3) ÷ 해당 영역 검출 페이지. 막대는 영역 내 등급별 페이지 수와 구성비.</p></section>
 
 <section class="g2">
 <div class="card"><h3 style="margin-bottom:4px">영역별 등급 구성</h3><p class="ts" style="margin-bottom:8px">단위: 페이지(쪽)</p><div class="cc" role="img" aria-label="영역별 등급 스택 바"><canvas id="c3"></canvas></div></div>
@@ -126,7 +128,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 <section style="margin-bottom:48px"><h2>키워드 x 영역 상세</h2>
 <div class="fb"><button type="button" class="fbtn on" aria-pressed="true" onclick="fK('all',this)">전체</button><button type="button" class="fbtn" aria-pressed="false" onclick="fK('high',this)">상위15</button><button type="button" class="fbtn" aria-pressed="false" onclick="fK('case',this)">사고사례있음</button></div>
 <div class="card" style="overflow-x:auto"><table class="tbl sortable"><thead><tr><th data-k="k" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('k')">키워드</button></th><th data-k="t" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('t')">검출건수</button></th><th data-k="pg" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('pg')">검출쪽</button></th><th data-k="dev" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('dev')">개발</button></th><th data-k="mfg" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('mfg')">제조</button></th><th data-k="eq" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('eq')">장비</button></th><th data-k="mat" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('mat')">재료</button></th><th data-k="g3" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('g3')">등급3 비율<br><span class="thsub">(검출건수 기준)</span></button></th><th data-k="cs" aria-sort="none"><button type="button" class="sortbtn" onclick="sK('cs')">사고사례<br><span class="thsub">(키워드 검출수)</span></button></th></tr></thead><tbody id="kb"></tbody></table></div>
-<p class="ts" style="margin-top:12px">* <strong>검출건수</strong>는 키워드×페이지 조합 수, <strong>검출쪽</strong>은 그 고유 페이지 수입니다. 영역별 수치와 등급3 비율은 검출건수 기준이므로 페이지 기준 비율(상단 KPI)과 다릅니다.<br>
+<p class="ts" style="margin-top:12px">* 이 표의 영역별 수치와 등급3 비율만 <strong>검출건수</strong>(키워드×쪽) 기준입니다. 페이지 기준인 상단 KPI 와 값이 다릅니다.<br>
 * <strong>사고사례</strong>는 자동 판정(<code>사고사례여부=예</code>) 검출수입니다. 전체 28건이 8개 페이지에 중복 검출되었고, 원문 대조 결과 실제 사고사례 서술은 3쪽, 그중 반도체 산업재해는 <strong>1건</strong>(구미 불산 사고, 2권 중복 게재)입니다. 아래 표 참조.</p>
 </section>
 
