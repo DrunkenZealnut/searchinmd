@@ -12,28 +12,41 @@
 
 ## P2 — Rewrite the safety grading algorithm
 - **Why**: The published grades come from a keyword-count rule that (a) matches substrings, so one `산업안전보건법` counts three times and semiconductor homonyms (`진동자`, `파티클 먼지`) count as safety content, and (b) applies a flat threshold regardless of page length, so long pages are promoted. Measured: 등급3 pages average 5,855 chars against 등급1's 1,220 — 4.8x — while their medians differ by only 250.
-- **Context**: The old blocker ("no access to the original grading script") turned out not to bind. The script is not needed: the source workbook carries `페이지전체내용` on 100% of rows, so the grade can be recomputed from the page text directly. The rule itself was reverse-engineered from the 4,000+ committed `등급사유` strings and reproduces at **99.6%** (1,839/1,847), which is what makes the deltas attributable.
+- **Context**: The old blocker ("no access to the original grading script") turned out not to bind. The script is not needed: the source workbook carries `페이지전체내용` on 100% of rows, so the grade can be recomputed from the page text directly. The rule itself was reverse-engineered from the 4,000+ committed `등급사유` strings and agrees with the **first-seen row's** grade on 99.6% (1,839/1,847) of pages. That is **not** the same as reproducing the published grades: `load_pages()` keeps the first row it meets, while `recount_grades.py` takes the lowest grade on conflict (12 NCS pages are mixed), so the two baselines differ by 9 pages while only 8 disagreements are counted. Rename and re-measure before citing this number as delta attribution.
   One claim in the earlier version of this entry was wrong: the "total disagrees with its own itemised list" is **not** a scoring bug. 168 of the 171 mismatches list exactly five terms — the reason string truncates to the top five. Only 3 pages (0.16%) are genuinely off, each by one.
 - **Status**: `regrade.py` reproduces the rule and fixes the two real defects; per-defect impact is in `docs/03-analysis/data/regrade_impact.json`. **The dashboards still publish the old numbers** — applying the correction is a research-facing decision, not a code one.
 
-  | | 등급1 | 등급2 | 등급3 | 등급3 비율 | F1 (코더 A / B) |
+  C-2(차감 산술) 수정 후 수치다. F1 열은 무효 라벨에서 나온 **폐기 예정 탐색값**이며 발행 근거가 아니다. 어느 행도 채택되지 않았다.
+
+  | | 등급1 | 등급2 | 등급3 | 등급3 비율 | F1 (폐기 예정) |
   |---|---:|---:|---:|---:|---:|
   | 발표 중 (원본) | 1,270 | 469 | 108 | 5.8% | 0.803 / 0.810 |
   | 재현 (규칙 확인용) | 1,261 | 478 | 108 | 5.8% | — |
-  | + 단어 경계 (D1) | 1,304 | 442 | 101 | 5.5% | — |
+  | + 단어 경계 (D1) | 1,274 | 465 | 108 | 5.8% | — |
   | + 길이 정규화 (D2) | 1,371 | 404 | 72 | 3.9% | — |
-  | D1+D2 | 1,407 | 371 | 69 | 3.7% | 0.813 / 0.807 |
-  | D1+D2 + 조건부면제 (D5) | 1,407 | 367 | 73 | 4.0% | 0.790 / 0.785 |
-  | **D1+D2 + 이산화 (D4 round)** | **1,386** | **386** | **75** | **4.1%** | **0.834 / 0.828** |
-  | D1+D2 + 이산화 (D4 floor) | 1,367 | 401 | 79 | 4.3% | 0.851 / 0.846 |
+  | D1+D2 | 1,386 | 389 | 72 | 3.9% | — |
+  | D1+D2 + 조건부면제 (D5, 기각) | 1,386 | 384 | 77 | 4.2% | — |
+  | D1+D2 + 이산화 (D4 round) | 1,359 | 409 | 79 | 4.3% | — |
+  | D1+D2 + 이산화 (D4 floor) | 1,338 | 424 | 85 | 4.6% | — |
 
-- **Validation**: 69쪽 맹검 이중코딩(분쟁군 39 전수 + 대조군 30). 두 AI 코더 일치 88.4%, Cohen κ 0.796. F1 은 모집단 비중으로 보정한 값 — 표본에서 분쟁군이 과대표집돼 있어 그냥 세면 안 된다. `score_coding.py` 5번 섹션.
-- **D5 조건부 정규화는 기각.** "안전 전담 페이지는 길고 조치가 많으니 정규화가 부당하게 깎는다"는 가설이 데이터와 반대였다. 코더가 진짜 등급3이라 한 쪽은 조치어 중앙 5건·길이 중앙 1,268자로 **짧았고**, 강등이 정당한 쪽이 조치어 중앙 8건·길이 중앙 6,436자로 **길었다**. 면제가 되살린 4쪽은 코더가 전부 등급3이 아니라고 했다.
-- **D4 이산화가 진짜 원인.** 카운트는 정수인데 임계는 연속값이라 비교가 사실상 `ceil()` 로 동작한다. 중앙값보다 1자 긴 페이지가 조치어 5건이 아니라 6건을 요구받는다. 분쟁군 11쪽이 임계 차이 -2.3 이내에서 떨어졌고 그중 7쪽을 코더 둘 다 진짜 등급3이라 판정했다.
-- **Depends on**: A decision on whether to republish, and at which number. 열려 있는 것 셋:
-  1. `floor` 가 F1 은 가장 높지만 **이 69쪽에서 골라 채택하면 과적합**이다. `round` 는 라벨을 보기 전에 중립적 이산화로 고른 값이라 그 문제가 없다. floor 채택은 별도 홀드아웃이 필요하다.
-  2. **현행의 재현율은 측정된 적이 없다.** 표본이 현행의 등급3 108쪽 안에서만 뽑혀서, 등급1·2로 떨어진 1,739쪽에 진짜 등급3이 얼마나 묻혀 있는지 모른다. 위 F1 은 전부 상한이다.
-  3. AI 두 코더의 일치는 사람 이중코딩이 아니다. κ 0.796 이 정확도인지 공통 편향인지 사람 코딩 30~40쪽으로만 갈린다.
+  **C-2 수정이 D1을 지웠다.** 이전에 D1 단독이 등급3을 108→101로 줄였던 것은 전부 차감 산술 버그였고, 단어 경계의 실제 효과가 아니었다. 고친 뒤 D1 단독은 baseline과 같은 108이다(변동 쪽수도 43→13). 이전 표의 3.7%는 이 버그 위에 있었다.
+
+  F1은 C-2 수정 전 값이라 위 표에서 뺐다. 재산출하지 않는다 — 라벨 자체가 무효이므로 정밀화가 오염을 가릴 뿐이다.
+
+- **Validation — 이 라벨은 무효다.** 69쪽 이중코딩(분쟁군 39 전수 + 대조군 30)을 했고 두 AI 코더 일치 88.4%, Cohen κ 0.796이 나왔지만, **맹검이 아니었다.** 코더 A는 규칙 작성 당사자였고, `make_coding_sheet.py:106-108`의 코더 지시문이 D1의 동음이의 가정(`진동`·`먼지(파티클)`)과 "판단이 갈리면 낮은 등급"이라는 방향성 동점 규칙을 **두 코더 모두에게** 주입했다. 후자는 분쟁군 실험에서 수정본이 이기는 방향이다. 아래 F1 열은 **폐기 예정 탐색값**이며 발행 근거가 아니다. 통합 κ도 층 구성의 산물이다(전체 0.796 > 분쟁군 0.769 > 대조군 0.760).
+- **D5 조건부 정규화는 기각.** "안전 전담 페이지는 길고 조치가 많으니 정규화가 부당하게 깎는다"는 가설이었으나, 현 라벨상 등급3인 쪽이 오히려 짧았다(조치어 중앙 5건·길이 중앙 1,268자 대 8건·6,436자). 기각 근거가 무효 라벨에 의존하므로 **재코딩 후 재검정 대상**이다. 다만 기각 방향이라 과적합 이득은 없고, 코드는 재현을 위해 남기되 기본값은 꺼 둔다.
+- **D4 이산화 결함은 라벨과 무관하게 실재한다.** 카운트는 정수인데 임계는 연속값이라 `an >= 5*배율` 비교가 사실상 `ceil()` 로 동작한다. 중앙값보다 1자 긴 페이지가 조치어 5건이 아니라 6건을 요구받는다 — 길이 0.1% 차이에 요구치 20% 증가로, 코드를 읽으면 증명되는 산술이다. **결함의 존재는 순환이 아니지만 방식 선택은 순환이다**(위 1번).
+- **C-2 차감 산술 오류는 수정 완료** (커밋 `5704c88`). 총계 뺄셈을 구간 매칭으로 바꿨다. 되살아난 3쪽은 두 코더가 모두 등급3이라 한 쪽이었다(3/3) — 라벨을 쓰지 않고 산술만으로 도출한 수정이라 이 일치는 순환이 아닌 방증이다.
+- **미이행 (외부감사 지적).** ① 절단 무결성: 엑셀 셀 한도 32,767자와 코딩 시트 6,000자가 **두 단계에서 별개로** 발생하는데 원 PDF 대조·셀 한도 우회 저장 경로가 없다. 표본 69항목 중 9항목이 정확히 32,767자이며 전부 분쟁군이다. ② 등급2↔1 경계 미검증: 재채점이 가장 많이 움직인 쪽이 등급2→1(102쪽)인데 표본에 한 쪽도 없다. ③ 산출물에 `git_commit`·`source_sha256`·`generated_at` 없음. ④ `score_coding.py`·`make_coding_sheet.py` 어서션 0건.
+- **감사 권고 중 거부한 것 1건.** 대시보드 경고 배너 게시 — 연구 책임자 판단으로 **달지 않기로 결정**. `docs/index.html:179`의 "108쪽(5.8%)"은 경고 없이 공개 상태를 유지한다.
+- **Depends on**: A decision on whether to republish, and at which number. 열려 있는 것 넷:
+  1. **라벨이 무효라 어느 변형도 채택할 수 없다.** 이산화 방식(`ceil`/`round`/`floor`) 선택은 이 69쪽으로 결정할 수 없다 — 과적합이기도 하고, 애초에 F1 신뢰구간 폭(±0.06~0.08)이 변형 간 차이(0.02~0.04)보다 커서 판별력이 없다. D4 **결함의 존재** 는 라벨과 무관하게 코드로 증명되지만 방식 선택은 신규 표본이 필요하다.
+  2. **재현율은 어느 규칙에서도 측정된 적이 없다.** 표본이 현행의 등급3 108쪽 안에서만 뽑혀서, 등급1·2로 떨어진 1,739쪽에 진짜 등급3이 얼마나 묻혀 있는지 모른다.
+  3. AI 두 코더의 일치는 사람 이중코딩이 아니다. 사람 코딩 30~40쪽으로만 갈린다.
+  4. **어휘 사전의 누락을 D1·D2와 동등한 노력으로 뒤진 적이 없다.** `ACTION_TERMS`에 `장갑`·`귀마개`·`국소배기`·`인터록`·`접지`·`누전차단기`·`LOTO`·`경고표지`가 없고 `SAFETY_TERMS`에 `화상`·`협착`·`낙하`·`비산`·`산소결핍`·`발암`이 없다. 등급3은 조치어 ≥5를 요구하므로 조치어 누락은 등급3을 직접 억누른다. 이 방향 탐색만 하지 않았다.
+
+- **"5.8%는 상한"이 아니다.** 알려진 결함은 전부 과대계상 축(정밀도)이고 누락 축(재현율)은 측정된 적이 없다. 4번을 수행하면 비율이 **올라갈** 수 있다. 발행 가능한 진술은 "5.8%는 결함이 확인된 현행 규칙의 출력값이며, 알려진 결함은 이 값을 낮추는 방향이지만 누락률이 측정된 적이 없어 참값의 상한으로 해석할 수 없다" 까지다.
+- **다만 구간은 연역된다.** C-2는 과다 차감이었으므로 수정 시 `sn`·`an`이 단조 증가하고 `grade_page`는 `(sn, an)`에 단조 비감소다 — 등급은 내려갈 수 없다. 실측으로 확인됐다: D1+D2 등급3이 69→72로 올랐고, 새 분쟁군 36쪽은 옛 39쪽의 **부분집합**(새로 생긴 쪽 0)이다. 이 구간은 **어휘 목록을 고정했을 때만** 성립한다(위 4번이 깨뜨린다).
 - **Base sensitivity**: 길이 정규화는 `sqrt(len / median)` 이고 형태와 기준값 모두 선택이다. 기준값 1,000~3,000자 범위에서 등급3 비율은 2.9~5.2% 에 걸친다. 발행하는 곳마다 이 폭을 함께 적어야 한다.
 
 ## Completed
