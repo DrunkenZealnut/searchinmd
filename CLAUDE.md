@@ -148,7 +148,7 @@ Two rules that are easy to get wrong:
 There is no test framework (no `package.json` / `pyproject.toml`). The project ships its own harnesses — all exit 0/1 and depend only on Node and the Python standard library.
 
 ```bash
-node   outputs/test-search-equivalence.js   # 16 assertions — search routine equivalence + chunked render
+node   outputs/test-search-equivalence.js   # 24 assertions — search equivalence, chunked render, lazy parse cache
 node   outputs/test-dashboard-data.js       # 92 assertions — docs/ dashboard data + table render/sort
 python3 outputs/test-recount-grades.py      # 87 assertions — recount_grades.py logic
 

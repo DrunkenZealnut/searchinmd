@@ -232,6 +232,50 @@ if (io.cb) io.cb([{ isIntersecting: true }]);
 check('T8e 콜백 발화 시 다음 청크가 tbody 에 append 된다',
   rec.nodes['resultsTbody'].innerHTML.length > before);
 
+// ===== T9: 파싱 캐시 지연 계산 =====
+// 회귀 배경: sentences/tables/images 를 즉시 계산하면 검색 옵션이 꺼져 있어도, LLM
+// 하이브리드 모드로 sentences 가 버려질 때도 그대로 계산·보관된다(캐시의 약 59%).
+console.log('\n[T9] 파싱 캐시 지연 계산');
+
+const A9 = loadApp(path.join(__dirname, 'markdown-search-app.html'));
+const md9 = [
+  '<!-- page: 1 -->', '## 안전 관리',
+  '보호구를 착용한다.', '',
+  '| 구분 | 대책 |', '|---|---|', '| 화학 | 환기 |', '',
+  '![표지](img/a.png)', ''
+].join('\n');
+const f9 = { name: 'lazy.md', content: A9.nfc(md9), metadata: null };
+
+// 추출 함수 호출 횟수를 세도록 감싼다
+const calls = { sentences: 0, tables: 0, images: 0 };
+for (const [k, fn] of [['sentences', 'extractSentencesWithLineNumbers'],
+                       ['tables', 'extractTablesWithLineNumbers'],
+                       ['images', 'extractImagesWithLineNumbers']]) {
+  const orig = A9[fn];
+  A9[fn] = function (...args) { calls[k]++; return orig.apply(this, args); };
+}
+
+const p9 = A9.getParsedDoc(f9);
+check('T9a getParsedDoc 은 lines/pageMap 만 즉시 만든다',
+  calls.sentences === 0 && calls.tables === 0 && calls.images === 0);
+check('T9b lines/pageMap 은 바로 쓸 수 있다',
+  Array.isArray(p9.lines) && p9.lines.length > 0 && p9.pageMap instanceof Map);
+
+const t9 = p9.tables;                       // 표만 건드린다
+check('T9c 표를 읽어도 문장·이미지는 계산되지 않는다',
+  calls.tables === 1 && calls.sentences === 0 && calls.images === 0);
+check('T9d 표 결과가 정상이고 lower 가 붙는다',
+  t9.length === 1 && typeof t9[0].lower === 'string');
+
+p9.tables; p9.tables;                       // 재접근
+check('T9e 한 번 계산하면 값으로 굳어 재계산이 없다', calls.tables === 1);
+
+check('T9f 문장은 접근할 때 계산된다',
+  (p9.sentences.length > 0) && calls.sentences === 1 && calls.images === 0);
+check('T9g 이미지도 마찬가지', (p9.images.length === 1) && calls.images === 1);
+check('T9h 지연 프로퍼티도 열거 가능해 객체 모양이 이전과 같다',
+  ['lines', 'pageMap', 'sentences', 'tables', 'images'].every(k => Object.keys(p9).includes(k)));
+
 // ===== 결과 =====
 console.log(`\n결과: ${pass}/${pass + fail} PASS${fail ? `, ${fail} FAIL` : ''}`);
 process.exit(fail ? 1 : 0);

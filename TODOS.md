@@ -10,11 +10,6 @@
 - **Context**: Currently the fallback is `console.warn` only. Add a visual badge or file-level indicator showing which analysis method was used.
 - **Depends on**: Nothing.
 
-## P1 — `__parseCache` is effectively a strong cache
-- **Why**: The comment says entries are invalidated by GC, but `markdownFiles` holds strong references to the file objects for the whole session, so nothing is ever collected. Peak memory goes from one file's parse to the whole corpus (lines + sentences + tables + images + lowercase copies). OOM risk on the 86-book NCS set.
-- **Context**: Also computes tables/images even when those search toggles are off, and computes rule-based sentences even in hybrid LLM mode. Add an LRU byte budget, or at minimum correct the comment.
-- **Depends on**: Nothing.
-
 ## P2 — Rewrite the safety grading algorithm
 - **Why**: `인화` and similar sheets report a keyword total that disagrees with their own itemised list (`안전 9건 [폭발(1)]`), which is what makes 12 pages disagree with themselves. `safety_count <= 5` uses raw frequency with no length normalisation, so long pages get promoted. No word-boundary matching, so domain homonyms (장비 진동, 파티클 먼지) count as safety content.
 - **Context**: `recount_grades.py` works around this with a conservative lowest-grade rule, but the source data stays wrong. See `docs/03-analysis/grade-recount.analysis.md` §6.
@@ -41,3 +36,8 @@
 - **Context**: Found by the /ship adversarial pass. Fix: move the sentinel inside the wrapper and pass `root: wrapper`, or switch to a scroll handler. `test-search-equivalence.js` mocks `IntersectionObserver` as a no-op and never calls `renderResultsTable`, so coverage is zero.
 - **Depends on**: Nothing. Lives in the currently-uncommitted `markdown-search-app.html` changes.
 - **Completed:** PR #2 (2026-09-03) — sentinel moved inside `.results-table-wrapper`, observer `root` set to the wrapper, cleanup hoisted above the empty-results early return. Regression covered by `test-search-equivalence.js` T8a-T8e (mutation-verified).
+
+### `__parseCache` is effectively a strong cache
+- **Why**: The comment claimed GC invalidated entries, but `markdownFiles` holds strong references for the whole session, so nothing was collected. It also computed tables/images with those toggles off, and rule-based sentences in hybrid LLM mode where they are discarded.
+- **Completed:** PR #4 (2026-09-03) — `sentences`/`tables`/`images` are now memoising lazy getters; `lines`/`pageMap` stay eager because result rendering always needs them. Call sites needed no change (they already guarded on the search toggles). Measured on a 200-page doc scaled to 86 books: 74 MB with everything on, 30 MB in hybrid mode, 19 MB with sentences-only + hybrid. Comment corrected — the WeakMap does invalidate on re-scan, it just has no bound within a session. Covered by `test-search-equivalence.js` T9a-T9h (mutation-verified).
+- **Not done**: no LRU byte cap. Measured worst case is 74 MB for the largest known corpus, which a browser tab handles; a cap would also undo FR-1's "re-search is free" property. Revisit if a corpus grows past a few hundred books.
