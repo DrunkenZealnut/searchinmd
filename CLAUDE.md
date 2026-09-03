@@ -150,7 +150,7 @@ There is no test framework (no `package.json` / `pyproject.toml`). The project s
 
 ```bash
 node   outputs/test-search-equivalence.js   # 24 assertions — search equivalence, chunked render, lazy parse cache
-node   outputs/test-dashboard-data.js       # 93 assertions — docs/ dashboard data + table render/sort
+node   outputs/test-dashboard-data.js       # 108 assertions — docs/ dashboard data + table render/sort
 python3 outputs/test-recount-grades.py      # 87 assertions — recount_grades.py logic
 
 node   outputs/run-core-logic-tests.js       # 32 assertions — headless runner for test-core-logic.html
@@ -201,7 +201,7 @@ The three dashboards each carry their own copy of the same `<style>` block. When
 Other invariants worth not breaking:
 
 - Interactive controls have `min-height: 44px`. Sortable headers are `th > button.sortbtn`, never `th[onclick]` — the button is what makes them keyboard-reachable, and `sK()` must keep `aria-sort` in sync (the arrow glyph is drawn from that attribute, so the visual and the assistive-tech state cannot diverge).
-- Wide tables go in `.scroll-x` with `tabindex="0"`, `role="region"` and an `aria-label`. Do not solve narrow viewports by hiding columns — those tables identify a row by 교재 and 쪽.
+- Wide tables go in an **inner** `<div class="scroll-x">` inside the card, with `tabindex="0"`, `role="region"` and an `aria-label`. Never put `scroll-x` on the `.card` element itself: `.card` is defined later at equal specificity, so its `background` silently wipes the scroll-shadow gradients. Do not solve narrow viewports by hiding columns — those tables identify a row by 교재 and 쪽. `@media print` and `body.exporting` unclip these regions so Print/PDF and Download PNG do not cut off columns.
 - Grid children carry `min-width: 0`. Without it, chart cards refuse to shrink and the page scrolls sideways below 768px.
 - No text on top of a coloured fill. Numbers go beside the bar, not inside it.
 
