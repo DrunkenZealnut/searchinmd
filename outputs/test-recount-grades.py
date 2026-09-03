@@ -466,6 +466,66 @@ check('R8j strip_page_markers 는 마커 줄만 지운다',
                               '본문 <!-- page: 5 --> 안']) ==
       ['본문', '본문 <!-- page: 5 --> 안'])
 
+# =====================================================================
+# R9 regrade — 안전등급 재채점 (순수 로직)
+#
+# 워크북 I/O 는 원본이 비공개(.gitignore)라 CI 에서 못 돈다. 여기서는 어휘 카운트·
+# 임계·길이 배율 같은 순수 함수만 고정한다. 재현율(99.6%)은 원본이 있는 환경에서
+# `python3 regrade.py --validate` 로 확인한다.
+# =====================================================================
+print('\n[R9] regrade — 안전등급 재채점 로직')
+
+import regrade as G                                            # noqa: E402
+
+check('R9a 안전어 32종 / 조치어 25종 (등급사유에서 추출한 사전)',
+      len(G.SAFETY_TERMS) == 32 and len(G.ACTION_TERMS) == 25,
+      '%d / %d' % (len(G.SAFETY_TERMS), len(G.ACTION_TERMS)))
+
+# --- 현재 규칙 재현: 안전 ≤5 -> 1, 조치 ≥5 -> 3, 그 사이 -> 2
+low = '안전 ' * 3
+check('R9b 안전 5건 이하 -> 등급1', G.grade_page(low)[0] == 1, G.grade_page(low)[:3])
+mid = '위험 ' * 10
+check('R9c 안전 6건 이상 + 조치 없음 -> 등급2', G.grade_page(mid)[0] == 2, G.grade_page(mid)[:3])
+hi = '위험 ' * 10 + '방지 예방 착용 환기 차단 '
+check('R9d 안전 6건 이상 + 조치 5건 이상 -> 등급3', G.grade_page(hi)[0] == 3, G.grade_page(hi)[:3])
+mid2 = '위험 ' * 10 + '방지 예방 착용 환기 '                    # 조치 4건
+check('R9e 조치 4건이면 등급3 아님(경계)', G.grade_page(mid2)[0] == 2, G.grade_page(mid2)[:3])
+
+# --- D1 단어 경계
+c_naive = G.count_terms('산업안전보건법', G.SAFETY_TERMS, word_boundary=False)
+c_fixed = G.count_terms('산업안전보건법', G.SAFETY_TERMS, word_boundary=True)
+check('R9f naive 는 산업안전보건법 하나를 안전·보건까지 3번 센다',
+      sum(c_naive.values()) == 3, dict(c_naive))
+check('R9g 단어 경계는 산업안전보건법만 1건으로 센다',
+      sum(c_fixed.values()) == 1 and c_fixed['산업안전보건법'] == 1, dict(c_fixed))
+homo = '진동자 진동수 격자 진동 파티클'
+check('R9h 반도체 문맥 동음이의(진동자·진동수·격자 진동)를 안전어에서 뺀다',
+      sum(G.count_terms(homo, G.SAFETY_TERMS, True).values()) == 0,
+      dict(G.count_terms(homo, G.SAFETY_TERMS, True)))
+check('R9i 문맥 없는 진동은 그대로 센다 (직업병 인자이기도 하다)',
+      G.count_terms('진동 노출 관리', G.SAFETY_TERMS, True)['진동'] == 1)
+
+# --- D2 길이 배율
+check('R9j 중앙값 길이는 배율 1.0 (원본 임계 그대로)',
+      abs(G.length_scale(1000, 1000) - 1.0) < 1e-9)
+check('R9k 중앙값보다 짧아도 배율은 1.0 (짧다고 승급하지 않는다)',
+      abs(G.length_scale(200, 1000) - 1.0) < 1e-9)
+check('R9l 4배 길면 배율 2.0 (선형 4.0 이 아니라 제곱근)',
+      abs(G.length_scale(4000, 1000) - 2.0) < 1e-9, G.length_scale(4000, 1000))
+check('R9m 배율은 단조 증가', G.length_scale(2000, 1000) < G.length_scale(8000, 1000))
+
+# 같은 안전어 밀도라면 긴 페이지가 짧은 페이지보다 불리해야 한다
+short = '위험 ' * 8 + 'x' * 200
+long_ = '위험 ' * 8 + 'x' * 20000
+check('R9n 같은 안전어 수라도 긴 페이지는 승급하지 않는다',
+      G.grade_page(short, True, G.length_scale(len(short), 1000))[0] == 2
+      and G.grade_page(long_, True, G.length_scale(len(long_), 1000))[0] == 1,
+      (G.grade_page(short, True, G.length_scale(len(short), 1000))[0],
+       G.grade_page(long_, True, G.length_scale(len(long_), 1000))[0]))
+
+check('R9o 사유 문자열은 상위 5개만 나열한다 (원본과 같은 절단)',
+      G.grade_page('안전 ' * 6 + '위험 사고 누출 폭발 화재 진동 ')[3].count('(') <= 6)
+
 print('\n결과: %d/%d PASS%s%s' % (
     PASS, PASS + FAIL, ', %d FAIL' % FAIL if FAIL else '',
     ', %d KNOWN ISSUE' % KNOWN if KNOWN else ''))

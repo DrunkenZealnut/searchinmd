@@ -11,9 +11,20 @@
 - **Depends on**: Nothing.
 
 ## P2 — Rewrite the safety grading algorithm
-- **Why**: `인화` and similar sheets report a keyword total that disagrees with their own itemised list (`안전 9건 [폭발(1)]`), which is what makes 12 pages disagree with themselves. `safety_count <= 5` uses raw frequency with no length normalisation, so long pages get promoted. No word-boundary matching, so domain homonyms (장비 진동, 파티클 먼지) count as safety content.
-- **Context**: `recount_grades.py` works around this with a conservative lowest-grade rule, but the source data stays wrong. See `docs/03-analysis/grade-recount.analysis.md` §6.
-- **Depends on**: Access to the original grading script (not in this repo).
+- **Why**: The published grades come from a keyword-count rule that (a) matches substrings, so one `산업안전보건법` counts three times and semiconductor homonyms (`진동자`, `파티클 먼지`) count as safety content, and (b) applies a flat threshold regardless of page length, so long pages are promoted. Measured: 등급3 pages average 5,855 chars against 등급1's 1,220 — 4.8x — while their medians differ by only 250.
+- **Context**: The old blocker ("no access to the original grading script") turned out not to bind. The script is not needed: the source workbook carries `페이지전체내용` on 100% of rows, so the grade can be recomputed from the page text directly. The rule itself was reverse-engineered from the 4,000+ committed `등급사유` strings and reproduces at **99.6%** (1,839/1,847), which is what makes the deltas attributable.
+  One claim in the earlier version of this entry was wrong: the "total disagrees with its own itemised list" is **not** a scoring bug. 168 of the 171 mismatches list exactly five terms — the reason string truncates to the top five. Only 3 pages (0.16%) are genuinely off, each by one.
+- **Status**: `regrade.py` reproduces the rule and fixes the two real defects; per-defect impact is in `docs/03-analysis/data/regrade_impact.json`. **The dashboards still publish the old numbers** — applying the correction is a research-facing decision, not a code one.
+
+  | | 등급1 | 등급2 | 등급3 | 등급3 비율 |
+  |---|---:|---:|---:|---:|
+  | 발표 중 (원본) | 1,270 | 469 | 108 | 5.8% |
+  | 재현 (규칙 확인용) | 1,261 | 478 | 108 | 5.8% |
+  | + 단어 경계 | 1,304 | 442 | 101 | 5.5% |
+  | + 길이 정규화 | 1,371 | 404 | 72 | 3.9% |
+  | **둘 다** | **1,407** | **371** | **69** | **3.7%** |
+
+- **Depends on**: A decision on whether to republish at 3.7%. Length normalisation uses `sqrt(len / median)`; the form and base are defensible but chosen, and within a reasonable base range (1,000-3,000 chars) the 등급3 share lands between 2.9% and 5.2%. That band should be stated wherever the number is published.
 
 ## Completed
 

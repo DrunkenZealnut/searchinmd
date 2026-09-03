@@ -1,0 +1,43 @@
+{
+  "source": "ncs_keywords_in_markdown_results_20260402.xlsx",
+  "pages": 1847,
+  "median_page_len": 1066,
+  "rule": {
+    "safety_min": 6,
+    "action_min": 5,
+    "normalize": "sqrt(len/median)"
+  },
+  "reproduction": {
+    "agree": 1839,
+    "total": 1847,
+    "rate": 99.57
+  },
+  "dist": {
+    "baseline": {
+      "1": 1261,
+      "2": 478,
+      "3": 108
+    },
+    "D1 단어 경계": {
+      "1": 1304,
+      "2": 442,
+      "3": 101
+    },
+    "D2 길이 정규화": {
+      "1": 1371,
+      "2": 404,
+      "3": 72
+    },
+    "D1+D2 둘 다": {
+      "1": 1407,
+      "2": 371,
+      "3": 69
+    }
+  },
+  "moves_vs_original": {
+    "2→1": 118,
+    "3→1": 24,
+    "3→2": 15,
+    "1→2": 4
+  }
+}
