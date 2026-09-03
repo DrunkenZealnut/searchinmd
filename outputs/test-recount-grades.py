@@ -417,7 +417,7 @@ with _fixture() as md:
     check('R8a 마커 없는 파일에 삽입', r1 == 'inserted_2_pages', r1)
     check('R8b page_id 는 0-based, 마커는 +1 (1 -> 2, 4 -> 5)',
           '<!-- page: 2 -->' in after1 and '<!-- page: 5 -->' in after1,
-          [l for l in after1.split('\n') if 'page:' in l])
+          [ln for ln in after1.split('\n') if 'page:' in ln])
     check('R8c 끝 줄바꿈을 보존한다', after1.endswith('보호구 착용.\n')
           and not after1.endswith('\n\n'), repr(after1[-14:]))
 
