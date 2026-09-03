@@ -42,10 +42,32 @@ def kappa(a, b, cats=(1, 2, 3)):
     return (po - pe) / (1 - pe) if pe < 1 else float('nan')
 
 
+def population():
+    """모집단 수치는 regrade.py 산출물에서 읽는다. 여기 손으로 적지 않는다."""
+    p = os.path.join(HERE, 'docs/03-analysis/data/regrade_impact.json')
+    if not os.path.exists(p):
+        sys.exit('없음: regrade_impact.json — 먼저 python3 regrade.py 를 돌리세요')
+    d = json.load(open(p, encoding='utf-8'))
+    total = d['pages']
+    cur3 = d['dist']['baseline']['3']            # 현행이 등급3이라 한 쪽
+    new3 = d['dist']['D1+D2 둘 다']['3']          # 수정본이 등급3이라 한 쪽
+    return total, cur3 - new3, new3              # 전체, 분쟁군, 합의군
+
+
 def main():
     A = load('coding_A.json')['grades']
     B = load('coding_B.json')['grades']
     key = {str(r['id']): r for r in load('coding_key.json')}
+    global TOTAL_PAGES, N_DISPUTED, N_AGREED
+    TOTAL_PAGES, N_DISPUTED, N_AGREED = population()
+
+    # 분쟁군은 전수 표집이므로 키의 개수와 모집단 수치가 같아야 한다. 어긋나면
+    # 4번 섹션의 가중치가 조용히 틀어지므로 여기서 멈춘다.
+    n_dis_key = sum(1 for r in key.values() if r['group'] == 'disputed')
+    if n_dis_key != N_DISPUTED:
+        sys.exit('불일치: 키의 분쟁군 %d쪽 vs regrade_impact.json 기준 %d쪽. '
+                 'regrade.py 와 make_coding_sheet.py 를 같은 버전으로 다시 돌리세요.'
+                 % (n_dis_key, N_DISPUTED))
 
     ids = sorted(key, key=int)
     a = [A[i] for i in ids]
@@ -87,21 +109,43 @@ def main():
     print('  두 코더 모두 현행 지지: %d/%d (%.0f%%)'
           % (both_old, len(dis), both_old * 100.0 / len(dis)))
 
-    print('\n=== 4. 규칙별 정밀도 (코더를 기준으로 봤을 때) ===')
-    print('  "규칙이 등급3이라 한 쪽 중 코더도 등급3인 비율"')
+    print('\n=== 4. 규칙별 정밀도·재현율 (모집단 비중으로 보정) ===')
+    print('  표본을 그대로 세면 안 된다. 분쟁군은 %d쪽 전수지만 대조군은 %d쪽 중 %d쪽만'
+          % (N_DISPUTED, N_AGREED, len(ctl)))
+    print('  뽑았다. 표본에서 분쟁군이 과대표집돼 있어 가중치를 되돌려야 한다.')
+    print('  현행 등급3 = %d쪽(분쟁 %d + 합의 %d), 수정본 등급3 = 합의 %d쪽.'
+          % (N_DISPUTED + N_AGREED, N_DISPUTED, N_AGREED, N_AGREED))
+    print()
     for nm, g in (('A', A), ('B', B)):
-        # 현행 규칙의 등급3 = 분쟁군 + 대조군 전체
-        cur_p = sum(1 for i in ids if g[i] == 3) / float(len(ids))
-        # 수정본의 등급3 = 대조군만
-        new_hit = sum(1 for i in ctl if g[i] == 3)
-        cur_hit = sum(1 for i in ids if g[i] == 3)
-        print('  코더 %s | 현행 %d/%d = %.0f%%   수정본 %d/%d = %.0f%%'
-              % (nm, cur_hit, len(ids), cur_hit * 100.0 / len(ids),
-                 new_hit, len(ctl), new_hit * 100.0 / len(ctl)))
-        del cur_p
+        # 분쟁군은 전수라 그대로, 대조군은 표본비율을 합의군 전체로 환산
+        tp_dis = sum(1 for i in dis if g[i] == 3)
+        rate_ctl = sum(1 for i in ctl if g[i] == 3) / float(len(ctl))
+        tp_agr = rate_ctl * N_AGREED
+        true_total = tp_dis + tp_agr           # 두 규칙의 합집합 안의 진짜 등급3
 
-    print('\n주의: 코더 둘 다 같은 계열 AI다. 일치율이 높아도 정확도가 아니라')
-    print('      공통 편향일 수 있다. 발표 수치의 근거로는 사람 코딩이 필요하다.')
+        cur_p = true_total / float(N_DISPUTED + N_AGREED)
+        cur_r = 1.0                            # 합집합 기준. 아래 주의 참조
+        new_p = tp_agr / float(N_AGREED)
+        new_r = tp_agr / true_total if true_total else float('nan')
+        f1 = lambda p, r: 2 * p * r / (p + r) if (p + r) else float('nan')  # noqa: E731
+
+        print('  코더 %s  (합집합 안 진짜 등급3 추정 %.1f쪽)' % (nm, true_total))
+        print('    현행   정밀도 %.1f%%  재현율 %.0f%%  F1 %.3f  (%d쪽 예측)'
+              % (cur_p * 100, cur_r * 100, f1(cur_p, cur_r), N_DISPUTED + N_AGREED))
+        print('    수정본 정밀도 %.1f%%  재현율 %.1f%%  F1 %.3f  (%d쪽 예측)'
+              % (new_p * 100, new_r * 100, f1(new_p, new_r), N_AGREED))
+        print('    전체 %d쪽 대비 등급3 비율 — 현행 %.1f%%  수정본 %.1f%%  코더추정 %.1f%%'
+              % (TOTAL_PAGES,
+                 (N_DISPUTED + N_AGREED) * 100.0 / TOTAL_PAGES,
+                 N_AGREED * 100.0 / TOTAL_PAGES,
+                 true_total * 100.0 / TOTAL_PAGES))
+
+    print('\n주의 1: 현행의 재현율 100%는 측정된 값이 아니라 표본 설계의 산물이다.')
+    print('        수정본은 강등만 하므로 그 등급3은 현행 등급3의 부분집합이고,')
+    print('        표본은 그 합집합(=현행의 등급3) 안에서만 뽑혔다. 현행이 등급1·2로')
+    print('        떨어뜨린 1,739쪽은 아무도 안 봤으므로 진짜 누락은 알 수 없다.')
+    print('주의 2: 코더 둘 다 같은 계열 AI다. 일치율이 높아도 정확도가 아니라')
+    print('        공통 편향일 수 있다. 발표 수치의 근거로는 사람 코딩이 필요하다.')
 
 
 if __name__ == '__main__':
