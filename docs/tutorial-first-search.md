@@ -21,7 +21,7 @@ cd searchinmd
 python3 outputs/server.py
 ```
 
-```
+```text
 🚀 서버 시작: http://localhost:3008/search_in_md
 종료하려면 Ctrl+C를 누르세요
 ```
@@ -78,7 +78,7 @@ PY
 
 **📁 폴더 선택** 을 누르고 저장소 안의 `outputs/test-samples` 를 고릅니다. Chrome이 폴더 접근 권한을 물으면 허용하세요.
 
-```
+```text
 outputs/test-samples/
 ├── sample1.md
 └── subfolder/
@@ -93,7 +93,7 @@ outputs/test-samples/
 
 - ☐ 대소문자 구분 — 꺼두면 `AI` 가 `ai` 도 잡습니다
 - ☑ 문장 검색 · ☑ 표 검색 · ☑ 이미지 검색
-- ☐ LLM 하이브리드 검색 — LM Studio가 필요합니다. 이 튜토리얼에서는 씁니다
+- ☐ LLM 하이브리드 검색 — **끈 채로 둡니다.** 로컬 LM Studio 서버가 따로 필요하고, 이 튜토리얼은 쓰지 않습니다
 
 **🔍 검색 시작** 을 누르면 결과가 키워드별 탭으로 나옵니다.
 
