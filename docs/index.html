@@ -94,9 +94,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
    건 width 라서 그쪽으로 바꿨다. */
 .case-detail td{vertical-align:top;line-height:1.6}.case-detail td:nth-child(5){width:340px;min-width:200px}.case-detail td:nth-child(6){font-size:var(--fs-xs);color:var(--text-secondary)}
 .tn{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:24px;overflow-x:auto}.tb{padding:10px 20px;border:none;background:none;cursor:pointer;font-size:var(--fs-sm);font-family:inherit;color:var(--text-secondary);border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .2s,border-color .2s;white-space:nowrap}.tb.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
-@keyframes fadeInUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}.ani{animation:fadeInUp .6s ease-out both}.d1{animation-delay:.1s}.d2{animation-delay:.2s}.d3{animation-delay:.3s}
-.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}.reveal.visible{opacity:1;transform:translateY(0)}
-@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 /* 인쇄와 PNG 내보내기에서는 스크롤 창 밖의 열이 잘린다. 이 페이지들은 메뉴에
    Print/PDF 와 Download PNG 를 달고 있으므로 그 두 경로에서만 표를 펼친다.
    .exporting 은 화면 캡처용이라 print 미디어 밖에 있어야 한다. */
@@ -121,7 +119,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 </nav>
 <main id="mc" role="main"><div class="ctn">
 
-<section class="hero ani"><h1>NCS 반도체 교재<br>안전보건 키워드 분석</h1><p>30개 안전보건 키워드로 NCS 반도체 4개 영역 교재 86권을 검색해, 키워드가 검출된 고유 페이지 1,847쪽을 3등급으로 분류한 대시보드</p>
+<section class="hero"><h1>NCS 반도체 교재<br>안전보건 키워드 분석</h1><p>30개 안전보건 키워드로 NCS 반도체 4개 영역 교재 86권을 검색해, 키워드가 검출된 고유 페이지 1,847쪽을 3등급으로 분류한 대시보드</p>
 <div class="hs-row"><div class="hs"><div class="hs-v" id="hero-total">1,847</div><div class="hs-l">키워드 검출 페이지</div></div><div class="hs"><div class="hs-v">7,769</div><div class="hs-l">검출 항목(키워드×쪽)</div></div><div class="hs"><div class="hs-v" id="hero-kw">30</div><div class="hs-l">안전보건 키워드</div></div><div class="hs"><div class="hs-v" id="hero-books">86</div><div class="hs-l">분석 교재</div></div><div class="hs"><div class="hs-v" id="hero-cases" style="color:var(--danger)">1</div><div class="hs-l" style="color:var(--danger);font-weight:600">고유 산업재해 사례</div></div></div>
 <p class="ts" style="margin-top:24px;max-width:820px;margin-left:auto;margin-right:auto;text-align:left;line-height:1.9">
 <strong>등급 체계</strong> — <strong>1 미흡·없음</strong>(안전 키워드 5건 이하) / <strong>2 형식적 언급</strong>(안전 키워드 다수, 구체적 조치 없음) / <strong>3 구체적 대책</strong>(안전 키워드 + 조치·대책 제시).<br>
@@ -129,21 +127,21 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 <span style="opacity:.8">출처: <code>data/ncs_keywords_in_markdown_results_20260402.xlsx</code> (2026-04-14) 전수 재집계</span></p></section>
 
 
-<section class="g4 ani d1" id="kpiSection">
+<section class="g4" id="kpiSection">
 <div class="card kpi"><div class="kpi-v" style="color:var(--g1)">1,270</div><div class="kpi-l">등급1 — 미흡·없음</div><div class="kpi-bar"><i style="width:68.8%;background:var(--g1)"></i></div><div class="ts" style="margin-top:8px">68.8% of 1,847쪽 · 검출 2,076건</div></div>
 <div class="card kpi"><div class="kpi-v" style="color:var(--g2)">469</div><div class="kpi-l">등급2 — 형식적 언급</div><div class="kpi-bar"><i style="width:25.4%;background:var(--g2)"></i></div><div class="ts" style="margin-top:8px">25.4% of 1,847쪽 · 검출 3,465건</div></div>
 <div class="card kpi"><div class="kpi-v" style="color:var(--g3)">108</div><div class="kpi-l">등급3 — 구체적 대책</div><div class="kpi-bar"><i style="width:5.8%;background:var(--g3);min-width:8px"></i></div><div class="ts" style="margin-top:8px">5.8% of 1,847쪽 · 검출 2,228건</div></div>
 <div class="card kpi"><div class="kpi-v" style="color:var(--danger)">8</div><div class="kpi-l">사고사례 판정 페이지</div><div class="kpi-bar"><i style="width:0.4%;background:var(--danger);min-width:8px"></i></div><div class="ts" style="margin-top:8px">0.4% · 5권 · 오탐 제외 시 1건</div></div>
 </section>
 
-<section class="ani d2"><h2>전체 분포</h2>
+<section><h2>전체 분포</h2>
 <div class="g2">
 <div class="card"><h3 style="margin-bottom:4px">영역별 안전 관련 비율</h3><p class="ts" style="margin-bottom:8px">(등급2+3) ÷ 영역 검출 페이지</p><div class="cc" role="img" aria-label="영역별 안전관련 비율"><canvas id="c1"></canvas></div></div>
 <div class="card"><h3 style="margin-bottom:4px">전체 등급 분포</h3><p class="ts" style="margin-bottom:8px">고유 페이지 1,847쪽 기준</p><div class="cc" role="img" aria-label="등급 분포 도넛"><canvas id="c2"></canvas></div></div>
 </div></section>
 
-<section><h2 class="ani d3">영역별 현황</h2>
-<div class="g4 tight ani d3" id="areaCardsGrid">
+<section><h2>영역별 현황</h2>
+<div class="g4 tight" id="areaCardsGrid">
 <div class="card"><div class="ah"><h3>반도체개발</h3><div class="ap" style="color:var(--a1)">12.5%</div></div><div class="ts" style="margin-bottom:12px">30권 · 검출 376쪽(794건) — 최하위</div><div class="bars"><div class="br"><span class="lb">등급1</span><div class="b"><i class="bf" style="width:87.5%;background:var(--g1)"></i></div><span class="cn">329</span><span class="ct">87.5%</span></div><div class="br"><span class="lb">등급2</span><div class="b"><i class="bf" style="width:9.8%;background:var(--g2)"></i></div><span class="cn">37</span><span class="ct">9.8%</span></div><div class="br"><span class="lb">등급3</span><div class="b"><i class="bf" style="width:2.7%;background:var(--g3)"></i></div><span class="cn">10</span><span class="ct">2.7%</span></div></div></div>
 <div class="card"><div class="ah"><h3>반도체제조</h3><div class="ap" style="color:var(--a2)">26.9%</div></div><div class="ts" style="margin-bottom:12px">13권 · 검출 242쪽(988건)</div><div class="bars"><div class="br"><span class="lb">등급1</span><div class="b"><i class="bf" style="width:73.1%;background:var(--g1)"></i></div><span class="cn">177</span><span class="ct">73.1%</span></div><div class="br"><span class="lb">등급2</span><div class="b"><i class="bf" style="width:21.9%;background:var(--g2)"></i></div><span class="cn">53</span><span class="ct">21.9%</span></div><div class="br"><span class="lb">등급3</span><div class="b"><i class="bf" style="width:5.0%;background:var(--g3)"></i></div><span class="cn">12</span><span class="ct">5.0%</span></div></div></div>
 <div class="card"><div class="ah"><h3>반도체장비</h3><div class="ap" style="color:var(--a3)">23.2%</div></div><div class="ts" style="margin-bottom:12px">19권 · 검출 422쪽(2,203건) — 사고사례 3쪽</div><div class="bars"><div class="br"><span class="lb">등급1</span><div class="b"><i class="bf" style="width:76.8%;background:var(--g1)"></i></div><span class="cn">324</span><span class="ct">76.8%</span></div><div class="br"><span class="lb">등급2</span><div class="b"><i class="bf" style="width:18.7%;background:var(--g2)"></i></div><span class="cn">79</span><span class="ct">18.7%</span></div><div class="br"><span class="lb">등급3</span><div class="b"><i class="bf" style="width:4.5%;background:var(--g3)"></i></div><span class="cn">19</span><span class="ct">4.5%</span></div></div></div>

@@ -75,7 +75,6 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 .fb{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}.fbtn{padding:8px 14px;min-height:44px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:var(--fs-sm);font-family:inherit;transition:background .15s,color .15s,border-color .15s}.fbtn:hover{background:var(--surface-hover)}.fbtn.on{background:var(--accent-strong);color:#fff;border-color:var(--accent-strong)}
 .ins{border-left:4px solid var(--danger);padding:20px 24px;margin-bottom:16px;background:var(--surface);border-radius:0 12px 12px 0}.ins h3{color:var(--danger);margin-bottom:8px;font-size:var(--fs-lg)}.ins p,.rec p{color:var(--text-secondary);font-size:var(--fs-md);line-height:1.8}.ins p strong,.rec p strong{color:var(--text)}
 .rec{border-left:4px solid var(--positive);padding:20px 24px;margin-bottom:16px;background:var(--surface);border-radius:0 12px 12px 0}.rec h3{color:var(--fg-ok);margin-bottom:8px;font-size:var(--fs-lg)}
-@keyframes fadeInUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}.ani{animation:fadeInUp .6s ease-out both}.d1{animation-delay:.1s}.d2{animation-delay:.2s}.d3{animation-delay:.3s}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 /* 인쇄와 PNG 내보내기에서는 스크롤 창 밖의 열이 잘린다. 이 페이지들은 메뉴에
    Print/PDF 와 Download PNG 를 달고 있으므로 그 두 경로에서만 표를 펼친다.
@@ -97,14 +96,14 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 <div class="viz-menu"><button class="viz-menu-toggle" onclick="toggleMenu()" aria-label="Menu"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg></button><div class="viz-menu-dropdown" id="vizMenuDropdown"><button onclick="cycleTheme()"><span id="themeIcon">☀️</span><span id="themeLabel">Light</span></button><button onclick="downloadImage()"><span>📥</span><span>Download PNG</span></button><button onclick="window.print()"><span>🖨️</span><span>Print / PDF</span></button></div></div>
 <main id="mc" role="main"><div class="ctn">
 
-<section class="hero ani"><h1>반도체고 교과서<br>안전보건 키워드 분석</h1><p>30개 안전보건 키워드로 반도체 특성화고 교과서 9권(총 2,055쪽)을 검색해, 키워드가 검출된 362쪽을 3등급으로 분류한 대시보드</p>
+<section class="hero"><h1>반도체고 교과서<br>안전보건 키워드 분석</h1><p>30개 안전보건 키워드로 반도체 특성화고 교과서 9권(총 2,055쪽)을 검색해, 키워드가 검출된 362쪽을 3등급으로 분류한 대시보드</p>
 <div class="hs-row"><div class="hs"><div class="hs-v">2,055</div><div class="hs-l">전체 페이지</div></div><div class="hs"><div class="hs-v">362</div><div class="hs-l">키워드 검출 페이지</div></div><div class="hs"><div class="hs-v">981</div><div class="hs-l">검출 항목(키워드×쪽)</div></div><div class="hs"><div class="hs-v">22</div><div class="hs-l">검출 키워드 (30개 중)</div></div><div class="hs"><div class="hs-v" style="color:var(--danger)">0</div><div class="hs-l" style="color:var(--danger);font-weight:600">사고사례 발견</div></div></div>
 <p class="ts" style="margin-top:24px;max-width:820px;margin-left:auto;margin-right:auto;text-align:left;line-height:1.9">
 <strong>등급 체계</strong>(NCS 대시보드와 통일) — <strong>1 미흡·없음</strong> / <strong>2 형식적 언급</strong> / <strong>3 구체적 대책</strong>.<br>
 <strong>분모 기준</strong> — 등급은 <em>페이지 단위</em>로 판정된다(검출 362쪽 전부에서 등급이 일치). 따라서 모든 비율은 <strong>페이지</strong>를 분모로 한다. 검출 항목(981건) 기준 비율은 한 페이지에 걸린 키워드 수만큼 중복 계수된다.<br>
 <span style="opacity:.8">출처: <code>data/ncs_keywords_in_markdown_results_교과서_results_20260415.xlsx</code> (2026-04-16) 전수 재집계. 원본 982행 중 NCS 잔여행 1건(<code>LM1903060324_19v2</code> p.16)을 제외한 981행.</span></p></section>
 
-<section class="g4 ani d1">
+<section class="g4">
 <div class="card kpi"><div class="kpi-v" style="color:var(--g1)">309</div><div class="kpi-l">등급1 — 미흡·없음</div><div class="kpi-bar"><i style="width:85.4%;background:var(--g1)"></i></div><div class="ts" style="margin-top:8px">검출쪽의 85.4% · 전체의 15.0% · 557건</div></div>
 <div class="card kpi"><div class="kpi-v" style="color:var(--g2)">45</div><div class="kpi-l">등급2 — 형식적 언급</div><div class="kpi-bar"><i style="width:12.4%;background:var(--g2)"></i></div><div class="ts" style="margin-top:8px">검출쪽의 12.4% · 전체의 2.2% · 360건</div></div>
 <div class="card kpi"><div class="kpi-v" style="color:var(--g3)">8</div><div class="kpi-l">등급3 — 구체적 대책</div><div class="kpi-bar"><i style="width:2.2%;background:var(--g3);min-width:8px"></i></div><div class="ts" style="margin-top:8px">검출쪽의 2.2% · <strong>전체 2,055쪽의 0.39%</strong> · 64건</div></div>
@@ -112,7 +111,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 </section>
 <p class="ts" style="margin:-32px 0 48px">단위는 <strong>페이지(쪽)</strong>. 등급1+2+3 = 362쪽(검출) + 미검출 1,693쪽 = 2,055쪽. 괄호 안 "N건"은 같은 페이지가 여러 키워드에 중복 계수된 검출 항목 수다.</p>
 
-<section class="ani d2"><h2>전체 분포</h2>
+<section><h2>전체 분포</h2>
 <div class="g2">
 <div class="card"><h3 style="margin-bottom:4px">전체 등급 분포</h3><p class="ts" style="margin-bottom:8px">전체 2,055쪽 기준 (단위: 쪽)</p><div class="cc" role="img" aria-label="등급 분포 도넛"><canvas id="c1"></canvas></div></div>
 <div class="card"><h3 style="margin-bottom:4px">상위 키워드별 등급 분포</h3><p class="ts" style="margin-bottom:8px">단위: 검출 건수(키워드×쪽)</p><div class="cc" role="img" aria-label="키워드별 등급 분포"><canvas id="c2"></canvas></div></div>

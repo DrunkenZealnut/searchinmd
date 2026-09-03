@@ -409,5 +409,46 @@ PAGES.forEach(([name, html]) => {
     regions.filter(a => !/aria-label="[^"]+"/.test(a)).length + '개 누락');
 });
 
+// =====================================================================
+// D12 — 헤드라인이 첫 페인트에 보인다
+//
+// 예전에는 .ani{animation:fadeInUp .6s both} 에 .1/.2/.3초 스태거가 붙어
+// KPI 와 영역 카드가 ~0.9초 동안 opacity:0 이었다(실측: t=91ms 에 0).
+// 데이터 대시보드에서 3초 첫인상 창의 1/3 을 헤드라인 없이 보내는 셈이고,
+// 인쇄·PNG 내보내기도 타이밍에 따라 빈 화면을 잡았다.
+//
+// 상호작용 트랜지션(hover, 테마 전환, 메뉴 열기)은 대상이 아니다 — 사용자
+// 입력에 대한 피드백이라 첫 페인트를 막지 않는다.
+// =====================================================================
+console.log('\n[첫 페인트] 지연 진입 애니메이션');
+PAGES.forEach(([name, html]) => {
+  const style = (html.match(/<style>([\s\S]*?)<\/style>/) || [])[1] || '';
+  // 시작 프레임(from / 0%)의 선언만 모은다. 그룹 선택자(`from,0%{...}`)와
+  // 뒤집힌 순서(`to{...}from{...}`) 양쪽을 처리한다 — 둘 다 정규식 하나로는
+  // 새어 나간다(CodeRabbit 지적).
+  //
+  // 규칙 간 조합(예: `.ani{...both}` + `.d1{animation-delay}`)은 일부러 보지
+  // 않는다. 원래 결함이 정확히 그 모양 — 서로 다른 두 규칙을 두 클래스로 한
+  // 요소에 얹은 것 — 이라 "같은 규칙 안" 으로 좁히면 잡아야 할 버그를 놓치고,
+  // 스타일시트 전체를 보면 무관한 규칙끼리 엮여 오탐이 난다. 대신 해로운 결과
+  // 자체(시작 프레임이 숨기거나 밀어냄)를 본다. 시작 프레임이 멀쩡하면
+  // fill 이나 지연이 무엇이든 첫 페인트를 막지 못한다.
+  const startFrames = [];
+  for (const kf of style.matchAll(/@keyframes[^{]*\{((?:[^{}]*\{[^{}]*\})*)\s*\}/g))
+    for (const blk of kf[1].matchAll(/([^{}]*)\{([^{}]*)\}/g))
+      if (/(^|,)\s*(?:from|0%)\s*(?:,|$)/.test(blk[1].trim())) startFrames.push(blk[2]);
+
+  check(`D12a ${name} — 시작 프레임이 transform 으로 콘텐츠를 밀어내지 않음`,
+    !startFrames.some(d => /\btransform\s*:[^;}]*\b(?:translate|scale)/.test(d)),
+    startFrames.filter(d => /\btransform\s*:[^;}]*\b(?:translate|scale)/.test(d)).join(' | '));
+  check(`D12b ${name} — 시작 프레임이 opacity:0 이 아님`,
+    !startFrames.some(d => /\bopacity\s*:\s*0(?:\s*[;}]|\s*$)/.test(d)),
+    startFrames.filter(d => /\bopacity\s*:\s*0(?:\s*[;}]|\s*$)/.test(d)).join(' | '));
+  const staged = [...html.matchAll(/class="([^"]*)"/g)]
+    .map(m => m[1]).filter(c => /\b(ani|reveal|d[123])\b/.test(c));
+  check(`D12c ${name} — 진입 애니메이션 클래스가 마크업에 남아 있지 않음`,
+    staged.length === 0, staged.join(' | '));
+});
+
 console.log(`\n결과: ${pass}/${pass + fail} PASS${fail ? `, ${fail} FAIL` : ''}${warned ? `, ${warned} KNOWN ISSUE` : ''}`);
 process.exit(fail ? 1 : 0);
