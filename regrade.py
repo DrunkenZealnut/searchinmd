@@ -40,6 +40,7 @@ D5 조건부 정규화 — **기각됨**. "안전 전담 페이지는 원래 길
 조용히 바꾸지 않는다.
 """
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -60,6 +61,50 @@ OUT_DIR = os.path.join(HERE, 'docs', '03-analysis', 'data')
 
 NCS_FILE = 'ncs_keywords_in_markdown_results_20260402.xlsx'
 TXT_FILE = 'ncs_keywords_in_markdown_results_교과서_results_20260415.xlsx'
+
+# 산출물에서 "수정본" 으로 읽히는 변형. 아래 variants 목록의 표시용 라벨과 같은
+# 문자열이지만, score_coding 이 이 라벨을 직접 타이핑하지 않도록 이름을 준다.
+# regrade_impact.json 에 `adopted_variant` 로도 실어서, 소비자가 라벨을 알 필요
+# 없이 산출물에게 물어보게 한다 — 라벨을 손봐도 KeyError 로 죽지 않는다.
+ADOPTED_VARIANT = 'D1+D2 둘 다'
+
+# 회귀 검증 기대값. recount_grades.py 와 같은 이유로 둔다 — 이 산출물이
+# score_coding.population() 을 거쳐 발표되는 정밀도·재현율의 분모가 되므로,
+# 어휘 목록이나 임계를 손보면 조용히 바뀐다. 집계만 비교하면 페이지 간 재배정이
+# 상쇄되므로 baseline 배정 전체의 해시도 함께 고정한다.
+EXPECTED = {
+    'pages': 1847,
+    'median_page_len': 1066,
+    'reproduction': {'agree': 1839, 'total': 1847, 'rate': 99.57},
+    'baseline_digest': '1a60c160d80b9fdc',
+    'dist': {
+        'baseline':                {1: 1261, 2: 478, 3: 108},
+        'D1 단어 경계':              {1: 1274, 2: 465, 3: 108},
+        'D2 길이 정규화':             {1: 1371, 2: 404, 3: 72},
+        'D1+D2 둘 다':              {1: 1386, 2: 389, 3: 72},
+        'D1+D2+D5 조건부면제':        {1: 1386, 2: 384, 3: 77},
+        'D1+D2+D4 round':          {1: 1359, 2: 409, 3: 79},
+        'D1+D2+D4 floor':          {1: 1338, 2: 424, 3: 85},
+    },
+}
+
+
+def impact_digest(graded):
+    """(교재,페이지)→등급 배정 전체의 해시. 총계가 그대로여도 재배정을 잡는다."""
+    body = '\n'.join('%s|%s|%s' % (fn, pg, graded[(fn, pg)]['g'])
+                     for fn, pg in sorted(graded, key=lambda k: (str(k[0]), k[1] or 0)))
+    return hashlib.sha256(body.encode('utf-8')).hexdigest()[:16]
+
+
+def check_expected(got):
+    """기대값과 대조하고 어긋난 항목을 출력한다. 통과면 True."""
+    bad = []
+    for k, v in EXPECTED.items():
+        if got.get(k) != v:
+            bad.append('%s: %s ≠ %s' % (k, got.get(k), v))
+    print('  회귀 검증 %s' % ('통과' if not bad else '실패 — ' + '; '.join(bad)))
+    return not bad
+
 
 # 등급사유에 실제로 등장한 어휘 전부. 손으로 고른 목록이 아니라 커밋된 CSV 의
 # 4,000여 건에서 뽑았다 — 원본 채점기가 쓰던 사전 그 자체다.
@@ -351,6 +396,8 @@ def main():
     ap.add_argument('--data', default=DATA_DIR, help='원본 엑셀 위치')
     ap.add_argument('--validate', action='store_true',
                     help='현재 규칙 재현율만 출력하고 산출물은 쓰지 않는다')
+    ap.add_argument('--force', action='store_true',
+                    help='회귀 검증에 실패해도 산출물을 덮어쓴다 (EXPECTED 를 바꿀 때)')
     args = ap.parse_args()
 
     src = os.path.join(args.data, NCS_FILE)
@@ -377,7 +424,7 @@ def main():
     variants = [
         ('D1 단어 경계', dict(word_boundary=True, normalize=False)),
         ('D2 길이 정규화', dict(word_boundary=False, normalize=True)),
-        ('D1+D2 둘 다', dict(word_boundary=True, normalize=True)),
+        (ADOPTED_VARIANT, dict(word_boundary=True, normalize=True)),
         ('D1+D2+D5 조건부면제',
          dict(word_boundary=True, normalize=True, exempt=True)),
         ('D1+D2+D4 round',
@@ -395,7 +442,7 @@ def main():
         print('  %-20s 분포 %s  등급3 %.1f%%  변동 %d쪽 (%.1f%%)'
               % (name, d, d[3] * 100.0 / len(g), moved, moved * 100.0 / max(len(g), 1)))
 
-    final = results['D1+D2 둘 다']
+    final = results[ADOPTED_VARIANT]
     print('\n=== 최종 (D1+D2) 대비 원본 ===')
     move = Counter()
     for k in final:
@@ -408,6 +455,16 @@ def main():
     for k, v in sorted(move.items()):
         print('  등급 %s : %d쪽' % (k, v))
 
+    repro = {'agree': ok, 'total': tot, 'rate': round(ok * 100.0 / max(tot, 1), 2)}
+    dists = {'baseline': dist(base), **{n: dist(g) for n, g in results.items()}}
+    print('\n=== 회귀 검증 ===')
+    passed = check_expected({'pages': len(pages), 'median_page_len': med,
+                             'reproduction': repro, 'dist': dists,
+                             'baseline_digest': impact_digest(base)})
+    if not passed and not args.force:
+        sys.exit('\n회귀 검증에 실패해 산출물을 쓰지 않습니다. 원본이나 규칙이 바뀐 것이라면 '
+                 'EXPECTED 를 고치고 다시 실행하거나 --force 로 덮어쓰십시오.')
+
     os.makedirs(OUT_DIR, exist_ok=True)
     out = os.path.join(OUT_DIR, 'regrade_impact.json')
     payload = {
@@ -417,10 +474,10 @@ def main():
         'rule': {'safety_min': SAFETY_MIN, 'action_min': ACTION_MIN,
                  'normalize': 'sqrt(len/median)',
                  'discretize': DISCRETIZE, 'action_exempt': ACTION_EXEMPT},
-        'reproduction': {'agree': ok, 'total': tot,
-                         'rate': round(ok * 100.0 / max(tot, 1), 2)},
-        'dist': {'baseline': dist(base),
-                 **{n: dist(g) for n, g in results.items()}},
+        'reproduction': repro,
+        'adopted_variant': ADOPTED_VARIANT,   # 소비자가 라벨을 타이핑하지 않게
+        'baseline_digest': impact_digest(base),
+        'dist': dists,
         'moves_vs_original': dict(move),
     }
     tmp = out + '.tmp'

@@ -34,6 +34,35 @@ def load(name):
 UNSURE = '?'                     # make_coding_sheet.py 가 코더에게 주는 '판단 불가' 코드
 
 
+def unwrap(doc):
+    """{'sample_digest':…, 'items':[…]} 와 구버전 평평한 리스트를 모두 받는다."""
+    if isinstance(doc, dict):
+        return doc.get('items', []), doc.get('sample_digest')
+    return doc, None
+
+
+def check_sample(key_digest, *coder_docs):
+    """코더 라벨이 **이 표본**에서 나온 것인지 지문으로 확인한다.
+
+    라벨은 항목 번호로만 페이지에 붙는데, make_coding_sheet 를 다시 돌리면
+    shuffle 로 번호가 전부 바뀐다. 예전 가드는 분쟁군 **개수**만 비교해서,
+    개수가 우연히 맞으면 엉뚱한 페이지의 라벨로 κ 와 F1 이 그럴듯하게 찍혔다.
+    숫자가 조용히 틀리는 것이 죽는 것보다 나쁘므로 여기서 멈춘다.
+    """
+    if key_digest is None:
+        sys.exit('coding_key.json 에 sample_digest 가 없습니다 (구버전 산출물).\n'
+                 '  make_coding_sheet.py 를 다시 돌린 뒤 **그 시트로 다시 코딩**하십시오.\n'
+                 '  기존 라벨은 항목 번호가 달라 그대로 재사용할 수 없습니다.')
+    for d in coder_docs:
+        got = d.get('sample_digest') if isinstance(d, dict) else None
+        if got != key_digest:
+            sys.exit('표본 지문 불일치 — 코더 %s: %s / 키: %s\n'
+                     '  이 라벨은 **다른 표본**에서 나온 것이라 채점할 수 없습니다.\n'
+                     '  항목 번호로 억지로 맞추면 엉뚱한 페이지의 라벨이 됩니다.'
+                     % (d.get('coder', '?') if isinstance(d, dict) else '?',
+                        got or '(없음)', key_digest))
+
+
 def dist(vals):
     """등급 분포를 정렬해 보여준다. 1·2·3 과 '?' 가 섞여도 깨지지 않는다.
 
@@ -106,19 +135,26 @@ def score_variants(A, B, key, dis, ctl):
          dict(word_boundary=True, normalize=True, how='floor')),
     ]
 
+    # 변형 그리드는 **코더와 무관하다** — 아래 코더 루프 안에서 돌리면 1,847쪽 ×
+    # 5변형의 count_terms 스캔(페이지당 최대 32,767자)이 통째로 두 번 돈다.
+    # 코더 라벨은 tp/정밀도 산술에만 쓰인다. 한 번 계산해 재사용한다.
+    preds = {}
+    for name, kw in variants:
+        g = RG.run(pages, base=med, **kw)
+        preds[name] = {k for k in g if g[k]['g'] == 3}
+    agr_pop = len({k for k in old if old[k]['g'] == 3} - dis_keys)
+
     print('\n=== 5. 규칙 변형별 채점 (코더 라벨 기준) ===')
     print('  주의: 이 표에서 최고 F1 을 골라 채택하면 69쪽에 과적합하는 것이다.')
     print('  %-22s %6s %8s %7s %7s %7s' %
           ('변형', '등급3', '전체비율', '정밀도', '재현율', 'F1'))
     for nm, G in (('A', A), ('B', B)):
         # 합집합(현행의 등급3) 안 진짜 등급3 — 변형과 무관한 고정 분모
-        agr_pop = len({k for k in old if old[k]['g'] == 3} - dis_keys)
         true_all = (sum(1 for i in dis if G[i] == 3)
                     + sum(1 for i in ctl if G[i] == 3) / float(len(ctl)) * agr_pop)
         print('  --- 코더 %s (진짜 등급3 추정 %.1f쪽) ---' % (nm, true_all))
         for name, kw in variants:
-            g = RG.run(pages, base=med, **kw)
-            pred = {k for k in g if g[k]['g'] == 3}
+            pred = preds[name]
             if not pred:
                 continue
             tp_dis = sum(1 for i in dis
@@ -184,11 +220,14 @@ def strata(A, B, key, ids):
     if dis_ok and len(dis_ok) < len(dis_all):
         print('  분쟁군 수정본 지지율 (두 코더 모두 등급 1·2):')
         for nm, sub in (('절단 포함', dis_all), ('절단 제외', dis_ok)):
-            # `!= 3` 이 아니라 `in (1, 2)` — `?`(판단 불가)를 수정본 지지로 세면
-            # 절단 항목에 `?` 를 권한 지시문이 그대로 지지율을 밀어 올린다.
-            both_new = sum(1 for i in sub if A[i] in (1, 2) and B[i] in (1, 2))
-            print('    %s %2d쪽 중 %2d쪽 (%.0f%%)'
-                  % (nm, len(sub), both_new, both_new * 100.0 / len(sub)))
+            # `?`(판단 불가)는 분자에서도 분모에서도 뺀다. 분자에서만 빼면 절단
+            # 항목에 `?` 를 권한 지시문이 그대로 지지율을 끌어내린다.
+            ok = [i for i in sub if A[i] != UNSURE and B[i] != UNSURE]
+            both_new = sum(1 for i in ok if A[i] in (1, 2) and B[i] in (1, 2))
+            print('    %s %2d쪽 중 %2d쪽 (%.0f%%)%s'
+                  % (nm, len(ok), both_new, both_new * 100.0 / max(len(ok), 1),
+                     '  (판단 불가 %d쪽 제외)' % (len(sub) - len(ok))
+                     if len(ok) < len(sub) else ''))
         print('    두 값이 크게 벌어지면 수정본 우세가 절단 인공물일 수 있다.')
 
     if len(cut) < 20:
@@ -206,17 +245,28 @@ def population():
     p = os.path.join(HERE, 'docs/03-analysis/data/regrade_impact.json')
     if not os.path.exists(p):
         sys.exit('없음: regrade_impact.json — 먼저 python3 regrade.py 를 돌리세요')
-    d = json.load(open(p, encoding='utf-8'))
+    with open(p, encoding='utf-8') as f:
+        d = json.load(f)
     total = d['pages']
     cur3 = d['dist']['baseline']['3']            # 현행이 등급3이라 한 쪽
-    new3 = d['dist']['D1+D2 둘 다']['3']          # 수정본이 등급3이라 한 쪽
+    # 어느 변형이 "수정본" 인지는 **산출물에게 묻는다.** 여기서 라벨을 타이핑하면
+    # regrade.py 의 표시용 문자열을 두 벌 갖게 되고, 라벨을 손보는 순간 이 줄이
+    # KeyError 로 죽는다. 'D1+D2 둘 다' 는 `adopted_variant` 가 없던 구버전
+    # 산출물을 위한 폴백이다.
+    adopted = d.get('adopted_variant', 'D1+D2 둘 다')
+    if adopted not in d['dist']:
+        sys.exit('regrade_impact.json 의 adopted_variant(%s)가 dist 에 없습니다. '
+                 'python3 regrade.py 를 다시 돌리세요.' % adopted)
+    new3 = d['dist'][adopted]['3']               # 수정본이 등급3이라 한 쪽
     return total, cur3 - new3, new3              # 전체, 분쟁군, 합의군
 
 
 def main():
-    A = load('coding_A.json')['grades']
-    B = load('coding_B.json')['grades']
-    key = {str(r['id']): r for r in load('coding_key.json')}
+    doc_a, doc_b = load('coding_A.json'), load('coding_B.json')
+    A, B = doc_a['grades'], doc_b['grades']
+    key_items, key_digest = unwrap(load('coding_key.json'))
+    check_sample(key_digest, doc_a, doc_b)      # 번호가 아니라 표본으로 묶는다
+    key = {str(r['id']): r for r in key_items}
     global TOTAL_PAGES, N_DISPUTED, N_AGREED
     TOTAL_PAGES, N_DISPUTED, N_AGREED = population()
 
@@ -224,8 +274,12 @@ def main():
     # 4번 섹션의 가중치가 조용히 틀어지므로 여기서 멈춘다.
     n_dis_key = sum(1 for r in key.values() if r['group'] == 'disputed')
     if n_dis_key != N_DISPUTED:
-        sys.exit('불일치: 키의 분쟁군 %d쪽 vs regrade_impact.json 기준 %d쪽. '
-                 'regrade.py 와 make_coding_sheet.py 를 같은 버전으로 다시 돌리세요.'
+        # 예전 안내문은 "다시 돌리세요" 였는데, 그것이 바로 오염시키는 행동이다 —
+        # 시트를 다시 만들면 항목 번호가 바뀌므로 기존 라벨을 붙일 수 없다.
+        sys.exit('불일치: 키의 분쟁군 %d쪽 vs regrade_impact.json 기준 %d쪽.\n'
+                 '  규칙이 바뀌어 표본이 낡았습니다. make_coding_sheet.py 를 다시 돌린 뒤\n'
+                 '  **새 시트로 다시 코딩**해야 합니다 — 기존 라벨을 새 키에 붙이면\n'
+                 '  항목 번호가 달라 엉뚱한 페이지에 붙습니다.'
                  % (n_dis_key, N_DISPUTED))
 
     ids = sorted(key, key=int)
@@ -240,7 +294,7 @@ def main():
     print('  코더 B 분포 %s' % dist(b))
     n_unsure = sum(1 for x in a + b if x == UNSURE)
     if n_unsure:
-        print('  판단 불가(%s) %d건 — 아래 지지율 계산에서 제외한다' % (UNSURE, n_unsure))
+        print('  판단 불가(%s) %d건 — 지지율의 분모에서 뺀다 (완전응답 분석)' % (UNSURE, n_unsure))
     m = Counter((x, y) for x, y in zip(a, b) if x != y)
     if m:
         print('  불일치 패턴 (A→B): %s'
@@ -269,12 +323,18 @@ def main():
         new = c.get(1, 0) + c.get(2, 0)
         print('  코더 %s: 현행 지지(등급3) %d  수정본 지지(1·2) %d  판단불가 %d  분포 %s'
               % (nm, cur, new, c.get(UNSURE, 0), dist(g[i] for i in dis)))
-    both_new = sum(1 for i in dis if A[i] in (1, 2) and B[i] in (1, 2))
-    both_old = sum(1 for i in dis if A[i] == 3 and B[i] == 3)
-    print('  두 코더 모두 수정본 지지: %d/%d (%.0f%%)'
-          % (both_new, len(dis), both_new * 100.0 / len(dis)))
-    print('  두 코더 모두 현행 지지: %d/%d (%.0f%%)'
-          % (both_old, len(dis), both_old * 100.0 / len(dis)))
+    # `?` 는 분모에서도 뺀다. 남겨 두면 "확실히 등급3 아님" 으로 채점되는 셈인데,
+    # make_coding_sheet 가 **절단 항목에** `?` 를 권하고 절단은 등급3 에 몰려 있어
+    # (16쪽 중 12쪽) 그 편향이 한 방향으로 실린다. 뺀 수를 함께 찍어 숨기지 않는다.
+    dis_ok = [i for i in dis if A[i] != UNSURE and B[i] != UNSURE]
+    both_new = sum(1 for i in dis_ok if A[i] in (1, 2) and B[i] in (1, 2))
+    both_old = sum(1 for i in dis_ok if A[i] == 3 and B[i] == 3)
+    n_drop = len(dis) - len(dis_ok)
+    tail = '  (판단 불가 %d쪽 제외)' % n_drop if n_drop else ''
+    print('  두 코더 모두 수정본 지지: %d/%d (%.0f%%)%s'
+          % (both_new, len(dis_ok), both_new * 100.0 / max(len(dis_ok), 1), tail))
+    print('  두 코더 모두 현행 지지: %d/%d (%.0f%%)%s'
+          % (both_old, len(dis_ok), both_old * 100.0 / max(len(dis_ok), 1), tail))
 
     strata(A, B, key, ids)
 

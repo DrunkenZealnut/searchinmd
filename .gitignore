@@ -20,9 +20,12 @@ venv/
 # 다운로더 기본 저장 위치 (DOWNLOAD_ROOT 미설정 시)
 /downloads/
 
-# 수기 코딩 시트 — 비공개 교재 본문이 들어간다
+# 수기 코딩 시트의 **본문** 만 무시한다 — 비공개 상업 교재 전문이 들어간다.
 /coding_sheet.json
 /coding_sheet.md
-/coding_key.json
-/coding_*.json
+
+# coding_key.json / coding_A.json / coding_B.json 은 **추적한다.**
+# 본문이 없다(교재명·쪽·군·카운트와 등급 라벨뿐, 최장 값 38자). 이 셋이 발표된
+# κ 0.796 / 일치 88.4% 의 유일한 원자료이고, 없으면 그 수치를 아무도 재현할 수
+# 없다. 이전에는 `/coding_*.json` 와일드카드가 교재 본문 사유로 함께 쓸어갔다.
 

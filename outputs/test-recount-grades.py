@@ -866,11 +866,15 @@ check('R12o4 구버전 키(절단 정보 없음)는 계산하지 않고 안내�
 
 # `?`(판단 불가)는 방향 없는 코드다. 수정본 지지로 세면 make_coding_sheet 가
 # 지운 동점 규칙 편향이 채점기로 옮겨올 뿐이다.
-check('R12o5 판단 불가(?)를 수정본 지지로 세지 않는다',
-      quiet(SC.strata, {**_A, '3': '?', '4': '?'}, {**_B, '3': '?', '4': '?'},
-            _key, _ids)[1].count('절단 제외  4쪽 중  2쪽 (50%)') == 1,
-      quiet(SC.strata, {**_A, '3': '?', '4': '?'},
-            {**_B, '3': '?', '4': '?'}, _key, _ids)[1])
+# `?` 는 분자에서도 **분모에서도** 빠져야 한다. 분자에서만 빼면 절단 항목에 `?` 를
+# 권한 지시문이 그대로 지지율을 끌어내린다 — 편향이 시트에서 채점기로 옮겨갈 뿐이다.
+# 아래 픽스처는 비절단 분쟁군 4쪽 중 2쪽이 `?` 다: 분모가 4가 아니라 2여야 한다.
+_o5 = quiet(SC.strata, {**_A, '3': '?', '4': '?'}, {**_B, '3': '?', '4': '?'},
+            _key, _ids)[1]
+check('R12o5 판단 불가(?)를 분자에서도 분모에서도 뺀다',
+      '절단 제외  2쪽 중  2쪽 (100%)' in _o5
+      and '절단 포함  4쪽 중  2쪽 (50%)' in _o5
+      and '판단 불가 2쪽 제외' in _o5, _o5)
 check('R12o6 등급 분포 출력이 ? 와 정수 혼재에도 죽지 않는다',
       SC.dist([3, 1, '?', 2, '?']) == {1: 1, 2: 1, 3: 1, '?': 2},
       SC.dist([3, 1, '?', 2, '?']))
@@ -1020,6 +1024,8 @@ def _run_main(fn, argv):
         return (out or 0), log
     except SystemExit as e:
         return (e.code if e.code is not None else 0), ''
+    except Exception as e:                        # noqa: BLE001 — 가드를 지나쳐
+        return '%s: %s' % (type(e).__name__, e), ''   # 굴러간 경우도 실패로 본다
     finally:
         sys.argv = old
 
@@ -1115,13 +1121,21 @@ check('R13w score_coding.load 는 파일이 없으면 안내로 종료',
 # score_coding 이 KeyError 로 죽는데 지금까지 아무 시험도 걸려 있지 않았다.
 _imp = json.load(open(os.path.join(ROOT, 'docs/03-analysis/data/regrade_impact.json'),
                       encoding='utf-8'))
+# 어느 변형이 '수정본' 인지는 산출물이 스스로 밝힌다. 여기서 라벨을 타이핑하면
+# 시험이 라벨 변경에 깨지는데, 그건 이 시험이 막으려는 바로 그 결함이다.
+_adopted = _imp.get('adopted_variant', 'D1+D2 둘 다')
+# 키 존재를 **먼저** 확인한다. 곧바로 인덱싱하면 산출물이 어긋났을 때 하네스가
+# 트레이스백으로 죽어 나머지 어서션을 통째로 가린다.
+_has_adopted = _adopted in _imp.get('dist', {})
 check('R13x regrade_impact.json 에 population() 이 읽는 키가 있다',
-      'pages' in _imp and '3' in _imp['dist']['baseline']
-      and '3' in _imp['dist']['D1+D2 둘 다'],
-      list(_imp['dist']))
+      'pages' in _imp and '3' in _imp.get('dist', {}).get('baseline', {})
+      and _has_adopted and '3' in _imp['dist'][_adopted],
+      (_adopted, list(_imp.get('dist', {}))))
 check('R13y 분쟁군 = 현행 등급3 - 수정본 등급3 이 양수 (표본 설계 전제)',
-      _imp['dist']['baseline']['3'] - _imp['dist']['D1+D2 둘 다']['3'] > 0,
-      (_imp['dist']['baseline']['3'], _imp['dist']['D1+D2 둘 다']['3']))
+      _has_adopted
+      and _imp['dist']['baseline']['3'] - _imp['dist'][_adopted]['3'] > 0,
+      (_imp['dist']['baseline']['3'],
+       _imp['dist'][_adopted]['3'] if _has_adopted else '(키 없음)'))
 
 # --- chunk_text 의 남은 갈래
 _nl = 'A' * 4000 + '\n' + 'B' * 4000            # 문단 경계 없이 줄 경계만
@@ -1143,6 +1157,205 @@ check('R13ab EXPECTED 의 등급별 절단 합계 == truncated_pages',
 check('R13ac EXPECTED 의 절단 쪽수는 전체 쪽수를 넘지 않는다',
       all(R.EXPECTED[k]['truncated_pages'] <= R.EXPECTED[k]['pages']
           for k in ('ncs', 'txt')))
+
+# --- /ship 스페셜리스트가 짚은 나머지 갭
+# population() 은 R13x/R13y 가 같은 JSON 을 손으로 다시 읽어 검증하고 있었다.
+# 함수를 직접 태워야 키 경로가 바뀌었을 때 잡힌다.
+try:
+    _pop = SC.population()
+except SystemExit as e:               # 라벨이 어긋나면 sys.exit 한다 — 하네스를
+    _pop = str(e)                     # 죽이지 말고 이 줄의 실패로 보이게 잡는다
+check('R13ad population() 이 커밋된 regrade_impact.json 에서 모집단을 뽑는다',
+      _has_adopted and _pop == (
+          _imp['pages'],
+          _imp['dist']['baseline']['3'] - _imp['dist'][_adopted]['3'],
+          _imp['dist'][_adopted]['3']), _pop)
+
+# main() 의 교차 검증 가드 — 키의 분쟁군 수와 regrade_impact.json 이 어긋나면
+# 4·5절 가중치가 조용히 틀어지므로 여기서 멈춰야 한다. 시험이 없었다.
+_orig_load, _orig_pop = SC.load, SC.population
+_key_items = [{'id': 1, 'group': 'disputed', 'file': 'a', 'page': 1},
+              {'id': 2, 'group': 'control', 'file': 'b', 'page': 2}]
+_kd = MCS.sample_digest(_key_items)               # 지문은 맞춰 둔다 — 여기서
+try:                                              # 보려는 것은 **개수** 가드다
+    SC.load = lambda n: ({'coder': 'A', 'sample_digest': _kd,
+                          'grades': {'1': 3, '2': 1}} if n.startswith('coding_A')
+                         else {'coder': 'B', 'sample_digest': _kd,
+                               'grades': {'1': 3, '2': 1}} if n.startswith('coding_B')
+                         else {'sample_digest': _kd, 'items': _key_items})
+    SC.population = lambda: (100, 5, 10)          # 키는 분쟁군 1쪽, 모집단은 5쪽
+    _mcode, _ = _run_main(SC.main, ['score_coding.py'])
+finally:
+    SC.load, SC.population = _orig_load, _orig_pop
+check('R13ae 키의 분쟁군 수가 모집단 수치와 어긋나면 멈춘다',
+      isinstance(_mcode, str) and '불일치' in _mcode and '1쪽' in _mcode, _mcode)
+
+# regrade(R13r)·truncation_audit(R13i) 는 원본 부재 종료를 지키는데
+# make_coding_sheet 만 빠져 있었다 — 같은 모양의 가드는 같이 지킨다.
+_orig_dd = G2.DATA_DIR
+try:
+    G2.DATA_DIR = '/nonexistent'
+    _kcode, _ = _run_main(MCS.main, ['make_coding_sheet.py'])
+finally:
+    G2.DATA_DIR = _orig_dd
+check('R13af make_coding_sheet 도 원본이 없으면 안내로 종료한다',
+      isinstance(_kcode, str) and '원본 엑셀을 찾을 수 없습니다' in _kcode, _kcode)
+
+# 변형 라벨은 regrade 가 소유하고 산출물이 실어 나른다. score_coding 이 라벨을
+# 다시 타이핑하면 라벨 수정이 조용히 KeyError 가 된다.
+check('R13ag 산출물이 어느 변형을 "수정본" 으로 보는지 스스로 밝힌다',
+      _imp.get('adopted_variant') == G2.ADOPTED_VARIANT
+      and G2.ADOPTED_VARIANT in _imp['dist'], _imp.get('adopted_variant'))
+
+# --- score_variants: 정밀도/재현율/F1 70줄에 시험이 0건이었다
+_sv_pages = {('f', i): {'text': 'x' * 100, 'grade': 3, 'truncated': False}
+             for i in (1, 2, 3, 4)}
+_sv_calls = []
+
+
+def _sv_run(pages, word_boundary=False, normalize=False, base=None, **kw):
+    _sv_calls.append((word_boundary, normalize, tuple(sorted(kw.items()))))
+    keep = (1, 2, 3, 4) if not (word_boundary or normalize) else (1, 2)
+    return {k: {'g': 3 if k[1] in keep else 1, 'sn': 9, 'an': 9, 'reason': '', 'len': 100}
+            for k in pages}
+
+
+_sv_key = {str(i): {'file': 'f', 'page': i,
+                    'group': 'disputed' if i in (3, 4) else 'control'}
+           for i in (1, 2, 3, 4)}
+_sv_A = {'1': 3, '2': 3, '3': 3, '4': 1}
+_o_lp, _o_run = G2.load_pages, G2.run
+try:
+    G2.load_pages = lambda p: _sv_pages
+    G2.run = _sv_run
+    _, _sv_out = quiet(SC.score_variants, _sv_A, _sv_A, _sv_key, ['3', '4'], ['1', '2'])
+finally:
+    G2.load_pages, G2.run = _o_lp, _o_run
+
+check('R13ah score_variants 가 코더 둘 × 변형 다섯을 표로 낸다',
+      _sv_out.count('--- 코더') == 2 and _sv_out.count('D1+D2') >= 3
+      and '과적합' in _sv_out, _sv_out[:120])
+# 변형 그리드는 코더와 무관하다. 코더 루프 안에서 돌리면 baseline 1 + 5×2 = 11 번
+# 돈다 — 1,847쪽 × 32,767자 스캔이 통째로 두 번이다. 6번이어야 한다.
+check('R13ai 변형 그리드를 코더당 다시 계산하지 않는다 (run 호출 6회)',
+      len(_sv_calls) == 6, len(_sv_calls))
+_sv_calls.clear()
+_o_lp2 = G2.load_pages
+try:
+    G2.load_pages = lambda p: (_ for _ in ()).throw(OSError('원본 없음'))
+    _, _sv_none = quiet(SC.score_variants, _sv_A, _sv_A, _sv_key, ['3', '4'], ['1', '2'])
+finally:
+    G2.load_pages = _o_lp2
+check('R13aj 원본을 못 읽으면 조용히 건너뛴다 (채점 전체를 죽이지 않는다)',
+      _sv_none.strip() == '' and not _sv_calls, _sv_none[:80])
+
+# ---------------------------------------------------------------------------
+# R14 표본 지문과 회귀 가드 — /ship red team 회귀
+#
+# 코더 라벨은 항목 번호로만 페이지에 붙는데 시트를 다시 만들면 번호가 전부
+# 바뀐다. 예전 가드는 분쟁군 **개수**만 비교해서, 개수가 우연히 맞으면 엉뚱한
+# 페이지의 라벨로 κ·F1 이 그럴듯하게 찍혔다. 숫자가 조용히 틀리는 것이 죽는
+# 것보다 나쁘다. 그리고 regrade.py 는 발표 수치의 근거 파일을 아무 검사 없이
+# 덮어쓰고 있었다 — 형제 스크립트 recount_grades.py 에는 있던 가드다.
+# ---------------------------------------------------------------------------
+print('\n[R14] 표본 지문 · regrade 회귀 가드 (red team 회귀)')
+
+_k1 = [{'file': 'a', 'page': 1, 'group': 'disputed'},
+       {'file': 'b', 'page': 2, 'group': 'control'}]
+check('R14a 표본 지문은 항목 순서에 무관하다 (shuffle 이 지문을 바꾸면 안 된다)',
+      MCS.sample_digest(_k1) == MCS.sample_digest(list(reversed(_k1))),
+      MCS.sample_digest(_k1))
+check('R14b 표본이 한 쪽이라도 다르면 지문이 달라진다',
+      MCS.sample_digest(_k1)
+      != MCS.sample_digest(_k1 + [{'file': 'c', 'page': 3, 'group': 'control'}]))
+check('R14c 같은 쪽이라도 군이 바뀌면 지문이 달라진다',
+      MCS.sample_digest(_k1)
+      != MCS.sample_digest([dict(_k1[0], group='control'), _k1[1]]))
+
+_D = MCS.sample_digest(_k1)
+check('R14d unwrap 은 신·구 두 모양을 모두 받는다',
+      SC.unwrap({'sample_digest': _D, 'items': _k1}) == (_k1, _D)
+      and SC.unwrap(_k1) == (_k1, None))
+
+
+def _sample(*a):
+    try:
+        SC.check_sample(*a)
+        return None
+    except SystemExit as e:
+        return str(e)
+
+
+check('R14e 구버전 키(지문 없음)는 채점을 거부한다',
+      '구버전' in (_sample(None, {'coder': 'A', 'sample_digest': _D}) or ''),
+      _sample(None, {'coder': 'A'}))
+check('R14f 지문이 어긋난 라벨은 채점을 거부한다 (번호로 억지 결합 금지)',
+      '지문 불일치' in (_sample(_D, {'coder': 'A', 'sample_digest': 'deadbeef'}) or ''),
+      _sample(_D, {'coder': 'A', 'sample_digest': 'deadbeef'}))
+check('R14g 지문 없는 라벨도 거부한다',
+      '지문 불일치' in (_sample(_D, {'coder': 'B'}) or ''), _sample(_D, {'coder': 'B'}))
+check('R14h 지문이 맞으면 통과한다',
+      _sample(_D, {'coder': 'A', 'sample_digest': _D},
+              {'coder': 'B', 'sample_digest': _D}) is None)
+
+# regrade 회귀 가드
+_g_ok = {('f', 1): {'g': 1}, ('f', 2): {'g': 3}}
+check('R14i impact_digest 는 배정이 바뀌면 달라진다 (총계 상쇄를 잡는다)',
+      G2.impact_digest(_g_ok)
+      != G2.impact_digest({('f', 1): {'g': 3}, ('f', 2): {'g': 1}}),
+      G2.impact_digest(_g_ok))
+check('R14j impact_digest 는 삽입 순서에 무관하다',
+      G2.impact_digest(_g_ok)
+      == G2.impact_digest({('f', 2): {'g': 3}, ('f', 1): {'g': 1}}))
+check('R14k check_expected 는 어긋난 항목을 짚고 False 를 준다',
+      quiet(G2.check_expected, dict(G2.EXPECTED, pages=1))[0] is False
+      and 'pages' in quiet(G2.check_expected, dict(G2.EXPECTED, pages=1))[1])
+check('R14l check_expected 는 기대값 그대로면 True', quiet(G2.check_expected, dict(G2.EXPECTED))[0])
+# 커밋된 산출물이 코드의 EXPECTED 와 맞는지 — 파일을 자기 자신으로 검증하지 않는다
+# 함수가 옳은 것과 main() 이 그것을 **부르는** 것은 다른 문제다. 호출을 지웠을 때
+# 아무 시험도 깨지지 않으면 가드는 사실상 없는 것이다.
+_bad_items = [{'id': 1, 'group': 'disputed', 'file': 'a', 'page': 1}]
+_o_load, _o_pop = SC.load, SC.population
+try:
+    SC.load = lambda n: ({'coder': n[7], 'sample_digest': 'WRONG',
+                          'grades': {'1': 3}} if n.startswith('coding_A')
+                         or n.startswith('coding_B')
+                         else {'sample_digest': MCS.sample_digest(_bad_items),
+                               'items': _bad_items})
+    SC.population = lambda: (100, 1, 10)          # 개수는 맞춘다 — 지문만 틀리게
+    _scode, _ = _run_main(SC.main, ['score_coding.py'])
+finally:
+    SC.load, SC.population = _o_load, _o_pop
+check('R14n main 이 개수 가드보다 먼저 지문 가드를 통과시킨다',
+      isinstance(_scode, str) and '지문 불일치' in _scode, _scode)
+
+# regrade.main 이 회귀 검증 결과로 실제로 멈추는가 (--force 없이).
+# 원본 부재 가드를 넘기려면 이름만 같은 빈 파일이면 된다 — load_pages 는 패치한다.
+_o = (G2.load_pages, G2.run, G2.median_length, G2.OUT_DIR)
+with tempfile.TemporaryDirectory() as _rtd:
+    open(os.path.join(_rtd, G2.NCS_FILE), 'w').close()
+    try:
+        # 가드가 뚫린 상태에서 main 이 끝까지 굴러가도 커밋된 산출물을 건드리지
+        # 못하게 한다. 이 격리가 없으면 뮤테이션 검증이 저장소를 오염시킨다.
+        G2.OUT_DIR = _rtd
+        G2.load_pages = lambda p: {('f', 1): {'text': 'x' * 50, 'grade': 1,
+                                              'truncated': False}}
+        G2.run = lambda pages, **kw: {k: {'g': 1, 'sn': 0, 'an': 0, 'reason': '',
+                                          'len': 50} for k in pages}
+        G2.median_length = lambda pages: 50
+        _rcode, _ = _run_main(G2.main, ['regrade.py', '--data', _rtd])
+    finally:
+        G2.load_pages, G2.run, G2.median_length, G2.OUT_DIR = _o
+check('R14o regrade.main 은 회귀 검증에 실패하면 산출물을 쓰지 않고 멈춘다',
+      isinstance(_rcode, str) and '회귀 검증에 실패' in _rcode, _rcode)
+
+check('R14m 커밋된 regrade_impact.json 이 regrade.EXPECTED 와 일치한다',
+      _imp['pages'] == G2.EXPECTED['pages']
+      and _imp['reproduction'] == G2.EXPECTED['reproduction']
+      and _imp.get('baseline_digest') == G2.EXPECTED['baseline_digest']
+      and {k: {int(g): n for g, n in v.items()} for k, v in _imp['dist'].items()}
+      == G2.EXPECTED['dist'],
+      (_imp['pages'], _imp.get('baseline_digest')))
 
 print('\n결과: %d/%d PASS%s%s' % (
     PASS, PASS + FAIL, ', %d FAIL' % FAIL if FAIL else '',

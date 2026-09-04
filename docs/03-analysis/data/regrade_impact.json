@@ -14,6 +14,8 @@
     "total": 1847,
     "rate": 99.57
   },
+  "adopted_variant": "D1+D2 둘 다",
+  "baseline_digest": "1a60c160d80b9fdc",
   "dist": {
     "baseline": {
       "1": 1261,

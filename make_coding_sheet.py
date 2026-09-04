@@ -65,18 +65,16 @@
 
 교재 본문이 그대로 들어간다. 비공개 상업 교재에서 뽑은 자료라 .gitignore 대상이다.
 """
+import hashlib
 import json
 import os
 import random
 import re
 import sys
 
-try:
-    from openpyxl import load_workbook  # noqa: F401
-except ImportError:
-    sys.exit('openpyxl이 필요합니다: pip install openpyxl')
-
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# openpyxl 가드는 여기 두지 않는다 — regrade 를 불러오는 순간 같은 문구로 걸린다.
+# 두 벌을 두면 어느 쪽이 먼저 걸리느냐에 따라 메시지 출처가 달라진다.
 import regrade as RG  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -120,6 +118,22 @@ def fence_for(text):
     """
     runs = re.findall(r'`+', text)
     return '`' * max([3] + [len(m) + 1 for m in runs])
+
+
+def sample_digest(key):
+    """표본의 정체성 해시 — (교재, 페이지, 군) 전체.
+
+    코더 라벨(coding_A/B.json)은 **항목 번호로만** 페이지에 붙는다. 이 스크립트를
+    다시 돌리면 rng.shuffle 로 번호가 전부 바뀌는데, score_coding 의 예전 가드는
+    분쟁군 **개수**만 비교했다 — 개수가 우연히 맞으면 엉뚱한 페이지의 라벨로
+    κ 와 F1 이 그럴듯하게 찍힌다. 번호가 아니라 표본 자체를 지문으로 묶는다.
+
+    페이지 순서로 정렬해 shuffle 결과와 무관하게 만든다. 같은 표본이면 몇 번을
+    다시 만들어도 같은 지문이 나오고, 표본이 바뀌면 반드시 달라진다.
+    """
+    body = '\n'.join('%s|%s|%s' % (r['file'], r['page'], r['group'])
+                      for r in sorted(key, key=lambda r: (str(r['file']), r['page'])))
+    return hashlib.sha256(body.encode('utf-8')).hexdigest()[:16]
 
 
 def build_sheet(pages, items, old, new):
@@ -189,10 +203,12 @@ def main():
 
     sheet, key = build_sheet(pages, items, old, new)
 
+    digest = sample_digest(key)
     for name, obj in (('coding_sheet.json', sheet), ('coding_key.json', key)):
         p = os.path.join(HERE, name)
         with open(p, 'w', encoding='utf-8') as f:
-            json.dump(obj, f, ensure_ascii=False, indent=1)
+            json.dump({'sample_digest': digest, 'items': obj}, f,
+                      ensure_ascii=False, indent=1)
         print('  %s (%d항목)' % (name, len(obj)))
 
     md = [
@@ -200,6 +216,18 @@ def main():
         '',
         '각 항목의 본문을 읽고 등급 1/2/3 중 하나를 매깁니다.',
         '**규칙이 매긴 등급은 이 문서에 없습니다.** 본문만 보고 판단하세요.',
+        '',
+        '## 표본 지문',
+        '',
+        '```',
+        digest,
+        '```',
+        '',
+        '답안 파일(`coding_A.json`)에 이 값을 **그대로** 적으십시오:',
+        '`{"coder": "A", "sample_digest": "' + digest + '", "grades": {...}}`',
+        '',
+        '항목 번호는 시트를 다시 만들 때마다 바뀝니다. 지문이 없거나 다르면 채점기가',
+        '거부합니다 — 엉뚱한 페이지의 라벨로 수치가 찍히는 것을 막기 위해서입니다.',
         '',
         '## 등급 정의',
         '',
