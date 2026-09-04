@@ -59,7 +59,7 @@ except ImportError:
     sys.exit('openpyxl이 필요합니다: pip install openpyxl')
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from page_utils import is_cell_truncated  # noqa: E402
+from page_utils import is_cell_truncated, BASELINE  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(HERE, 'data')
@@ -86,7 +86,7 @@ EXPECTED = {
     'reproduction': {'agree': 1839, 'total': 1847, 'rate': 99.57},
     'baseline_digest': '1a60c160d80b9fdc',
     'dist': {
-        'baseline':                {1: 1261, 2: 478, 3: 108},
+        BASELINE:                  {1: 1261, 2: 478, 3: 108},
         'D1 단어 경계':              {1: 1274, 2: 465, 3: 108},
         'D2 길이 정규화':             {1: 1371, 2: 404, 3: 72},
         'D1+D2 둘 다':              {1: 1386, 2: 389, 3: 72},
@@ -493,7 +493,7 @@ def main():
         print('  등급 %s : %d쪽' % (k, v))
 
     repro = {'agree': ok, 'total': tot, 'rate': round(ok * 100.0 / max(tot, 1), 2)}
-    dists = {'baseline': dist(base), **{n: dist(g) for n, g in results.items()}}
+    dists = {BASELINE: dist(base), **{n: dist(g) for n, g in results.items()}}
     print('\n=== 회귀 검증 ===')
     passed = check_expected({'pages': len(pages), 'median_page_len': med,
                              'reproduction': repro, 'dist': dists,

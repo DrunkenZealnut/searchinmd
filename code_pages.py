@@ -26,10 +26,10 @@
 
 ## Claude Code 헤드리스 백엔드 (`--backend claude-cli`, 설계 A1)
 
-API 키 없이 Claude 계열 코더를 쓰는 길이다. `claude -p` 를 항목마다 한 번 띄운다. 세 가지를
-강제한다 — `--setting-sources ""`(프로젝트 설정·훅·플러그인·CLAUDE.md 를 싣지 않는다; 실측으로
-그 옵션 없이는 7.5만 토큰의 프로젝트 컨텍스트가 코더에게 실렸다), `--tools ""`(도구 없음),
-그리고 저장소 **밖**의 작업 디렉터리. 온도·시드는 CLI 가 받지 않으므로 400 으로 돌려 폴백이
+API 키 없이 Claude 계열 코더를 쓰는 길이다. `claude -p` 를 항목마다 한 번 띄운다. 다음을 전부
+강제한다 — `--strict-mcp-config`(핵심: 사용자 MCP 서버의 도구 정의 4.8만~11.8만 토큰이 실리던 통로),
+`--setting-sources ""`(프로젝트 설정·훅·플러그인·CLAUDE.md), `--tools ""`(도구 없음), `--no-chrome`,
+`--no-session-persistence`, 그리고 저장소 **밖**에 프로세스마다 새로 만든 0700 작업 디렉터리. 온도·시드는 CLI 가 받지 않으므로 400 으로 돌려 폴백이
 `*_honored=False` 를 기록하게 한다. 응답은 OpenAI 응답 모양으로 바꿔 나머지 경로를 그대로 탄다.
 
 ## 온도·시드를 거부하는 모델
@@ -45,19 +45,25 @@ API 키 없이 Claude 계열 코더를 쓰는 길이다. `claude -p` 를 항목�
                 "run_at", "context_isolated": true, "provider_env", "version",
                 "temperature_honored", "seed_honored", "model_reported" },
       "grades": { "1": 3, "2": "?", … },        # score_coding.py 가 읽는 형식 그대로
-      "errors": { "5": "응답을 … 읽을 수 없음" },
-      "raw":    { "1": { "answer", "tokens_in", "tokens_out", "latency_ms", "retries" }, … } }
+      "errors": { "5": "응답을 … 읽을 수 없음" },   # scrub() 을 거친다 (키 토큰·홈 경로 가림, 200자)
+      "raw":    { "1": { "answer" (200자 초과면 잘리고 "answer_sha256"), "tokens_in", "tokens_out",
+                         "latency_ms", "retries", "cost_usd", "side_calls"?, "error"? }, … } }
+    meta 에는 재개 시 "resumed_at": [...] 이 붙는다.
 """
 import argparse
+import atexit
 import hashlib
 import json
 import os
+import random
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 
@@ -113,12 +119,38 @@ def provider_config(env, model=None, base_url=None):
     if not key:
         raise ValueError('API 키를 찾을 수 없습니다 — AUDIT_LLM_API_KEY 또는 %s 중 하나가 '
                          'env 파일에 있어야 합니다' % ', '.join(v for v, _ in PRESETS))
-    url = url or PRESETS[0][1]
+    if not url:
+        raise ValueError('AUDIT_LLM_BASE_URL 또는 --base-url 을 지정하십시오 — 제공자 중립 키(%s)는 주소 '
+                         '없이 OpenAI 로 보내지 않습니다 (키가 엉뚱한 제3자에게 갈 수 있다)' % key_var)
+    parts = urllib.parse.urlsplit(url)
+    if parts.scheme != 'https' and not (parts.scheme == 'http'
+                                        and parts.hostname in ('localhost', '127.0.0.1', '::1')):
+        raise ValueError('base URL 은 https 만 허용합니다 (평문 http 는 localhost 만 — LM Studio): %s' % url)
     model = model or env.get('AUDIT_LLM_MODEL')
     if not model:
         raise ValueError('모델을 지정하십시오 (--model 또는 AUDIT_LLM_MODEL). 기본값으로 '
                          '때우지 않습니다 — 어느 모델이 코딩했는지가 기록의 핵심입니다')
     return {'base_url': url.rstrip('/'), 'api_key': key, 'model': model, 'key_var': key_var}
+
+
+_SECRET_RE = re.compile(r'(sk-[A-Za-z0-9_-]{6,}|Bearer\s+[A-Za-z0-9._-]{6,})')
+_HOME_RE = re.compile(r'/(?:Users|home)/[^/\s]+|/root(?=/|\s|$)')
+SCRUB_MAX = 200
+
+
+def scrub(msg):
+    """추적 산출물에 실리는 오류 문자열 — 키 토큰·홈 경로를 가리고 SCRUB_MAX 자로 자른다."""
+    s = str(msg)
+    s = _SECRET_RE.sub(lambda m: m.group(0)[:3] + '***', s)
+    s = _HOME_RE.sub('~', s)
+    return s[:SCRUB_MAX]
+
+
+def public_path(p):
+    """홈 디렉터리 접두를 `~` 로 — 산출물에 OS 사용자명·키 파일 위치를 싣지 않는다."""
+    home = os.path.expanduser('~')
+    p = os.path.expanduser(p)
+    return '~' + p[len(home):] if home and p.startswith(home) else p
 
 
 # 1·2·3·? 가 **홀로** 선 자리만 잡는다. '12', '2.5' 같은 숫자의 일부는 잡지 않는다.
@@ -152,24 +184,43 @@ def post_json(url, headers, payload, timeout):
                                  headers=dict(headers, **{'Content-Type': 'application/json'}))
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
-            return r.status, json.loads(r.read().decode('utf-8'))
+            raw = r.read().decode('utf-8', 'replace')
+            try:
+                return r.status, json.loads(raw)
+            except ValueError:
+                return 500, {'error': {'message': '응답이 JSON 이 아님: %s' % raw[:200]}}
     except urllib.error.HTTPError as e:
         body = e.read().decode('utf-8', 'replace')
         try:
-            return e.code, json.loads(body)
+            parsed = json.loads(body)
+            if not isinstance(parsed, dict):
+                parsed = {'error': {'message': body[:500]}}
         except ValueError:
-            return e.code, {'error': {'message': body[:500]}}
+            parsed = {'error': {'message': body[:500]}}
+        retry_after = e.headers.get('Retry-After') if e.headers else None
+        if retry_after:
+            parsed['_retry_after'] = retry_after      # 429 대기는 서버가 준 값을 우선한다
+        return e.code, parsed
 
 
 CLI_BASE_URL = 'claude-cli://anthropic'   # 호스트가 계열 가드에 쓰인다 (OpenAI 와 다르게)
 CLI_UNSUPPORTED = ('temperature', 'seed')  # claude -p 가 받지 않는 인자 — 400 으로 알린다
 
 
+_CLI_CWD = []
+
+
 def _cli_cwd():
-    """저장소 밖의 작업 디렉터리. 프로젝트 컨텍스트가 코더에게 실리지 않게 한다."""
-    d = os.path.join(tempfile.gettempdir(), 'code_pages_claude_cli')
-    os.makedirs(d, exist_ok=True)
-    return d
+    """저장소 밖의 작업 디렉터리. 프로젝트 컨텍스트가 코더에게 실리지 않게 한다.
+
+    프로세스마다 0700 으로 새로 만든다 — 공용 /tmp 의 고정 이름은 리눅스에서 다른 사용자가 먼저
+    만들어 둘 수 있다. 종료 시 지운다.
+    """
+    if not _CLI_CWD:
+        d = tempfile.mkdtemp(prefix='code_pages_claude_cli_')
+        atexit.register(shutil.rmtree, d, True)
+        _CLI_CWD.append(d)
+    return _CLI_CWD[0]
 
 
 def claude_cli_post(url, headers, payload, timeout, run=None, cwd=None, claude_bin='claude'):
@@ -190,6 +241,8 @@ def claude_cli_post(url, headers, payload, timeout, run=None, cwd=None, claude_b
                 cwd=cwd or _cli_cwd())
     except subprocess.TimeoutExpired:
         return None, {'error': {'message': 'claude -p 시간 초과 (%ss)' % timeout}}
+    except FileNotFoundError:
+        return 404, {'error': {'message': 'claude 실행 파일을 찾을 수 없음: %s — --claude-bin 을 확인하십시오' % claude_bin}}
     try:
         body = json.loads(r.stdout)
     except (ValueError, TypeError):
@@ -202,11 +255,11 @@ def claude_cli_post(url, headers, payload, timeout, run=None, cwd=None, claude_b
     # Claude Code 는 요청 모델 외에 Haiku 보조 호출(실측 922토큰 고정)을 낀다. 토큰·모델은 요청
     # 모델의 modelUsage 로 세고, 나머지는 side_calls 로 남긴다 — 총계 usage 를 쓰면 섞인다.
     mu = body.get('modelUsage') or {}
-    main = next((k for k in mu if k.startswith(payload['model'])), None)
-    if main is None and mu:
-        main = max(mu, key=lambda k: (mu[k].get('inputTokens') or 0) + (mu[k].get('cacheReadInputTokens') or 0)
-                   + (mu[k].get('cacheCreationInputTokens') or 0))
-    u = mu.get(main) or {}
+    main_model = next((k for k in mu if k.startswith(payload['model'])), None)
+    if main_model is None and mu:
+        main_model = max(mu, key=lambda k: (mu[k].get('inputTokens') or 0) + (mu[k].get('cacheReadInputTokens') or 0)
+                         + (mu[k].get('cacheCreationInputTokens') or 0))
+    u = mu.get(main_model) or {}
     usage = body.get('usage') or {}
     prompt_tokens = (sum(u.get(k) or 0 for k in ('inputTokens', 'cacheCreationInputTokens', 'cacheReadInputTokens'))
                      if u else sum(usage.get(k) or 0 for k in ('input_tokens', 'cache_read_input_tokens',
@@ -214,9 +267,9 @@ def claude_cli_post(url, headers, payload, timeout, run=None, cwd=None, claude_b
     completion = u.get('outputTokens') if u else usage.get('output_tokens')
     return 200, {'choices': [{'message': {'content': body.get('result')}}],
                  'usage': {'prompt_tokens': prompt_tokens, 'completion_tokens': completion or 0},
-                 'model': main or payload['model'], 'system_fingerprint': None,
+                 'model': main_model or payload['model'], 'system_fingerprint': None,
                  'cost_usd': body.get('total_cost_usd'),
-                 'side_calls': {k: v for k, v in mu.items() if k != main}}
+                 'side_calls': {k: v for k, v in mu.items() if k != main_model}}
 
 
 def _err_msg(body):
@@ -246,6 +299,8 @@ def call_chat(cfg, messages, temperature, seed, state, post=post_json, sleep=tim
             status, body = post(url, headers, payload, timeout)
         except (urllib.error.URLError, OSError) as e:          # 네트워크 — 재시도 대상
             status, body = None, {'error': {'message': repr(e)}}
+        if not isinstance(body, dict):                        # 프록시 페이지 등 — 재시도 대상
+            status, body = (500 if status == 200 else status), {'error': {'message': '응답 본문이 JSON 객체가 아님: %r' % str(body)[:120]}}
         if status == 200:
             choice = (body.get('choices') or [{}])[0]
             usage = body.get('usage') or {}
@@ -273,7 +328,11 @@ def call_chat(cfg, messages, temperature, seed, state, post=post_json, sleep=tim
         if status in (None, 408, 409, 429) or status >= 500:
             if retries >= MAX_RETRIES:
                 raise RuntimeError('%d회 재시도 후 실패 (HTTP %s): %s' % (retries, status, msg))
-            sleep(BACKOFF[min(retries, len(BACKOFF) - 1)])
+            try:                                       # Retry-After 가 있으면 그 값, 없으면 백오프 + 지터
+                wait_s = float(body.get('_retry_after'))
+            except (TypeError, ValueError, AttributeError):
+                wait_s = BACKOFF[min(retries, len(BACKOFF) - 1)] + random.uniform(0, 1)
+            sleep(wait_s)
             retries += 1
             continue
         raise RuntimeError('HTTP %s: %s' % (status, msg))
@@ -342,20 +401,38 @@ def code_items(sheet, cfg, coder, out_path, temperature=DEFAULT_TEMPERATURE, see
         try:
             return sid, call_chat(cfg, build_messages(prompt, it), temperature, seed, state,
                                   post=post, sleep=sleep), None
-        except RuntimeError as e:
-            return sid, None, str(e)
+        except Exception as e:                       # noqa: BLE001 — 한 항목의 실패가 실행을 끊지 않는다
+            return sid, None, ('%s: %s' % (type(e).__name__, e)) if not isinstance(e, RuntimeError) else str(e)
 
-    if workers > 1:
-        from concurrent.futures import ThreadPoolExecutor
+    def _parallel(items):
+        # 완료 순서대로 넘긴다 — pool.map 은 제출 순서로만 소비해서 선두 항목 하나가 느리면 이미 끝난
+        # 유료 호출 결과가 디스크에 남지 않는다(원칙 5 위반). 제출 창은 workers*2 로 제한한다.
+        from concurrent.futures import ThreadPoolExecutor, FIRST_COMPLETED, wait as fwait
         pool = ThreadPoolExecutor(max_workers=workers)
-        results = pool.map(_one, todo)          # 순서 보존 — 기록은 아래서 주 스레드가 한다
-    else:
-        pool, results = None, map(_one, todo)
+        pending, it = set(), iter(items)
+        try:
+            while True:
+                while len(pending) < workers * 2:
+                    try:
+                        pending.add(pool.submit(_one, next(it)))
+                    except StopIteration:
+                        break
+                if not pending:
+                    return
+                done, _ = fwait(pending, return_when=FIRST_COMPLETED)
+                for f in done:
+                    pending.discard(f)
+                    yield f.result()
+        finally:
+            pool.shutdown(wait=False, cancel_futures=True)
+
+    results = _parallel(todo) if workers > 1 else map(_one, todo)
     for n, (sid, r, err) in enumerate(results, 1):
         if err is not None:
+            err = scrub(err)
             doc['errors'][sid] = err
             doc['raw'][sid] = {'answer': None, 'tokens_in': None, 'tokens_out': None,
-                               'latency_ms': None, 'retries': None, 'error': err}
+                               'latency_ms': None, 'retries': None, 'cost_usd': None, 'error': err}
             write_doc(out_path, doc)
             log('  [%d/%d] id=%s  실패: %s' % (n, len(todo), sid, err[:100]))
             continue
@@ -364,8 +441,12 @@ def code_items(sheet, cfg, coder, out_path, temperature=DEFAULT_TEMPERATURE, see
                                                  'latency_ms', 'retries', 'cost_usd')}
         if r.get('side_calls'):
             doc['raw'][sid]['side_calls'] = r['side_calls']
+        ans = r.get('answer')
+        if isinstance(ans, str) and len(ans) > SCRUB_MAX:     # 지시문은 한 글자를 요구한다 — 긴 응답은
+            doc['raw'][sid]['answer'] = ans[:SCRUB_MAX]         # 교재 본문일 수 있어 공개 파일에 싣지 않는다
+            doc['raw'][sid]['answer_sha256'] = hashlib.sha256(ans.encode('utf-8')).hexdigest()
         if g is None:
-            doc['errors'][sid] = '응답을 1·2·3·? 로 읽을 수 없음: %r' % (r['answer'] or '')[:80]
+            doc['errors'][sid] = scrub('응답을 1·2·3·? 로 읽을 수 없음: %r' % (r['answer'] or '')[:80])
         else:
             doc['grades'][sid] = g
             doc['errors'].pop(sid, None)
@@ -379,8 +460,6 @@ def code_items(sheet, cfg, coder, out_path, temperature=DEFAULT_TEMPERATURE, see
         log('  [%d/%d] id=%s → %s  (%s ms, 재시도 %s)'
             % (n, len(todo), sid, g if g is not None else '읽기 실패',
                r['latency_ms'], r['retries']))
-    if pool is not None:
-        pool.shutdown()
     return doc
 
 
@@ -425,7 +504,7 @@ def main():
             cfg = provider_config(read_env(env_path), model=args.model, base_url=args.base_url)
         except ValueError as e:
             sys.exit(str(e))
-        post, provider_env = post_json, args.provider_env
+        post, provider_env = post_json, public_path(args.provider_env)
     out = args.out or os.path.join(os.path.dirname(os.path.abspath(args.sheet)),
                                    'coding_%s.json' % args.coder)
 
@@ -442,6 +521,8 @@ def main():
                   % (m[0]['content'], m[1]['content'][:300]))
         return
 
+    if args.backend == 'claude-cli' and not shutil.which(args.claude_bin):
+        sys.exit('claude 실행 파일을 찾을 수 없습니다: %s (--claude-bin)' % args.claude_bin)
     try:
         doc = code_items(sheet, cfg, args.coder, out, temperature=args.temperature,
                          seed=args.seed, limit=args.limit, resume=args.resume,

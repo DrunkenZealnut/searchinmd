@@ -26,7 +26,10 @@
 
 **단서.** 두 모델 모두 `temperature` 를 거부해 온도 없이 물었다(`meta` 기록). Claude 는 API 키가 없어
 `claude -p` 헤드리스로 돌렸고, Claude Code 가 끼워 넣는 Haiku 보조 호출이 항목 본문을 본다(코더로 세지
-않고 `raw[id].side_calls` 에 기록). 사람 코딩은 아직 없다 — §7.
+않고 `raw[id].side_calls` 에 기록). **코더 B 의 모델 `gpt-5.6-sol` 은 이 규칙의 외부감사
+(`docs/04-report/regrade-audit-response.report.md`)를 수행한 바로 그 모델이다** — API 는 무상태라 호출 간
+오염은 없지만 감사 보고서에는 D1 의 동음이의 가정과 규칙 내부가 들어 있었다(Plan §4.5-3). 코더 프롬프트는
+그 내용을 담지 않으며, 이 사실은 기록으로 남긴다. 사람 코딩은 아직 없다 — §7.
 
 ## 1. 표본과 코더
 

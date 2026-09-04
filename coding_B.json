@@ -10,7 +10,7 @@
   "prompt_sha256": "a82a82b732222be1f28ff5ed25fd634c238c64bee2d932b10302d65011c1e60d",
   "run_at": "2026-09-04T05:52:11+00:00",
   "context_isolated": true,
-  "provider_env": "/Users/zealnutkim/.config/auditagent/.env",
+  "provider_env": "~/.config/auditagent/.env",
   "version": null,
   "model_reported": "gpt-5.6-sol",
   "temperature_honored": false,

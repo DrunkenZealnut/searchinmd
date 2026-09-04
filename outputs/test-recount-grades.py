@@ -1839,7 +1839,7 @@ check('R15o9 두 코더가 같은 제공자면 FR-1 미충족 경고, 다르면 
       isinstance(_fg_same, str) and 'FR-1' in _fg_same and _fg_diff is None, (_fg_same, _fg_diff))
 
 # --- main 라우팅: 새 형식 키 → 전수 채점, 구형식 키 → 기존 경로
-_o_load, _o_pop, _o_here = SC.load, SC.population, SC.HERE
+_o_load, _o_here = SC.load, SC.HERE
 _scores = None
 with tempfile.TemporaryDirectory() as _td:
     try:
@@ -1853,7 +1853,7 @@ with tempfile.TemporaryDirectory() as _td:
         _scores_raw = open(_sp, encoding='utf-8').read() if os.path.exists(_sp) else ''
         _scores = json.loads(_scores_raw) if _scores_raw else None
     finally:
-        SC.load, SC.population, SC.HERE = _o_load, _o_pop, _o_here
+        SC.load, SC.HERE = _o_load, _o_here
 check('R15p main 은 새 형식 키(pred·population)를 전수 채점 경로로 보낸다',
       _mcode == 0 and '재현율층' in _mout and '규칙 변형별' not in _mout, (_mcode, _mout[:120]))
 # 보고서 문장만 남기면 분석 문서의 수치를 아무도 재현할 수 없다. 채점기가 JSON 도 남긴다.
@@ -1916,6 +1916,362 @@ check('R15r --coders C,B 는 coding_C/coding_B 를 읽어 채점하고 JSON 에 
       and _sc2.get('C', {}).get('variants', {}).get('baseline', {}).get('tp') == 3
       and _sc2.get('family_warning') is None and '코더 C' in _rout,
       (_rcode, _rout[:100], sorted(_sc2) if isinstance(_sc2, dict) else _sc2))
+
+# --- PR #12 CodeRabbit 지적: 기존 coding_key.json 은 라벨 삼종(coding_A/B/C.json)의 유일한 결합 정보다.
+# 기본 실행이 그것을 덮어쓰면 안 된다 — --force 를 요구한다. (지문 가드는 결합을 막지 쓰기를 막지 않는다)
+_o_here_m, _o_dd_m, _o_lp_m = MCS.HERE, G2.DATA_DIR, G2.load_pages
+_kc1 = _kc2 = None
+_wrote = False
+with tempfile.TemporaryDirectory() as _td:
+    open(os.path.join(_td, G2.NCS_FILE), 'w').close()          # 원본 부재 가드를 넘긴다
+    with open(os.path.join(_td, 'coding_key.json'), 'w', encoding='utf-8') as _f:
+        _f.write('{"sample_digest": "old"}')
+    _pg_m = {('f', i): {'text': '안전 위험 주의 사고 유해 누출 방지 예방 착용 환기 차단 ' * (i % 3 + 1),
+                        'grade': 1, 'truncated': False} for i in range(1, 9)}
+    try:
+        MCS.HERE, G2.DATA_DIR = _td, _td
+        G2.load_pages = lambda p: _pg_m
+        _kc1, _ = _run_main(MCS.main, ['make_coding_sheet.py'])
+        _kc2, _ = _run_main(MCS.main, ['make_coding_sheet.py', '--force'])
+        _wrote = os.path.exists(os.path.join(_td, 'coding_sheet.md'))
+    finally:
+        MCS.HERE, G2.DATA_DIR, G2.load_pages = _o_here_m, _o_dd_m, _o_lp_m
+check('R15t make_coding_sheet 는 기존 coding_key.json 을 --force 없이 덮어쓰지 않는다',
+      isinstance(_kc1, str) and '--force' in _kc1 and _kc2 == 0 and _wrote, (_kc1, _kc2, _wrote))
+
+# --- PR #12 CodeRabbit 지적: xlsx 는 zip 이다. 압축비가 비정상인 항목(압축 폭탄)은 열지 않고 멈춘다.
+import zipfile as _zipmod  # noqa: E402
+with tempfile.TemporaryDirectory() as _td:
+    _bomb = os.path.join(_td, 'bomb.xlsx')
+    with _zipmod.ZipFile(_bomb, 'w', _zipmod.ZIP_DEFLATED) as _z:
+        _z.writestr('xl/worksheets/sheet1.xml', '0' * (16 * 1024 * 1024))
+    _bomb_res = _call(lambda: list(TA.iter_rows(_bomb)))
+check('R15u truncation_audit 는 압축비가 임계를 넘는 zip 항목을 읽지 않고 멈춘다 (압축 폭탄)',
+      isinstance(_bomb_res, SystemExit) and '압축' in str(_bomb_res), _bomb_res)
+
+# --- /ship 스페셜리스트 지적 (2026-09-04): 테스트·보안·유지보수성
+print('\n[R15] 재코딩 — /ship 리뷰 회귀 (라벨 누락·실행 파일 부재·비JSON 응답·경로 노출·스크럽·응답 상한)')
+
+# testing CRITICAL: 라벨 없는 항목(code_pages errors)이 있으면 strata() 가 A[i] 직접 색인으로 죽는다.
+_gA_miss = {k: v for k, v in _gA.items() if k != '3'}     # id 3 = 분쟁군 + 절단 항목, 라벨 없음
+_miss = quiet(lambda: _call(lambda: SC.score_census(_gA_miss, _gB, _kdoc)))[0]
+check('R15v 라벨 없는 항목(errors)이 있어도 전수 채점은 죽지 않고 판단 불가로 다룬다',
+      isinstance(_miss, dict) and _miss['agreement']['n'] == 10
+      and _miss['A']['variants']['baseline']['excluded'] == 1, _miss if not isinstance(_miss, dict) else _miss['agreement'])
+
+
+def _run_nobin(argv, input=None, capture_output=True, text=True, timeout=None, cwd=None):
+    raise FileNotFoundError(2, 'No such file or directory', 'claude')
+
+
+_sl_nb = []
+_nb = _call(lambda: CP.call_chat({'base_url': CP.CLI_BASE_URL, 'api_key': '', 'model': 'claude-opus-5'},
+                                 _pl['messages'], None, None, {},
+                                 post=lambda u, h, p, t: CP.claude_cli_post(u, h, p, t, run=_run_nobin),
+                                 sleep=_sl_nb.append))
+check('R15v2 claude 실행 파일이 없으면 재시도 없이 즉시 실패한다 (일시 오류가 아니다)',
+      isinstance(_nb, RuntimeError) and _sl_nb == [] and 'claude' in str(_nb), (_nb, _sl_nb))
+
+with tempfile.TemporaryDirectory() as _td:
+    _doc_g = _call(lambda: CP.code_items(_sheet15, _cfg15, 'G', os.path.join(_td, 'g.json'),
+                                         post=lambda u, h, p, t: (200, 'garbage'), limit=1, **_quiet_kw))
+check('R15v3 200 인데 본문이 JSON dict 가 아니면 그 항목만 오류로 남기고 실행은 계속된다',
+      isinstance(_doc_g, dict) and '1' in _doc_g.get('errors', {}) and '1' in _doc_g.get('raw', {}), _doc_g)
+
+# security: 추적 산출물에 OS 사용자명·키 파일 위치가 실리면 안 된다
+_tracked = ['coding_A.json', 'coding_B.json', 'coding_C.json'] + sorted(
+    f for f in os.listdir(os.path.join(ROOT, 'docs/03-analysis/data')) if f.startswith('recoding_scores'))
+
+
+def _strings(x):
+    if isinstance(x, dict):
+        for v in x.values():
+            yield from _strings(v)
+    elif isinstance(x, list):
+        for v in x:
+            yield from _strings(v)
+    elif isinstance(x, str):
+        yield x
+
+
+_home_hits = []
+_maxlen = 0
+for _f in _tracked:
+    _p = os.path.join(ROOT, _f if _f.startswith('coding_') else 'docs/03-analysis/data/' + _f)
+    if not os.path.exists(_p):
+        continue
+    for _s in _strings(json.load(open(_p, encoding='utf-8'))):
+        _maxlen = max(_maxlen, len(_s))
+        if _s.startswith(('/Users/', '/home/', '/root/')):
+            _home_hits.append((_f, _s[:60]))
+check('R15w 추적되는 라벨·수치 JSON 에 홈 경로(/Users, /home)가 없다', not _home_hits, _home_hits)
+check('R15w1 추적되는 라벨·수치 JSON 의 문자열 값은 200자 이하다 (교재 본문·긴 응답이 실리지 않는다)',
+      _maxlen <= 200, _maxlen)
+
+_scr = _call(lambda: CP.scrub('Incorrect API key provided: sk-proj-abcDEF123456789xyz at '
+                              '/Users/me/.config/x.env ' + 'y' * 300))
+check('R15w2 오류 문자열은 키 토큰·홈 경로를 가리고 200자로 자른 뒤 저장한다',
+      isinstance(_scr, str) and 'sk-proj-abc' not in _scr and '/Users/me' not in _scr
+      and len(_scr) <= 200 and 'sk-' in _scr, _scr)
+with tempfile.TemporaryDirectory() as _td:
+    _doc_k = _call(lambda: CP.code_items(_sheet15, _cfg15, 'K', os.path.join(_td, 'k.json'),
+                                         post=lambda u, h, p, t: (401, {'error': {'message':
+                                             'Incorrect API key provided: sk-proj-abcDEF123456789xyz'}}),
+                                         limit=1, **_quiet_kw))
+    _doc_l = _call(lambda: CP.code_items(_sheet15, _cfg15, 'L', os.path.join(_td, 'l.json'),
+                                         post=lambda u, h, p, t: (200, {'choices': [{'message': {'content': '3' * 1000}}],
+                                                                       'usage': {}}),
+                                         limit=1, **_quiet_kw))
+check('R15w3 저장된 오류에 키 토큰이 남지 않고, 응답 원문은 200자로 잘리며 해시가 남는다',
+      isinstance(_doc_k, dict) and 'sk-proj-abc' not in json.dumps(_doc_k, ensure_ascii=False)
+      and isinstance(_doc_l, dict) and len(_doc_l['raw']['1']['answer']) <= 200
+      and len(_doc_l['raw']['1'].get('answer_sha256', '')) == 64 and '1' in _doc_l['errors'],
+      (_doc_k.get('errors') if isinstance(_doc_k, dict) else _doc_k,
+       {k: (len(v) if isinstance(v, str) else v) for k, v in _doc_l['raw']['1'].items()} if isinstance(_doc_l, dict) else _doc_l))
+
+_pc1 = _call(lambda: CP.provider_config({'AUDIT_LLM_API_KEY': 'k', 'AUDIT_LLM_MODEL': 'm'}))
+_pc2 = _call(lambda: CP.provider_config({'OPENAI_API_KEY': 'k'}, model='m', base_url='http://evil.example/v1'))
+_pc3 = _call(lambda: CP.provider_config({'OPENAI_API_KEY': 'k'}, model='m', base_url='http://localhost:1234/v1'))
+check('R15w4 제공자 중립 키(AUDIT_LLM_API_KEY)는 주소 없이 OpenAI 로 떨어지지 않고, 평문 http 는 localhost 만 허용한다',
+      isinstance(_pc1, ValueError) and 'BASE_URL' in str(_pc1)
+      and isinstance(_pc2, ValueError) and 'https' in str(_pc2)
+      and isinstance(_pc3, dict) and _pc3['base_url'] == 'http://localhost:1234/v1', (_pc1, _pc2, _pc3))
+
+_cwd1 = _call(lambda: CP._cli_cwd())
+_cwd2 = _call(lambda: CP._cli_cwd())
+check('R15w5 claude -p 작업 디렉터리는 프로세스마다 새로 만든 0700 디렉터리다 (공용 /tmp 고정 이름 아님)',
+      isinstance(_cwd1, str) and _cwd1 == _cwd2 and os.path.isdir(_cwd1)
+      and (os.stat(_cwd1).st_mode & 0o777) == 0o700 and not _cwd1.startswith(ROOT)
+      and os.path.basename(_cwd1) != 'code_pages_claude_cli', (_cwd1, oct(os.stat(_cwd1).st_mode & 0o777) if isinstance(_cwd1, str) and os.path.isdir(_cwd1) else None))
+
+# maintainability: strata() 가 찍는 절단층 수치와 JSON 의 수치는 한 계산이어야 한다
+_key15 = {str(r['id']): r for r in _kitems}
+_tr_ret = quiet(lambda: _call(lambda: SC.strata(_gA, _gB, _key15, [str(r['id']) for r in _kitems])))[0]
+check('R15x strata() 가 절단층 수치를 돌려주고 score_census 의 truncation 과 같다',
+      _tr_ret == _res.get('truncation') and isinstance(_tr_ret, dict), (_tr_ret, _res.get('truncation')))
+
+_o_load3, _o_pop3, _o_here3 = SC.load, SC.population, SC.HERE
+_leg_items = [{'id': 1, 'group': 'disputed', 'file': 'a', 'page': 1, 'cell_truncated': False},
+              {'id': 2, 'group': 'control', 'file': 'b', 'page': 2, 'cell_truncated': False}]
+_leg_d = MCS.sample_digest(_leg_items)
+with tempfile.TemporaryDirectory() as _td:
+    try:
+        SC.load = lambda n: ({'coder': n[7], 'sample_digest': _leg_d, 'grades': {'1': 3, '2': 3}}
+                             if n.startswith('coding_') and not n.startswith('coding_key')
+                             else {'sample_digest': _leg_d, 'items': _leg_items})
+        SC.population = lambda: (100, 1, 10)
+        SC.HERE = _td
+        _lcode2, _lout2 = _run_main(SC.main, ['score_coding.py', '--out', os.path.join(_td, 'x.json')])
+    finally:
+        SC.load, SC.population, SC.HERE = _o_load3, _o_pop3, _o_here3
+check('R15x2 구형식 키에서 --out 을 주면 조용히 무시하지 않고 전수 경로 전용임을 알린다',
+      _lcode2 == 0 and '전수 경로' in _lout2, (_lcode2, _lout2[-200:]))
+
+check('R15x3 층 이름은 한 곳(page_utils.CODING_GROUPS)이 소유하고 두 스크립트가 같이 쓴다',
+      _call(lambda: PU.CODING_GROUPS) == MCS.GROUPS == tuple(g for g, _ in SC.GROUP_LABELS)
+      == ('disputed', 'control', 'boundary', 'recall'), (_call(lambda: PU.CODING_GROUPS), MCS.GROUPS))
+
+# --- /ship 스페셜리스트 2차 (성능·테스트) + 커버리지 감사 GAP
+import io as _io  # noqa: E402
+import threading as _threading  # noqa: E402
+
+
+def _post_badjson(u, h, p, t):
+    raise json.JSONDecodeError('Expecting value', 'doc', 0)
+
+
+with tempfile.TemporaryDirectory() as _td:
+    _dbj = _call(lambda: CP.code_items(_sheet15, _cfg15, 'J', os.path.join(_td, 'j.json'),
+                                       post=_post_badjson, workers=2, **_quiet_kw))
+check('R15v4 post 가 예외를 던져도 (JSONDecodeError) 실행은 죽지 않고 항목별 errors 에 남는다',
+      isinstance(_dbj, dict) and set(_dbj['errors']) == {'1', '2', '3'} and not _dbj['grades'], _dbj)
+
+# performance: 429 의 Retry-After 를 존중하고 백오프에 지터를 더한다
+_ra_calls = {'n': 0}
+_ra_sleeps = []
+
+
+def _post_ra(u, h, p, t):
+    _ra_calls['n'] += 1
+    if _ra_calls['n'] == 1:
+        return 429, {'error': {'message': 'rate'}, '_retry_after': '7'}
+    return 200, {'choices': [{'message': {'content': '3'}}], 'usage': {}}
+
+
+with tempfile.TemporaryDirectory() as _td:
+    _doc_ra = _call(lambda: CP.code_items(_sheet15, _cfg15, 'RA', os.path.join(_td, 'ra.json'), post=_post_ra,
+                                          limit=1, sleep=_ra_sleeps.append, log=lambda *a, **k: None))
+check('R15y 429 에 Retry-After 가 있으면 그만큼 기다린다 (백오프 표보다 우선)',
+      isinstance(_doc_ra, dict) and _doc_ra['grades'] == {'1': 3} and len(_ra_sleeps) == 1 and _ra_sleeps[0] >= 7,
+      (_ra_sleeps, _doc_ra if not isinstance(_doc_ra, dict) else ''))
+
+# testing: --out 에 디렉터리 없는 파일명
+_o_here4, _o_load4, _o_cwd4 = SC.HERE, SC.load, os.getcwd()
+with tempfile.TemporaryDirectory() as _td:
+    try:
+        SC.HERE = _td
+        os.chdir(_td)
+        SC.load = lambda n: ({'coder': n[7], 'sample_digest': _kdoc['sample_digest'],
+                              'meta': {'base_url': 'https://x/v1', 'model': 'm'},
+                              'grades': _gA if n.startswith('coding_A') else _gB}
+                             if n.startswith('coding_') and not n.startswith('coding_key') else _kdoc)
+        _oc, _oo = _run_main(SC.main, ['score_coding.py', '--out', 'scores.json'])
+        _o_written = os.path.exists(os.path.join(_td, 'scores.json'))
+    finally:
+        os.chdir(_o_cwd4)
+        SC.HERE, SC.load = _o_here4, _o_load4
+check('R15y2 --out 에 디렉터리 없는 파일명을 줘도 죽지 않고 수치를 쓴다', _oc == 0 and _o_written, (_oc, _oo[-120:]))
+
+# testing: 계열 가드는 호스트가 아니라 계열을 비교한다
+_fg_cli = _call(lambda: SC.family_guard({'base_url': 'claude-cli://anthropic', 'model': 'claude-opus-5'},
+                                        {'base_url': 'https://api.anthropic.com/v1', 'model': 'claude-sonnet-5'}))
+_fg_or = _call(lambda: SC.family_guard({'base_url': 'https://openrouter.ai/api/v1', 'model': 'openai/gpt-x'},
+                                       {'base_url': 'https://openrouter.ai/api/v1', 'model': 'anthropic/claude-x'}))
+check('R15y3 claude-cli 와 api.anthropic.com 은 같은 계열(경고), 같은 집계 호스트라도 vendor/model 이 다르면 다른 계열',
+      isinstance(_fg_cli, str) and 'FR-1' in _fg_cli and _fg_or is None, (_fg_cli, _fg_or))
+
+# performance: 병렬 경로도 완료 즉시 기록한다 (선두 항목이 느려도 이미 끝난 유료 호출 결과가 디스크에 남는다)
+_ev = _threading.Event()
+_writes = []
+
+
+def _post_slowhead(u, h, p, t):
+    if '본문1' in p['messages'][-1]['content']:
+        _ev.wait(5)                                  # 다른 항목이 기록될 때까지 막는다
+    return 200, {'choices': [{'message': {'content': '3'}}], 'usage': {}}
+
+
+_o_write = CP.write_doc
+
+
+def _rec_write(path, doc):
+    _writes.append(sorted(doc['raw']))
+    if len(doc['raw']) >= 2:
+        _ev.set()
+    _o_write(path, doc)
+
+
+with tempfile.TemporaryDirectory() as _td:
+    try:
+        CP.write_doc = _rec_write
+        _doc_sh = _call(lambda: CP.code_items(_sheet15, _cfg15, 'SH', os.path.join(_td, 'sh.json'),
+                                              post=_post_slowhead, workers=3, **_quiet_kw))
+    finally:
+        CP.write_doc = _o_write
+check('R15y4 워커 경로는 완료 순서대로 즉시 기록한다 (첫 기록에 느린 선두 항목이 없다)',
+      isinstance(_doc_sh, dict) and len(_doc_sh['raw']) == 3 and _writes and '1' not in _writes[0], _writes[:3])
+
+# --- 커버리지 감사 GAP (Step 7): 값·제어흐름 경로 보강
+_o = (G2.load_pages, G2.run, G2.median_length, G2.OUT_DIR)
+with tempfile.TemporaryDirectory() as _rtd:
+    open(os.path.join(_rtd, G2.NCS_FILE), 'w').close()
+    try:
+        G2.OUT_DIR = _rtd
+        G2.load_pages = lambda p: {('f', 1): {'text': 'x' * 50, 'grade': 1, 'truncated': False}}
+        G2.run = lambda pages, **kw: {k: {'g': 1, 'sn': 0, 'an': 0, 'reason': '', 'len': 50} for k in pages}
+        G2.median_length = lambda pages: 50
+        _zc, _ = _run_main(G2.main, ['regrade.py', '--data', _rtd, '--force'])
+        _zp = json.load(open(os.path.join(_rtd, 'regrade_impact.json'), encoding='utf-8'))
+    finally:
+        G2.load_pages, G2.run, G2.median_length, G2.OUT_DIR = _o
+check('R15z regrade 산출물 rule 에 확장 사전 21종이 실리고 dist 에 모든 변형 행이 있다 (--force 경로)',
+      _zc == 0 and _zp['rule']['extra_safety_terms'] == G2.EXTRA_SAFETY_TERMS
+      and _zp['rule']['extra_action_terms'] == G2.EXTRA_ACTION_TERMS
+      and set(_zp['dist']) == {'baseline', *dict(G2.variant_grid())}, (_zc, sorted(_zp.get('dist', {}))))
+check('R15z2 draw 는 n_recall 이 모집단보다 커도 모집단 전부로 클램프한다',
+      sum(1 for _, g in MCS.draw({'disputed': [], 'control': [], 'boundary': [], 'recall_pool': ['a', 'b']},
+                                 seed=1, n_recall=5) if g == 'recall') == 2)
+with tempfile.TemporaryDirectory() as _td:
+    open(os.path.join(_td, G2.NCS_FILE), 'w').close()
+    try:
+        MCS.HERE, G2.DATA_DIR = _td, _td
+        G2.load_pages = lambda p: _pg_m
+        _zc3, _ = _run_main(MCS.main, ['make_coding_sheet.py'])
+        _kd = json.load(open(os.path.join(_td, 'coding_key.json'), encoding='utf-8'))
+        _sd = json.load(open(os.path.join(_td, 'coding_sheet.json'), encoding='utf-8'))
+    finally:
+        MCS.HERE, G2.DATA_DIR, G2.load_pages = _o_here_m, _o_dd_m, _o_lp_m
+check('R15z3 make_coding_sheet.main 이 쓰는 키·시트 문서의 구조 (population·variants·rule_pairs·seed·pred / coder_prompt·지문)',
+      _zc3 == 0 and {'sample_digest', 'seed', 'n_recall', 'variants', 'rule_pairs', 'population', 'items'} <= set(_kd)
+      and _kd['population']['strata'] == {g: sum(1 for r in _kd['items'] if r['group'] == g) for g in MCS.GROUPS}
+      and all(set(r['pred']) == set(_kd['variants']) for r in _kd['items'])
+      and _sd['coder_prompt'] == MCS.coder_prompt() and _sd['sample_digest'] == _kd['sample_digest']
+      and not any(k in it for it in _sd['items'] for k in ('pred', 'group')), (_zc3, sorted(_kd)))
+with tempfile.TemporaryDirectory() as _td:
+    _ep = os.path.join(_td, 'e.env')
+    with open(_ep, 'w') as _f:
+        _f.write('A=1 # note\nnoequals\nB="x # y"\n')
+    _env2 = _call(lambda: CP.read_env(_ep))
+check('R15z4 read_env 는 인라인 주석을 자르고 따옴표 안의 #는 남기며 = 없는 줄은 건너뛴다',
+      _env2 == {'A': '1', 'B': 'x # y'}, _env2)
+_pc5 = _call(lambda: CP.provider_config({'AUDIT_LLM_API_KEY': 'k', 'AUDIT_LLM_BASE_URL': 'https://a/v1/', 'AUDIT_LLM_MODEL': 'm'},
+                                        base_url='https://b/v1/'))
+check('R15z5 --base-url 인자가 env 주소보다 우선하고 끝의 / 는 뗀다',
+      isinstance(_pc5, dict) and _pc5['base_url'] == 'https://b/v1', _pc5)
+
+
+class _FakeResp:
+    def __init__(self, status, raw):
+        self.status, self._raw = status, raw
+
+    def read(self):
+        return self._raw
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+_o_urlopen = CP.urllib.request.urlopen
+try:
+    CP.urllib.request.urlopen = lambda req, timeout=None: _FakeResp(200, b'<html>challenge</html>')
+    _pj1 = _call(lambda: CP.post_json('https://x/v1/chat/completions', {}, {'a': 1}, 5))
+    _hdrs = CP.urllib.request.urllib.response if False else None
+
+    def _raise_http(req, timeout=None):
+        import email
+        raise CP.urllib.error.HTTPError('https://x', 429, 'Too Many', email.message_from_string('Retry-After: 3\n'),
+                                        _io.BytesIO(b'{"error":{"message":"rate"}}'))
+    CP.urllib.request.urlopen = _raise_http
+    _pj2 = _call(lambda: CP.post_json('https://x/v1/chat/completions', {}, {'a': 1}, 5))
+finally:
+    CP.urllib.request.urlopen = _o_urlopen
+check('R15z6 post_json 은 200 비JSON 본문을 500 오류로, HTTPError 는 (코드, JSON 본문, Retry-After) 로 돌려준다',
+      isinstance(_pj1, tuple) and _pj1[0] == 500 and 'JSON' in _pj1[1]['error']['message']
+      and isinstance(_pj2, tuple) and _pj2[0] == 429 and _pj2[1]['error']['message'] == 'rate'
+      and _pj2[1].get('_retry_after') == '3', (_pj1, _pj2))
+
+
+def _run_badout(argv, input=None, capture_output=True, text=True, timeout=None, cwd=None):
+    class _R:
+        returncode, stderr, stdout = 1, 'boom', 'not json'
+    return _R()
+
+
+_r_bad = _call(lambda: CP.claude_cli_post('x', {}, _pl, 180, run=_run_badout))
+check('R15z7 claude -p 출력이 JSON 이 아니면 500 으로 돌려준다 (exit code·stderr 꼬리 포함)',
+      isinstance(_r_bad, tuple) and _r_bad[0] == 500 and 'exit 1' in _r_bad[1]['error']['message']
+      and 'boom' in _r_bad[1]['error']['message'], _r_bad)
+
+
+def _run_mu(mu, usage):
+    def f(argv, input=None, capture_output=True, text=True, timeout=None, cwd=None):
+        class _R:
+            returncode, stderr = 0, ''
+            stdout = json.dumps({'type': 'result', 'is_error': False, 'result': '2', 'usage': usage, 'modelUsage': mu})
+        return _R()
+    return f
+
+
+_r_mu1 = _call(lambda: CP.claude_cli_post('x', {}, _pl, 180, run=_run_mu(
+    {'claude-haiku-4-5': {'inputTokens': 900, 'outputTokens': 10}, 'claude-sonnet-5': {'inputTokens': 5000, 'outputTokens': 3}},
+    {'input_tokens': 5900, 'output_tokens': 13})))
+_r_mu2 = _call(lambda: CP.claude_cli_post('x', {}, _pl, 180, run=_run_mu({}, {'input_tokens': 42, 'output_tokens': 3})))
+check('R15z8 modelUsage 에 요청 모델이 없으면 토큰이 가장 많은 모델을, modelUsage 가 없으면 usage 총계를 쓴다',
+      isinstance(_r_mu1, tuple) and _r_mu1[1]['model'] == 'claude-sonnet-5' and _r_mu1[1]['usage']['prompt_tokens'] == 5000
+      and isinstance(_r_mu2, tuple) and _r_mu2[1]['usage'] == {'prompt_tokens': 42, 'completion_tokens': 3}, (_r_mu1, _r_mu2))
 
 print('\n결과: %d/%d PASS%s%s' % (
     PASS, PASS + FAIL, ', %d FAIL' % FAIL if FAIL else '',

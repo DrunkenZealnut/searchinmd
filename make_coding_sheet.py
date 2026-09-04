@@ -89,6 +89,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # openpyxl 가드는 여기 두지 않는다 — regrade 를 불러오는 순간 같은 문구로 걸린다.
 # 두 벌을 두면 어느 쪽이 먼저 걸리느냐에 따라 메시지 출처가 달라진다.
 import regrade as RG  # noqa: E402
+from page_utils import CODING_GROUPS, BASELINE  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SEED = 20260904          # 표본이 바뀌었으므로 시드도 새로 둔다. 옛 시드(20260903)는 옛
@@ -97,9 +98,9 @@ N_RECALL = 300           # 재현율층 크기 (Plan §4.3-A). 적중 0건이어
 CHUNK_CHARS = 6000       # 자르는 길이가 아니라 **나누는** 단위다
 
 # 층을 가르는 규칙쌍 (현행, 수정본). 어휘가 두 벌이므로 쌍도 둘이다.
-RULE_PAIRS = [('baseline', RG.ADOPTED_VARIANT),
+RULE_PAIRS = [(BASELINE, RG.ADOPTED_VARIANT),
               (RG.VOCAB_VARIANT, RG.ADOPTED_VOCAB_VARIANT)]
-GROUPS = ('disputed', 'control', 'boundary', 'recall')
+GROUPS = CODING_GROUPS
 
 # 절단 고지 — .md 는 인용 블록으로, 시트 JSON 은 `notice` 로 싣는다. 한 곳에만 둔다.
 TRUNCATION_NOTICE = [
@@ -206,7 +207,7 @@ def strata(preds, pairs=None):
     여기서 기대지 않는다: 그 논증이 어느 변형에서 깨져도 층은 그대로 옳다.
     """
     pairs = pairs or RULE_PAIRS
-    keys = set(preds['baseline'])
+    keys = set(preds[BASELINE])
     g3 = {k for g in preds.values() for k in keys if g[k]['g'] == 3}
     disputed = {k for cur, new in pairs for k in keys
                 if preds[cur][k]['g'] == 3 and preds[new][k]['g'] != 3}
@@ -271,14 +272,27 @@ def render_item(it):
 
 
 def main():
+    import argparse
+    ap = argparse.ArgumentParser(description='수기 코딩 시트 생성')
+    ap.add_argument('--force', action='store_true',
+                    help='기존 coding_key.json 을 덮어쓴다 (라벨 삼종의 결합 정보가 바뀐다)')
+    args = ap.parse_args()
+
     src = os.path.join(RG.DATA_DIR, RG.NCS_FILE)
     if not os.path.exists(src):
         sys.exit('원본 엑셀을 찾을 수 없습니다: %s' % src)
+    key_path = os.path.join(HERE, 'coding_key.json')
+    if os.path.exists(key_path) and not args.force:
+        # 키는 coding_A/B/C.json 을 페이지에 붙이는 유일한 결합 정보다. 지문 가드는 어긋난
+        # 라벨의 **채점**을 막지 이 파일의 **덮어쓰기**를 막지 않는다 — 기본 실행이 기존
+        # 코딩 기록의 결합을 끊어서는 안 된다 (PR #12 리뷰 지적).
+        sys.exit('coding_key.json 이 이미 있습니다 — 기존 라벨(coding_A/B/C.json)의 결합 정보입니다.\n'
+                 '  다시 뽑으려면 --force 를 주십시오 (그 뒤에는 새 시트로 다시 코딩해야 합니다).')
 
     print('원본 읽는 중…')
     pages = RG.load_pages(src)
     med = RG.median_length(pages)
-    preds = {'baseline': RG.run(pages, word_boundary=False, normalize=False)}
+    preds = {BASELINE: RG.run(pages, word_boundary=False, normalize=False)}
     for name, kw in RG.variant_grid():
         preds[name] = RG.run(pages, base=med, **kw)
 

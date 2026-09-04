@@ -10,6 +10,11 @@ import json
 import unicodedata
 
 EXCEL_MAX_CHARS = 32767          # 엑셀 셀 한도. add_fullpage.py 가 여기서 가져다 쓴다
+# 재코딩 표본의 층 이름. make_coding_sheet(추출)·score_coding(채점)이 같이 쓴다 — 두 벌로 타이핑하면
+# 층을 하나 늘릴 때 한쪽만 고쳐지고 조용히 어긋난다. score_coding 은 regrade(openpyxl 가드)를 못
+# 부르므로 의존성 없는 이 모듈이 소유한다.
+CODING_GROUPS = ('disputed', 'control', 'boundary', 'recall')
+BASELINE = 'baseline'            # 재현 기준선(현행 규칙)의 변형 라벨. 다른 변형 라벨은 regrade.variant_grid() 가 소유한다
 TRUNCATION_MARK = '...'
 
 

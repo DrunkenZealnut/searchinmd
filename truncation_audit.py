@@ -39,6 +39,22 @@ from page_utils import is_cell_truncated  # noqa: E402
 NS = '{http://schemas.openxmlformats.org/spreadsheetml/2006/main}'
 
 
+# xlsx 는 zip 이다. 압축비가 비정상인 항목(압축 폭탄)은 열지 않는다 — 실측 두 워크북의 최대
+# 압축비는 36.7배(교과서 sheet13.xml), 최대 항목은 81 MB(NCS sheet1.xml)라 여유가 크다.
+MAX_ZIP_RATIO = 200
+MAX_ENTRY_BYTES = 4 * 1024 ** 3
+
+
+def _open_entry(z, name):
+    """압축비·크기를 확인하고 연다. 넘으면 읽지 않고 멈춘다 (PR #12 리뷰 지적)."""
+    info = z.getinfo(name)
+    ratio = info.file_size / float(max(info.compress_size, 1))
+    if info.file_size > MAX_ENTRY_BYTES or ratio > MAX_ZIP_RATIO:
+        sys.exit('압축 폭탄 의심: %s 가 %.0f배(%d B)로 풀립니다 — 임계 %d배/%d B. 읽지 않습니다.'
+                 % (name, ratio, info.file_size, MAX_ZIP_RATIO, MAX_ENTRY_BYTES))
+    return z.open(name)
+
+
 def _shared_strings(z):
     """sharedStrings.xml 을 읽어 인덱스→문자열 목록으로 돌려준다.
 
@@ -51,7 +67,7 @@ def _shared_strings(z):
     if not names:
         return []
     out = []
-    with z.open(names[0]) as f:
+    with _open_entry(z, names[0]) as f:
         for _, si in ET.iterparse(f, events=('end',)):
             if si.tag == NS + 'si':
                 out.append(''.join(t.text or '' for t in si.iter(NS + 't')))
@@ -92,7 +108,7 @@ def iter_rows(path):
                         if n.startswith('xl/worksheets/sheet')),
                        key=lambda n: int(''.join(c for c in n if c.isdigit())))
         for name in names:
-            with z.open(name) as f:
+            with _open_entry(z, name) as f:
                 for _, row in ET.iterparse(f, events=('end',)):
                     if row.tag != NS + 'row':
                         continue

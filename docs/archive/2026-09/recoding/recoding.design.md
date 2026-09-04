@@ -225,7 +225,7 @@ K 의 구간은 **정확 초기하**(Clopper-Pearson 형, `missed_interval`)다.
   3. make_coding_sheet.py  4층 합집합       [완료] strata() · draw() · pred/population 키 · coder_prompt (R15e–i3)
   4. code_pages.py (신규)  항목별 호출기     [완료] R15j–m
   5. score_coding.py  전수 + 재현율층       [완료] missed_interval · score_census · check_population · family_guard (R15n–p)
-  6. outputs/test-recount-grades.py  R15   [완료] 56건, 뮤테이션 7종 전부 검출 (§7)
+  6. outputs/test-recount-grades.py  R15   [완료] 70건(/ship 리뷰 회귀 14건 포함), 뮤테이션 9종 전부 검출 (§7)
   7. 표본 생성 (538쪽, 지문 68a4575ffff0def9)  [완료] python3.13 make_coding_sheet.py
   8. 코딩 실행 — B: gpt-5.6-sol **완료** (2026-09-04, 538/538, 읽기 실패 0, 재시도 0, 입력 약 90만 토큰; temperature 거부 → 온도 없이, meta 기록)
                 A: **gpt-5.6-sol 로 완료** (연구 책임자 결정, 2026-09-04 — OpenAI 키만 있어 같은 모델로 진행. FR-1 미충족, 채점기가 경고)
@@ -268,9 +268,13 @@ B 원자료 결함 하나: id 385 의 `latency_ms` 가 -1,159 — 벽시계 NTP 
 | R15r | `--coders C,B` 가 `coding_C`/`coding_B` 를 읽어 채점하고 JSON 에 코더 이름·파일·계열 판정을 남긴다 |
 | R15s·s2·s3 | `claude_cli_post`: 도구·설정·MCP·세션 없이 저장소 밖에서 실행, 요청 모델의 modelUsage 로 토큰·모델 집계, 보조 호출 분리; 온도·시드는 호출 없이 400; 로그인 없음 401 / 그 밖 500 / 시간 초과 None |
 | R15s4·s5 | `--workers` 병렬도 산출물 동일; `--backend claude-cli` 는 env 없이 dry-run |
+| R15t·u | (PR #12 리뷰) `coding_key.json` 은 `--force` 없이 덮어쓰지 않는다; xlsx 압축 폭탄(압축비 > 200)은 읽지 않는다 |
+| R15v·v2·v3 | (/ship 테스트 스페셜리스트) 라벨 없는 항목이 있어도 전수 채점이 죽지 않는다; `claude` 실행 파일 부재는 재시도 없이 실패; 200 인데 JSON 이 아닌 본문은 항목 오류로 |
+| R15w–w5 | (/ship 보안 스페셜리스트) 추적 JSON 에 홈 경로 없음·문자열 ≤200자; 오류 스크럽; 응답 상한+sha256; 중립 키는 주소 필수·https 강제; claude 작업 디렉터리는 프로세스별 0700 |
+| R15x·x2·x3 | (/ship 유지보수성) `strata()` 가 절단층 수치를 돌려줘 콘솔·JSON 이 한 계산; 구형식 키에서 `--out` 안내; 층 이름은 `page_utils.CODING_GROUPS` 단일 소유 |
 | R15l10 | 지연은 단조 시계로 잰다 — 벽시계가 뒤로 가도 음수가 되지 않는다 (B 실행에서 실제로 -1,159 ms 가 찍혔다) |
 
-**뮤테이션 (2026-09-04, 전부 검출)**: 온도를 env 에서 상속 → R15j5+R15m / 합의군을 무작위로
+**뮤테이션 (2026-09-04, 전부 검출; /ship 전 재실행 9종 전부 검출 — 아래 7종 + `--force` 가드 제거→R15t + 압축 폭탄 가드 제거→R15u)**: 온도를 env 에서 상속 → R15j5+R15m / 합의군을 무작위로
 → R15h / 재현율층에 등급3 포함 → R15g / 0건에서 점추정 → R15n+R15o4 / `?` 를 분모에 남김 →
 R15o3 / 애매한 응답도 라벨로 → R15k+R15l+R15l5 / 재개 시 오류 항목을 안 물음 → R15l5.
 
