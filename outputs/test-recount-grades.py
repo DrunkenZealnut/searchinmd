@@ -920,6 +920,230 @@ check('R12p5 공유 문자열 워크북에서도 절단을 잡는다',
       _shared_st.truncated_rows == 1 and _shared_st.longest_cell == LIM,
       (_shared_st.truncated_rows, _shared_st.longest_cell))
 
+# ---------------------------------------------------------------------------
+# R13 커버리지 갭 보강 (/ship Step 7 감사)
+#
+# R9-R12 는 순수 로직에 강했지만 I/O 경계와 각 main() 이 통째로 비어 있었다.
+# 특히 truncation_audit._cell_value 는 **실제 워크북 두 개가 쓰는 inlineStr
+# 갈래**에 시험이 없고, 이번에 새로 만든 공유 문자열 갈래만 검증돼 있었다 —
+# 그 갈래가 죽으면 "절단 0건" 이라는 틀린 답이 나오는데 전 어서션이 초록이다.
+# ---------------------------------------------------------------------------
+print('\n[R13] 커버리지 갭 보강 (I/O 경계·main·가드)')
+
+_NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+
+
+def _xlsx(path, sheets, shared=None):
+    """시트별 XML 문자열로 최소 xlsx 를 만든다. sheets 는 XML 조각 목록."""
+    import zipfile
+    with zipfile.ZipFile(path, 'w') as z:
+        if shared is not None:
+            z.writestr('xl/sharedStrings.xml', '<sst xmlns="%s">%s</sst>'
+                       % (_NS, ''.join('<si><t>%s</t></si>' % s for s in shared)))
+        for i, body in enumerate(sheets, 1):
+            z.writestr('xl/worksheets/sheet%d.xml' % i,
+                       '<worksheet xmlns="%s"><sheetData>%s</sheetData></worksheet>'
+                       % (_NS, body))
+    return path
+
+
+def _inline(col, text):
+    return '<c r="%s" t="inlineStr"><is><t>%s</t></is></c>' % (col, text)
+
+
+def _num(col, v):
+    return '<c r="%s"><v>%s</v></c>' % (col, v)
+
+
+# --- truncation_audit: 실제 워크북 형식(inlineStr)과 나머지 갈래
+with tempfile.TemporaryDirectory() as _td:
+    _il = _xlsx(os.path.join(_td, 'inline.xlsx'),
+                ['<row r="1">%s%s%s</row>'
+                 % (_inline('A1', 'LM_x'), _inline('B1', CUT), _num('C1', 7))])
+    _il_rows = list(TA.iter_rows(_il))
+    _il_stats = TA.scan_cells(_il)
+    _multi = _xlsx(os.path.join(_td, 'multi.xlsx'),
+                   ['<row r="1">%s</row>' % _inline('A1', 'first'),
+                    '<row r="1">%s</row>' % _inline('A1', 'second')])
+    _multi_rows = [r[0] for r in TA.iter_rows(_multi)]
+
+check('R13a inlineStr 셀을 읽는다 (실제 워크북 두 개가 쓰는 형식)',
+      _il_rows[0][0] == 'LM_x' and len(_il_rows[0][1]) == LIM
+      and _il_rows[0][2] == '7',
+      [None if v is None else (len(v), v[:5]) for v in _il_rows[0]])
+check('R13b inlineStr 워크북에서도 절단을 잡는다',
+      _il_stats.truncated_rows == 1 and _il_stats.longest_cell == LIM,
+      (_il_stats.truncated_rows, _il_stats.longest_cell))
+check('R13c sharedStrings 가 없으면 빈 표로 동작한다 (예외 없음)',
+      _il_stats.rows == 1)
+check('R13d 시트를 번호 순으로 훑는다 (sheet2 가 sheet10 앞)',
+      _multi_rows == ['first', 'second'], _multi_rows)
+
+with tempfile.TemporaryDirectory() as _td:
+    # 공유 색인이 범위 밖이거나 숫자가 아니면 본문 대신 None — 색인을 본문으로
+    # 착각해 짧은 숫자 문자열을 흘리는 것보다 낫다.
+    _bad = _xlsx(os.path.join(_td, 'bad.xlsx'),
+                 ['<row r="1"><c r="A1" t="s"><v>99</v></c>'
+                  '<c r="B1" t="s"><v>x</v></c><c r="C1"></c></row>'],
+                 shared=['하나'])
+    _bad_rows = list(TA.iter_rows(_bad))
+check('R13e 공유 색인이 범위 밖·비숫자·빈 셀이면 None (색인 유출 없음)',
+      _bad_rows[0] == (None, None, None), _bad_rows[0])
+
+# fold_pages 는 이 스크립트의 핵심 주장이다 — recount 의 parse_row/aggregate 를
+# 다시 구현하지 않고 빌려 쓴다. 몽키패치가 실제로 걸리고 되돌아오는지 본다.
+with tempfile.TemporaryDirectory() as _td:
+    _row = ('<row r="1">%s%s%s%s%s%s%s%s</row>'
+            % (_num('A1', 1), _inline('B1', 'LM1903060329_19v1_x'),
+               _inline('C1', '반도체장비'), _num('D1', 46),
+               _inline('E1', CUT), _inline('F1', '아니오'),
+               _num('G1', 3), _inline('H1', '사유')))
+    _fp = _xlsx(os.path.join(_td, 'fold.xlsx'), [_row])
+    _orig_lw = R.load_workbook
+    _agg, _stats = TA.fold_pages(_fp, R.NCS_MAP, False)
+check('R13f fold_pages 가 recount 의 parse_row/aggregate 를 실제로 태운다',
+      _agg['pages'] == 1 and _agg['truncated_pages'] == 1
+      and _agg['truncated_page_g'] == {1: 0, 2: 0, 3: 1},
+      (_agg['pages'], _agg['truncated_pages'], _agg['truncated_page_g']))
+check('R13g fold_pages 는 셀 수치를 같은 패스에서 함께 센다 (재파싱 없음)',
+      _stats.rows == 1 and _stats.truncated_rows == 1)
+check('R13h fold_pages 가 recount.load_workbook 을 원상 복구한다',
+      R.load_workbook is _orig_lw)
+
+
+def _run_main(fn, argv):
+    """argv 를 갈아끼우고 main() 을 돌려 (종료코드, 출력) 을 얻는다."""
+    old = sys.argv
+    sys.argv = argv
+    try:
+        out, log = quiet(fn)
+        return (out or 0), log
+    except SystemExit as e:
+        return (e.code if e.code is not None else 0), ''
+    finally:
+        sys.argv = old
+
+
+_code, _ = _run_main(TA.main, ['truncation_audit.py', '--data', '/nonexistent'])
+# sys.exit(str) 은 메시지를 stderr 로 내고 프로세스 종료코드 1 을 준다.
+check('R13i truncation_audit 는 원본이 없으면 트레이스백 대신 안내로 종료',
+      isinstance(_code, str) and '원본 엑셀을 찾을 수 없습니다' in _code
+      and '.gitignore' in _code, _code)
+
+# --- regrade.load_pages: regrade·make_coding_sheet 의 유일한 리더인데 어서션 0건이었다
+import regrade as G2  # noqa: E402  (G 와 같은 모듈, 이름만 분리해 의도를 드러낸다)
+
+_GOOD = (1, 'x', 'LM_a/y.md', 'area', 19, '본문 가나다', '아니오', 2, '사유')
+_CUTROW = (2, 'x', 'LM_a/y.md', 'area', 20, CUT, '아니오', 3, '사유')
+
+
+def _with_regrade_wb(sheets):
+    wb = FakeWB(sheets)
+    orig = G2.load_workbook
+    G2.load_workbook = lambda *a, **k: wb
+    try:
+        return quiet(G2.load_pages, 'dummy.xlsx')[0]
+    finally:
+        G2.load_workbook = orig
+
+
+_lp = _with_regrade_wb({'s': [_GOOD, _CUTROW]})
+check('R13j load_pages 가 (교재,페이지) 로 접고 본문·등급을 싣는다',
+      set(_lp) == {('LM_a/y.md', 19), ('LM_a/y.md', 20)}
+      and _lp[('LM_a/y.md', 19)]['grade'] == 2, sorted(_lp))
+check('R13k load_pages 가 절단 플래그를 채운다',
+      _lp[('LM_a/y.md', 20)]['truncated']
+      and not _lp[('LM_a/y.md', 19)]['truncated'])
+_dup = _with_regrade_wb({'s': [_GOOD, (9, 'x', 'LM_a/y.md', 'area', 19,
+                                       '나중 본문', '예', 1, '다른 사유')]})
+check('R13l 같은 페이지가 또 나오면 첫 행이 이긴다 (스캔 순서 의존 제거)',
+      _dup[('LM_a/y.md', 19)]['text'] == '본문 가나다',
+      _dup[('LM_a/y.md', 19)]['text'])
+_skip = _with_regrade_wb({'s': [
+    ('number',) + _GOOD[1:],                      # 헤더 행
+    (1, 'x', 'LM_a/y.md', 'a', 19),               # 열이 모자란 행
+    (1, 'x', None, 'a', 19, '본문', '아니오', 2, 's'),        # 교재 없음
+    (1, 'x', 'LM_b/y.md', 'a', 'abc', '본문', '아니오', 2, 's'),  # 페이지 파싱 실패
+    (1, 'x', 'LM_c/y.md', 'a', 21, None, '아니오', 2, 's'),   # 본문이 문자열이 아님
+    (1, 'x', 'LM_d/y.md', 'a', 22, '   ', '아니오', 2, 's'),  # 본문이 공백뿐
+]})
+check('R13m load_pages 가 헤더·짧은 행·결측·파싱실패·빈 본문을 전부 건너뛴다',
+      _lp and _skip == {}, sorted(_skip))
+
+check('R13n median_length 는 빈 입력에서 DENSITY_BASE 로 떨어진다',
+      G2.median_length({}) == G2.DENSITY_BASE, G2.median_length({}))
+check('R13o median_length 는 중앙값을 준다',
+      G2.median_length({i: {'text': 'x' * n} for i, n in enumerate((10, 20, 90))}) == 20)
+check('R13p dist 는 등장하지 않은 등급도 0 으로 채운다',
+      G2.dist({'a': {'g': 3}}) == {1: 0, 2: 0, 3: 3 and 1}, G2.dist({'a': {'g': 3}}))
+check('R13q agree 는 등급이 정수가 아닌 행을 분모에서 뺀다',
+      G2.agree({'a': {'g': 2}, 'b': {'g': 1}},
+               {'a': {'grade': 2}, 'b': {'grade': None}}) == (1, 1),
+      G2.agree({'a': {'g': 2}, 'b': {'g': 1}},
+               {'a': {'grade': 2}, 'b': {'grade': None}}))
+_code, _ = _run_main(G2.main, ['regrade.py', '--data', '/nonexistent'])
+check('R13r regrade 는 원본이 없으면 트레이스백 대신 안내로 종료',
+      isinstance(_code, str) and '원본 엑셀을 찾을 수 없습니다' in _code, _code)
+
+# --- score_coding 가드
+check('R13s kappa 는 빈 입력에서 nan (0 나눗셈 대신)', SC.kappa([], []) != SC.kappa([], []))
+check('R13t kappa 는 전원 같은 범주면 nan (pe==1, 우연 일치가 100%)',
+      SC.kappa([3, 3, 3], [3, 3, 3]) != SC.kappa([3, 3, 3], [3, 3, 3]))
+_ids20 = [str(i) for i in range(1, 25)]
+_A20 = {i: (3 if int(i) % 2 else 1) for i in _ids20}
+_key20 = {i: {'group': 'disputed', 'cell_truncated': int(i) <= 2,
+              'file': 'LM_a', 'page': int(i)} for i in _ids20}
+_, _out20 = quiet(SC.strata, _A20, _A20, _key20, _ids20)
+check('R13u 층이 20항목 이상이면 κ 를 낸다 (작은 층에서는 안 낸다)',
+      'κ =' in _out20 and '절단층  2항목' in _out20 and 'κ' not in _out20.split('비절단층')[0].split('절단층')[1].split('\n')[0],
+      _out20)
+_keyno = {i: dict(r, cell_truncated=False) for i, r in _key20.items()}
+_, _outno = quiet(SC.strata, _A20, _A20, _keyno, _ids20)
+check('R13v 절단 항목이 0건이면 층 분리를 하지 않고 안내한다',
+      '절단 항목이 없어' in _outno and 'A 분포' not in _outno, _outno)
+_old_cwd = SC.HERE
+SC.HERE = '/nonexistent'
+try:
+    _lcode, _ = _run_main(lambda: SC.load('coding_A.json'), ['x'])
+finally:
+    SC.HERE = _old_cwd
+check('R13w score_coding.load 는 파일이 없으면 안내로 종료',
+      isinstance(_lcode, str) and '없음' in _lcode, _lcode)
+
+# 커밋된 regrade_impact.json 과 population() 이 읽는 키를 묶어 둔다. 이 결합은
+# regrade.py 의 **표시용 라벨 문자열**('D1+D2 둘 다')이라, 라벨을 손보면
+# score_coding 이 KeyError 로 죽는데 지금까지 아무 시험도 걸려 있지 않았다.
+_imp = json.load(open(os.path.join(ROOT, 'docs/03-analysis/data/regrade_impact.json'),
+                      encoding='utf-8'))
+check('R13x regrade_impact.json 에 population() 이 읽는 키가 있다',
+      'pages' in _imp and '3' in _imp['dist']['baseline']
+      and '3' in _imp['dist']['D1+D2 둘 다'],
+      list(_imp['dist']))
+check('R13y 분쟁군 = 현행 등급3 - 수정본 등급3 이 양수 (표본 설계 전제)',
+      _imp['dist']['baseline']['3'] - _imp['dist']['D1+D2 둘 다']['3'] > 0,
+      (_imp['dist']['baseline']['3'], _imp['dist']['D1+D2 둘 다']['3']))
+
+# --- chunk_text 의 남은 갈래
+_nl = 'A' * 4000 + '\n' + 'B' * 4000            # 문단 경계 없이 줄 경계만
+_p_nl = MCS.chunk_text(_nl)
+check('R13z 문단 경계가 없으면 줄 경계에서 나눈다',
+      _p_nl[0].endswith('\n') and ''.join(_p_nl) == _nl, [len(p) for p in _p_nl])
+_hard = 'C' * 20000                              # 경계가 아예 없다
+_p_hard = MCS.chunk_text(_hard)
+check('R13aa 경계가 하나도 없으면 그냥 끊는다 (무한 루프 없이)',
+      ''.join(_p_hard) == _hard
+      and all(len(p) <= MCS.CHUNK_CHARS for p in _p_hard), [len(p) for p in _p_hard])
+
+# --- EXPECTED 자체 정합성 (R5e/R5f 패턴을 절단 키로 확장)
+check('R13ab EXPECTED 의 등급별 절단 합계 == truncated_pages',
+      all(sum(R.EXPECTED[k]['truncated_page_g'].values())
+          == R.EXPECTED[k]['truncated_pages'] for k in ('ncs', 'txt')),
+      {k: (R.EXPECTED[k]['truncated_pages'],
+           R.EXPECTED[k]['truncated_page_g']) for k in ('ncs', 'txt')})
+check('R13ac EXPECTED 의 절단 쪽수는 전체 쪽수를 넘지 않는다',
+      all(R.EXPECTED[k]['truncated_pages'] <= R.EXPECTED[k]['pages']
+          for k in ('ncs', 'txt')))
+
 print('\n결과: %d/%d PASS%s%s' % (
     PASS, PASS + FAIL, ', %d FAIL' % FAIL if FAIL else '',
     ', %d KNOWN ISSUE' % KNOWN if KNOWN else ''))

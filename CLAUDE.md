@@ -152,8 +152,8 @@ There is no test framework (no `package.json` / `pyproject.toml`). The project s
 
 ```bash
 node   outputs/test-search-equivalence.js   # 24 assertions — search equivalence, chunked render, lazy parse cache
-node   outputs/test-dashboard-data.js       # 117 assertions — docs/ dashboard data + table render/sort
-python3 outputs/test-recount-grades.py      # 181 assertions — recount_grades.py logic
+node   outputs/test-dashboard-data.js       # 122 assertions — docs/ dashboard data + table render/sort
+python3 outputs/test-recount-grades.py      # 210 assertions — recount_grades.py logic
 
 python3 truncation_audit.py                 # not a test — re-measures truncation and checks it against EXPECTED (needs data/)
 
