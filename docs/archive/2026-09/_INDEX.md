@@ -17,7 +17,7 @@
   방향성 동점 규칙을 두 코더에게 흘렸으며, 표본틀이 C-2 버그를 가진 카운터로 뽑혔다.
 - **왜 재채점할 수 없는가**: `coding_key.json` 이 `sample_digest` 가드(`9773312`)보다 먼저
   생성돼 지문이 없다. 채점기는 "구버전 산출물" 로 멈춘다 — 가드가 옳다.
-- **후속**: `recoding` (docs/01-plan·02-design/features/recoding.*). 루트의 `coding_key.json` 은
+- **후속**: `recoding` (이 디렉터리의 [`recoding/`](recoding/) 에 보관). 루트의 `coding_key.json` 은
   2026-09-04 부터 538쪽 4층 합집합 표본의 새 키다.
 
 ## recoding
