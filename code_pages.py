@@ -72,6 +72,7 @@ DEFAULT_SHEET = os.path.join(HERE, 'coding_sheet.json')
 DEFAULT_TEMPERATURE = 0.0     # env 의 온도를 상속하지 않는다. 바꾸려면 --temperature 로 명시
 SEED = 20260904               # API seed (best-effort 재현). 표본 시드와 같은 값을 쓴다
 MAX_RETRIES = 5
+MAX_CONSECUTIVE_FAILURES = 10  # 항목 연속 실패 상한 — 키·모델명 오류 같은 결정적 실패로 538항목을 헛돌지 않는다
 BACKOFF = (1, 2, 4, 8, 16)    # 초. 429·5xx·네트워크 오류에만 적용
 TIMEOUT = 180                 # 초. 분쟁군은 평균 11,735자라 추론 모델이 오래 걸릴 수 있다
 
@@ -165,6 +166,8 @@ def parse_grade(answer):
     if len(found) != 1:
         return None
     g = found.pop()
+    if g != '?' and '?' in answer:                # "3?" — 주저한 답은 라벨이 아니다
+        return None
     return '?' if g == '?' else int(g)
 
 
@@ -255,9 +258,13 @@ def claude_cli_post(url, headers, payload, timeout, run=None, cwd=None, claude_b
     # Claude Code 는 요청 모델 외에 Haiku 보조 호출(실측 922토큰 고정)을 낀다. 토큰·모델은 요청
     # 모델의 modelUsage 로 세고, 나머지는 side_calls 로 남긴다 — 총계 usage 를 쓰면 섞인다.
     mu = body.get('modelUsage') or {}
-    main_model = next((k for k in mu if k.startswith(payload['model'])), None)
+    req = payload['model']
+    main_model = (next((k for k in mu if k.startswith(req)), None)
+                  or next((k for k in mu if req in k), None))          # 별칭(opus)도 이름을 품은 항목으로
     if main_model is None and mu:
-        main_model = max(mu, key=lambda k: (mu[k].get('inputTokens') or 0) + (mu[k].get('cacheReadInputTokens') or 0)
+        # Claude Code 가 끼워 넣는 Haiku 보조 호출은 토큰이 고정적으로 커서 짧은 항목에서는 최다가 된다
+        cands = [k for k in mu if 'haiku' not in k.lower()] or list(mu)
+        main_model = max(cands, key=lambda k: (mu[k].get('inputTokens') or 0) + (mu[k].get('cacheReadInputTokens') or 0)
                          + (mu[k].get('cacheCreationInputTokens') or 0))
     u = mu.get(main_model) or {}
     usage = body.get('usage') or {}
@@ -369,6 +376,14 @@ def code_items(sheet, cfg, coder, out_path, temperature=DEFAULT_TEMPERATURE, see
             raise ValueError('다른 모델·주소로는 재개할 수 없습니다 (파일 %s / 지금 %s @ %s). '
                              '한 파일에 코더가 섞이면 라벨의 출처가 사라집니다.'
                              % (m.get('model'), cfg['model'], cfg['base_url']))
+        want = hashlib.sha256(prompt.encode('utf-8')).hexdigest()
+        if m.get('prompt_sha256') != want:
+            raise ValueError('지시문(프롬프트)이 파일과 다릅니다 — 다른 시트의 지시문으로는 재개할 수 없습니다: %s' % out_path)
+        if m.get('temperature') != temperature:
+            raise ValueError('온도가 파일과 다릅니다 (파일 %s / 지금 %s) — 한 파일의 라벨은 한 설정에서 나와야 합니다'
+                             % (m.get('temperature'), temperature))
+        if m.get('seed') != seed:
+            raise ValueError('시드가 파일과 다릅니다 (파일 %s / 지금 %s)' % (m.get('seed'), seed))
         m.setdefault('resumed_at', []).append(_now())
     else:
         if os.path.exists(out_path):
@@ -427,6 +442,7 @@ def code_items(sheet, cfg, coder, out_path, temperature=DEFAULT_TEMPERATURE, see
             pool.shutdown(wait=False, cancel_futures=True)
 
     results = _parallel(todo) if workers > 1 else map(_one, todo)
+    streak = 0                                    # 연속 호출 실패 수 — 결정적 실패를 조기에 끊는다
     for n, (sid, r, err) in enumerate(results, 1):
         if err is not None:
             err = scrub(err)
@@ -435,7 +451,12 @@ def code_items(sheet, cfg, coder, out_path, temperature=DEFAULT_TEMPERATURE, see
                                'latency_ms': None, 'retries': None, 'cost_usd': None, 'error': err}
             write_doc(out_path, doc)
             log('  [%d/%d] id=%s  실패: %s' % (n, len(todo), sid, err[:100]))
+            streak += 1
+            if streak >= MAX_CONSECUTIVE_FAILURES:
+                raise RuntimeError('연속 %d회 실패 — 중단합니다 (기록은 남았고 --resume 로 이어갑니다). 마지막 오류: %s'
+                                   % (streak, err[:100]))
             continue
+        streak = 0
         g = parse_grade(r['answer'])
         doc['raw'][sid] = {k: r.get(k) for k in ('answer', 'tokens_in', 'tokens_out',
                                                  'latency_ms', 'retries', 'cost_usd')}
@@ -527,7 +548,7 @@ def main():
         doc = code_items(sheet, cfg, args.coder, out, temperature=args.temperature,
                          seed=args.seed, limit=args.limit, resume=args.resume,
                          provider_env=provider_env, post=post, workers=args.workers)
-    except ValueError as e:
+    except (ValueError, RuntimeError) as e:       # 재개 거부·연속 실패 중단은 트레이스백이 아니라 한 줄로
         sys.exit(str(e))
     print('\n채점 %d / 오류 %d / 전체 %d → %s'
           % (len(doc['grades']), len(doc['errors']), len(sheet['items']), out))

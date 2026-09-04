@@ -1813,7 +1813,7 @@ _res2, _cout2 = quiet(lambda: _call(lambda: SC.score_census(dict(_gA, **{'10': 1
 check('R15o12 층별 ? 비율이 임계를 넘으면 경고를 내고 기록한다 (분쟁군 B, 재현율층 A); 없으면 조용하다',
       isinstance(_uw, list) and {(w['group'], w['coder']) for w in _uw} == {('disputed', 'B'), ('recall', 'A')}
       and '경고' in _cout and isinstance(_res2, dict) and _res2.get('unsure_warnings') == []
-      and '판단 불가 비율' not in _cout2, (_uw, _cout[:0]))
+      and '판단 불가 비율' not in _cout2, (_uw, _cout2[:200]))
 
 # 재현율층에 어느 변형이든 등급3 예측이 섞여 있으면 표본이 낡은 것 — 계산하지 않고 멈춘다
 _bad = dict(_kdoc, items=_kitems[:-1] + [_ki(10, 'recall', (3, 1, 1, 1))])
@@ -1878,17 +1878,33 @@ if os.path.exists(_sc_p) and os.path.exists(_ck_p):
     _files = _sc.get('coder_files') or {n: 'coding_%s.json' % n for n in _names}
     _docs = {n: json.load(open(os.path.join(ROOT, _files[n]), encoding='utf-8')) for n in _names
              if os.path.exists(os.path.join(ROOT, _files[n]))}
+    def _tri(sc, docs, names):
+        return (len(docs) == 2
+                and all(sc.get('sample_digest') == _ck.get('sample_digest') == d.get('sample_digest')
+                        for d in docs.values())
+                and sc.get('agreement', {}).get('n') == len(_ck['items'])
+                and sc['population'] == _ck['population']
+                and all(sc['coders'][n].get('model') == docs[n]['meta'].get('model') for n in names)
+                and all(sum(1 for i in _ck['items']
+                            if docs[n]['grades'].get(str(i['id'])) == 3 and i['group'] != 'recall')
+                        == sc[n]['census_true'] for n in names))
     check('R15q 커밋된 recoding_scores.json 이 커밋된 키·라벨과 맞는다 (지문·항목 수·모델·등급3 수)',
-          len(_docs) == 2
-          and all(_sc.get('sample_digest') == _ck.get('sample_digest') == d.get('sample_digest')
-                  for d in _docs.values())
-          and _sc.get('agreement', {}).get('n') == len(_ck['items'])
-          and _sc['population'] == _ck['population']
-          and all(_sc['coders'][n].get('model') == _docs[n]['meta'].get('model') for n in _names)
-          and all(sum(1 for i in _ck['items']
-                      if _docs[n]['grades'].get(str(i['id'])) == 3 and i['group'] != 'recall')
-                  == _sc[n]['census_true'] for n in _names),
-          (_names, _sc.get('sample_digest'), _ck.get('sample_digest'), sorted(_docs)))
+          _tri(_sc, _docs, _names), (_names, _sc.get('sample_digest'), _ck.get('sample_digest'), sorted(_docs)))
+    # 결과 문서가 인용하는 보조 파일 둘도 같은 대조를 받는다 — 주 파일만 맞고 보조가 낡아도 초록이면 안 된다
+    _tri2 = {}
+    for _suffix in ('AB', 'CA'):
+        _p2 = os.path.join(ROOT, 'docs/03-analysis/data/recoding_scores_%s.json' % _suffix)
+        if not os.path.exists(_p2):
+            continue
+        _s2 = json.load(open(_p2, encoding='utf-8'))
+        _n2 = _s2.get('coder_names') or list(_suffix)
+        _f2 = _s2.get('coder_files') or {n: 'coding_%s.json' % n for n in _n2}
+        _d2 = {n: json.load(open(os.path.join(ROOT, _f2[n]), encoding='utf-8')) for n in _n2
+               if os.path.exists(os.path.join(ROOT, _f2[n]))}
+        _tri2[_suffix] = (_tri(_s2, _d2, _n2) and _n2 == list(_suffix)
+                          and ('FR-1' in (_s2.get('family_warning') or '')) == (_suffix == 'AB'))
+    check('R15q2 보조 산출물 recoding_scores_AB/CA.json 도 키·라벨과 맞고 AB 만 계열 경고를 싣는다',
+          len(_tri2) == 2 and all(_tri2.values()), _tri2)
 else:
     print('  (recoding_scores.json / coding_key.json 이 없어 R15q 를 건너뛴다)')
 
@@ -2272,6 +2288,125 @@ _r_mu2 = _call(lambda: CP.claude_cli_post('x', {}, _pl, 180, run=_run_mu({}, {'i
 check('R15z8 modelUsage 에 요청 모델이 없으면 토큰이 가장 많은 모델을, modelUsage 가 없으면 usage 총계를 쓴다',
       isinstance(_r_mu1, tuple) and _r_mu1[1]['model'] == 'claude-sonnet-5' and _r_mu1[1]['usage']['prompt_tokens'] == 5000
       and isinstance(_r_mu2, tuple) and _r_mu2[1]['usage'] == {'prompt_tokens': 42, 'completion_tokens': 3}, (_r_mu1, _r_mu2))
+
+
+# --- /ship 적대적·커버리지 리뷰 2차 (2026-09-04): 라벨 입력 검증·완주 검증·주저 응답·재개 대조·별칭 폴백·연속 실패
+print('\n[R15] 재코딩 — /ship 리뷰 회귀 2차 (라벨 타입·완주·주저 응답·재개 대조·별칭·연속 실패)')
+
+check('R15z9 주저 응답(3?, 2?)은 라벨이 아니다 — 정확히 하나의 토큰만 받는다',
+      CP.parse_grade('3?') is None and CP.parse_grade('2?') is None and CP.parse_grade('3 ?') is None
+      and CP.parse_grade('3') == 3 and CP.parse_grade('?') == '?' and CP.parse_grade('등급: 3') == 3
+      and CP.parse_grade(' 2\n') == 2,
+      [(a, CP.parse_grade(a)) for a in ('3?', '2?', '3 ?', '3', '?', '등급: 3')])
+
+# adversarial 1 (9/10): 손으로 쓴 "3" 이 3 도 1·2 도 아니어서 일치 0/538, 정밀도 0.0 이 경고 없이 찍힌다
+_gA_str = {k: (str(v) if v != '?' else '?') for k, v in _gA.items()}
+_res_str = quiet(lambda: _call(lambda: SC.score_census(_gA_str, _gB, _kdoc)))[0]
+_norm_bad = _call(lambda: SC.normalize_labels({'1': 'x', '2': 3}, 'A'))
+_norm_ok = _call(lambda: SC.normalize_labels({'1': '3', '2': 1, '3': '?', '4': 2.0}, 'A'))
+check('R15z10 코더 라벨은 "1"/"2"/"3"/1/2/3/"?" 만 받아 정수로 정규화하고, 그 밖의 값은 즉시 멈춘다',
+      _norm_ok == {'1': 3, '2': 1, '3': '?', '4': 2}
+      and isinstance(_norm_bad, SystemExit) and '라벨' in str(_norm_bad)
+      and isinstance(_res_str, dict) and _res_str['agreement'] == _res['agreement']
+      and _res_str['A']['variants'] == _res['A']['variants'],
+      (_norm_ok, _norm_bad, _res_str['agreement'] if isinstance(_res_str, dict) else _res_str))
+
+# adversarial 2 (9/10): grades 에도 errors 에도 없는 id 는 "판단 불가" 가 아니라 완주하지 않은 파일이다
+_ids10 = [str(i) for i in range(1, 11)]
+_cc_bad = _call(lambda: SC.check_complete({'grades': {k: v for k, v in _gA.items() if k != '3'}, 'errors': {}}, _ids10, 'A'))
+_cc_ok = _call(lambda: SC.check_complete({'grades': {k: v for k, v in _gA.items() if k != '3'}, 'errors': {'3': 'x'}}, _ids10, 'A'))
+_cc_extra = _call(lambda: SC.check_complete({'grades': dict(_gA, **{'99': 1}), 'errors': {}}, _ids10, 'A'))
+check('R15z11 라벨도 오류도 없는 항목이 있으면 채점을 거부한다 (완주하지 않은 산출물); 키에 없는 id 도 거부',
+      isinstance(_cc_bad, SystemExit) and '1' in str(_cc_bad) and 'A' in str(_cc_bad)
+      and _cc_ok is None and isinstance(_cc_extra, SystemExit), (_cc_bad, _cc_ok, _cc_extra))
+
+# testing 7 / adversarial 9: 모르는 군은 통계에서 조용히 빠진다 → 전항목 배치 어서션
+_kdoc_bad = dict(_kdoc, items=[dict(_kitems[0], group='bogus')] + _kitems[1:])
+_res_bad = quiet(lambda: _call(lambda: SC.score_census(_gA, _gB, _kdoc_bad)))[0]
+check('R15z12 키 항목의 군이 CODING_GROUPS 밖이면 통계에서 조용히 빠지지 않고 멈춘다',
+      isinstance(_res_bad, SystemExit) and 'bogus' in str(_res_bad), _res_bad)
+
+# adversarial 4 (8/10): --resume 가 프롬프트·온도·시드를 대조하지 않아 섞여도 통과한다
+with tempfile.TemporaryDirectory() as _td:
+    _outz = os.path.join(_td, 'coding_Z.json')
+    _base = _call(lambda: CP.code_items(_sheet15, _cfg15, 'Z', _outz, post=_fake_post, limit=1, **_quiet_kw))
+    _sheet_p2 = dict(_sheet15, coder_prompt='지시문 Y')
+    _rz_prompt = _call(lambda: CP.code_items(_sheet_p2, _cfg15, 'Z', _outz, post=_fake_post, resume=True, **_quiet_kw))
+    _rz_temp = _call(lambda: CP.code_items(_sheet15, _cfg15, 'Z', _outz, post=_fake_post, resume=True,
+                                           temperature=0.7, **_quiet_kw))
+    _rz_seed = _call(lambda: CP.code_items(_sheet15, _cfg15, 'Z', _outz, post=_fake_post, resume=True,
+                                           seed=1, **_quiet_kw))
+    _rz_ok = _call(lambda: CP.code_items(_sheet15, _cfg15, 'Z', _outz, post=_fake_post, resume=True, **_quiet_kw))
+check('R15z13 --resume 는 프롬프트·온도·시드가 파일과 다르면 거부한다 (같으면 이어간다)',
+      isinstance(_base, dict)
+      and isinstance(_rz_prompt, ValueError) and '지시문' in str(_rz_prompt)
+      and isinstance(_rz_temp, ValueError) and '온도' in str(_rz_temp)
+      and isinstance(_rz_seed, ValueError) and '시드' in str(_rz_seed)
+      and isinstance(_rz_ok, dict) and len(_rz_ok.get('grades', {})) + len(_rz_ok.get('errors', {})) == 3,
+      (_rz_prompt, _rz_temp, _rz_seed, _rz_ok if not isinstance(_rz_ok, dict) else sorted(_rz_ok)))
+
+# testing 6: --model 이 별칭(opus)이면 접두 일치가 없어 토큰 최다인 Haiku 보조 호출이 주 모델로 찍힌다
+_pl_alias = dict(_pl, model='opus')
+_r_alias = _call(lambda: CP.claude_cli_post('x', {}, _pl_alias, 180, run=_run_mu(
+    {'claude-haiku-4-5': {'inputTokens': 900, 'outputTokens': 10}, 'claude-opus-5': {'inputTokens': 100, 'outputTokens': 3}},
+    {'input_tokens': 1000, 'output_tokens': 13})))
+_r_alias2 = _call(lambda: CP.claude_cli_post('x', {}, dict(_pl, model='zzz'), 180, run=_run_mu(
+    {'claude-haiku-4-5': {'inputTokens': 900, 'outputTokens': 10}, 'claude-opus-5': {'inputTokens': 100, 'outputTokens': 3}},
+    {'input_tokens': 1000, 'output_tokens': 13})))
+check('R15z14 요청 모델이 별칭이면 이름을 품은 항목을, 그것도 없으면 Haiku 가 아닌 항목을 주 모델로 고른다',
+      isinstance(_r_alias, tuple) and _r_alias[1]['model'] == 'claude-opus-5' and _r_alias[1]['usage']['prompt_tokens'] == 100
+      and isinstance(_r_alias2, tuple) and _r_alias2[1]['model'] == 'claude-opus-5', (_r_alias, _r_alias2))
+
+# adversarial 8 (7/10): 결정적 실패가 항목마다 반복되면 538항목 × 31초를 헛돈다 → 연속 실패 상한
+def _post_503(url, headers, payload, timeout):
+    return 503, {'error': {'message': 'down'}}
+_o_mcf = getattr(CP, 'MAX_CONSECUTIVE_FAILURES', None)
+with tempfile.TemporaryDirectory() as _td:
+    try:
+        CP.MAX_CONSECUTIVE_FAILURES = 2
+        _outc = os.path.join(_td, 'coding_F.json')
+        _cf = _call(lambda: CP.code_items(_sheet15, _cfg15, 'F', _outc, post=_post_503, **_quiet_kw))
+        _cf_doc = json.load(open(_outc, encoding='utf-8')) if os.path.exists(_outc) else None
+    finally:
+        if _o_mcf is None:
+            CP.__dict__.pop('MAX_CONSECUTIVE_FAILURES', None)
+        else:
+            CP.MAX_CONSECUTIVE_FAILURES = _o_mcf
+check('R15z15 연속 실패가 상한에 닿으면 남은 항목을 묻지 않고 멈춘다 (기록은 남고 --resume 로 이어간다)',
+      isinstance(_cf, RuntimeError) and '연속' in str(_cf)
+      and isinstance(_cf_doc, dict) and len(_cf_doc['errors']) == 2 and not _cf_doc['grades']
+      and isinstance(_o_mcf, int) and _o_mcf >= 5,
+      (_cf, _cf_doc['errors'] if isinstance(_cf_doc, dict) else _cf_doc, _o_mcf))
+
+# coverage 16·18·19: NaN 세척, 표본 0 구간, 계열 가드 meta 부재 분기
+_nan = float('nan')
+check('R15z16 _no_nan 은 중첩 NaN 을 None 으로, 표본 0 이면 (0, 0, N), meta 가 없으면 FR-1 미확인',
+      SC._no_nan({'a': _nan, 'b': (1, _nan), 'c': [{'d': _nan}]}) == {'a': None, 'b': [1, None], 'c': [{'d': None}]}
+      and SC.missed_interval(50, 0, 0) == (0, 0, 50)
+      and 'FR-1 미확인' in (SC.family_guard(None, {'base_url': 'https://x'}) or '')
+      and SC.family_guard({'base_url': 'https://api.openai.com/v1', 'model': 'g'},
+                          {'base_url': 'https://openrouter.ai/api/v1', 'model': 'anthropic/claude'}) is None,
+      (SC.missed_interval(50, 0, 0), SC.family_guard(None, {'base_url': 'https://x'})))
+
+
+# adversarial 4 (채점 쪽): 두 코더가 다른 지시문으로 코딩했으면 비교가 성립하지 않는다 — 해시가 다르면 멈춘다
+_o_here5, _o_load5 = SC.HERE, SC.load
+with tempfile.TemporaryDirectory() as _td:
+    try:
+        SC.HERE = _td
+        def _ld5(n, _h={'A': 'h1', 'B': 'h2'}):
+            if n.startswith('coding_key'):
+                return _kdoc
+            c = n[7]
+            return {'coder': c, 'sample_digest': _kdoc['sample_digest'],
+                    'meta': {'base_url': 'https://x/v1', 'model': 'm', 'prompt_sha256': _h[c]},
+                    'grades': _gA if c == 'A' else _gB}
+        SC.load = _ld5
+        _ph_code, _ph_out = _run_main(SC.main, ['score_coding.py', '--out', os.path.join(_td, 's.json')])
+    finally:
+        SC.HERE, SC.load = _o_here5, _o_load5
+check('R15z17 두 코더의 prompt_sha256 이 다르면 채점을 거부한다 (다른 지시문의 라벨은 비교 대상이 아니다)',
+      isinstance(_ph_code, str) and '지시문' in _ph_code, (_ph_code, _ph_out[-100:]))
 
 print('\n결과: %d/%d PASS%s%s' % (
     PASS, PASS + FAIL, ', %d FAIL' % FAIL if FAIL else '',

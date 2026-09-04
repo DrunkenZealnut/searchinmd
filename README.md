@@ -86,7 +86,7 @@ python3 truncation_audit.py      # 엑셀 셀 한도에서 잘린 본문을 전�
 ```bash
 node    outputs/test-search-equivalence.js   # 24 — 검색 동치성 + 청크 렌더 + 지연 캐시
 node    outputs/test-dashboard-data.js       # 122 — 대시보드 데이터·표 렌더·정렬
-python3 outputs/test-recount-grades.py       # 315 — 재집계·재채점·페이지 마커·절단 판정·재코딩(코더 호출·채점)
+python3 outputs/test-recount-grades.py       # 325 — 재집계·재채점·페이지 마커·절단 판정·재코딩(코더 호출·채점)
 node    outputs/run-core-logic-tests.js       # 32 — 제목 판정·정규화 (헤드리스)
 node    outputs/test-sri.js                  # 38 — 외부 스크립트 SRI (--online 이면 CDN 대조)
 ```

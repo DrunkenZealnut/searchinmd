@@ -278,7 +278,7 @@ def population():
 def main_legacy():
     """구형식 키(분쟁군·대조군 2층) 채점. 새 형식은 main_census() 가 맡는다."""
     doc_a, doc_b = load('coding_A.json'), load('coding_B.json')
-    A, B = doc_a['grades'], doc_b['grades']
+    A, B = normalize_labels(doc_a['grades'], 'A'), normalize_labels(doc_b['grades'], 'B')
     key_items, key_digest = unwrap(load('coding_key.json'))
     check_sample(key_digest, doc_a, doc_b)      # 번호가 아니라 표본으로 묶는다
     key = {str(r['id']): r for r in key_items}
@@ -549,14 +549,49 @@ def _f1(p, r):
     return 2 * p * r / (p + r) if (p + r) else float('nan')
 
 
+VALID_LABELS = {'1': 1, '2': 2, '3': 3, UNSURE: UNSURE}
+
+
+def normalize_labels(grades, name):
+    """코더 라벨을 정수 1·2·3 또는 '?' 로 정규화한다. 그 밖의 값은 즉시 멈춘다.
+
+    손으로 쓴 "3" 이 3 도 1·2 도 아니면 일치 0/538·정밀도 0.0 이 경고 없이 찍힌다 (적대적 리뷰 T3).
+    """
+    out = {}
+    for sid, v in (grades or {}).items():
+        key = v.strip() if isinstance(v, str) else (str(int(v)) if isinstance(v, (int, float)) and v == int(v) else None)
+        if key not in VALID_LABELS:
+            sys.exit('코더 %s 의 라벨이 1·2·3·? 가 아닙니다 (id %s: %r) — 손으로 고친 파일이거나 다른 형식입니다'
+                     % (name, sid, v))
+        out[str(sid)] = VALID_LABELS[key]
+    return out
+
+
+def check_complete(doc, ids, name):
+    """라벨도 오류도 없는 항목은 '판단 불가' 가 아니라 완주하지 않은 산출물이다 — 채점하지 않는다."""
+    grades, errors = doc.get('grades') or {}, doc.get('errors') or {}
+    missing = [i for i in ids if i not in grades and i not in errors]
+    extra = [i for i in grades if i not in ids]
+    if missing:
+        sys.exit('코더 %s 산출물에 항목 %d개가 없습니다 (grades 에도 errors 에도 없음, 예: id %s) — 완주하지 않은 '
+                 '파일은 채점하지 않습니다. code_pages.py --resume 로 마저 돌리십시오.' % (name, len(missing), missing[0]))
+    if extra:
+        sys.exit('코더 %s 산출물에 키에 없는 항목이 있습니다 (예: id %s) — 다른 표본의 파일입니다' % (name, extra[0]))
+
+
 def score_census(A, B, key_doc, meta_a=None, meta_b=None, names=('A', 'B')):
     """4층 전수 + 재현율층 채점. 보고를 출력하고 수치를 dict 로 돌려준다."""
+    A, B = normalize_labels(A, names[0]), normalize_labels(B, names[1])
     items = key_doc['items']
     key = {str(r['id']): r for r in items}
     ids = sorted(key, key=int)
     variants = list(key_doc.get('variants') or items[0]['pred'])
     pop = key_doc['population']
     groups = {g: [i for i in ids if key[i]['group'] == g] for g, _ in GROUP_LABELS}
+    unplaced = [i for i in ids if key[i].get('group') not in groups]
+    if unplaced:                                  # 모르는 군은 통계에서 조용히 빠진다 — 멈춘다
+        sys.exit('키 항목 %d개의 군이 %s 밖입니다 (예: id %s 의 %r) — 다른 버전의 시트입니다'
+                 % (len(unplaced), '/'.join(CODING_GROUPS), unplaced[0], key[unplaced[0]].get('group')))
     census = groups['disputed'] + groups['control'] + groups['boundary']
 
     # 전수성 가드 — 재현율층에 등급3 예측이 있으면 "어느 변형의 등급3이든 전수" 가 깨진다.
@@ -738,6 +773,13 @@ def main_census(key_doc, names=('A', 'B'), out=None):
     files = {n: 'coding_%s.json' % n for n in names}
     doc_a, doc_b = load(files[names[0]]), load(files[names[1]])
     check_sample(key_doc.get('sample_digest'), doc_a, doc_b)   # 번호가 아니라 표본으로 묶는다
+    key_ids = [str(r['id']) for r in key_doc['items']]
+    check_complete(doc_a, key_ids, names[0])                    # 완주하지 않은 파일은 채점하지 않는다
+    check_complete(doc_b, key_ids, names[1])
+    ha, hb = (doc_a.get('meta') or {}).get('prompt_sha256'), (doc_b.get('meta') or {}).get('prompt_sha256')
+    if ha and hb and ha != hb:                                  # 다른 지시문으로 코딩한 라벨은 비교 대상이 아니다
+        sys.exit('두 코더의 지시문(prompt_sha256)이 다릅니다 (%s: %s… / %s: %s…) — 같은 시트로 다시 코딩하십시오.'
+                 % (names[0], ha[:8], names[1], hb[:8]))
     imp = os.path.join(HERE, IMPACT_JSON)
     if os.path.exists(imp):
         with open(imp, encoding='utf-8') as f:
