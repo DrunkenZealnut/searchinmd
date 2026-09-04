@@ -55,6 +55,16 @@ python3 recount_grades.py --data /other/path # 다른 위치 지정
 
 원본 엑셀(`data/`, 67MB)은 저장소에 없습니다 — 비공개 교재에서 뽑은 자료라 `.gitignore` 대상입니다. 산출된 CSV·JSON만 커밋합니다.
 
+원본이 있으면 검증용 스크립트 둘을 더 돌릴 수 있습니다. **둘 다 대시보드 수치를 바꾸지 않습니다.**
+
+```bash
+python3 regrade.py --validate    # 페이지 본문에서 등급을 다시 계산해 현재 규칙의 재현율만 확인
+python3 regrade.py               # 결함별 영향도를 docs/03-analysis/data/regrade_impact.json 에 기록
+python3 truncation_audit.py      # 엑셀 셀 한도에서 잘린 본문을 전수 재측정 (pip 패키지 불필요)
+```
+
+`regrade.py` 는 원본 채점 규칙을 되짚어 만든 재채점기입니다. 어떤 결함을 고치면 등급 분포가 어떻게 움직이는지 항목별로 떼어 보여줄 뿐, 발표 수치를 교체하지 않습니다 — 채택 여부는 `TODOS.md` P2 에 열린 채로 있습니다.
+
 ### 등급이 뜻하는 것
 
 | 등급 | 뜻 |
@@ -69,14 +79,14 @@ python3 recount_grades.py --data /other/path # 다른 위치 지정
 
 ## 테스트
 
-프레임워크는 없습니다. 자체 하니스 4종이고 Node·Python 표준 라이브러리만 씁니다. 전부 exit 0/1 을 내며 **push·PR 마다 CI 에서 돕니다**(`.github/workflows/test.yml`).
+프레임워크는 없습니다. 자체 하니스 5종이고 Node·Python 표준 라이브러리만 씁니다. 전부 exit 0/1 을 내며 **push·PR 마다 CI 에서 돕니다**(`.github/workflows/test.yml`).
 
 ```bash
 node    outputs/test-search-equivalence.js   # 24 — 검색 동치성 + 청크 렌더 + 지연 캐시
-node    outputs/test-dashboard-data.js       # 117 — 대시보드 데이터·표 렌더·정렬
-python3 outputs/test-recount-grades.py       # 97 — recount_grades.py 로직 + 페이지 마커 주입
+node    outputs/test-dashboard-data.js       # 122 — 대시보드 데이터·표 렌더·정렬
+python3 outputs/test-recount-grades.py       # 232 — 재집계·재채점·페이지 마커·절단 판정
 node    outputs/run-core-logic-tests.js       # 32 — 제목 판정·정규화 (헤드리스)
-node    outputs/test-sri.js                  # 41 — 외부 스크립트 SRI (--online 이면 CDN 대조)
+node    outputs/test-sri.js                  # 38 — 외부 스크립트 SRI (--online 이면 CDN 대조)
 ```
 
 Node 기반 하니스 세 개는 HTML 안의 실제 `<script>` 블록을 `vm` + DOM mock으로 불러옵니다. 복사해 붙인 사본을 테스트하지 않습니다. `test-core-logic.html` 은 브라우저에서 열어 탭 제목으로 봐도 됩니다 — `run-core-logic-tests.js` 는 같은 HTML 을 헤드리스로 돌릴 뿐입니다. `test-recount-grades.py`는 `openpyxl`을 스텁으로 주입해 pip 패키지 없이도, 원본 엑셀 없이도 돕니다.
@@ -89,6 +99,9 @@ Node 기반 하니스 세 개는 HTML 안의 실제 `<script>` 블록을 `vm` + 
 outputs/markdown-search-app.html   검색 앱 (HTML+CSS+JS 단일 파일, ~2,040줄)
 outputs/server.py                  개발 서버 (표준 라이브러리만, LM Studio 프록시 포함)
 recount_grades.py                  원본 엑셀 → 등급 재집계 → CSV/JSON
+regrade.py                         페이지 본문에서 등급 재채점 (검증용, 미발표)
+make_coding_sheet.py, score_coding.py  수기 코딩 시트 생성 · 교차 판정 채점
+truncation_audit.py                엑셀 셀 한도 절단 전수 실측 (pip 불필요)
 *_downloader.py                    OSHA·KOSHA·NIOSH·EU-OSHA·SafeWork AU 발간물 수집기
 page_utils.py 외                   PDF→마크다운→Excel 페이지 매핑 유틸
 docs/                              대시보드 3종 + 분석 문서 (GitHub Pages)
@@ -117,10 +130,13 @@ python3 osha_downloader.py
 
 ## 알려진 한계
 
-- 부분 문자열 일치라 동의어·표기 변형을 놓칩니다. 반도체 문맥의 동음이의(장비 진동, 파티클 먼지)도 걸러지지 않습니다.
-- 원본 채점 알고리즘에 총계/내역 불일치 버그가 있습니다. `recount_grades.py`는 보수적 규칙으로 우회할 뿐 원본을 고치지 않습니다.
-- 분류 정확도 검증(이중 코딩, precision/recall)이 아직 없습니다.
+- 부분 문자열 일치라 동의어·표기 변형을 놓칩니다. 반도체 문맥의 동음이의(장비 진동, 파티클 먼지)도 걸러지지 않습니다. `regrade.py` 에 단어 경계 보정이 들어 있지만 발표 수치에는 적용하지 않았습니다.
+- 원본 채점 규칙에 확인된 결함이 둘 있습니다 — 단어 경계 없는 부분 문자열 매칭, 그리고 페이지 길이와 무관한 고정 임계. 결함별 영향도는 `docs/03-analysis/data/regrade_impact.json` 에 있고, `recount_grades.py` 는 보수적 규칙으로 우회할 뿐 원본을 고치지 않습니다. 이전 판에 적혀 있던 "총계/내역 불일치 버그" 는 **철회합니다** — 불일치 171건 중 168건은 등급사유 문자열이 상위 5개만 보여주는 표시 절단이었고, 실제로 어긋난 것은 3쪽(0.16%)뿐입니다.
+- 분류 정확도 검증이 아직 없습니다. 69쪽 이중코딩을 시도했지만 코딩 시트가 판정 규칙의 가정을 두 코더 모두에게 흘려 **라벨을 무효 처리**했습니다. 재현율은 어느 규칙에서도 측정된 적이 없습니다.
+- NCS 16쪽은 원본 엑셀의 셀 한도(32,767자)에서 본문이 잘려 있고, 원본이 그 엑셀뿐이라 **복구할 수 없습니다.** 등급별로 고르지 않습니다 — 등급1 은 1,270쪽 중 0쪽, 등급3 은 108쪽 중 12쪽(11.1%)입니다. 텍스트가 지워지면 등급은 내려가는 방향으로만 움직이므로 등급3 은 108~112쪽(5.8~6.1%) 구간에 있습니다. 교과서 쪽은 0쪽입니다.
 - 일부 교재에 마크다운 변환·페이지 매핑 결손이 있습니다. `반도체 장비 안전관리` 는 검출 페이지가 p.46 과 p.136~154 20쪽뿐이고 p.47~135 가 통째로 비어 있습니다. 등급3 108쪽과 사고사례 판정의 신뢰도에 영향을 줍니다.
+
+그래서 5.8% 는 이렇게까지만 읽어야 합니다 — **결함이 확인된 현행 규칙의 출력값이며, 알려진 결함은 이 값을 낮추는 방향이지만 누락률이 측정된 적이 없어 참값의 상한으로 해석할 수 없습니다.**
 
 남은 과제는 `TODOS.md`에 있습니다.
 

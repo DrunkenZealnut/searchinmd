@@ -102,7 +102,7 @@ The **data pipeline scripts** (see below) are a separate story: they require pip
 
 ## Data Pipeline (Python, repo root)
 
-The root-level Python scripts are an offline data pipeline that feeds the search app — they are **not** part of the web app and run independently. Two distinct groups:
+The root-level Python scripts are an offline data pipeline around the search app — they are **not** part of the web app and run independently. Three distinct groups:
 
 ### 1. Publication downloaders (web scrapers)
 
@@ -125,6 +125,19 @@ These bridge the PDF→markdown→Excel workflow and mirror the HTML app's page 
 - `recount_grades.py` — reads the two source workbooks in `data/`, remaps both to the unified grade scheme, aggregates **per unique page** (not per keyword hit), and writes `docs/03-analysis/data/{ncs_pages.csv, txt_pages.csv, summary.json}`. Flags: `--data`, `--out`, `--force`. It refuses to write when its built-in regression check fails; `--force` overrides that (use it only when the source data legitimately changed and you are about to update `EXPECTED`). Unlike the scripts above it takes no hardcoded absolute path — `--data` defaults to `data/` next to the script.
 
 These still have **hardcoded absolute paths** (`EXCEL_PATH`, `NCS_BASES`, `DEFAULT_NCS_DIRS`) — edit the constants before running. (The downloaders no longer do; see `DOWNLOAD_ROOT` above.)
+
+### 3. Regrade & coding validation (research track, nothing published)
+
+`recount_grades.py` re-maps the grades the source workbook already carries. This group throws that column away and recomputes the grade from the page text, then tries to check the result against independent coding. **None of it feeds the dashboards.** `docs/*.html` still publish the `recount_grades.py` numbers, and whether to republish is a research-facing decision, not a code one — see `TODOS.md` P2 before touching any of this.
+
+- `regrade.py` — recomputes the safety grade from the `페이지전체내용` column instead of trusting the workbook's 등급. The rule was reverse-engineered from the 4,000+ committed `등급사유` strings and reproduces the first-seen row's grade on 99.6% (1,839/1,847) of pages. The defect fixes toggle independently so each one's impact can be read alone: D1 word boundaries (`HOMONYM_CONTEXTS`, `CONTAINING`), D2 length normalisation, D4 threshold discretisation (`DISCRETIZE`), D5 conditional exemption (`ACTION_EXEMPT`, hypothesis rejected — code kept for reproduction, default off). Flags: `--data`, `--validate` (reproduction rate only, writes nothing), `--force`. Writes `docs/03-analysis/data/regrade_impact.json` and, like `recount_grades.py`, refuses to write when its `EXPECTED` check misses. `EXPECTED` pins `baseline_digest` as well as the totals, so a page-to-page reassignment that leaves the distribution flat still fails.
+- `make_coding_sheet.py` — builds the manual coding sheet for the 69-page sample: 39 disputed pages (current rule says 등급3, D1+D2 does not) taken in full, plus a 30-page random control where both rules say 등급3. The control is the baseline — without it you cannot tell "the coder is stingy about 등급3" from "the corrected rule is right". Writes `coding_sheet.json` / `coding_sheet.md` (coder-facing, gitignored) and `coding_key.json` (answer key, tracked). Two rules the file exists to enforce: the sheet carries **no** grade, count, or reason (anchoring), and it **never truncates** — long pages are split into `CHUNK_CHARS` pieces that concatenate back to the original, because the scorer reads the full 32,767-char cell and a truncated sheet would have coder and scorer looking at different text. Pages the source workbook already truncated get an explicit notice, otherwise the coder reads the missing tail as "no measures".
+- `score_coding.py` — scores the two coders against each other and against both rules: Cohen's κ, control-group agreement, per-stratum splits (truncated vs not), and sample-weighted precision/recall. Reads `coding_A.json` / `coding_B.json` / `coding_key.json`; population figures come from `regrade_impact.json`, never typed in. `?` is a valid coder code (판단 불가) and drops out of the denominator, so anything reading these labels must tolerate a non-1/2/3 value.
+
+Two traps here:
+
+- **`coding_sheet.json` / `.md` are gitignored; `coding_key.json` / `coding_A.json` / `coding_B.json` are tracked on purpose.** The first two carry commercial textbook body text. The last three carry only 교재 / 페이지 / 군 / counts and a grade label (longest value 38 chars) and are the only surviving record of the reported κ 0.796 / 88.4% agreement. A `/coding_*.json` wildcard once swept all five under the body-text rationale — do not re-add one.
+- **`score_coding.py` requires a `sample_digest` in `coding_key.json`, and the committed key predates that guard.** Running it against the files in the repo stops at "구버전 산출물". The guard is correct — re-running `make_coding_sheet.py` reshuffles item ids, and the older count-only guard let labels from one sample score another sample's pages — but it means the committed triple is an archive, not something you can re-score without re-coding. `TODOS.md` P2 rules those labels invalid for an independent reason anyway (the sheet leaked D1's homonym assumption to both coders).
 
 ## Safety Grading Scheme
 
@@ -153,18 +166,18 @@ There is no test framework (no `package.json` / `pyproject.toml`). The project s
 ```bash
 node   outputs/test-search-equivalence.js   # 24 assertions — search equivalence, chunked render, lazy parse cache
 node   outputs/test-dashboard-data.js       # 122 assertions — docs/ dashboard data + table render/sort
-python3 outputs/test-recount-grades.py      # 210 assertions — recount_grades.py logic
+python3 outputs/test-recount-grades.py      # 232 assertions — recount_grades / regrade / coding-sheet / truncation logic
 
 python3 truncation_audit.py                 # not a test — re-measures truncation and checks it against EXPECTED (needs data/)
 
 node   outputs/run-core-logic-tests.js       # 32 assertions — headless runner for test-core-logic.html
-node   outputs/test-sri.js                  # 41 assertions — SRI on external scripts (--online to verify against the CDN)
+node   outputs/test-sri.js                  # 38 assertions — SRI on external scripts (--online to verify against the CDN)
 
 # Or open it in a browser and read the tab title: "PASS: N/N tests passed"
 open outputs/test-core-logic.html
 ```
 
-All four run in CI on every push and pull request (`.github/workflows/test.yml`). The workflow installs nothing for the harnesses themselves; it installs `openpyxl` only for the last step, which checks that `recount_grades.py` exits with a readable message instead of a traceback when `data/` is absent (the default state of a fresh clone).
+All five run in CI on every push and pull request (`.github/workflows/test.yml`). The workflow installs nothing for the harnesses themselves; it installs `openpyxl` only for the last step, which checks that `recount_grades.py` exits with a readable message instead of a traceback when `data/` is absent (the default state of a fresh clone).
 
 `test-core-logic.html` copies shared helper functions from the main app and runs assertions in-browser. When adding or changing heading detection / normalization logic, update both files and verify tests pass. `run-core-logic-tests.js` runs that same HTML headlessly (minimal DOM + `vm`, reads `document.title`) so CI can gate on it — it holds no copy of the assertions.
 
@@ -180,7 +193,7 @@ For manual E2E testing, use `outputs/test-samples/` with sample `.md` files. For
 
 - New logic in `outputs/*.html` (search app) → extend `test-search-equivalence.js` or `test-core-logic.html`.
 - New data or table/sort logic in `docs/*.html` (dashboards) → extend `test-dashboard-data.js`. Hardcoded data arrays must be cross-validated against `docs/03-analysis/data/summary.json`, never asserted against themselves.
-- New logic in `recount_grades.py` or the page-mapping utilities → extend `test-recount-grades.py`.
+- New logic in `recount_grades.py`, the regrade/coding-validation scripts (`regrade.py`, `make_coding_sheet.py`, `score_coding.py`, `truncation_audit.py`), or the page-mapping utilities → extend `test-recount-grades.py`. Its groups are `R1`-`R7` recount, `R8` page markers, `R9`-`R11` regrade rules, `R12` truncation integrity, `R13` I/O and `main()` boundaries, `R14` sample fingerprint + regrade regression guards.
 - Paths that genuinely cannot be automated here (browser chart rendering, File System Access API, real `.xlsx` parsing) are documented as `[→E2E]` gaps in the PR body rather than silently skipped.
 
 ## Other Artifacts
@@ -215,7 +228,7 @@ Other invariants worth not breaking:
   - `docs/howto-download-publications.md` — the downloaders' `DOWNLOAD_ROOT`, per-agency save dirs, range constants, and resume semantics. Note that `eu_osha_downloader.py` alone has no `DELAY` constant (it hardcodes `time.sleep(2)`).
   - `docs/howto-page-markers.md` — `insert_page_markers.py`. `page_id` in `_meta.json` is 0-based and the marker is written +1. `--force` strips the existing markers before re-deriving from the TOC (leaving them in place would make `build_page_map` read them via Strategy 1 and re-emit the same values, doubling the markers); it refuses to touch a file whose `_meta.json` is missing or whose marker sits mid-line, because neither is recoverable. Covered by `R8a`-`R8j` in `test-recount-grades.py`.
 - `docs/01-plan/`, `docs/02-design/`, `docs/03-analysis/`, `docs/04-report/` — feature PDCA documents (`features/` subdirs hold per-feature plan/design/analysis/report `.md`)
-- `docs/03-analysis/data/` — machine-readable output of `recount_grades.py`. `ncs_pages.csv` and `txt_pages.csv` are one row per unique (교재, 페이지) with its grade, grade reason, accident-case flag, and a `절단` flag (last column — keep it last so index-based readers do not shift); `summary.json` carries the aggregate counts plus `truncated_pages` / `truncated_page_g`, `kw_pages` (unique detected pages per keyword — the dashboards' `pg` column is validated against this, never against itself) and `page_grade_digest` (a hash of the whole page→grade assignment, so a reassignment that leaves the totals unchanged still fails the regression check).
+- `docs/03-analysis/data/` — machine-readable output of `recount_grades.py`. `ncs_pages.csv` and `txt_pages.csv` are one row per unique (교재, 페이지) with its grade, grade reason, accident-case flag, and a `절단` flag (last column — keep it last so index-based readers do not shift); `summary.json` carries the aggregate counts plus `truncated_pages` / `truncated_page_g`, `kw_pages` (unique detected pages per keyword — the dashboards' `pg` column is validated against this, never against itself) and `page_grade_digest` (a hash of the whole page→grade assignment, so a reassignment that leaves the totals unchanged still fails the regression check). `regrade_impact.json` is written by `regrade.py`, not `recount_grades.py`: it carries the reproduction rate, the per-variant grade distributions, `adopted_variant`, and `baseline_digest`. **Nothing in this file is published** — the dashboards read the `recount_grades.py` outputs. `score_coding.population()` reads it so the population figures are never typed in by hand.
 - `docs/archive/YYYY-MM/` — retired PDCA feature docs, kept for provenance. `_INDEX.md` lists what moved and when.
 - `docs/NCS_교재_노동안전_분석보고서.md` — **superseded**. Built on the older 3,552-row dataset with a different grade numbering; carries a deprecation banner. Kept for provenance; cite the dashboards or `grade-recount.analysis.md` instead.
 - `키워드기반_문서분류분석_방법론.hwpx` (repo root) — the methodology of record for the search pipeline: the 6 stages, the heading-detection rules, and the line-number→PDF-page alignment algorithm. Read it before changing `extractSentencesWithLineNumbers` or `buildPageMapping`. It does **not** define the grading scheme (see the section above).
