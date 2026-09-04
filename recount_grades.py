@@ -46,6 +46,9 @@ try:
 except ImportError:
     sys.exit('openpyxl이 필요합니다:  pip install openpyxl')
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from page_utils import is_cell_truncated  # noqa: E402
+
 _HERE = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(_HERE, 'data')
 OUT_DIR = os.path.join(_HERE, 'docs', '03-analysis', 'data')
@@ -95,15 +98,25 @@ YN = {'예', '아니오'}
 FN_RE = re.compile(r'^(LM\d|20\d{6}_\d{6}_)')   # NCS: LM…, 교과서: 20260415_143535_…
 
 # 기대값 (회귀 검증용)
+#
+# truncated_* 는 엑셀 셀 한도(32,767자)에서 잘린 본문의 실측치다. 원본이 남아 있지
+# 않아 복구할 수 없으므로 이 값들은 고정 사실이며, 변하면 원본이 교체된 것이다.
+# 절단은 NCS 에만 있고 등급3 108쪽 중 12쪽(11.1%)을 차지한다 — 등급1 은 0쪽이라
+# 무작위가 아니다. 행으로 세면 1,376건이지만 그건 절단쪽에 키워드가 많이 걸린
+# 결과일 뿐이라 페이지로만 센다.
 EXPECTED = {
     'ncs': {'rows': 7769, 'pages': 1847, 'books': 86,
             'row_g': {1: 2076, 2: 3465, 3: 2228},
             'page_g': {1: 1270, 2: 469, 3: 108},
-            'page_grade_digest': '3461b416055291a5'},
+            'page_grade_digest': '3461b416055291a5',
+            'truncated_pages': 16,
+            'truncated_page_g': {1: 0, 2: 4, 3: 12}},
     'txt': {'rows': 981, 'pages': 362, 'books': 9,
             'row_g': {1: 557, 2: 360, 3: 64},
             'page_g': {1: 309, 2: 45, 3: 8},
-            'page_grade_digest': '9186a08609cec321'},
+            'page_grade_digest': '9186a08609cec321',
+            'truncated_pages': 0,
+            'truncated_page_g': {1: 0, 2: 0, 3: 0}},
 }
 
 
@@ -130,8 +143,17 @@ def parse_row(vals):
 
     앵커는 뒤에서부터 찾는다. 본문·비고 열에 우연히 ('예', '2') 같은 값이 있어도
     실제 꼬리 3연속을 우선하기 위해서다.
+
+    `truncated` 는 본문 열을 찾지 않고 **행의 모든 셀**에서 판정한다. 절단 마커가
+    자기 식별적이라 열 위치를 몰라도 되고, 시트마다 열 구성이 다른 이 워크북들에서는
+    그게 유일하게 안전한 방법이다 — 교과서 파일은 NCS 와 열 배치가 달라서
+    regrade.py 의 고정 열(C/E/F/H)이 맞지 않는다.
+
+    판정은 `v` 가 아니라 **원시 `vals`** 로 한다. `v` 는 strip() 을 거쳐서, 셀 앞뒤에
+    공백이 있으면 길이가 32,767 미만으로 줄어 절단을 놓친다.
     """
     v = [None if x is None else str(x).strip() for x in vals]
+    truncated = any(is_cell_truncated(y) for y in vals)
     for i in range(len(v) - 1, -1, -1):
         x = v[i]
         if x in YN and i + 1 < len(v) and v[i + 1] in ('1', '2', '3'):
@@ -144,7 +166,7 @@ def parse_row(vals):
                     page = n
             return dict(case=x, raw=int(v[i + 1]),
                         reason=v[i + 2] if i + 2 < len(v) else None,
-                        fn=fn, area=area, page=page)
+                        fn=fn, area=area, page=page, truncated=truncated)
     return None
 
 
@@ -190,12 +212,16 @@ def page_record(page_rows):
                같은 방향이고, 판정 근거를 스캔 순서에서 완전히 떼어낸다.
       사고사례  한 행이라도 '예'면 '예' (OR). 이전 구현은 마지막 행만 남겨
                사고사례 8쪽이 CSV에서 전부 '아니오'로 유실됐다
+      절단      한 행이라도 잘린 본문을 실었으면 그 페이지의 본문은 잘렸다 (OR).
+               등급의 min 과 달리 여기서 보수적인 방향은 OR 이다 — 절단을
+               놓치면 오염된 쪽이 깨끗한 층으로 섞여 들어간다.
       등급사유  채택된 등급을 가진 행 중 첫 번째
     """
     grade = min(x['g'] for x in page_rows)
     case = '예' if any(x['case'] == '예' for x in page_rows) else '아니오'
+    truncated = any(x.get('truncated') for x in page_rows)
     rep = next(x for x in page_rows if x['g'] == grade)
-    return dict(rep, g=grade, case=case)
+    return dict(rep, g=grade, case=case, truncated=truncated)
 
 
 def aggregate(rows, total_pages=None):
@@ -214,6 +240,13 @@ def aggregate(rows, total_pages=None):
         'cases_rows': sum(1 for x in rows if x['case'] == '예'),
         'cases_pages': len(set((x['fn'], x['page']) for x in rows if x['case'] == '예')),
         'cases_books': len(set(x['fn'] for x in rows if x['case'] == '예')),
+        # 엑셀 셀 한도(32,767자)에서 잘린 본문. 원본이 남아 있지 않아 복구는 불가이며
+        # 이 수치는 층화 분석용이다. 행 단위로 세면 절단쪽에 키워드가 많이 걸려
+        # 크게 부풀려지므로(NCS 실측 1,376행 대 16쪽) 페이지 단위로만 센다.
+        'truncated_pages': sum(1 for x in by_page.values() if x['truncated']),
+        'truncated_page_g': {g: sum(1 for x in by_page.values()
+                                    if x['truncated'] and x['g'] == g)
+                             for g in (1, 2, 3)},
         # 집계값만 비교하면 페이지 간 등급 재배정이 상쇄되어 검출되지 않는다.
         # (교재,페이지)→등급 전체의 해시를 함께 고정한다.
         'page_grade_digest': hashlib.sha256(
@@ -341,8 +374,9 @@ def main():
                  '--force 로 덮어쓰십시오.')
 
     # 산출물
-    for nm, pages_, cols in (('ncs_pages', ncs_pages, ['영역', '교재', '페이지', '등급', '등급명', '사고사례', '등급사유']),
-                             ('txt_pages', txt_pages, ['교재', '페이지', '등급', '등급명', '사고사례', '등급사유'])):
+    # '절단' 은 항상 마지막 열이다. 중간에 끼우면 열 인덱스로 읽는 소비자가 조용히 어긋난다.
+    for nm, pages_, cols in (('ncs_pages', ncs_pages, ['영역', '교재', '페이지', '등급', '등급명', '사고사례', '등급사유', '절단']),
+                             ('txt_pages', txt_pages, ['교재', '페이지', '등급', '등급명', '사고사례', '등급사유', '절단'])):
         path = os.path.join(args.out, nm + '.csv')
 
         def _write(f, pages_=pages_, cols=cols):
@@ -351,7 +385,8 @@ def main():
             for (fn, pg), x in sorted(pages_.items(), key=lambda z: (str(z[0][0]), z[0][1] or 0)):
                 row = [x['area']] if '영역' in cols else []
                 label = fn if '영역' in cols else txt_title(fn)
-                row += [label, pg, x['g'], GRADE_LABEL[x['g']], x['case'], x['reason']]
+                row += [label, pg, x['g'], GRADE_LABEL[x['g']], x['case'], x['reason'],
+                        '예' if x['truncated'] else '아니오']
                 w.writerow(row)
 
         write_atomic(path, _write, newline='', encoding='utf-8-sig')

@@ -677,6 +677,249 @@ check('R11l 포함형 동음이의는 어휘에 있고 귀속이 None 이다',
       all(G.build_vocab(tuple(G.SAFETY_TERMS))[1].get(c, 'X') is None
           for c in ('진동자', '진동수', '격자 진동', '먼지 입자 수', '소음 지수')))
 
+# ---------------------------------------------------------------------------
+# R12 절단 무결성 — 외부감사 C-1 / C-5 회귀
+#
+# 절단은 두 단계에서 별개로 일어났다. 상위(엑셀 셀 한도 32,767자)는 원본이
+# 엑셀뿐이라 복구 불가여서 탐지·플래그·층화로만 관리하고, 하위(코딩 시트
+# 6,000자)는 제거했다. 실측: NCS 1,847쪽 중 16쪽(행으로는 1,376건), 교과서 0쪽.
+# 등급별로 고르지 않다 — 등급1 0/1,270, 등급2 4/469, 등급3 12/108.
+#
+# 실 워크북 실측치는 data/ 가 .gitignore 라 여기서 돌지 않는다. recount_grades.py
+# 의 EXPECTED 가 그 값을 지키고, 아래는 그 값을 만들어내는 로직만 고정한다.
+# ---------------------------------------------------------------------------
+print('\n[R12] 절단 무결성 (감사 C-1/C-5 회귀)')
+
+import csv  # noqa: E402
+import page_utils as PU  # noqa: E402
+import make_coding_sheet as MCS  # noqa: E402
+
+LIM = PU.EXCEL_MAX_CHARS
+CUT = 'x' * (LIM - 3) + '...'          # add_fullpage.py 가 실제로 만드는 모양
+FULL = 'y' * LIM                       # 원래 딱 한도 길이였던 본문 (자르지 않았다)
+
+check('R12a 32,767자 + 말줄임 → 절단', PU.is_cell_truncated(CUT))
+check('R12b 32,767자인데 말줄임 없음 → 절단 아님 (원래 그 길이였던 본문)',
+      not PU.is_cell_truncated(FULL))
+check('R12c 32,766자 + 말줄임 → 절단 아님 (짧은데 말줄임으로 끝나는 본문)',
+      not PU.is_cell_truncated('z' * (LIM - 4) + '...'))
+check('R12d None·정수·바이트·빈 문자열 → 절단 아님',
+      not any(PU.is_cell_truncated(x) for x in (None, 0, LIM, '', b'x' * LIM)))
+
+# 절단 셀에 앞 공백이 있으면 str.strip() 이 길이를 깎아 탐지를 놓친다.
+# parse_row 는 strip 된 v 가 아니라 원시 vals 로 판정해야 한다.
+CUT_PAD = '   ' + 'x' * (LIM - 6) + '...'
+check('R12e parse_row 는 strip 된 값이 아니라 원시 셀에서 판정한다',
+      len(CUT_PAD) == LIM and len(CUT_PAD.strip()) < LIM
+      and R.parse_row((1, 'LM1903060329_19v1_장비', '반도체장비', 46,
+                       CUT_PAD, '아니오', 3, '사유'))['truncated'],
+      '원시 %d자 / strip 후 %d자' % (len(CUT_PAD), len(CUT_PAD.strip())))
+# 교과서 워크북은 NCS 와 열 배치가 달라 고정 열로는 본문을 찾을 수 없다.
+# 절단 마커가 자기 식별적이므로 행 전체를 훑으면 열 위치를 몰라도 된다.
+check('R12f 본문 열 위치와 무관하게 판정한다 (교과서형 열 배치)',
+      R.parse_row((1, '20260413_171220_반도체기초기술1_크리아트_/x.md', 13,
+                   CUT, '아니오', 1, '사유'))['truncated'])
+check('R12f2 절단 셀이 없는 행은 False', not R.parse_row(NCS_ROW)['truncated'])
+
+
+def mkt(fn, page, g, truncated=False, kw='안전'):
+    return dict(fn=fn, page=page, g=g, case='아니오', area='반도체개발',
+                kw=kw, raw=g, reason='r', truncated=truncated)
+
+
+# 순서를 뒤집어도 같아야 한다. 한쪽 순서만 보면 "마지막 행" 이나 "대표 행" 을
+# 쓰는 구현이 그대로 통과한다 — 대표 행은 최저 등급을 가진 **첫** 행이라
+# 절단 행과 일치한다는 보장이 없다.
+_g12 = [mkt('A', 1, 3), mkt('A', 1, 3, truncated=True, kw='위험')]
+check('R12g 한 행만 절단이어도 페이지는 절단 — 행 순서와 무관 (OR)',
+      R.page_record(_g12)['truncated'] and R.page_record(_g12[::-1])['truncated'],
+      (R.page_record(_g12)['truncated'], R.page_record(_g12[::-1])['truncated']))
+check('R12g2 모든 행이 비절단이면 페이지도 비절단',
+      not R.page_record([mkt('A', 1, 3), mkt('A', 1, 3, kw='위험')])['truncated'])
+# 등급이 갈리는 쪽: 대표 행(최저 등급의 첫 행)이 비절단이어도 절단은 살아남아야 한다
+check('R12g3 대표 행이 비절단이어도 다른 행의 절단을 잃지 않는다',
+      R.page_record([mkt('A', 1, 1), mkt('A', 1, 3, truncated=True, kw='위험')])
+      ['truncated'])
+
+rows12 = [mkt('A', 1, 3, truncated=True), mkt('A', 2, 2, truncated=True),
+          mkt('A', 3, 1), mkt('B', 4, 3)]
+agg12, _ = R.aggregate(rows12)
+check('R12h aggregate 가 절단 쪽수를 센다',
+      agg12['truncated_pages'] == 2, agg12['truncated_pages'])
+check('R12h2 등급별 절단 분포 (등급3 집중을 이 열로 본다)',
+      agg12['truncated_page_g'] == {1: 0, 2: 1, 3: 1}, agg12['truncated_page_g'])
+# --- CSV/summary 산출까지 실제 main() 으로 태운다 (--force 로 회귀 검증 우회)
+sheets12 = {'안전': [NCS_ROW,
+                     (2, 'LM1903060329_19v1_장비', '반도체장비', 46,
+                      CUT, '아니오', 3, '사유'),
+                     TXT_ROW]}
+with tempfile.TemporaryDirectory() as td:
+    for f in (R.NCS_FILE, R.TXT_FILE):
+        open(os.path.join(td, f), 'w').close()
+    _argv = sys.argv
+    sys.argv = ['recount_grades.py', '--out', td, '--data', td, '--force']
+    try:
+        with with_wb(sheets12):
+            quiet(R.main)
+        with open(os.path.join(td, 'ncs_pages.csv'), encoding='utf-8-sig') as f:
+            csv_rows = list(csv.reader(f))
+        with open(os.path.join(td, 'summary.json'), encoding='utf-8') as f:
+            summary12 = json.load(f)
+    finally:
+        sys.argv = _argv
+
+check('R12i CSV 마지막 열이 절단 (중간에 끼우면 열 인덱스 소비자가 어긋난다)',
+      csv_rows[0][-1] == '절단', csv_rows[0])
+# NCS 스캔은 잔여행을 버리지 않으므로(drop_ncs_residue=False) 교과서형 행도 한 쪽으로
+# 잡힌다. 3쪽 중 절단은 1쪽뿐이다.
+check('R12i2 절단 쪽만 예, 나머지는 아니오',
+      sorted(r[-1] for r in csv_rows[1:]) == ['아니오', '아니오', '예'],
+      [r[-1] for r in csv_rows[1:]])
+check('R12i3 기존 열 순서는 그대로',
+      csv_rows[0][:7] == ['영역', '교재', '페이지', '등급', '등급명', '사고사례', '등급사유'],
+      csv_rows[0])
+check('R12i4 summary.json 에 절단 집계가 실린다',
+      summary12['ncs']['truncated_pages'] == 1
+      and summary12['textbook']['truncated_pages'] == 0,
+      (summary12['ncs']['truncated_pages'], summary12['textbook']['truncated_pages']))
+
+# 절단 열을 더해도 (교재,페이지)→등급 배정은 그대로여야 한다. 이게 깨지면
+# 기존 회귀 검증(page_grade_digest)이 무너져 산출물을 쓸 수 없게 된다.
+check('R12j 절단 플래그는 page_grade_digest 를 바꾸지 않는다',
+      R.aggregate([dict(x, truncated=False) for x in rows12])[0]['page_grade_digest']
+      == agg12['page_grade_digest'], agg12['page_grade_digest'])
+
+# --- 코딩 시트: 어떤 경우에도 자르지 않는다 (FR-2 의 핵심 수용 기준)
+_src = 'A' * 20000                       # 옛 MAX_CHARS(6,000)의 3배 넘는 본문
+_pages12 = {('LM_x/y.md', 46): {'text': _src, 'grade': 3, 'truncated': True},
+            ('LM_x/y.md', 47): {'text': '짧은 쪽', 'grade': 1, 'truncated': False}}
+_gr12 = {k: {'g': v['grade'], 'sn': 0, 'an': 0} for k, v in _pages12.items()}
+_sheet12, _key12 = MCS.build_sheet(
+    _pages12, [(k, 'disputed') for k in _pages12], _gr12, _gr12)
+check('R12k 코딩 시트가 본문을 자르지 않는다 (길이 == 원문 길이)',
+      _sheet12[0]['text'] == _src and _sheet12[0]['chars'] == len(_src),
+      (len(_sheet12[0]['text']), len(_src)))
+# 렌더까지 가도 살아남아야 한다 — 코더가 실제로 보는 것은 마크다운 쪽이다.
+_body = [l for l in MCS.render_item(_sheet12[0])
+         if not l.startswith(('#', '>', '**', '`', '판정', '---')) and l != '']
+check('R12k2 렌더된 본문을 이어붙이면 원문과 같다',
+      ''.join(_body) == _src, (len(''.join(_body)), len(_src)))
+check('R12k3 절단 플래그가 시트와 키 양쪽에 실린다',
+      _sheet12[0]['cell_truncated'] and _key12[0]['cell_truncated']
+      and not _sheet12[1]['cell_truncated'])
+
+# --- 분할은 나누는 것이지 자르는 것이 아니다
+long_txt = ('문단 %d 내용\n\n' % 0) + ('가나다라마바사아자차\n\n' * 2000) + '끝'
+parts12 = MCS.chunk_text(long_txt)
+check('R12l 분할은 무손실 — 이어붙이면 원문과 바이트 단위로 같다',
+      ''.join(parts12) == long_txt, (len(''.join(parts12)), len(long_txt)))
+check('R12l2 모든 덩어리가 분할 단위 이하',
+      all(len(p) <= MCS.CHUNK_CHARS for p in parts12),
+      [len(p) for p in parts12])
+check('R12l3 문단 경계를 통째로 앞 덩어리에 남긴다 (경계가 쪼개지지 않는다)',
+      MCS.chunk_text('A' * 5000 + '\n\n' + 'B' * 5000)[0].endswith('\n\n'))
+check('R12l4 짧은 본문은 나누지 않는다', MCS.chunk_text('짧다') == ['짧다'])
+check('R12m 본문 안의 코드펜스보다 긴 펜스를 쓴다 (블록이 중간에 닫히지 않게)',
+      MCS.fence_for('a ``` b') == '````' and MCS.fence_for('평범한 본문') == '```',
+      MCS.fence_for('a ``` b'))
+
+_cut_item = {'id': 1, 'text': '짧은 본문', 'chars': 5, 'cell_truncated': True}
+_ok_item = {'id': 2, 'text': '짧은 본문', 'chars': 5, 'cell_truncated': False}
+check('R12n 절단 고지는 절단 항목에만 붙는다',
+      any('원본 수집 단계에서 잘렸' in l for l in MCS.render_item(_cut_item))
+      and not any('원본 수집 단계에서 잘렸' in l for l in MCS.render_item(_ok_item)))
+_big = MCS.render_item({'id': 3, 'text': 'A' * 20000, 'chars': 20000,
+                        'cell_truncated': False})
+check('R12n2 분할돼도 한 항목이라 판정 줄은 하나',
+      sum(1 for l in _big if l == '판정: ____') == 1,
+      sum(1 for l in _big if l == '판정: ____'))
+check('R12n3 분할 시 몇 분의 몇인지 표시한다',
+      any(l.startswith('**(본문 1/') for l in _big))
+
+# --- score_coding.strata: 절단층 분리 보고
+# 설계는 이 절을 "자동화 대상 아님" 으로 뒀지만 45줄짜리 변경에 어서션이 0건이면
+# CLAUDE.md 의 최소 커버리지(60%)를 못 맞춘다. 출력 문자열을 직접 잡는다.
+import score_coding as SC  # noqa: E402
+
+_ids = [str(i) for i in range(1, 11)]
+_A = {i: (3 if int(i) <= 2 else 1) for i in _ids}
+_B = dict(_A)
+_key = {i: {'group': 'disputed' if int(i) <= 6 else 'control',
+            'cell_truncated': int(i) <= 2, 'file': 'LM_a', 'page': int(i)}
+        for i in _ids}
+_, _out = quiet(SC.strata, _A, _B, _key, _ids)
+check('R12o strata 가 절단층과 비절단층을 나눠 센다',
+      '절단층 2항목 / 비절단층 8항목' in _out, _out.strip()[:80])
+# 분쟁군 6쪽 중 절단 2쪽은 두 코더가 등급3 이라 했으므로 지지율이 갈려야 한다
+check('R12o2 절단 포함/제외 민감도를 병기한다',
+      '절단 포함  6쪽 중  4쪽 (67%)' in _out and '절단 제외  4쪽 중  4쪽 (100%)' in _out,
+      _out)
+check('R12o3 작은 층은 원자료를 싣는다', '원자료를 그대로 싣는다' in _out)
+_, _old_out = quiet(SC.strata, _A, _B,
+                    {i: {k: v for k, v in r.items() if k != 'cell_truncated'}
+                     for i, r in _key.items()}, _ids)
+check('R12o4 구버전 키(절단 정보 없음)는 계산하지 않고 안내한다',
+      '구버전 coding_key.json' in _old_out
+      and '절단층 2항목' not in _old_out          # 절단 통계를 내지 않는다
+      and '절단 포함' not in _old_out,            # 민감도도 내지 않는다
+      _old_out.strip()[:80])
+
+# `?`(판단 불가)는 방향 없는 코드다. 수정본 지지로 세면 make_coding_sheet 가
+# 지운 동점 규칙 편향이 채점기로 옮겨올 뿐이다.
+check('R12o5 판단 불가(?)를 수정본 지지로 세지 않는다',
+      quiet(SC.strata, {**_A, '3': '?', '4': '?'}, {**_B, '3': '?', '4': '?'},
+            _key, _ids)[1].count('절단 제외  4쪽 중  2쪽 (50%)') == 1,
+      quiet(SC.strata, {**_A, '3': '?', '4': '?'},
+            {**_B, '3': '?', '4': '?'}, _key, _ids)[1])
+check('R12o6 등급 분포 출력이 ? 와 정수 혼재에도 죽지 않는다',
+      SC.dist([3, 1, '?', 2, '?']) == {1: 1, 2: 1, 3: 1, '?': 2},
+      SC.dist([3, 1, '?', 2, '?']))
+# cats 를 (1,2,3) 으로 고정하면 '?' 쌍이 po 에만 들어가고 pe 에서 빠져 κ 가 부푼다
+_ka = [3, 3, 1, '?', '?', 2, 1, 1, 3, 2]
+_kb = [3, 3, 1, '?', '?', 2, 1, 2, 3, 2]
+check('R12o7 κ 는 ? 를 우연 일치 계산에 포함한다 (부풀지 않는다)',
+      SC.kappa(_ka, _kb) < SC.kappa(_ka, _kb, cats=(1, 2, 3)),
+      (round(SC.kappa(_ka, _kb), 4), round(SC.kappa(_ka, _kb, cats=(1, 2, 3)), 4)))
+
+# --- truncation_audit: pip 없는 재측정 도구
+import truncation_audit as TA  # noqa: E402
+
+check('R12p 열 문자를 0기반 색인으로 (A=0, Z=25, AA=26)',
+      [TA._col_index(x) for x in ('A1', 'F12', 'Z9', 'AA1', 'AB3')] == [0, 5, 25, 26, 27],
+      [TA._col_index(x) for x in ('A1', 'F12', 'Z9', 'AA1', 'AB3')])
+_st = TA.CellStats()
+_st.observe((None, 'abc', CUT, 5))
+_st.observe(('짧다', None))
+check('R12p2 CellStats 가 행·최장셀·절단행을 센다',
+      (_st.rows, _st.longest_cell, _st.truncated_rows) == (2, LIM, 1),
+      (_st.rows, _st.longest_cell, _st.truncated_rows))
+check('R12p3 observe 는 받은 행을 그대로 돌려준다 (스트리밍 중 변형 금지)',
+      TA.CellStats().observe(('a', 'b')) == ('a', 'b'))
+
+# 공유 문자열 워크북: t="s" 의 <v> 는 본문이 아니라 색인이다. 표를 안 읽으면
+# 모든 셀이 짧은 숫자로 보여 "절단 0건" 이라는 조용히 틀린 결과가 나온다.
+_NSU = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+with tempfile.TemporaryDirectory() as _td:
+    _p = os.path.join(_td, 'shared.xlsx')
+    import zipfile as _zip  # noqa: E402
+    with _zip.ZipFile(_p, 'w') as _z:
+        _z.writestr('xl/sharedStrings.xml',
+                    '<sst xmlns="%s"><si><t>%s</t></si><si><t>짧다</t></si></sst>'
+                    % (_NSU, CUT))
+        _z.writestr('xl/worksheets/sheet1.xml',
+                    '<worksheet xmlns="%s"><sheetData><row r="1">'
+                    '<c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c>'
+                    '<c r="C1"><v>7</v></c></row></sheetData></worksheet>' % _NSU)
+    _shared_rows = list(TA.iter_rows(_p))
+    _shared_st = TA.scan_cells(_p)
+check('R12p4 공유 문자열 셀을 색인이 아니라 본문으로 읽는다',
+      len(_shared_rows[0][0]) == LIM and _shared_rows[0][1] == '짧다'
+      and _shared_rows[0][2] == '7',
+      [None if v is None else (len(v), v[:4]) for v in _shared_rows[0]])
+check('R12p5 공유 문자열 워크북에서도 절단을 잡는다',
+      _shared_st.truncated_rows == 1 and _shared_st.longest_cell == LIM,
+      (_shared_st.truncated_rows, _shared_st.longest_cell))
+
 print('\n결과: %d/%d PASS%s%s' % (
     PASS, PASS + FAIL, ', %d FAIL' % FAIL if FAIL else '',
     ', %d KNOWN ISSUE' % KNOWN if KNOWN else ''))

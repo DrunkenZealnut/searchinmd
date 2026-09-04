@@ -31,11 +31,31 @@ def load(name):
     return json.load(open(p, encoding='utf-8'))
 
 
-def kappa(a, b, cats=(1, 2, 3)):
-    """Cohen's kappa — 우연 일치를 뺀 일치도."""
+UNSURE = '?'                     # make_coding_sheet.py 가 코더에게 주는 '판단 불가' 코드
+
+
+def dist(vals):
+    """등급 분포를 정렬해 보여준다. 1·2·3 과 '?' 가 섞여도 깨지지 않는다.
+
+    `sorted(Counter(...).items())` 는 int 와 str 을 비교하려다 TypeError 로 죽는다.
+    코더는 `?` 를 쓸 수 있으므로(make_coding_sheet.py) 여기서 막아야 한다.
+    """
+    return dict(sorted(Counter(vals).items(), key=lambda kv: (str(kv[0]) == UNSURE,
+                                                              str(kv[0]))))
+
+
+def kappa(a, b, cats=None):
+    """Cohen's kappa — 우연 일치를 뺀 일치도.
+
+    cats 를 관측값에서 뽑는다. 고정 (1,2,3) 이면 `?` 쌍이 분자(po)에는 들어가고
+    분모의 우연 일치(pe)에서는 빠져 **κ 가 부풀려진다.** κ 는 발표에 인용되는
+    값이라(TODOS.md 0.796) 조용히 높아지면 안 된다.
+    """
     n = len(a)
     if not n:
         return float('nan')
+    if cats is None:
+        cats = set(a) | set(b)
     po = sum(x == y for x, y in zip(a, b)) / n
     ca, cb = Counter(a), Counter(b)
     pe = sum((ca[c] / n) * (cb[c] / n) for c in cats)
@@ -114,6 +134,73 @@ def score_variants(A, B, key, dis, ctl):
                      p * 100, r * 100, f1))
 
 
+def strata(A, B, key, ids):
+    """절단 여부로 층을 갈라 따로 본다 (외부감사 C-1).
+
+    통합 수치만 내면 절단의 집중도가 가려진다 — 통합 κ 0.796 이 분쟁군 0.769·
+    대조군 0.760 보다 높았던 것과 같은 함정이다. 층 구성이 만든 값을 층과 무관한
+    값으로 읽게 된다.
+
+    절단쪽은 원본이 엑셀 셀 한도에서 잘려 뒷부분이 존재하지 않는다. 코더가 "조치
+    없음" 이라 한 것이 진짜 없어서인지 잘려서 못 본 것인지 구분할 수 없으므로,
+    이 층의 라벨은 다른 층과 같은 무게로 다룰 수 없다.
+    """
+    print('\n=== 3-1. 절단층 분리 (외부감사 C-1) ===')
+    if not any('cell_truncated' in key[i] for i in ids):
+        print('  키에 절단 정보가 없습니다 (구버전 coding_key.json).')
+        print('  python3 make_coding_sheet.py 를 다시 돌린 뒤 재코딩하십시오.')
+        return
+
+    cut = [i for i in ids if key[i].get('cell_truncated')]
+    ok = [i for i in ids if not key[i].get('cell_truncated')]
+    print('  절단층 %d항목 / 비절단층 %d항목' % (len(cut), len(ok)))
+    if not cut:
+        print('  절단 항목이 없어 층 분리가 무의미합니다.')
+        return
+
+    for nm, sub in (('절단층', cut), ('비절단층', ok)):
+        if not sub:
+            continue
+        a = [A[i] for i in sub]
+        b = [B[i] for i in sub]
+        agree = sum(x == y for x, y in zip(a, b))
+        line = ('  %s %2d항목  일치 %d/%d (%.0f%%)'
+                % (nm, len(sub), agree, len(sub), agree * 100.0 / len(sub)))
+        # 층이 작으면 κ·F1 을 내지 않는다. 9항목에서 소수점 셋째 자리까지 적으면
+        # 없는 정밀도를 주장하는 것이다 (감사 M-3 의 신뢰구간 지적과 같은 이유).
+        if len(sub) >= 20:
+            line += '  κ = %.3f' % kappa(a, b)
+        print(line)
+        print('    A 분포 %s   B 분포 %s' % (dist(a), dist(b)))
+
+    # 민감도 — 절단 항목을 빼면 분쟁군의 결론이 달라지는가.
+    #
+    # 층별 F1 은 내지 않는다. 절단층은 한 자릿수라 F1 신뢰구간이 변형 간 차이보다
+    # 넓고(감사 M-3), 무엇보다 분쟁군은 **전수** 표집이라 일부를 빼면 모집단 대비
+    # 가중이 어긋난다 — 표본 수치를 모집단 예측 수와 나누는 4·5절 계산이 그대로
+    # 무너진다. 해석 가능한 것은 분쟁군 안의 '수정본 지지율' 이라는 비율이다.
+    dis_all = [i for i in ids if key[i]['group'] == 'disputed']
+    dis_ok = [i for i in dis_all if not key[i].get('cell_truncated')]
+    if dis_ok and len(dis_ok) < len(dis_all):
+        print('  분쟁군 수정본 지지율 (두 코더 모두 등급 1·2):')
+        for nm, sub in (('절단 포함', dis_all), ('절단 제외', dis_ok)):
+            # `!= 3` 이 아니라 `in (1, 2)` — `?`(판단 불가)를 수정본 지지로 세면
+            # 절단 항목에 `?` 를 권한 지시문이 그대로 지지율을 밀어 올린다.
+            both_new = sum(1 for i in sub if A[i] in (1, 2) and B[i] in (1, 2))
+            print('    %s %2d쪽 중 %2d쪽 (%.0f%%)'
+                  % (nm, len(sub), both_new, both_new * 100.0 / len(sub)))
+        print('    두 값이 크게 벌어지면 수정본 우세가 절단 인공물일 수 있다.')
+
+    if len(cut) < 20:
+        print('  절단층은 표본이 작아 원자료를 그대로 싣는다:')
+        print('    %-4s %-9s %-3s %-3s %s' % ('id', '군', 'A', 'B', '교재/쪽'))
+        for i in sorted(cut, key=int):
+            r = key[i]
+            print('    %-4s %-9s %-3s %-3s %s p.%s'
+                  % (i, r['group'], A[i], B[i],
+                     str(r['file']).split('/')[-1][:34], r['page']))
+
+
 def population():
     """모집단 수치는 regrade.py 산출물에서 읽는다. 여기 손으로 적지 않는다."""
     p = os.path.join(HERE, 'docs/03-analysis/data/regrade_impact.json')
@@ -149,12 +236,16 @@ def main():
     agree = sum(x == y for x, y in zip(a, b))
     print('  단순 일치 %d/%d (%.1f%%)  Cohen κ = %.3f'
           % (agree, len(ids), agree * 100.0 / len(ids), kappa(a, b)))
-    print('  코더 A 분포 %s' % dict(sorted(Counter(a).items())))
-    print('  코더 B 분포 %s' % dict(sorted(Counter(b).items())))
+    print('  코더 A 분포 %s' % dist(a))
+    print('  코더 B 분포 %s' % dist(b))
+    n_unsure = sum(1 for x in a + b if x == UNSURE)
+    if n_unsure:
+        print('  판단 불가(%s) %d건 — 아래 지지율 계산에서 제외한다' % (UNSURE, n_unsure))
     m = Counter((x, y) for x, y in zip(a, b) if x != y)
     if m:
         print('  불일치 패턴 (A→B): %s'
-              % ', '.join('%d→%d:%d' % (x, y, c) for (x, y), c in sorted(m.items())))
+              % ', '.join('%s→%s:%s' % (x, y, c)
+                          for (x, y), c in sorted(m.items(), key=lambda kv: str(kv[0]))))
 
     print('\n=== 2. 대조군 — 두 규칙이 모두 등급3이라 한 쪽 ===')
     ctl = [i for i in ids if key[i]['group'] == 'control']
@@ -162,24 +253,30 @@ def main():
         c = Counter(g[i] for i in ctl)
         ok = c.get(3, 0)
         print('  코더 %s: 등급3 동의 %d/%d (%.0f%%)  분포 %s'
-              % (nm, ok, len(ctl), ok * 100.0 / len(ctl), dict(sorted(c.items()))))
+              % (nm, ok, len(ctl), ok * 100.0 / len(ctl), dist(g[i] for i in ctl)))
     both3 = sum(1 for i in ctl if A[i] == 3 and B[i] == 3)
     print('  두 코더 모두 등급3: %d/%d' % (both3, len(ctl)))
 
     print('\n=== 3. 분쟁군 — 현행은 등급3, 수정본은 아님 ===')
     dis = [i for i in ids if key[i]['group'] == 'disputed']
     print('  %d쪽. 코더가 등급3 이라 하면 현행 규칙이 옳고, 아니라 하면 수정본이 옳다.' % len(dis))
+    # `?` 를 "수정본 지지" 로 세면 안 된다. `?` 는 방향 없는 코드로 도입됐는데
+    # (make_coding_sheet.py 가 지운 '판단이 갈리면 낮은 등급' 대신), != 3 으로 세면
+    # 그 편향이 시트에서 채점기로 옮겨올 뿐이다. 명시적으로 1·2 인 것만 센다.
     for nm, g in (('A', A), ('B', B)):
         c = Counter(g[i] for i in dis)
         cur = c.get(3, 0)
-        print('  코더 %s: 현행 지지(등급3) %d  수정본 지지(1·2) %d  분포 %s'
-              % (nm, cur, len(dis) - cur, dict(sorted(c.items()))))
-    both_new = sum(1 for i in dis if A[i] != 3 and B[i] != 3)
+        new = c.get(1, 0) + c.get(2, 0)
+        print('  코더 %s: 현행 지지(등급3) %d  수정본 지지(1·2) %d  판단불가 %d  분포 %s'
+              % (nm, cur, new, c.get(UNSURE, 0), dist(g[i] for i in dis)))
+    both_new = sum(1 for i in dis if A[i] in (1, 2) and B[i] in (1, 2))
     both_old = sum(1 for i in dis if A[i] == 3 and B[i] == 3)
     print('  두 코더 모두 수정본 지지: %d/%d (%.0f%%)'
           % (both_new, len(dis), both_new * 100.0 / len(dis)))
     print('  두 코더 모두 현행 지지: %d/%d (%.0f%%)'
           % (both_old, len(dis), both_old * 100.0 / len(dis)))
+
+    strata(A, B, key, ids)
 
     print('\n=== 4. 규칙별 정밀도·재현율 (모집단 비중으로 보정) ===')
     print('  표본을 그대로 세면 안 된다. 분쟁군은 %d쪽 전수지만 대조군은 %d쪽 중 %d쪽만'

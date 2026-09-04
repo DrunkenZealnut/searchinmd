@@ -358,6 +358,24 @@ check('D8i txt_pages.csv 교재 수 == books(9)', new Set(txtCsv.slice(1).map(r 
 check('D8j txt_pages.csv 에 NCS 잔여행(LM…) 없음', txtCsv.slice(1).every(r => !/^LM\d/.test(r[0])));
 check('D8k 미검출쪽 == 2,055 - 362', summary.textbook.total_pages - summary.textbook.pages === summary.textbook.undetected_pages);
 
+// 절단 열은 커밋된 CSV 와 summary.json 을 서로 묶어 둔다. 한쪽만 재생성되거나
+// page_record() 의 OR 접기가 깨지면 CSV 는 전부 '아니오' 인데 summary 는 16 을
+// 주장하는 상태가 되는데, 이 대조가 없으면 CI 전체가 그대로 통과한다.
+const cutCol = (csv) => csv.slice(1).filter(r => r[r.length - 1] === '예');
+const ncsCut = cutCol(ncsCsv), txtCut = cutCol(txtCsv);
+check('D8l ncs_pages.csv 절단 열 == summary.ncs.truncated_pages(16)',
+  ncsCut.length === summary.ncs.truncated_pages,
+  'CSV ' + ncsCut.length + '쪽 vs summary ' + summary.ncs.truncated_pages + '쪽');
+check('D8m ncs_pages.csv 절단쪽 등급 분포 == truncated_page_g',
+  [1, 2, 3].every(g => ncsCut.filter(r => +r[3] === g).length === summary.ncs.truncated_page_g[g]),
+  JSON.stringify([1, 2, 3].map(g => ncsCut.filter(r => +r[3] === g).length)));
+check('D8n 절단은 등급3 에 몰려 있다 (등급1 은 0쪽) — 무작위가 아니라는 근거',
+  summary.ncs.truncated_page_g['1'] === 0 && summary.ncs.truncated_page_g['3'] === 12);
+check('D8o txt_pages.csv 절단 0쪽 (교과서 워크북에는 셀 한도 절단이 없다)',
+  txtCut.length === 0 && summary.textbook.truncated_pages === 0, txtCut.length);
+check('D8p 절단 열 값은 예/아니오 뿐',
+  ncsCsv.slice(1).concat(txtCsv.slice(1)).every(r => ['예', '아니오'].includes(r[r.length - 1])));
+
 // =====================================================================
 // D9 — docs/osha.html 본문 인용 수치 (텍스트 전용 diff, 썩기 쉬운 구간)
 // =====================================================================

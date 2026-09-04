@@ -22,6 +22,12 @@
   "cases_rows": 28,
   "cases_pages": 8,
   "cases_books": 5,
+  "truncated_pages": 16,
+  "truncated_page_g": {
+   "1": 0,
+   "2": 4,
+   "3": 12
+  },
   "page_grade_digest": "3461b416055291a5",
   "kw_pages": {
    "MSDS": 200,
@@ -74,6 +80,12 @@
   "cases_rows": 0,
   "cases_pages": 0,
   "cases_books": 0,
+  "truncated_pages": 0,
+  "truncated_page_g": {
+   "1": 0,
+   "2": 0,
+   "3": 0
+  },
   "page_grade_digest": "9186a08609cec321",
   "total_pages": 2055,
   "undetected_pages": 1693,

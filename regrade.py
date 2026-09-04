@@ -51,6 +51,9 @@ try:
 except ImportError:
     sys.exit('openpyxl이 필요합니다: pip install openpyxl')
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from page_utils import is_cell_truncated  # noqa: E402
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(HERE, 'data')
 OUT_DIR = os.path.join(HERE, 'docs', '03-analysis', 'data')
@@ -297,7 +300,10 @@ def load_pages(path):
                 continue
             key = (str(fn), pg)
             if key not in pages:
-                pages[key] = {'text': tx, 'grade': gr}
+                # truncated: 이 본문이 엑셀 셀 한도에서 잘렸는가. 원본이 남아 있지
+                # 않아 복구는 불가이고, 코딩 시트 고지와 층화 분석에만 쓴다.
+                pages[key] = {'text': tx, 'grade': gr,
+                              'truncated': is_cell_truncated(tx)}
     wb.close()
     if skipped:
         print('  (형식이 맞지 않아 건너뛴 행 %d개)' % skipped)

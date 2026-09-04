@@ -10,7 +10,8 @@ import json
 from openpyxl import load_workbook
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from page_utils import nfc, find_md_and_meta, build_page_map, extract_page_content
+from page_utils import (nfc, find_md_and_meta, build_page_map,
+                        extract_page_content, EXCEL_MAX_CHARS)
 
 # === 설정 ===
 EXCEL_PATH = "/Users/zealnutkim/Documents/청년노동자인권센터/2026년/교과서 기초연구/ncs_keywords&reworkinglist.xlsx"
@@ -19,7 +20,8 @@ NCS_BASES = [
     "/Users/zealnutkim/Documents/DEV/SafeFactory/documents/semiconductor/ncs/data",
 ]
 OUTPUT_PATH = EXCEL_PATH.replace(".xlsx", "_with_fullpage.xlsx")
-EXCEL_MAX_CHARS = 32767
+# EXCEL_MAX_CHARS 는 page_utils 가 갖는다. 여기서 자른 흔적을 page_utils.
+# is_cell_truncated() 가 되읽으므로, 두 곳에 적으면 어긋날 때 탐지가 조용히 깨진다.
 
 
 def main():
