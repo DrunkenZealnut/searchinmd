@@ -795,7 +795,8 @@ _pages12 = {('LM_x/y.md', 46): {'text': _src, 'grade': 3, 'truncated': True},
             ('LM_x/y.md', 47): {'text': '짧은 쪽', 'grade': 1, 'truncated': False}}
 _gr12 = {k: {'g': v['grade'], 'sn': 0, 'an': 0} for k, v in _pages12.items()}
 _sheet12, _key12 = MCS.build_sheet(
-    _pages12, [(k, 'disputed') for k in _pages12], _gr12, _gr12)
+    _pages12, [(k, 'disputed') for k in _pages12],
+    {'baseline': _gr12, MCS.RG.ADOPTED_VARIANT: _gr12})   # G2 는 아래에서 import 된다
 check('R12k 코딩 시트가 본문을 자르지 않는다 (길이 == 원문 길이)',
       _sheet12[0]['text'] == _src and _sheet12[0]['chars'] == len(_src),
       (len(_sheet12[0]['text']), len(_src)))
@@ -1356,6 +1357,565 @@ check('R14m 커밋된 regrade_impact.json 이 regrade.EXPECTED 와 일치한다'
       and {k: {int(g): n for g, n in v.items()} for k, v in _imp['dist'].items()}
       == G2.EXPECTED['dist'],
       (_imp['pages'], _imp.get('baseline_digest')))
+
+# ---------------------------------------------------------------------------
+# R15 재코딩 (recoding) — 어휘 확장 변형 · 4층 합집합 표본 · 항목별 호출기 · 재현율
+#
+# 기존 69쪽 라벨은 무효다(코더 A 독립성 실패 + 지시문 누출 + 표본틀 오염). 다시
+# 만드는 표본은 두 어휘(현재 사전 / +21종)의 **합집합**으로 층을 뽑아 같은 라벨로
+# 네 변형을 채점한다 — 어휘 채택도 라벨이 판정한다. 설계: recoding.design.md
+# ---------------------------------------------------------------------------
+print('\n[R15] 재코딩 — 어휘 확장 변형 (regrade)')
+
+
+def _call(fn, *a, **k):
+    """아직 없는 기능은 크래시가 아니라 이 줄의 실패로 보이게 한다 (TDD RED)."""
+    try:
+        return fn(*a, **k)
+    except (Exception, SystemExit) as e:          # noqa: BLE001 — sys.exit 가드도 값으로 받는다
+        return e
+
+
+# 안전어 6종을 한 번씩, 조치어는 확장 사전에만 있는 '장갑' 5회.
+_v_text = ' '.join(['안전', '위험', '주의', '사고', '유해', '누출'] + ['장갑'] * 5)
+_v_off, _v_on = _call(G2.grade_page, _v_text), _call(G2.grade_page, _v_text, extra_vocab=True)
+check('R15a 어휘 확장을 켜면 확장 조치어가 등급을 올린다 (2→3)',
+      isinstance(_v_on, tuple) and _v_off[0] == 2 and _v_on[0] == 3, (_v_off, _v_on))
+_v_d1 = _call(G2.count_terms, '안전난간 착용', G2.ACTION_TERMS + getattr(G2, 'EXTRA_ACTION_TERMS', []),
+              word_boundary=True)
+check('R15a2 D1 경로에서도 확장어가 최장일치로 잡힌다 (안전난간 1, 착용 1)',
+      _v_d1 == {'안전난간': 1, '착용': 1}, _v_d1)
+check('R15b 어휘 확장을 끄면 기준선과 완전히 같다 (재현 기준선에 새지 않는다)',
+      _v_off == _call(G2.grade_page, _v_text, extra_vocab=False)
+      and G2.count_terms(_v_text, G2.ACTION_TERMS) == {})
+check('R15c 확장 사전 21종은 기존 사전과 겹치지 않는다 (조치 12 / 안전 9)',
+      len(getattr(G2, 'EXTRA_ACTION_TERMS', [])) == 12
+      and len(getattr(G2, 'EXTRA_SAFETY_TERMS', [])) == 9
+      and not (set(getattr(G2, 'EXTRA_ACTION_TERMS', []))
+               | set(getattr(G2, 'EXTRA_SAFETY_TERMS', [])))
+      & (set(G2.ACTION_TERMS) | set(G2.SAFETY_TERMS)))
+_grid = _call(lambda: dict(G2.variant_grid()))
+check('R15d variant_grid 에 어휘 변형 둘이 있고 EXPECTED 가 모든 변형의 분포를 고정한다',
+      isinstance(_grid, dict)
+      and getattr(G2, 'VOCAB_VARIANT', None) in _grid
+      and getattr(G2, 'ADOPTED_VOCAB_VARIANT', None) in _grid
+      and _grid[G2.VOCAB_VARIANT].get('extra_vocab') is True
+      and set(G2.EXPECTED['dist']) == {'baseline', *_grid},
+      _grid if not isinstance(_grid, dict) else sorted(_grid))
+_v_run = _call(G2.run, {('f', 1): {'text': _v_text}}, False, False, extra_vocab=True)
+check('R15d2 run() 이 extra_vocab 을 grade_page 까지 전달한다',
+      isinstance(_v_run, dict) and _v_run[('f', 1)]['g'] == 3, _v_run)
+
+print('\n[R15] 재코딩 — 4층 합집합 표본 (make_coding_sheet)')
+
+_VB, _VN, _VV, _VNV = 'baseline', G2.ADOPTED_VARIANT, G2.VOCAB_VARIANT, G2.ADOPTED_VOCAB_VARIANT
+# 합성 예측 — (현행, D1+D2, 현행+V, D1+D2+V). 합집합의 효과가 보이도록 짰다:
+#   p3 는 V 쌍에서만 갈리고, p4 는 V 에서만 등급3, p6 는 V 쌍에서만 경계다.
+#   p9 는 어떤 변형이든 3 이면 전수 대상임을 본다 — 단조성 논증에 기대지 않는다.
+_syn = {'p1': (3, 3, 3, 3), 'p2': (3, 1, 3, 1), 'p3': (3, 3, 3, 2), 'p4': (2, 1, 3, 3),
+        'p5': (2, 1, 2, 1), 'p6': (1, 1, 2, 1), 'p7': (2, 2, 2, 2), 'p8': (1, 1, 1, 1),
+        'p9': (2, 2, 2, 3)}
+_preds = {nm: {k: {'g': v[i]} for k, v in _syn.items()}
+          for i, nm in enumerate((_VB, _VN, _VV, _VNV))}
+_st = _call(lambda: MCS.strata(_preds))
+check('R15e 4층 합집합 — 분쟁군은 두 규칙쌍 중 하나라도 갈리면 든다',
+      isinstance(_st, dict) and _st.get('disputed') == ['p2', 'p3'], _st)
+check('R15f 합의군은 전수 — 어느 변형이든 등급3인 쪽 전부에서 분쟁군을 뺀 것',
+      isinstance(_st, dict) and _st.get('control') == ['p1', 'p4', 'p9'], _st)
+check('R15g 경계층(2→1)은 두 규칙쌍의 합집합, 재현율 모집단은 나머지 전부',
+      isinstance(_st, dict) and _st.get('boundary') == ['p5', 'p6']
+      and _st.get('recall_pool') == ['p7', 'p8'], _st)
+_dr = _call(lambda: MCS.draw(_st, seed=1, n_recall=1)) if isinstance(_st, dict) else None
+_dr2 = _call(lambda: MCS.draw(_st, seed=1, n_recall=1)) if isinstance(_st, dict) else None
+check('R15h draw 는 전수 3층 + 재현율 무작위층을 섞어 내고 시드에 결정적이다',
+      isinstance(_dr, list) and _dr == _dr2 and len(_dr) == 8
+      and {g for _, g in _dr} == {'disputed', 'control', 'boundary', 'recall'}
+      and sum(1 for _, g in _dr if g == 'recall') == 1, _dr)
+check('R15h2 새 표본은 새 시드 — 옛 시드(20260903)를 버리고, 대조군 무작위 상수도 없다',
+      MCS.SEED != 20260903 and getattr(MCS, 'N_RECALL', None) == 300
+      and not hasattr(MCS, 'N_CONTROL'), (MCS.SEED, getattr(MCS, 'N_RECALL', None)))
+
+_pg15 = {('f', 1): {'text': '본문 하나', 'grade': 3, 'truncated': False},
+         ('f', 2): {'text': 'x' * 10, 'grade': 1, 'truncated': True}}
+_pr15 = {nm: {k: {'g': 3 if k[1] == 1 else 1} for k in _pg15}
+         for nm in (_VB, _VN, _VV, _VNV)}
+_bs = _call(MCS.build_sheet, _pg15, [(('f', 1), 'control'), (('f', 2), 'recall')], _pr15)
+check('R15i 시트에는 등급·카운트·군이 없고, 키에는 변형별 예측이 실린다 (앵커링 차단)',
+      isinstance(_bs, tuple)
+      and not any(k in it for it in _bs[0] for k in ('pred', 'group', 'grade', 'old', 'new'))
+      and all(set(r['pred']) == {_VB, _VN, _VV, _VNV} for r in _bs[1])
+      and _bs[1][0]['group'] == 'control' and _bs[1][0]['pred'][_VB] == 3
+      and _bs[1][1]['pred'][_VNV] == 1, _bs)
+check('R15i2 절단 항목은 시트 JSON 에도 고지가 실린다 (API 코더도 사람과 같은 고지를 본다)',
+      isinstance(_bs, tuple) and '잘렸' in _bs[0][1].get('notice', '')
+      and 'notice' not in _bs[0][0], _bs)
+_cp = _call(lambda: MCS.coder_prompt())
+check('R15i3 코더 지시문은 시트가 소유한다 — 등급 정의와 응답 형식(1/2/3/?)이 들고 누출은 없다',
+      isinstance(_cp, str) and '구체적 대책' in _cp and '형식적 언급' in _cp
+      and '`?`' in _cp and '진동' not in _cp and '낮은 등급' not in _cp,
+      _cp if not isinstance(_cp, str) else _cp[:80])
+
+print('\n[R15] 재코딩 — 항목별 독립 호출기 (code_pages)')
+import hashlib  # noqa: E402
+
+CP = _call(lambda: __import__('code_pages'))
+_cp_ok = not isinstance(CP, Exception)
+check('R15j code_pages 는 표준 라이브러리만으로 import 된다', _cp_ok, CP)
+
+with tempfile.TemporaryDirectory() as _td:
+    _envp = os.path.join(_td, '.env')
+    with open(_envp, 'w') as _f:
+        _f.write('# 주석\nexport AUDIT_LLM_BASE_URL="https://api.openai.com/v1"\n'
+                 'AUDIT_LLM_API_KEY=sk-test\nAUDIT_LLM_MODEL=\'gpt-x\'\n'
+                 'AUDIT_LLM_TEMPERATURE=1.0\n\nGEMINI_API_KEY=gm-test\n')
+    _env = _call(lambda: CP.read_env(_envp)) if _cp_ok else None
+check('R15j2 read_env 는 export·따옴표·주석·빈 줄을 처리한다',
+      isinstance(_env, dict) and _env.get('AUDIT_LLM_BASE_URL') == 'https://api.openai.com/v1'
+      and _env.get('AUDIT_LLM_MODEL') == 'gpt-x' and _env.get('GEMINI_API_KEY') == 'gm-test',
+      _env)
+_cfg = _call(lambda: CP.provider_config(_env)) if isinstance(_env, dict) else None
+check('R15j3 provider_config 는 AUDIT_LLM_* 를 우선하고 모델·키·주소를 한 곳에서 읽는다',
+      isinstance(_cfg, dict) and _cfg.get('model') == 'gpt-x' and _cfg.get('api_key') == 'sk-test'
+      and _cfg.get('base_url') == 'https://api.openai.com/v1'
+      and _cfg.get('key_var') == 'AUDIT_LLM_API_KEY', _cfg)
+_cfg2 = (_call(lambda: CP.provider_config({'GEMINI_API_KEY': 'gm'}, model='gemini-x'))
+         if _cp_ok else None)
+check('R15j4 AUDIT_LLM_* 가 없으면 키 변수명으로 제공자 주소를 고른다 (Gemini 프리셋)',
+      isinstance(_cfg2, dict) and 'generativelanguage.googleapis.com' in _cfg2.get('base_url', '')
+      and _cfg2.get('key_var') == 'GEMINI_API_KEY' and _cfg2.get('model') == 'gemini-x', _cfg2)
+check('R15j5 온도는 .env 에서 상속하지 않는다 — 설정에 temperature 가 없고 기본값은 0',
+      isinstance(_cfg, dict) and 'temperature' not in _cfg
+      and getattr(CP, 'DEFAULT_TEMPERATURE', None) == 0.0, _cfg)
+_nokey = _call(lambda: CP.provider_config({'FOO': 'bar'}, model='m')) if _cp_ok else None
+_nomodel = _call(lambda: CP.provider_config({'OPENAI_API_KEY': 'k'})) if _cp_ok else None
+check('R15j6 키나 모델이 없으면 기본값으로 때우지 않고 거부한다',
+      isinstance(_nokey, ValueError) and '키' in str(_nokey)
+      and isinstance(_nomodel, ValueError) and '모델' in str(_nomodel), (_nokey, _nomodel))
+
+_pg_cases = [('3', 3), (' 2 \n', 2), ('등급: 1', 1), ('?', '?'), ('**3**', 3), ('판정: `2`', 2),
+             ('3. 구체적 대책이 있다', 3), ('2 또는 3', None), ('', None),
+             ('안전 조치가 없다', None), ('12', None), (None, None)]
+_pg_got = [(_call(lambda a=a: CP.parse_grade(a)) if _cp_ok else None) for a, _ in _pg_cases]
+check('R15k parse_grade 는 1·2·3·? 하나만 있을 때 받고, 애매하면 None (라벨을 만들지 않는다)',
+      _pg_got == [e for _, e in _pg_cases],
+      [(a, g) for (a, e), g in zip(_pg_cases, _pg_got) if g != e])
+
+# --- code_items: 가짜 HTTP 를 주입해 호출·파싱·기록·재개·폴백·재시도를 본다
+_sheet15 = {'sample_digest': 'abc123', 'coder_prompt': '지시문 X', 'items': [
+    {'id': 1, 'text': '본문1', 'chars': 3, 'cell_truncated': False},
+    {'id': 2, 'text': '본문2', 'chars': 3, 'cell_truncated': True, 'notice': '잘렸습니다'},
+    {'id': 3, 'text': '본문3', 'chars': 3, 'cell_truncated': False}]}
+_cfg15 = {'base_url': 'https://api.example.com/v1', 'api_key': 'k', 'model': 'm',
+          'key_var': 'X_API_KEY'}
+_posts = []
+
+
+def _fake_post(url, headers, payload, timeout):
+    _posts.append((url, headers, payload))
+    text = payload['messages'][-1]['content']
+    ans = '3' if '본문1' in text else ('2 또는 3' if '본문2' in text else '?')
+    return 200, {'choices': [{'message': {'content': ans}}],
+                 'usage': {'prompt_tokens': 10, 'completion_tokens': 1},
+                 'system_fingerprint': 'fp_x', 'model': 'm-2026'}
+
+
+_quiet_kw = dict(sleep=lambda s: None, log=lambda *a, **k: None)
+with tempfile.TemporaryDirectory() as _td:
+    _outp = os.path.join(_td, 'coding_A.json')
+    _doc = _call(lambda: CP.code_items(_sheet15, _cfg15, 'A', _outp, post=_fake_post,
+                                       provider_env='/x/.env', **_quiet_kw))
+    _saved = json.load(open(_outp, encoding='utf-8')) if os.path.exists(_outp) else None
+    # 재개: 이미 채점된 1·3 은 건너뛰고 오류였던 2 만 다시 묻는다
+    _posts2 = []
+
+    def _post_resume(url, headers, payload, timeout):
+        _posts2.append(payload['messages'][-1]['content'])
+        return 200, {'choices': [{'message': {'content': '2'}}], 'usage': {}}
+    _doc_r = _call(lambda: CP.code_items(_sheet15, _cfg15, 'A', _outp, post=_post_resume,
+                                         resume=True, **_quiet_kw))
+    # 다른 모델로 같은 파일에 재개 → 거부 (한 파일에 코더가 섞이면 안 된다)
+    _doc_mix = _call(lambda: CP.code_items(_sheet15, dict(_cfg15, model='other'), 'A', _outp,
+                                           post=_post_resume, resume=True, **_quiet_kw))
+    # 온도 400 폴백
+    _posts3 = []
+
+    def _post_temp(url, headers, payload, timeout):
+        _posts3.append(payload)
+        if 'temperature' in payload:
+            return 400, {'error': {'message': "Unsupported value: 'temperature' does not "
+                                              "support 0 with this model."}}
+        return 200, {'choices': [{'message': {'content': '1'}}], 'usage': {}}
+    _outt = os.path.join(_td, 'coding_T.json')
+    _doc_t = _call(lambda: CP.code_items(_sheet15, _cfg15, 'T', _outt, post=_post_temp,
+                                         limit=2, **_quiet_kw))
+    # 429 → 재시도 후 성공
+    _n429 = {'calls': 0}
+    _sleeps = []
+
+    def _post_429(url, headers, payload, timeout):
+        _n429['calls'] += 1
+        if _n429['calls'] == 1:
+            return 429, {'error': {'message': 'rate limit'}}
+        return 200, {'choices': [{'message': {'content': '3'}}], 'usage': {}}
+    _out4 = os.path.join(_td, 'coding_R.json')
+    _doc_4 = _call(lambda: CP.code_items(_sheet15, _cfg15, 'R', _out4, post=_post_429, limit=1,
+                                         sleep=_sleeps.append, log=lambda *a, **k: None))
+
+check('R15l code_items 는 파싱된 라벨만 grades 에, 애매한 응답은 errors 에 두고 원자료를 남긴다',
+      isinstance(_doc, dict) and _doc.get('grades') == {'1': 3, '3': '?'}
+      and '2' in _doc.get('errors', {}) and set(_doc.get('raw', {})) == {'1', '2', '3'}
+      and all(k in _doc['raw']['1'] for k in ('answer', 'tokens_in', 'tokens_out',
+                                                'latency_ms', 'retries'))
+      and _doc.get('coder') == 'A' and _doc.get('sample_digest') == 'abc123', _doc)
+check('R15l2 산출물은 항목마다 디스크에 반영된다 (중단돼도 잃지 않는다)', _saved == _doc, _saved)
+_meta = _doc.get('meta', {}) if isinstance(_doc, dict) else {}
+check('R15l3 meta 에 FR-3 필드가 전부 실린다 (model·base_url·temperature·prompt_sha256·run_at·context_isolated·provider_env·seed)',
+      {'model', 'base_url', 'temperature', 'prompt_sha256', 'run_at', 'context_isolated',
+       'provider_env', 'seed'} <= set(_meta)
+      and _meta.get('temperature') == 0 and _meta.get('context_isolated') is True
+      and _meta.get('prompt_sha256') == hashlib.sha256('지시문 X'.encode()).hexdigest()
+      and _meta.get('provider_env') == '/x/.env' and _meta.get('version') == 'fp_x', _meta)
+check('R15l4 프롬프트는 시트에서 온다 — system 은 coder_prompt 그대로, 절단 고지는 user 에',
+      len(_posts) == 3 and all(p[2]['messages'][0] == {'role': 'system', 'content': '지시문 X'}
+                               for p in _posts)
+      and any('잘렸습니다' in p[2]['messages'][-1]['content'] and '본문2' in p[2]['messages'][-1]['content']
+              for p in _posts)
+      and all(p[0].endswith('/chat/completions') and p[1].get('Authorization') == 'Bearer k'
+              and p[2].get('temperature') == 0 and 'seed' in p[2] and p[2]['model'] == 'm'
+              for p in _posts), _posts[:1])
+check('R15l5 --resume 는 채점된 항목을 건너뛰고 오류 항목만 다시 묻는다',
+      _posts2 == ['잘렸습니다\n\n본문2'] and isinstance(_doc_r, dict)
+      and _doc_r.get('grades') == {'1': 3, '2': 2, '3': '?'} and not _doc_r.get('errors'),
+      (_posts2, _doc_r.get('grades') if isinstance(_doc_r, dict) else _doc_r))
+check('R15l6 다른 모델로 같은 파일에 재개하면 거부한다 (한 파일에 코더가 섞이지 않는다)',
+      isinstance(_doc_mix, (ValueError, SystemExit)) and '모델' in str(_doc_mix), _doc_mix)
+check('R15l7 온도를 거부하는 모델이면 온도 없이 다시 묻고 meta 에 temperature_honored=False 를 남긴다',
+      isinstance(_doc_t, dict) and _doc_t['meta'].get('temperature_honored') is False
+      and len(_posts3) == 3 and 'temperature' in _posts3[0] and 'temperature' not in _posts3[1]
+      and 'temperature' not in _posts3[2]        # 두 번째 항목부터는 처음부터 빼고 보낸다
+      and _doc_t.get('grades') == {'1': 1, '2': 1}, (_doc_t, len(_posts3)))
+check('R15l8 429 는 물러섰다 다시 시도하고 retries 를 기록한다',
+      isinstance(_doc_4, dict) and _doc_4.get('grades') == {'1': 3}
+      and _doc_4['raw']['1']['retries'] == 1 and len(_sleeps) == 1, (_doc_4, _sleeps))
+check('R15l9 --limit 은 시도 항목 수를 제한한다',
+      isinstance(_doc_t, dict) and len(_doc_t.get('raw', {})) == 2, _doc_t)
+
+# 지연을 벽시계로 재면 NTP 보정으로 time.time() 이 뒤로 갈 때 음수가 찍힌다 —
+# 실제 코더 B 실행(2026-09-04)에서 -1,159 ms 가 기록됐다. 단조 시계여야 한다.
+_tt = iter([1000.0, 999.0, 998.0, 997.0, 996.0, 995.0])
+_o_time = CP.time.time
+try:
+    CP.time.time = lambda: next(_tt)                 # 뒤로 가는 벽시계
+    with tempfile.TemporaryDirectory() as _td:
+        _doc_lat = _call(lambda: CP.code_items(_sheet15, _cfg15, 'L', os.path.join(_td, 'l.json'),
+                                               post=_fake_post, limit=1, **_quiet_kw))
+finally:
+    CP.time.time = _o_time
+check('R15l10 지연은 단조 시계로 잰다 — 벽시계가 뒤로 가도 음수가 되지 않는다',
+      isinstance(_doc_lat, dict) and _doc_lat['raw']['1']['latency_ms'] >= 0,
+      _doc_lat['raw']['1'] if isinstance(_doc_lat, dict) else _doc_lat)
+
+# --- Claude Code 헤드리스 백엔드 (설계 A1): `claude -p` 를 post 인터페이스로 감싼다. 실행은 주입한다.
+# 프로젝트 컨텍스트(CLAUDE.md 의 등급 규칙!)가 실리지 않도록 --setting-sources "" · --tools "" ·
+# 저장소 밖 cwd 가 강제돼야 한다 — 실측: 그 옵션 없이는 7.5만 토큰이 캐시에 실렸다.
+_cli_calls = []
+
+
+def _fake_run(argv, input=None, capture_output=True, text=True, timeout=None, cwd=None):
+    _cli_calls.append({'argv': list(argv), 'stdin': input, 'cwd': cwd})
+
+    class _R:
+        returncode, stderr = 0, ''
+        # Claude Code 는 요청 모델 외에 Haiku 보조 호출을 한 번 낀다 (실측 922토큰 고정).
+        # usage 총계에는 그것이 섞이므로 요청 모델의 modelUsage 로 세어야 한다.
+        stdout = json.dumps({'type': 'result', 'is_error': False, 'result': ' 2 ',
+                             'usage': {'input_tokens': 1222, 'output_tokens': 17,
+                                       'cache_read_input_tokens': 20, 'cache_creation_input_tokens': 5},
+                             'modelUsage': {'claude-haiku-4-5-20251001': {'inputTokens': 922, 'outputTokens': 14,
+                                                                          'cacheCreationInputTokens': 0,
+                                                                          'cacheReadInputTokens': 0},
+                                            'claude-opus-5': {'inputTokens': 300, 'outputTokens': 3,
+                                                              'cacheCreationInputTokens': 5,
+                                                              'cacheReadInputTokens': 20}},
+                             'total_cost_usd': 0.01})
+    return _R()
+
+
+_pl = {'model': 'claude-opus-5', 'messages': [{'role': 'system', 'content': '지시문 X'},
+                                              {'role': 'user', 'content': '본문 Y'}]}
+_r = _call(lambda: CP.claude_cli_post('claude-cli://anthropic/chat/completions', {}, _pl, 180, run=_fake_run))
+_argv = _cli_calls[-1]['argv'] if _cli_calls else []
+check('R15s claude_cli_post 는 claude -p 를 도구·설정·세션 없이 저장소 밖에서 돌리고 OpenAI 응답 모양으로 돌려준다',
+      isinstance(_r, tuple) and _r[0] == 200
+      and _r[1]['choices'][0]['message']['content'] == ' 2 '
+      and _r[1]['usage'] == {'prompt_tokens': 325, 'completion_tokens': 3}
+      and _r[1]['model'] == 'claude-opus-5'
+      and _argv[:2] == ['claude', '-p']
+      and all(x in _argv for x in ('--tools', '--setting-sources', '--no-session-persistence',
+                                   '--strict-mcp-config', '--no-chrome',     # MCP 도구 정의 4.8만~11.8만 토큰이 새던 통로
+                                   '--output-format', 'json', '--model', 'claude-opus-5',
+                                   '--system-prompt', '지시문 X'))
+      and _r[1].get('side_calls') == {'claude-haiku-4-5-20251001': {'inputTokens': 922, 'outputTokens': 14,
+                                                                     'cacheCreationInputTokens': 0,
+                                                                     'cacheReadInputTokens': 0}}
+      and _argv[_argv.index('--tools') + 1] == '' and _argv[_argv.index('--setting-sources') + 1] == ''
+      and _cli_calls[-1]['stdin'] == '본문 Y'
+      and _cli_calls[-1]['cwd'] and os.path.abspath(_cli_calls[-1]['cwd']) != ROOT
+      and not os.path.abspath(_cli_calls[-1]['cwd']).startswith(ROOT + os.sep),
+      (_r, _argv, _cli_calls[-1] if _cli_calls else None))
+_n_before = len(_cli_calls)
+_r_t = _call(lambda: CP.claude_cli_post('x', {}, dict(_pl, temperature=0), 180, run=_fake_run))
+_r_s = _call(lambda: CP.claude_cli_post('x', {}, dict(_pl, seed=1), 180, run=_fake_run))
+check('R15s2 온도·시드는 CLI 가 받지 않는다 — 호출 없이 400 으로 알려 폴백이 기록하게 한다',
+      isinstance(_r_t, tuple) and _r_t[0] == 400 and 'temperature' in _r_t[1]['error']['message']
+      and isinstance(_r_s, tuple) and _r_s[0] == 400 and 'seed' in _r_s[1]['error']['message']
+      and len(_cli_calls) == _n_before, (_r_t, _r_s))
+
+
+def _run_err(msg, code=0):
+    def f(argv, input=None, capture_output=True, text=True, timeout=None, cwd=None):
+        class _R:
+            returncode, stderr = code, ''
+            stdout = json.dumps({'type': 'result', 'is_error': True, 'result': msg})
+        return _R()
+    return f
+
+
+def _run_timeout(argv, input=None, capture_output=True, text=True, timeout=None, cwd=None):
+    import subprocess
+    raise subprocess.TimeoutExpired(argv, timeout)
+
+
+_r_login = _call(lambda: CP.claude_cli_post('x', {}, _pl, 180, run=_run_err('Not logged in · Please run /login')))
+_r_other = _call(lambda: CP.claude_cli_post('x', {}, _pl, 180, run=_run_err('overloaded')))
+_r_to = _call(lambda: CP.claude_cli_post('x', {}, _pl, 1, run=_run_timeout))
+check('R15s3 로그인 안 됨은 401(재시도 없음), 그 밖의 오류는 500, 시간 초과는 None(재시도) 으로 매핑한다',
+      isinstance(_r_login, tuple) and _r_login[0] == 401 and 'logged in' in _r_login[1]['error']['message']
+      and isinstance(_r_other, tuple) and _r_other[0] == 500
+      and isinstance(_r_to, tuple) and _r_to[0] is None, (_r_login, _r_other, _r_to))
+
+# --- 병렬 워커: 산출물은 순차 실행과 같아야 한다
+with tempfile.TemporaryDirectory() as _td:
+    _outw = os.path.join(_td, 'w.json')
+    _docw = _call(lambda: CP.code_items(_sheet15, _cfg15, 'W', _outw, post=_fake_post, workers=3, **_quiet_kw))
+check('R15s4 --workers 로 병렬 호출해도 산출물은 같다 (라벨 2, 오류 1, 항목마다 원자료)',
+      isinstance(_docw, dict) and _docw['grades'] == {'1': 3, '3': '?'} and set(_docw['raw']) == {'1', '2', '3'}
+      and '2' in _docw['errors'], _docw)
+
+# --- main: --backend claude-cli 는 env 파일 없이 설정을 만든다
+with tempfile.TemporaryDirectory() as _td:
+    _shp = os.path.join(_td, 'sheet.json')
+    with open(_shp, 'w', encoding='utf-8') as _f:
+        json.dump(_sheet15, _f, ensure_ascii=False)
+    _mcode2, _mout2 = _run_main(CP.main, ['code_pages.py', '--coder', 'T', '--backend', 'claude-cli',
+                                          '--model', 'claude-opus-5', '--sheet', _shp, '--dry-run'])
+check('R15s5 --backend claude-cli 는 --provider-env 없이 claude-cli://anthropic 설정으로 dry-run 한다',
+      _mcode2 == 0 and 'claude-opus-5 @ claude-cli://anthropic' in _mout2, (_mcode2, _mout2[:120]))
+
+_cp_src = open(os.path.join(ROOT, 'code_pages.py'), encoding='utf-8').read() if _cp_ok else ''
+check('R15m 호출기는 규칙 지식을 갖지 않는다 — 등급 정의·동음이의 문자열이 소스에 없다',
+      _cp_ok and not any(w in _cp_src for w in ('구체적 대책', '형식적 언급', '미흡', '안전보건 내용',
+                                                 '진동', '먼지', 'SAFETY_TERMS', 'regrade'))
+      and 'AUDIT_LLM_TEMPERATURE' not in _cp_src, [w for w in ('구체적 대책', '형식적 언급', '미흡', '안전보건 내용', '진동', '먼지', 'SAFETY_TERMS', 'regrade', 'AUDIT_LLM_TEMPERATURE') if w in _cp_src])
+
+print('\n[R15] 재코딩 — 전수 + 재현율층 채점 (score_coding)')
+
+# --- 재현율층: 유한모집단 정확 구간 (초기하). N=1,739 / n=300 / 적중 0 → 상한 15쪽
+_mi0 = _call(lambda: SC.missed_interval(1739, 300, 0))
+check('R15n 적중 0건 → 점추정 없이 단측 95% 상한만 (1,739쪽 중 300쪽 → 15쪽)',
+      _mi0 == (0, 0, 15), _mi0)
+_mi6 = _call(lambda: SC.missed_interval(1739, 300, 6))
+_mi12 = _call(lambda: SC.missed_interval(1739, 300, 12))
+check('R15n2 적중 h건 → 점추정 h·N/n 과 그것을 품는 양측 95% 구간, 적중이 늘면 구간이 오른다',
+      isinstance(_mi6, tuple) and abs(_mi6[0] - 6 * 1739 / 300) < 1e-9
+      and 0 < _mi6[1] <= _mi6[0] <= _mi6[2] < 1739
+      and isinstance(_mi12, tuple) and _mi12[1] > _mi6[1] and _mi12[2] > _mi6[2], (_mi6, _mi12))
+check('R15n3 전수(n == N)면 구간이 점으로 닫힌다', _call(lambda: SC.missed_interval(10, 10, 3)) == (3, 3, 3),
+      _call(lambda: SC.missed_interval(10, 10, 3)))
+
+# --- 합성 4층 키. 변형 4개 (현행, D1+D2, V, D1+D2+V)
+_vs = ['baseline', G2.ADOPTED_VARIANT, G2.VOCAB_VARIANT, G2.ADOPTED_VOCAB_VARIANT]
+
+
+def _ki(i, grp, pred, cut=False):
+    return {'id': i, 'group': grp, 'file': 'LM_%d' % i, 'page': i, 'cell_truncated': cut,
+            'pred': dict(zip(_vs, pred))}
+
+
+_kitems = [_ki(1, 'disputed', (3, 1, 3, 1)), _ki(2, 'disputed', (3, 1, 3, 1)),
+           _ki(3, 'disputed', (3, 3, 3, 2), cut=True), _ki(4, 'control', (3, 3, 3, 3)),
+           _ki(5, 'control', (2, 1, 3, 3)), _ki(6, 'boundary', (2, 1, 2, 1)),
+           _ki(7, 'boundary', (2, 1, 2, 1)), _ki(8, 'recall', (1, 1, 1, 1)),
+           _ki(9, 'recall', (2, 2, 2, 2)), _ki(10, 'recall', (1, 1, 1, 1))]
+_kdoc = {'sample_digest': MCS.sample_digest(_kitems), 'seed': 1, 'n_recall': 3, 'variants': _vs,
+         'rule_pairs': [[_vs[0], _vs[1]], [_vs[2], _vs[3]]],
+         'population': {'pages': 100, 'recall_pool': 50,
+                        'strata': {'disputed': 3, 'control': 2, 'boundary': 2, 'recall': 3}},
+         'items': _kitems}
+_gA = {'1': 3, '2': 1, '3': 3, '4': 3, '5': 2, '6': 3, '7': 1, '8': 3, '9': 1, '10': '?'}
+_gB = {'1': 3, '2': 2, '3': '?', '4': 3, '5': 2, '6': 3, '7': 1, '8': 1, '9': 1, '10': 1}
+_res, _cout = quiet(lambda: _call(lambda: SC.score_census(_gA, _gB, _kdoc)))
+_rA = _res.get('A', {}) if isinstance(_res, dict) else {}
+_rB = _res.get('B', {}) if isinstance(_res, dict) else {}
+_vA = _rA.get('variants', {})
+check('R15o 변형별 정밀도는 전수라 표본 가중 없이 그대로다 (A: 현행 3/4, D1+D2 2/2, V 3/5, D1+D2+V 1/2)',
+      isinstance(_res, dict)
+      and [(_vA[v]['pred'], _vA[v]['tp']) for v in _vs] == [(4, 3), (2, 2), (5, 3), (2, 1)]
+      and abs(_vA['baseline']['precision'] - 0.75) < 1e-9, _res if not isinstance(_res, dict) else _vA)
+check('R15o2 재현율은 전수 진짜 등급3 + 재현율층 추정으로 처음 측정된다 (A: 전수 4 + 1/2×50 = 29 → 현행 3/29)',
+      _rA.get('census_true') == 4 and _rA.get('recall', {}).get('hits') == 1
+      and _rA.get('recall', {}).get('n') == 2 and abs(_rA['recall']['k_hat'] - 25.0) < 1e-9
+      and abs(_vA['baseline']['recall'] - 3 / 29.0) < 1e-9
+      and _vA['baseline']['recall_ci'][0] < 3 / 29.0 < _vA['baseline']['recall_ci'][1],
+      (_rA.get('census_true'), _rA.get('recall'), _vA.get('baseline')))
+_vB = _rB.get('variants', {})
+check('R15o3 판단 불가(?)는 분자·분모 양쪽에서 빠지고 뺀 수를 남긴다 (B 현행: 2/3, 제외 1)',
+      _vB.get('baseline', {}).get('excluded') == 1 and abs(_vB['baseline']['precision'] - 2 / 3.0) < 1e-9
+      and _rB.get('recall', {}).get('n') == 3, _vB.get('baseline'))
+check('R15o4 적중 0건인 코더는 점추정 대신 상한만 낸다 (B: 0/3 → k_hat 0, hi > 0)',
+      _rB.get('recall', {}).get('hits') == 0 and _rB['recall']['k_hat'] == 0
+      and _rB['recall']['lo'] == 0 and _rB['recall']['hi'] > 0
+      and '점추정 없음' in _cout and '상한' in _cout, _rB.get('recall'))
+check('R15o5 정밀도에 코더 불일치 폭을 병기한다 (양쪽 모두 3 ≤ 한쪽이라도 3)',
+      'band' in _vA.get('baseline', {}) and _vA['baseline']['band']['both'] <= _vA['baseline']['band']['either']
+      and '재현율층' in _cout and '경계층' in _cout and '분쟁군' in _cout, _vA.get('baseline', {}).get('band'))
+check('R15o6 경계층 적중은 두 규칙이 모두 놓친 등급3으로 전수 집계된다 (A·B 각 1/2)',
+      _rA.get('boundary_hits') == (1, 2) and _rB.get('boundary_hits') == (1, 2),
+      (_rA.get('boundary_hits'), _rB.get('boundary_hits')))
+# 결과 dict 는 JSON 산출물의 재료다 — 보고서 문장이 아니라 여기서 수치를 읽어야 재현된다
+_ag = _res.get('agreement', {}) if isinstance(_res, dict) else {}
+_gs = _res.get('group_stats', {}) if isinstance(_res, dict) else {}
+check('R15o10 결과 dict 에 전체 일치도·κ 와 층별 일치도가 실린다 (6/10; 분쟁 1/3, 합의 2/2, 경계 2/2, 재현율 1/3)',
+      _ag.get('n') == 10 and _ag.get('agree') == 6 and isinstance(_ag.get('kappa'), float)
+      and [(_gs[g]['agree'], _gs[g]['n']) for g in ('disputed', 'control', 'boundary', 'recall')]
+      == [(1, 3), (2, 2), (2, 2), (1, 3)], (_ag, _gs))
+
+# 갭 분석 #2: 결과 문서가 손계산하던 수치도 dict 에 실린다 — 불일치 패턴, 규칙쌍별 지지율,
+# 절단층 통계, "둘 다 3" 재현율 추정. 이것들이 JSON 에 있어야 "숫자는 전부 이 파일에서" 가 참이다.
+_dp = _res.get('disagreement') if isinstance(_res, dict) else None
+_ps = _res.get('pair_support') if isinstance(_res, dict) else None
+_tr = _res.get('truncation') if isinstance(_res, dict) else None
+_rb = _res.get('recall_both3') if isinstance(_res, dict) else None
+check('R15o11 결과 dict 에 불일치 패턴·규칙쌍별 지지율·절단층 통계·둘 다 3 재현율이 실린다',
+      _dp == {'1→2': 1, '3→?': 1, '3→1': 1, '?→1': 1}
+      and isinstance(_ps, list) and len(_ps) == 2
+      and _ps[0]['n'] == 2 and _ps[0]['A'] == {'cur': 1, 'new': 1, 'unsure': 0}
+      and _ps[0]['both_old'] == 1 and _ps[0]['both_new'] == 1 and _ps[0]['valid'] == 2
+      and _ps[1]['n'] == 3 and _ps[1]['A'] == {'cur': 2, 'new': 1, 'unsure': 0}
+      and _ps[1]['B'] == {'cur': 1, 'new': 1, 'unsure': 1} and _ps[1]['valid'] == 2
+      and _tr == {'n': 1, 'agree': 0, 'both3': 0,
+                  'disputed_support': {'with': [1, 2], 'without': [1, 2]}}
+      and isinstance(_rb, dict) and _rb['hits'] == 0 and _rb['n'] == 2 and _rb['hi'] > 0,
+      (_dp, _ps, _tr, _rb))
+# 갭 분석 #6: 설계 §8 — `?` 비율이 층별 임계를 넘으면 경고한다. 픽스처는 분쟁군 B 1/3, 재현율층 A 1/3.
+_uw = _res.get('unsure_warnings') if isinstance(_res, dict) else None
+_res2, _cout2 = quiet(lambda: _call(lambda: SC.score_census(dict(_gA, **{'10': 1}), dict(_gB, **{'3': 2}), _kdoc)))
+check('R15o12 층별 ? 비율이 임계를 넘으면 경고를 내고 기록한다 (분쟁군 B, 재현율층 A); 없으면 조용하다',
+      isinstance(_uw, list) and {(w['group'], w['coder']) for w in _uw} == {('disputed', 'B'), ('recall', 'A')}
+      and '경고' in _cout and isinstance(_res2, dict) and _res2.get('unsure_warnings') == []
+      and '판단 불가 비율' not in _cout2, (_uw, _cout[:0]))
+
+# 재현율층에 어느 변형이든 등급3 예측이 섞여 있으면 표본이 낡은 것 — 계산하지 않고 멈춘다
+_bad = dict(_kdoc, items=_kitems[:-1] + [_ki(10, 'recall', (3, 1, 1, 1))])
+_bad_res = quiet(lambda: _call(lambda: SC.score_census(_gA, _gB, _bad)))[0]
+check('R15o7 재현율층에 등급3 예측이 있으면 채점을 거부한다 (표본이 규칙과 어긋남)',
+      isinstance(_bad_res, SystemExit) and '재현율층' in str(_bad_res), _bad_res)
+
+# --- 모집단 교차 검증: 키의 변형별 등급3 전수 == regrade_impact.json 의 분포
+_imp_ok = {'pages': 100, 'dist': {v: {'3': n} for v, n in zip(_vs, (4, 2, 5, 2))}}
+check('R15o8 키의 변형별 등급3 수가 regrade_impact.json 과 맞으면 통과, 하나라도 다르면 멈춘다',
+      _call(lambda: SC.check_population(_kdoc, _imp_ok)) is None
+      and isinstance(_call(lambda: SC.check_population(
+          _kdoc, dict(_imp_ok, dist=dict(_imp_ok['dist'], baseline={'3': 5})))), SystemExit)
+      and isinstance(_call(lambda: SC.check_population(_kdoc, dict(_imp_ok, pages=99))), SystemExit),
+      _call(lambda: SC.check_population(_kdoc, _imp_ok)))
+
+# --- 코더 계열 가드 (FR-1): 같은 제공자면 경고
+_fg_same = _call(lambda: SC.family_guard({'base_url': 'https://api.openai.com/v1', 'model': 'a'},
+                                         {'base_url': 'https://api.openai.com/v1', 'model': 'b'}))
+_fg_diff = _call(lambda: SC.family_guard({'base_url': 'https://api.openai.com/v1', 'model': 'a'},
+                                         {'base_url': 'https://generativelanguage.googleapis.com/v1beta/openai', 'model': 'g'}))
+check('R15o9 두 코더가 같은 제공자면 FR-1 미충족 경고, 다르면 없음',
+      isinstance(_fg_same, str) and 'FR-1' in _fg_same and _fg_diff is None, (_fg_same, _fg_diff))
+
+# --- main 라우팅: 새 형식 키 → 전수 채점, 구형식 키 → 기존 경로
+_o_load, _o_pop, _o_here = SC.load, SC.population, SC.HERE
+_scores = None
+with tempfile.TemporaryDirectory() as _td:
+    try:
+        SC.load = lambda n: ({'coder': n[7], 'sample_digest': _kdoc['sample_digest'],
+                              'meta': {'base_url': 'https://x/v1', 'model': 'm'},
+                              'grades': _gA if n.startswith('coding_A') else _gB}
+                             if n.startswith('coding_') and not n.startswith('coding_key') else _kdoc)
+        SC.HERE = _td                 # regrade_impact.json 이 없어도 전수 채점은 돈다
+        _mcode, _mout = _run_main(SC.main, ['score_coding.py'])
+        _sp = os.path.join(_td, 'docs', '03-analysis', 'data', 'recoding_scores.json')
+        _scores_raw = open(_sp, encoding='utf-8').read() if os.path.exists(_sp) else ''
+        _scores = json.loads(_scores_raw) if _scores_raw else None
+    finally:
+        SC.load, SC.population, SC.HERE = _o_load, _o_pop, _o_here
+check('R15p main 은 새 형식 키(pred·population)를 전수 채점 경로로 보낸다',
+      _mcode == 0 and '재현율층' in _mout and '규칙 변형별' not in _mout, (_mcode, _mout[:120]))
+# 보고서 문장만 남기면 분석 문서의 수치를 아무도 재현할 수 없다. 채점기가 JSON 도 남긴다.
+check('R15p2 전수 채점은 수치를 docs/03-analysis/data/recoding_scores.json 에도 쓴다 (NaN 없이, 계열 경고 포함)',
+      isinstance(_scores, dict) and _scores.get('sample_digest') == _kdoc['sample_digest']
+      and _scores.get('A', {}).get('variants', {}).get('baseline', {}).get('tp') == 3
+      and _scores.get('coders', {}).get('B', {}).get('model') == 'm'
+      and 'FR-1' in (_scores.get('family_warning') or '')
+      and 'NaN' not in _scores_raw,
+      _scores if not isinstance(_scores, dict) else sorted(_scores))
+
+# --- 커밋된 산출물 삼각 검증: recoding_scores.json ↔ coding_key.json ↔ coding_A/B.json
+# 파일을 자기 자신으로 검증하지 않는다 — 지문·개수·모델을 서로 대조한다. 라벨을 다시 만들고
+# 채점을 안 돌리면 여기서 걸린다 (R14m 과 같은 패턴).
+_sc_p = os.path.join(ROOT, 'docs/03-analysis/data/recoding_scores.json')
+_ck_p = os.path.join(ROOT, 'coding_key.json')
+if os.path.exists(_sc_p) and os.path.exists(_ck_p):
+    _sc = json.load(open(_sc_p, encoding='utf-8'))
+    _ck = json.load(open(_ck_p, encoding='utf-8'))
+    # 어느 코더 둘을 대조했는지는 JSON 이 말한다 (FR-1 회차는 C,B). 구버전 JSON 은 A,B.
+    _names = _sc.get('coder_names') or ['A', 'B']
+    _files = _sc.get('coder_files') or {n: 'coding_%s.json' % n for n in _names}
+    _docs = {n: json.load(open(os.path.join(ROOT, _files[n]), encoding='utf-8')) for n in _names
+             if os.path.exists(os.path.join(ROOT, _files[n]))}
+    check('R15q 커밋된 recoding_scores.json 이 커밋된 키·라벨과 맞는다 (지문·항목 수·모델·등급3 수)',
+          len(_docs) == 2
+          and all(_sc.get('sample_digest') == _ck.get('sample_digest') == d.get('sample_digest')
+                  for d in _docs.values())
+          and _sc.get('agreement', {}).get('n') == len(_ck['items'])
+          and _sc['population'] == _ck['population']
+          and all(_sc['coders'][n].get('model') == _docs[n]['meta'].get('model') for n in _names)
+          and all(sum(1 for i in _ck['items']
+                      if _docs[n]['grades'].get(str(i['id'])) == 3 and i['group'] != 'recall')
+                  == _sc[n]['census_true'] for n in _names),
+          (_names, _sc.get('sample_digest'), _ck.get('sample_digest'), sorted(_docs)))
+else:
+    print('  (recoding_scores.json / coding_key.json 이 없어 R15q 를 건너뛴다)')
+
+# --- FR-1 회차: 코더 파일을 골라 채점한다 (--coders C,B). JSON 에 코더 이름·파일이 남아 R15q 가 따라간다.
+_o_here2 = SC.HERE
+_sc2, _rcode, _rout = None, None, ''
+with tempfile.TemporaryDirectory() as _td:
+    with open(os.path.join(_td, 'coding_key.json'), 'w', encoding='utf-8') as _f:
+        json.dump(_kdoc, _f, ensure_ascii=False)
+    for _nm, _g, _host in (('C', _gA, 'https://api.anthropic.com/v1'), ('B', _gB, 'https://api.openai.com/v1')):
+        with open(os.path.join(_td, 'coding_%s.json' % _nm), 'w', encoding='utf-8') as _f:
+            json.dump({'coder': _nm, 'sample_digest': _kdoc['sample_digest'],
+                       'meta': {'base_url': _host, 'model': 'm-' + _nm}, 'grades': _g}, _f)
+    try:
+        SC.HERE = _td
+        _rcode, _rout = _run_main(SC.main, ['score_coding.py', '--coders', 'C,B'])
+        _sp2 = os.path.join(_td, 'docs', '03-analysis', 'data', 'recoding_scores.json')
+        if os.path.exists(_sp2):
+            _sc2 = json.load(open(_sp2, encoding='utf-8'))
+    finally:
+        SC.HERE = _o_here2
+check('R15r --coders C,B 는 coding_C/coding_B 를 읽어 채점하고 JSON 에 코더 이름·파일·계열 판정을 남긴다',
+      _rcode == 0 and isinstance(_sc2, dict) and _sc2.get('coder_names') == ['C', 'B']
+      and _sc2.get('coder_files') == {'C': 'coding_C.json', 'B': 'coding_B.json'}
+      and _sc2.get('C', {}).get('variants', {}).get('baseline', {}).get('tp') == 3
+      and _sc2.get('family_warning') is None and '코더 C' in _rout,
+      (_rcode, _rout[:100], sorted(_sc2) if isinstance(_sc2, dict) else _sc2))
 
 print('\n결과: %d/%d PASS%s%s' % (
     PASS, PASS + FAIL, ', %d FAIL' % FAIL if FAIL else '',

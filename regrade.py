@@ -34,6 +34,12 @@ D5 조건부 정규화 — **기각됨**. "안전 전담 페이지는 원래 길
    쪽이 조치어 중앙 8건·길이 중앙 6,436자로 길었다. 면제를 켜면 4쪽이 되살아나는데
    코더는 그 4쪽 모두 등급3이 아니라고 했다(F1 0.813→0.790). 재현을 위해 코드는
    남기되 켜지 않는다. ACTION_EXEMPT 참조.
+V  어휘 확장 — 원본 채점기의 **사전 자체**가 불완전했다. `등급사유` 에 이름 붙은
+   용어는 0종 누락이지만 본문에는 `장갑`(145쪽)·`화상`·`협착` 처럼 사전에 없는
+   안전·조치어가 있다. 21종(조치 12 / 안전 9)을 **변형**으로만 둔다 — 기준선(재현)에
+   넣으면 99.6% 재현이 깨진다. 현행+V 는 등급3을 108→129쪽으로 **올리는** 방향이라
+   D1·D2 와 반대다. 채택 여부는 재코딩 라벨이 판정한다(vocab-search.analysis.md,
+   recoding.design.md). EXTRA_*_TERMS 참조.
 
 각 결함을 따로 켜고 끌 수 있어 영향도를 항목별로 뗄 수 있다. 기본값은 현재
 발행된 동작(ceil, 면제 없음)이며, 채택 여부는 별도 판단이다 — 산출물의 숫자를
@@ -67,6 +73,8 @@ TXT_FILE = 'ncs_keywords_in_markdown_results_교과서_results_20260415.xlsx'
 # regrade_impact.json 에 `adopted_variant` 로도 실어서, 소비자가 라벨을 알 필요
 # 없이 산출물에게 물어보게 한다 — 라벨을 손봐도 KeyError 로 죽지 않는다.
 ADOPTED_VARIANT = 'D1+D2 둘 다'
+VOCAB_VARIANT = 'V 어휘 확장'            # 현행 규칙 + 21종 (V)
+ADOPTED_VOCAB_VARIANT = 'D1+D2+V'        # 수정본 + 21종
 
 # 회귀 검증 기대값. recount_grades.py 와 같은 이유로 둔다 — 이 산출물이
 # score_coding.population() 을 거쳐 발표되는 정밀도·재현율의 분모가 되므로,
@@ -85,6 +93,8 @@ EXPECTED = {
         'D1+D2+D5 조건부면제':        {1: 1386, 2: 384, 3: 77},
         'D1+D2+D4 round':          {1: 1359, 2: 409, 3: 79},
         'D1+D2+D4 floor':          {1: 1338, 2: 424, 3: 85},
+        'V 어휘 확장':               {1: 1247, 2: 471, 3: 129},
+        'D1+D2+V':                 {1: 1366, 2: 391, 3: 90},
     },
 }
 
@@ -119,6 +129,18 @@ ACTION_TERMS = [
     '안전화', '대피', '응급조치', '격리', '소화기', '보안경', '보호복', '안전모',
     '안전교육', '방독면', '안전수칙', '조치사항', '보호장비', '안전대책', '안전조치',
     '관리방법',
+]
+
+# V: 본문 탐색에서 나온 누락 어휘 (docs/03-analysis/vocab-search.analysis.md §3).
+# 기준선 재현에는 **쓰지 않는다** — 원본 채점기에 없던 어휘라 넣으면 재현이 깨진다.
+# 변형(extra_vocab=True)에서만 켠다. 보류 6종(접지·정전기·감지기·노출·취급·인체)은
+# 동음이의 처리가 필요해 넣지 않았다.
+EXTRA_SAFETY_TERMS = [
+    '화상', '협착', '낙하', '비산', '발암', '직업병', '맹독성', '유독', '발화성',
+]
+EXTRA_ACTION_TERMS = [
+    '장갑', '고글', '보호안경', '방진복', '방진화', '귀마개', '보호장구',
+    '국소배기', '인터록', '경고표지', '방열복', '안전난간',
 ]
 
 SAFETY_MIN = 6          # 이 이상이어야 등급1을 벗어난다 (원본의 "5건 이하" 경계)
@@ -274,16 +296,19 @@ def discretize(x, how):
 
 
 def grade_page(text, word_boundary=False, normalize=False,
-               how=DISCRETIZE, exempt=False):
+               how=DISCRETIZE, exempt=False, extra_vocab=False):
     """페이지 본문 하나에 등급을 매긴다. 반환: (등급, 안전수, 조치수, 사유)
 
     normalize 는 False 이거나 length_scale() 이 돌려준 배율(float)이다.
     how     는 정규화 임계의 이산화 방식(D4).
     exempt  가 True 면 조치어 절대수 >= ACTION_EXEMPT 인 페이지는 조치어
             임계를 정규화하지 않는다(D5, 조건부 정규화).
+    extra_vocab 가 True 면 21종 확장 사전을 더한다(V). 기본값 False 가 재현 기준선이다.
     """
-    s = count_terms(text, SAFETY_TERMS, word_boundary)
-    a = count_terms(text, ACTION_TERMS, word_boundary)
+    s_terms = SAFETY_TERMS + EXTRA_SAFETY_TERMS if extra_vocab else SAFETY_TERMS
+    a_terms = ACTION_TERMS + EXTRA_ACTION_TERMS if extra_vocab else ACTION_TERMS
+    s = count_terms(text, s_terms, word_boundary)
+    a = count_terms(text, a_terms, word_boundary)
     sn, an = sum(s.values()), sum(a.values())
 
     s_min, a_min = SAFETY_MIN, ACTION_MIN
@@ -361,16 +386,38 @@ def median_length(pages):
 
 
 def run(pages, word_boundary, normalize, base=None,
-        how=DISCRETIZE, exempt=False):
+        how=DISCRETIZE, exempt=False, extra_vocab=False):
     """normalize=True 면 페이지별 길이 배율을 적용한다."""
     out = {}
     for key, rec in pages.items():
         scale = length_scale(len(rec['text']), base) if normalize else False
         g, sn, an, reason = grade_page(rec['text'], word_boundary, scale,
-                                       how, exempt)
+                                       how, exempt, extra_vocab)
         out[key] = {'g': g, 'sn': sn, 'an': an, 'reason': reason,
                     'len': len(rec['text'])}
     return out
+
+
+def variant_grid():
+    """산출물에 싣는 변형 목록 (라벨, run() 인자).
+
+    라벨은 **여기서만** 정의한다. make_coding_sheet 와 score_coding 은 이 목록을
+    불러 쓰지 다시 타이핑하지 않는다 — 두 벌이 되면 라벨을 손보는 순간 어긋난다.
+    """
+    return [
+        ('D1 단어 경계', dict(word_boundary=True, normalize=False)),
+        ('D2 길이 정규화', dict(word_boundary=False, normalize=True)),
+        (ADOPTED_VARIANT, dict(word_boundary=True, normalize=True)),
+        ('D1+D2+D5 조건부면제',
+         dict(word_boundary=True, normalize=True, exempt=True)),
+        ('D1+D2+D4 round',
+         dict(word_boundary=True, normalize=True, how='round')),
+        ('D1+D2+D4 floor',
+         dict(word_boundary=True, normalize=True, how='floor')),
+        (VOCAB_VARIANT, dict(word_boundary=False, normalize=False, extra_vocab=True)),
+        (ADOPTED_VOCAB_VARIANT,
+         dict(word_boundary=True, normalize=True, extra_vocab=True)),
+    ]
 
 
 def dist(graded):
@@ -421,17 +468,7 @@ def main():
     med = median_length(pages)
     print('  페이지 길이 중앙값 %d자 (D2 기준 길이로 사용)' % med)
 
-    variants = [
-        ('D1 단어 경계', dict(word_boundary=True, normalize=False)),
-        ('D2 길이 정규화', dict(word_boundary=False, normalize=True)),
-        (ADOPTED_VARIANT, dict(word_boundary=True, normalize=True)),
-        ('D1+D2+D5 조건부면제',
-         dict(word_boundary=True, normalize=True, exempt=True)),
-        ('D1+D2+D4 round',
-         dict(word_boundary=True, normalize=True, how='round')),
-        ('D1+D2+D4 floor',
-         dict(word_boundary=True, normalize=True, how='floor')),
-    ]
+    variants = variant_grid()
     print('\n=== 항목별 영향도 (재현 기준 대비) ===')
     results = {}
     for name, kw in variants:
@@ -473,7 +510,9 @@ def main():
         'median_page_len': med,
         'rule': {'safety_min': SAFETY_MIN, 'action_min': ACTION_MIN,
                  'normalize': 'sqrt(len/median)',
-                 'discretize': DISCRETIZE, 'action_exempt': ACTION_EXEMPT},
+                 'discretize': DISCRETIZE, 'action_exempt': ACTION_EXEMPT,
+                 'extra_safety_terms': EXTRA_SAFETY_TERMS,
+                 'extra_action_terms': EXTRA_ACTION_TERMS},
         'reproduction': repro,
         'adopted_variant': ADOPTED_VARIANT,   # 소비자가 라벨을 타이핑하지 않게
         'baseline_digest': impact_digest(base),

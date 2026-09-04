@@ -10,15 +10,29 @@
 높은 일치율이 정확도가 아니라 공통 편향을 보여줄 수 있다. 이 결과는 규칙이 명백히
 틀린 페이지를 싸게 찾아내는 **선별(triage)** 이지 발표 수치의 근거가 아니다.
 
-## 무엇을 재는가
+## 무엇을 재는가 — 4층 전수 + 재현율층 (recoding.design.md §4)
 
-분쟁군 = 현행 규칙이 등급3, 수정본(D1+D2)이 등급3 아님. 여기서 코더가 어느 쪽 손을
-들어주느냐가 두 규칙의 우열을 가른다.
-대조군 = 둘 다 등급3. 코더가 원래 등급3에 인색한지 보는 기준선이다.
+키가 새 형식(`population` + 항목별 `pred`)이면 전수 채점 경로로 간다.
+
+  분쟁군   어느 규칙쌍에서든 현행=3, 수정본≠3 — 코더가 어느 쪽 손을 드느냐가 우열을 가른다
+  합의군   어느 변형이든 등급3인 나머지 — 코더가 원래 등급3에 인색한지 보는 기준선
+  경계층   현행=2, 수정본=1 — 재채점이 가장 많이 움직인 경계. 여기서 코더가 3 이라 하면
+           두 규칙이 **모두** 놓친 것이다
+  재현율층 현행이 등급1·2인 나머지에서 무작위 — **재현율이 처음 측정되는 곳.** 적중 h 건에
+           유한모집단 정확(초기하) 구간을 붙이고, 0 건이면 점추정 없이 상한만 낸다
+
+앞의 세 층은 전수라 변형별 정밀도에 표집오차가 없다. 남는 불확실성은 (a) 재현율층의
+표집오차 — 구간으로 낸다, (b) 코더 신뢰도 — 두 코더의 값을 따로 내고 "양쪽 모두 3 ≤
+한쪽이라도 3" 폭을 병기한다. 정밀도 표에서 최고값을 골라 채택하면 이 표본에 과적합하는
+것이다 — 이 표는 결함을 **발견**하는 데 쓰고 변형을 **고르는** 데 쓰지 않는다.
+
+구형식 키(분쟁군·대조군 2층, `pred` 없음)는 예전 경로(main_legacy)로 간다.
 """
 import json
+import math
 import os
 import sys
+import urllib.parse
 from collections import Counter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -170,7 +184,7 @@ def score_variants(A, B, key, dis, ctl):
                      p * 100, r * 100, f1))
 
 
-def strata(A, B, key, ids):
+def strata(A, B, key, ids, names=('A', 'B')):
     """절단 여부로 층을 갈라 따로 본다 (외부감사 C-1).
 
     통합 수치만 내면 절단의 집중도가 가려진다 — 통합 κ 0.796 이 분쟁군 0.769·
@@ -207,7 +221,7 @@ def strata(A, B, key, ids):
         if len(sub) >= 20:
             line += '  κ = %.3f' % kappa(a, b)
         print(line)
-        print('    A 분포 %s   B 분포 %s' % (dist(a), dist(b)))
+        print('    %s 분포 %s   %s 분포 %s' % (names[0], dist(a), names[1], dist(b)))
 
     # 민감도 — 절단 항목을 빼면 분쟁군의 결론이 달라지는가.
     #
@@ -232,7 +246,7 @@ def strata(A, B, key, ids):
 
     if len(cut) < 20:
         print('  절단층은 표본이 작아 원자료를 그대로 싣는다:')
-        print('    %-4s %-9s %-3s %-3s %s' % ('id', '군', 'A', 'B', '교재/쪽'))
+        print('    %-4s %-9s %-3s %-3s %s' % ('id', '군', names[0], names[1], '교재/쪽'))
         for i in sorted(cut, key=int):
             r = key[i]
             print('    %-4s %-9s %-3s %-3s %s p.%s'
@@ -261,7 +275,8 @@ def population():
     return total, cur3 - new3, new3              # 전체, 분쟁군, 합의군
 
 
-def main():
+def main_legacy():
+    """구형식 키(분쟁군·대조군 2층) 채점. 새 형식은 main_census() 가 맡는다."""
     doc_a, doc_b = load('coding_A.json'), load('coding_B.json')
     A, B = doc_a['grades'], doc_b['grades']
     key_items, key_digest = unwrap(load('coding_key.json'))
@@ -378,6 +393,378 @@ def main():
     print('        떨어뜨린 1,739쪽은 아무도 안 봤으므로 진짜 누락은 알 수 없다.')
     print('주의 2: 코더 둘 다 같은 계열 AI다. 일치율이 높아도 정확도가 아니라')
     print('        공통 편향일 수 있다. 발표 수치의 근거로는 사람 코딩이 필요하다.')
+
+
+# ---------------------------------------------------------------------------
+# 전수 + 재현율층 채점 (새 형식 키)
+# ---------------------------------------------------------------------------
+GROUP_LABELS = (('disputed', '분쟁군'), ('control', '합의군'),
+                ('boundary', '경계층'), ('recall', '재현율층'))
+UNSURE_WARN = 0.10   # 층별 `?` 비율이 이걸 넘으면 경고 — 표본이 조용히 줄어든 층이다 (설계 §8)
+
+
+def is_census_key(doc):
+    return (isinstance(doc, dict) and 'population' in doc
+            and bool(doc.get('items')) and all('pred' in r for r in doc['items']))
+
+
+def _log_comb(a, b):
+    if b < 0 or b > a:
+        return float('-inf')
+    return math.lgamma(a + 1) - math.lgamma(b + 1) - math.lgamma(a - b + 1)
+
+
+def _hyper_cdf(N, K, n, h):
+    """P(X <= h): 모집단 N 에 양성 K, 비복원 n 추출. K 에 대해 단조 감소."""
+    tot = _log_comb(N, n)
+    s = 0.0
+    for k in range(max(0, n - (N - K)), min(h, K, n) + 1):
+        s += math.exp(_log_comb(K, k) + _log_comb(N - K, n - k) - tot)
+    return min(s, 1.0)
+
+
+def missed_interval(N, n, h, alpha=0.05):
+    """재현율층: 모집단 N 에서 n 을 뽑아 h 건 적중 → 모집단의 진짜 등급3 수 K.
+
+    반환 (점추정, 하한, 상한). 유한모집단 **정확** 구간(초기하 분포, Clopper-Pearson 형).
+    h == 0 이면 점추정 없이(0) 단측 95% 상한만 — "0 건도 결과다" 를 수치로 만든다.
+    n == N(전수)이면 구간이 점으로 닫힌다. Wilson+FPC 근사 대신 정확 구간을 쓴 이유:
+    n=300 에 h 가 한 자릿수일 때 정규 근사가 하한을 음수로 만든다.
+    """
+    if n <= 0 or N <= 0:
+        return (0, 0, N)                          # 표본이 없으면 아무 것도 말할 수 없다
+    n = min(n, N)
+    if h == 0:
+        hi = 0
+        for K in range(0, N - n + 1):             # K > N-n 이면 0 건 적중이 불가능하다
+            if _hyper_cdf(N, K, n, 0) >= alpha:
+                hi = K
+            else:
+                break
+        return (0, 0, hi)
+    k_hat = h * N / float(n)
+    kmax = N - (n - h)                            # 음성이 n-h 개는 있어야 한다
+    lo = h
+    for K in range(h, kmax + 1):
+        if 1.0 - _hyper_cdf(N, K, n, h - 1) >= alpha / 2:
+            lo = K
+            break
+    hi = h
+    for K in range(h, kmax + 1):
+        if _hyper_cdf(N, K, n, h) >= alpha / 2:
+            hi = K
+        else:
+            break
+    return (k_hat, lo, hi)
+
+
+def check_population(key_doc, impact):
+    """키의 변형별 등급3 전수가 regrade_impact.json 의 분포와 같아야 한다.
+
+    전수 채점은 "어느 변형의 등급3이든 표본에 다 들어 있다" 에 기댄다. 규칙이 바뀌어
+    산출물이 갱신됐는데 표본이 옛것이면 정밀도의 분모가 조용히 틀어진다 — 여기서 멈춘다.
+    """
+    pages = key_doc['population']['pages']
+    if pages != impact['pages']:
+        sys.exit('불일치: 키의 전체 %d쪽 vs regrade_impact.json %d쪽 — 표본이 낡았습니다. '
+                 'make_coding_sheet.py 를 다시 돌린 뒤 새 시트로 다시 코딩하십시오.'
+                 % (pages, impact['pages']))
+    counts = Counter(v for r in key_doc['items'] for v, g in r['pred'].items() if g == 3)
+    bad = ['%s: 키 %d ≠ 산출물 %s' % (v, counts.get(v, 0), d.get('3'))
+           for v, d in impact['dist'].items()
+           if v in key_doc.get('variants', counts) and counts.get(v, 0) != int(d.get('3', -1))]
+    if bad:
+        sys.exit('불일치: 변형별 등급3 전수가 regrade_impact.json 과 다릅니다 — %s.\n'
+                 '  규칙이 바뀌어 표본이 낡았습니다. make_coding_sheet.py 를 다시 돌린 뒤\n'
+                 '  **새 시트로 다시 코딩**해야 합니다 — 기존 라벨을 새 키에 붙이면 엉뚱한\n'
+                 '  페이지에 붙습니다.' % '; '.join(bad))
+
+
+def family_guard(meta_a, meta_b):
+    """FR-1: 두 코더의 모델 계열이 달라야 한다. 같은 제공자면 경고문을, 아니면 None."""
+    if not meta_a or not meta_b:
+        return ('주의 (FR-1 미확인): 코더 산출물에 meta 가 없어 모델 계열을 확인할 수 없습니다. '
+                'code_pages.py 로 만든 산출물이 아니면 model·base_url 을 손으로 적으십시오.')
+    ha = urllib.parse.urlsplit(meta_a.get('base_url') or '').hostname
+    hb = urllib.parse.urlsplit(meta_b.get('base_url') or '').hostname
+    if ha and ha == hb:
+        return ('주의 (FR-1 미충족): 두 코더가 같은 제공자(%s)입니다 — %s / %s. 같은 계열은 '
+                '오류가 상관되므로 일치율이 정확도가 아니라 공통 편향일 수 있습니다. 발표 근거로 '
+                '쓰려면 코더 하나를 다른 계열로 바꾸십시오.'
+                % (ha, meta_a.get('model'), meta_b.get('model')))
+    return None
+
+
+def _agreement_line(A, B, sub):
+    a = [A.get(i, UNSURE) for i in sub]
+    b = [B.get(i, UNSURE) for i in sub]
+    agree = sum(x == y for x, y in zip(a, b))
+    line = '일치 %d/%d (%.0f%%)' % (agree, len(sub), agree * 100.0 / max(len(sub), 1))
+    if len(sub) >= 20:                            # 작은 층에서 κ 를 내면 없는 정밀도를 주장한다
+        line += '  κ = %.3f' % kappa(a, b)
+    return line, a, b
+
+
+def _recall_est(G, rec_ids, N):
+    valid = [i for i in rec_ids if G.get(i, UNSURE) != UNSURE]
+    hits = sum(1 for i in valid if G[i] == 3)
+    k_hat, lo, hi = missed_interval(N, len(valid), hits)
+    return {'n': len(valid), 'hits': hits, 'N': N, 'k_hat': k_hat, 'lo': lo, 'hi': hi,
+            'unsure': len(rec_ids) - len(valid)}
+
+
+def _f1(p, r):
+    return 2 * p * r / (p + r) if (p + r) else float('nan')
+
+
+def score_census(A, B, key_doc, meta_a=None, meta_b=None, names=('A', 'B')):
+    """4층 전수 + 재현율층 채점. 보고를 출력하고 수치를 dict 로 돌려준다."""
+    items = key_doc['items']
+    key = {str(r['id']): r for r in items}
+    ids = sorted(key, key=int)
+    variants = list(key_doc.get('variants') or items[0]['pred'])
+    pop = key_doc['population']
+    groups = {g: [i for i in ids if key[i]['group'] == g] for g, _ in GROUP_LABELS}
+    census = groups['disputed'] + groups['control'] + groups['boundary']
+
+    # 전수성 가드 — 재현율층에 등급3 예측이 있으면 "어느 변형의 등급3이든 전수" 가 깨진다.
+    stale = [i for i in groups['recall'] if any(key[i]['pred'].get(v) == 3 for v in variants)]
+    if stale:
+        sys.exit('재현율층 %d항목에 등급3 예측이 있습니다 (예: id %s). 규칙이 바뀌어 표본이 '
+                 '낡았습니다 — make_coding_sheet.py 를 다시 돌린 뒤 새 시트로 다시 코딩하십시오.'
+                 % (len(stale), stale[0]))
+
+    coders = ((names[0], A), (names[1], B))
+    print('=== 1. 두 코더의 일치도 (전체 %d항목) ===' % len(ids))
+    line, a, b = _agreement_line(A, B, ids)
+    print('  단순 %s' % line)
+    if len(ids) < 20:
+        print('  Cohen κ = %.3f' % kappa(a, b))
+    res = {'groups': {g: len(groups[g]) for g, _ in GROUP_LABELS}, 'variants': variants,
+           'agreement': {'n': len(ids), 'agree': sum(x == y for x, y in zip(a, b)),
+                         'kappa': kappa(a, b)},
+           'group_stats': {}}
+    print('  코더 %s 분포 %s\n  코더 %s 분포 %s' % (names[0], dist(a), names[1], dist(b)))
+    n_unsure = sum(1 for x in a + b if x == UNSURE)
+    if n_unsure:
+        print('  판단 불가(%s) %d건 — 분자·분모 양쪽에서 뺀다 (완전응답 분석)' % (UNSURE, n_unsure))
+    res['disagreement'] = dict(sorted(Counter('%s→%s' % (x, y) for x, y in zip(a, b)
+                                              if x != y).items()))
+    if res['disagreement']:
+        print('  불일치 패턴 (%s→%s): %s' % (names[0], names[1], ', '.join('%s:%d' % kv for kv in res['disagreement'].items())))
+    for nm, meta in ((names[0], meta_a), (names[1], meta_b)):
+        if meta:
+            print('  코더 %s: %s @ %s  온도 %s%s' % (
+                nm, meta.get('model'), meta.get('base_url'), meta.get('temperature'),
+                '' if meta.get('temperature_honored', True) else ' (모델이 거부 — 온도 없이 물음)'))
+
+    print('\n=== 2. 층별 — 분포와 일치도 (전수 3층 + 재현율층) ===')
+    for g, label in GROUP_LABELS:
+        sub = groups[g]
+        if not sub:
+            print('  %-6s 0항목' % label)
+            continue
+        line, ga, gb = _agreement_line(A, B, sub)
+        print('  %-6s %3d항목  %s' % (label, len(sub), line))
+        print('         %s 분포 %s   %s 분포 %s' % (names[0], dist(ga), names[1], dist(gb)))
+        res['group_stats'][g] = {
+            'n': len(sub), 'agree': sum(x == y for x, y in zip(ga, gb)),
+            'kappa': kappa(ga, gb) if len(sub) >= 20 else None,   # 작은 층에서는 내지 않는다
+            'dist': {names[0]: {str(k): v for k, v in dist(ga).items()},
+                     names[1]: {str(k): v for k, v in dist(gb).items()}}}
+        for nm, G in coders:
+            k = sum(1 for i in sub if G.get(i, UNSURE) == UNSURE)
+            if k / float(len(sub)) > UNSURE_WARN:
+                res.setdefault('unsure_warnings', []).append(
+                    {'group': g, 'coder': nm, 'unsure': k, 'n': len(sub), 'ratio': k / float(len(sub))})
+                print('         경고: 코더 %s 의 판단 불가 비율 %d/%d (%.0f%%) 이 임계 %.0f%% 를 넘는다 — '
+                      '이 층의 수치는 표본이 조용히 줄어든 값이다'
+                      % (nm, k, len(sub), k * 100.0 / len(sub), UNSURE_WARN * 100))
+    res.setdefault('unsure_warnings', [])
+
+    pairs = key_doc.get('rule_pairs') or []
+    if pairs:
+        print('\n=== 3. 분쟁군 — 규칙쌍별 지지율 (현행=3, 수정본≠3 인 쪽) ===')
+        print('  코더가 등급3 이라 하면 현행 규칙이 옳고, 1·2 라 하면 수정본이 옳다. `?` 는 양쪽에서 뺀다.')
+    res['pair_support'] = []
+    for cur, new in pairs:
+        dis = [i for i in census if key[i]['pred'].get(cur) == 3 and key[i]['pred'].get(new) != 3]
+        print('  [%s → %s] %d쪽' % (cur, new, len(dis)))
+        entry = {'cur': cur, 'new': new, 'n': len(dis)}
+        for nm, G in coders:
+            c = Counter(G.get(i, UNSURE) for i in dis)
+            entry[nm] = {'cur': c.get(3, 0), 'new': c.get(1, 0) + c.get(2, 0),
+                         'unsure': c.get(UNSURE, 0)}
+            print('    코더 %s: 현행 지지(3) %d  수정본 지지(1·2) %d  판단불가 %d'
+                  % (nm, entry[nm]['cur'], entry[nm]['new'], entry[nm]['unsure']))
+        ok = [i for i in dis if A.get(i, UNSURE) != UNSURE and B.get(i, UNSURE) != UNSURE]
+        both_new = sum(1 for i in ok if A[i] in (1, 2) and B[i] in (1, 2))
+        both_old = sum(1 for i in ok if A[i] == 3 and B[i] == 3)
+        tail = '  (판단 불가 %d쪽 제외)' % (len(dis) - len(ok)) if len(ok) < len(dis) else ''
+        print('    두 코더 모두 수정본 지지 %d/%d (%.0f%%), 모두 현행 지지 %d/%d (%.0f%%)%s'
+              % (both_new, len(ok), both_new * 100.0 / max(len(ok), 1),
+                 both_old, len(ok), both_old * 100.0 / max(len(ok), 1), tail))
+        entry.update({'valid': len(ok), 'both_old': both_old, 'both_new': both_new})
+        res['pair_support'].append(entry)
+
+    strata(A, B, key, ids, names)
+    cut = [i for i in ids if key[i].get('cell_truncated')]
+
+    def _support(sub):
+        ok = [i for i in sub if A.get(i, UNSURE) != UNSURE and B.get(i, UNSURE) != UNSURE]
+        return [sum(1 for i in ok if A[i] in (1, 2) and B[i] in (1, 2)), len(ok)]
+    res['truncation'] = {
+        'n': len(cut),
+        'agree': sum(1 for i in cut if A.get(i, UNSURE) == B.get(i, UNSURE)),
+        'both3': sum(1 for i in cut if A.get(i) == 3 and B.get(i) == 3),
+        'disputed_support': {
+            'with': _support(groups['disputed']),
+            'without': _support([i for i in groups['disputed'] if not key[i].get('cell_truncated')])}}
+
+    print('\n=== 4. 재현율층 — 처음 측정되는 누락 (모집단 %d쪽, 표본 %d항목) ==='
+          % (pop['recall_pool'], len(groups['recall'])))
+    print('  경계층은 두 규칙이 모두 등급3이 아니라 한 쪽이라 여기서 3 은 두 규칙 공통의 누락(전수)이다.')
+    for nm, G in coders:
+        rec = _recall_est(G, groups['recall'], pop['recall_pool'])
+        bnd_valid = [i for i in groups['boundary'] if G.get(i, UNSURE) != UNSURE]
+        bnd_hits = sum(1 for i in bnd_valid if G[i] == 3)
+        census_true = sum(1 for i in census if G.get(i) == 3)
+        if rec['hits'] == 0:
+            est = '점추정 없음 — 95%% 상한 %d쪽 (모집단의 %.2f%%)' % (
+                rec['hi'], rec['hi'] * 100.0 / max(pop['recall_pool'], 1))
+        else:
+            est = '놓친 등급3 점추정 %.1f쪽, 95%% 구간 [%d, %d] (모집단의 %.1f%%)' % (
+                rec['k_hat'], rec['lo'], rec['hi'], rec['k_hat'] * 100.0 / max(pop['recall_pool'], 1))
+        print('  코더 %s: 재현율층 적중 %d/%d%s → %s' % (
+            nm, rec['hits'], rec['n'],
+            ' (판단 불가 %d 제외)' % rec['unsure'] if rec['unsure'] else '', est))
+        print('         경계층 적중 %d/%d (전수),  전수 3층의 진짜 등급3 %d쪽'
+              % (bnd_hits, len(bnd_valid), census_true))
+        res[nm] = {'recall': rec, 'boundary_hits': (bnd_hits, len(bnd_valid)),
+                   'census_true': census_true, 'variants': {}}
+    both_rec = [i for i in groups['recall']
+                if A.get(i, UNSURE) != UNSURE and B.get(i, UNSURE) != UNSURE]
+    h3 = sum(1 for i in both_rec if A[i] == 3 and B[i] == 3)
+    k3, lo3, hi3 = missed_interval(pop['recall_pool'], len(both_rec), h3)
+    res['recall_both3'] = {'hits': h3, 'n': len(both_rec), 'N': pop['recall_pool'],
+                           'k_hat': k3, 'lo': lo3, 'hi': hi3}
+    print('  두 코더 모두 3: 재현율층 적중 %d/%d → 점추정 %.1f쪽, 95%% 구간 [%d, %d]'
+          % (h3, len(both_rec), k3, lo3, hi3))
+
+    print('\n=== 5. 변형별 정밀도·재현율·F1 — 전수라 표본 가중이 없다 ===')
+    print('  정밀도 폭 [양쪽 모두 3, 한쪽이라도 3] 은 코더 불일치가 만드는 범위다. 재현율 구간은 4절의 구간.')
+    print('  주의: 이 표에서 최고값을 골라 채택하면 이 표본에 과적합하는 것이다.')
+    both_ok = {i for i in census if A.get(i, UNSURE) != UNSURE and B.get(i, UNSURE) != UNSURE}
+    for nm, G in coders:
+        r = res[nm]
+        T = r['census_true'] + r['recall']['k_hat']
+        T_lo, T_hi = r['census_true'] + r['recall']['lo'], r['census_true'] + r['recall']['hi']
+        r['true_total'] = (T, T_lo, T_hi)
+        print('  --- 코더 %s (진짜 등급3 추정 %.1f쪽 = 전수 %d + 재현율층 %.1f [%d, %d]; 전체 %d쪽의 %.1f%%) ---'
+              % (nm, T, r['census_true'], r['recall']['k_hat'], r['recall']['lo'],
+                 r['recall']['hi'], pop['pages'], T * 100.0 / max(pop['pages'], 1)))
+        print('  %-20s %5s %7s %13s %7s %15s %6s'
+              % ('변형', '예측', '정밀도', '[폭]', '재현율', '[구간]', 'F1'))
+        for v in variants:
+            P = [i for i in census if key[i]['pred'].get(v) == 3]
+            excluded = sum(1 for i in P if G.get(i, UNSURE) == UNSURE)
+            tp = sum(1 for i in P if G.get(i) == 3)
+            denom = len(P) - excluded
+            prec = tp / float(denom) if denom else float('nan')
+            recall = tp / float(T) if T else float('nan')
+            r_lo = tp / float(T_hi) if T_hi else float('nan')
+            r_hi = tp / float(T_lo) if T_lo else float('nan')
+            pb = [i for i in P if i in both_ok]
+            band = {'both': sum(1 for i in pb if A[i] == 3 and B[i] == 3) / float(len(pb)) if pb else float('nan'),
+                    'either': sum(1 for i in pb if A[i] == 3 or B[i] == 3) / float(len(pb)) if pb else float('nan')}
+            r['variants'][v] = {'pred': len(P), 'excluded': excluded, 'tp': tp, 'precision': prec,
+                                'recall': recall, 'recall_ci': (r_lo, r_hi), 'f1': _f1(prec, recall),
+                                'band': band}
+            print('  %-20s %5d %6.1f%% [%4.0f%%,%4.0f%%] %6.1f%% [%5.1f%%,%5.1f%%] %6.3f%s'
+                  % (v, len(P), prec * 100, band['both'] * 100, band['either'] * 100,
+                     recall * 100, r_lo * 100, r_hi * 100, _f1(prec, recall),
+                     '  (판단 불가 %d 제외)' % excluded if excluded else ''))
+    return res
+
+
+SCORES_OUT = 'docs/03-analysis/data/recoding_scores.json'
+
+
+def _no_nan(x):
+    """JSON 에 NaN 을 쓰지 않는다 — 표준이 아니라 읽는 쪽이 갈린다. None 으로 바꾼다."""
+    if isinstance(x, float) and math.isnan(x):
+        return None
+    if isinstance(x, dict):
+        return {k: _no_nan(v) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [_no_nan(v) for v in x]
+    return x
+
+
+def main_census(key_doc, names=('A', 'B'), out=None):
+    """전수 채점을 출력하고 수치를 JSON 으로도 남긴다 (분석 문서가 여기서 읽는다).
+
+    names 는 채점할 코더 둘 — 파일은 coding_<이름>.json. FR-1 회차처럼 셋 이상의 코더가
+    있을 때 어느 둘을 대조했는지가 JSON 의 coder_names / coder_files 에 남는다.
+    """
+    files = {n: 'coding_%s.json' % n for n in names}
+    doc_a, doc_b = load(files[names[0]]), load(files[names[1]])
+    check_sample(key_doc.get('sample_digest'), doc_a, doc_b)   # 번호가 아니라 표본으로 묶는다
+    imp = os.path.join(HERE, 'docs/03-analysis/data/regrade_impact.json')
+    if os.path.exists(imp):
+        with open(imp, encoding='utf-8') as f:
+            check_population(key_doc, json.load(f))
+    else:
+        print('  (regrade_impact.json 없음 — 모집단 교차 검증 생략)')
+    for nm, d in ((names[0], doc_a), (names[1], doc_b)):
+        if d.get('errors'):
+            print('  코더 %s: 라벨 없는 항목 %d개 (응답 읽기 실패·호출 오류) — 판단 불가로 취급한다'
+                  % (nm, len(d['errors'])))
+    res = score_census(doc_a['grades'], doc_b['grades'], key_doc, doc_a.get('meta'), doc_b.get('meta'),
+                       names=names)
+    warn = family_guard(doc_a.get('meta'), doc_b.get('meta'))
+    payload = _no_nan({
+        'sample_digest': key_doc.get('sample_digest'),
+        'population': key_doc['population'], 'seed': key_doc.get('seed'),
+        'rule_pairs': key_doc.get('rule_pairs'),
+        'coder_names': list(names), 'coder_files': files,
+        'coders': {names[0]: doc_a.get('meta'), names[1]: doc_b.get('meta')},
+        'label_errors': {names[0]: len(doc_a.get('errors') or {}),
+                         names[1]: len(doc_b.get('errors') or {})},
+        'family_warning': warn,
+        'generated_at': __import__('datetime').datetime.now(
+            __import__('datetime').timezone.utc).isoformat(timespec='seconds'),
+        **res,
+    })
+    out = out or os.path.join(HERE, SCORES_OUT)
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    tmp = out + '.tmp'
+    with open(tmp, 'w', encoding='utf-8') as f:
+        json.dump(payload, f, ensure_ascii=False, indent=1, allow_nan=False)
+    os.replace(tmp, out)
+    print('\n수치를 %s 에 썼습니다.' % os.path.relpath(out, HERE))
+    print('\n주의 1: 재현율은 이번 표본에서 **처음** 측정된 값이다. 재현율층 밖(전수 3층)은')
+    print('        표집오차가 없고, 남는 불확실성은 재현율층 구간과 코더 불일치 폭뿐이다.')
+    print('주의 2: 이 결과는 어느 변형을 채택할지 **정하지 않는다.** 채택은 연구 책임자 판단이다.')
+    if warn:
+        print(warn)
+
+
+def main():
+    import argparse
+    ap = argparse.ArgumentParser(description='교차 판정 채점')
+    ap.add_argument('--coders', default='A,B',
+                    help='채점할 코더 둘 (coding_<이름>.json), 예: C,B — 전수 경로에서만 뜻이 있다')
+    ap.add_argument('--out', help='수치 JSON 경로 (기본 %s)' % SCORES_OUT)
+    args = ap.parse_args()
+    names = tuple(n.strip() for n in args.coders.split(',') if n.strip())
+    if len(names) != 2:
+        sys.exit('--coders 는 코더 이름 둘이어야 합니다 (예: C,B)')
+    key_doc = load('coding_key.json')
+    if is_census_key(key_doc):
+        main_census(key_doc, names=names, out=args.out)
+    else:
+        main_legacy()
 
 
 if __name__ == '__main__':

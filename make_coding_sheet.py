@@ -3,23 +3,32 @@
 수기 코딩 시트 생성 — 등급 판정을 사람(또는 독립 코더)이 눈으로 매기기 위한 것.
 
     pip install openpyxl
-    python3 make_coding_sheet.py                 # coding_sheet.json / .md 생성
+    python3 make_coding_sheet.py                 # coding_sheet.json / .md / coding_key.json
 
-## 왜 전수가 아니라 이 표본인가
+## 표본 — 4층, 두 어휘 정의의 합집합 (docs/02-design/features/recoding.design.md §3)
 
-두 규칙(현행 / D1+D2 수정본)이 **갈리는 페이지**가 결정적이다. 둘 다 등급3이라고
-하는 페이지를 아무리 코딩해도 어느 규칙이 나은지는 알 수 없다. 갈리는 지점에서
-코더가 어느 쪽 손을 들어주느냐가 답이다.
+규칙은 현행 / 수정본(D1+D2) 두 쌍이고, 각 쌍은 어휘 두 벌(현재 사전 / +21종, V)로
+다시 갈린다. 어느 어휘를 채택할지 라벨 없이 먼저 정하면 순환이므로, **두 어휘 정의의
+합집합**으로 층을 뽑아 같은 라벨로 변형 전부를 채점한다 — 어휘 채택도 라벨이 판정한다.
 
-  분쟁군  현행=3, 수정본=1 또는 2   -> 39쪽 (전수)
-  대조군  둘 다 3                   -> 30쪽 (무작위)
+  분쟁군   어느 규칙쌍에서든 현행=3, 수정본≠3                  → 전수
+  합의군   어느 변형이든 등급3인 쪽 가운데 분쟁군이 아닌 것      → 전수 (기준선)
+  경계층   등급3이 아닌 쪽 가운데 어느 쌍에서든 현행=2, 수정본=1  → 전수 (가장 많이 움직인 경계)
+  재현율층 나머지(현행이 등급1·2)에서 무작위 N_RECALL            → 여기서 나온 등급3이 누락 추정
 
-대조군은 기준선이다. 분쟁군만 보면 "코더가 원래 등급3에 인색한가" 와
-"수정본이 옳은가" 를 구분할 수 없다.
+앞의 세 층은 전수라 표집오차가 0이다. "69쪽으로는 판별력이 없었다" 의 해법은 더
+뽑는 것이 아니라 다 하는 것이었다 — 어느 변형이든 등급3인 쪽이 130쪽 안팎이라 가능하다.
+재현율층만 표본이고, 채점기(score_coding.py)가 유한모집단 구간을 낸다. 합의군은
+기준선이다 — 분쟁군만 보면 "코더가 원래 등급3에 인색한가" 와 "수정본이 옳은가" 를
+구분할 수 없다.
+
+변형별 예측 등급은 **키 파일**에 싣는다(`pred`). 채점기가 원본 엑셀 없이 변형별
+정밀도를 낼 수 있고, 어느 변형의 등급3이든 표본에 전수로 들어 있으므로 표본 수치를
+모집단으로 환산하는 가중치가 필요 없다.
 
 ## 코더는 규칙의 판정을 보지 못한다
 
-시트에는 등급도, 안전어/조치어 카운트도, 사유도 넣지 않는다. 보면 그쪽으로
+시트에는 등급도, 안전어/조치어 카운트도, 사유도, 군도 넣지 않는다. 보면 그쪽으로
 끌려간다(앵커링). 코더는 본문과 등급 정의만 보고 매긴다. 정답은 별도 키 파일에
 두고 채점할 때만 붙인다.
 
@@ -40,6 +49,8 @@
 동음이의 예시를 지우고, 동점 규칙을 방향 없는 `?`(판단 불가) 코드로 바꾸고,
 "사전에 없을 법한 표현도 조치로 센다" 는 상향 지침을 대칭으로 넣었다.
 
+지시문은 `coder_prompt()` 한 곳에만 있다. 사람용 `.md` 와 API 코더(`code_pages.py`)가
+**같은 문자열**을 본다 — 호출기는 이것을 시트 JSON 에서 읽고 자기 문자열을 갖지 않는다.
 `?` 를 도입했으므로 `score_coding.py` 는 1·2·3 외의 값을 받을 수 있어야 한다.
 
 ## 본문을 자르지 않는다 (외부감사 C-1, 수정함)
@@ -61,9 +72,11 @@
 붙인다 — 고지하지 않으면 코더가 잘린 뒷부분의 부재를 "조치 없음" 으로 읽게 되고,
 그것이 C-1 이 지적한 오염 그 자체다. 전문을 실으면 말미의 '...' 로 어차피 드러난다.
 
-## 산출물은 커밋하지 않는다
+## 산출물
 
-교재 본문이 그대로 들어간다. 비공개 상업 교재에서 뽑은 자료라 .gitignore 대상이다.
+`coding_sheet.json` / `.md` 는 교재 본문이 그대로 들어가므로 커밋하지 않는다(.gitignore).
+`coding_key.json` 은 본문이 없어(교재·쪽·군·변형별 예측 등급) 추적한다 — 라벨을
+페이지에 붙이는 유일한 결합 정보이자 표본 지문의 원천이다.
 """
 import hashlib
 import json
@@ -78,9 +91,56 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import regrade as RG  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SEED = 20260903          # 재현 가능하게 고정
-N_CONTROL = 30
+SEED = 20260904          # 표본이 바뀌었으므로 시드도 새로 둔다. 옛 시드(20260903)는 옛
+                         # 표본의 것이고, 재사용하면 두 표본이 같은 것처럼 보인다
+N_RECALL = 300           # 재현율층 크기 (Plan §4.3-A). 적중 0건이어도 누락률 상한을 말할 수 있다
 CHUNK_CHARS = 6000       # 자르는 길이가 아니라 **나누는** 단위다
+
+# 층을 가르는 규칙쌍 (현행, 수정본). 어휘가 두 벌이므로 쌍도 둘이다.
+RULE_PAIRS = [('baseline', RG.ADOPTED_VARIANT),
+              (RG.VOCAB_VARIANT, RG.ADOPTED_VOCAB_VARIANT)]
+GROUPS = ('disputed', 'control', 'boundary', 'recall')
+
+# 절단 고지 — .md 는 인용 블록으로, 시트 JSON 은 `notice` 로 싣는다. 한 곳에만 둔다.
+TRUNCATION_NOTICE = [
+    '⚠️ **이 본문은 원본 수집 단계에서 잘렸습니다** (엑셀 셀 한도 32,767자).',
+    '뒷부분은 존재하지 않으며 복구할 수 없습니다. 뒤에 조치가 더 있었는지',
+    '알 수 없으므로, 판단이 서지 않으면 `?` 로 표시하십시오.',
+]
+
+GRADE_GUIDE = [
+    '## 등급 정의',
+    '',
+    '| 등급 | 뜻 | 판정 기준 |',
+    '|:---:|---|---|',
+    '| 1 | 미흡·없음 | 안전보건 내용이 없거나, 있어도 스쳐 지나가는 수준 |',
+    '| 2 | 형식적 언급 | 안전·위험을 언급하지만 **무엇을 어떻게 하라는 조치가 없다** |',
+    '| 3 | 구체적 대책 | 실제 안전 조치·보호구·대응절차를 **구체적으로 제시**한다 |',
+    '',
+    '**등급을 정하기 어려우면 `?` 로 표시하고 넘어갑니다.** 어느 쪽으로도',
+    '기울이지 마십시오 — 불확실성을 등급으로 바꾸면 그 방향이 결과에 실립니다.',
+    '',
+    '본문이 길면 `(본문 1/3)` 처럼 나눠서 싣습니다. **나뉘어도 한 항목이고 판정도',
+    '하나입니다.** 끝까지 읽고 나서 매기십시오.',
+    '',
+    '판정 대상은 **작업자의 안전보건**입니다. 공정·품질·설비 관리 문맥의 서술은',
+    '해당하지 않습니다. 반대로 사전에 없을 법한 표현(예: 특정 보호구 이름을',
+    '직접 지목하거나, 환기·격리 같은 방법을 풀어 쓴 경우)도 조치로 셉니다.',
+    '',
+    '## 응답 형식',
+    '',
+    '판정은 `1`, `2`, `3`, `?` 넷 중 **하나만** 적습니다. 설명·근거·다른 문자는 붙이지',
+    '않습니다.',
+]
+
+
+def coder_prompt():
+    """코더가 보는 지시문 전문. 규칙 지식은 여기에만 있다 (설계 원칙 1)."""
+    return '\n'.join([
+        '각 항목의 본문을 읽고 등급 1/2/3 중 하나를 매깁니다.',
+        '**규칙이 매긴 등급은 이 문서에 없습니다.** 본문만 보고 판단하세요.',
+        '',
+    ] + GRADE_GUIDE)
 
 
 def chunk_text(text, size=CHUNK_CHARS):
@@ -136,32 +196,62 @@ def sample_digest(key):
     return hashlib.sha256(body.encode('utf-8')).hexdigest()[:16]
 
 
-def build_sheet(pages, items, old, new):
+def strata(preds, pairs=None):
+    """변형별 예측에서 4층을 가른다. 반환: {군: 정렬된 키 목록} (재현율층은 모집단).
+
+    preds: {변형: {(교재,쪽): {'g': 등급}}}, 'baseline' 포함.
+
+    합집합이다 — 어느 규칙쌍에서든 갈리면 분쟁군이고, 어느 변형이든 등급3이면
+    전수 대상이다. 단조성("수정본 등급3 ⊆ 현행 등급3")은 실측으로 성립하지만
+    여기서 기대지 않는다: 그 논증이 어느 변형에서 깨져도 층은 그대로 옳다.
+    """
+    pairs = pairs or RULE_PAIRS
+    keys = set(preds['baseline'])
+    g3 = {k for g in preds.values() for k in keys if g[k]['g'] == 3}
+    disputed = {k for cur, new in pairs for k in keys
+                if preds[cur][k]['g'] == 3 and preds[new][k]['g'] != 3}
+    boundary = {k for cur, new in pairs for k in keys - g3
+                if preds[cur][k]['g'] == 2 and preds[new][k]['g'] == 1}
+    return {'disputed': sorted(disputed), 'control': sorted(g3 - disputed),
+            'boundary': sorted(boundary), 'recall_pool': sorted(keys - g3 - boundary)}
+
+
+def draw(st, seed=SEED, n_recall=N_RECALL):
+    """전수 3층 + 재현율 무작위층 → [(키, 군)]. 시드에 결정적이다."""
+    rng = random.Random(seed)
+    pool = list(st['recall_pool'])
+    recall = rng.sample(pool, min(n_recall, len(pool)))
+    items = ([(k, 'disputed') for k in st['disputed']]
+             + [(k, 'control') for k in st['control']]
+             + [(k, 'boundary') for k in st['boundary']]
+             + [(k, 'recall') for k in recall])
+    rng.shuffle(items)                       # 군이 섞여야 코더가 눈치채지 못한다
+    return items
+
+
+def build_sheet(pages, items, preds):
     """표본 항목들을 (코더용 시트, 정답 키) 두 목록으로 만든다.
 
     **본문은 어떤 경우에도 자르지 않는다.** 채점기(`regrade.py`)가 보는 텍스트와
     코더가 보는 텍스트가 같아야 F1·κ 가 규칙을 재는 값이 된다. 길이가 문제면
     자르지 말고 `chunk_text()` 로 나눠 보여준다.
+
+    시트에는 등급·카운트·군이 없고(앵커링), 키에는 변형별 예측 등급 `pred` 가 실린다.
+    'cell_truncated' 는 **원본이** 엑셀 셀 한도에서 잘렸다는 뜻이다.
     """
     sheet, key = [], []
     for i, (k, grp) in enumerate(items, 1):
         fn, pg = k
         text = pages[k]['text']
-        # 'truncated'(6,000자에서 잘랐다) 는 없앴다. 더 이상 자르지 않으므로 뜻이
-        # 없어졌고, 같은 이름을 다른 뜻으로 재사용하면 과거 산출물과 조용히 어긋난다.
-        # 'cell_truncated' 는 **원본이** 엑셀 셀 한도에서 잘렸다는 뜻이다.
-        sheet.append({
-            'id': i,
-            'text': text,
-            'chars': len(text),
-            'cell_truncated': pages[k]['truncated'],
-        })
+        it = {'id': i, 'text': text, 'chars': len(text),
+              'cell_truncated': pages[k]['truncated']}
+        if pages[k]['truncated']:
+            it['notice'] = ' '.join(TRUNCATION_NOTICE)   # API 코더도 같은 고지를 본다
+        sheet.append(it)
         key.append({
             'id': i, 'group': grp, 'file': fn, 'page': pg,
             'cell_truncated': pages[k]['truncated'],
-            'old': old[k]['g'], 'new': new[k]['g'],
-            'old_safety': old[k]['sn'], 'old_action': old[k]['an'],
-            'new_safety': new[k]['sn'], 'new_action': new[k]['an'],
+            'pred': {name: g[k]['g'] for name, g in preds.items()},
         })
     return sheet, key
 
@@ -170,9 +260,7 @@ def render_item(it):
     """항목 하나를 코딩 시트 마크다운 줄 목록으로 렌더한다."""
     md = ['### %d' % it['id'], '']
     if it['cell_truncated']:
-        md += ['> ⚠️ **이 본문은 원본 수집 단계에서 잘렸습니다** (엑셀 셀 한도 32,767자).',
-               '> 뒷부분은 존재하지 않으며 복구할 수 없습니다. 뒤에 조치가 더 있었는지',
-               '> 알 수 없으므로, 판단이 서지 않으면 `?` 로 표시하십시오.', '']
+        md += ['> ' + line for line in TRUNCATION_NOTICE] + ['']
     parts = chunk_text(it['text'])
     fence = fence_for(it['text'])
     for j, part in enumerate(parts, 1):
@@ -190,32 +278,32 @@ def main():
     print('원본 읽는 중…')
     pages = RG.load_pages(src)
     med = RG.median_length(pages)
-    old = RG.run(pages, word_boundary=False, normalize=False)
-    new = RG.run(pages, word_boundary=True, normalize=True, base=med)
+    preds = {'baseline': RG.run(pages, word_boundary=False, normalize=False)}
+    for name, kw in RG.variant_grid():
+        preds[name] = RG.run(pages, base=med, **kw)
 
-    disputed = [k for k in pages if old[k]['g'] == 3 and new[k]['g'] != 3]
-    agreed = [k for k in pages if old[k]['g'] == 3 and new[k]['g'] == 3]
-
-    rng = random.Random(SEED)
-    control = rng.sample(agreed, min(N_CONTROL, len(agreed)))
-    items = [(k, 'disputed') for k in disputed] + [(k, 'control') for k in control]
-    rng.shuffle(items)                       # 군이 섞여야 코더가 눈치채지 못한다
-
-    sheet, key = build_sheet(pages, items, old, new)
-
+    st = strata(preds)
+    items = draw(st)
+    sheet, key = build_sheet(pages, items, preds)
     digest = sample_digest(key)
-    for name, obj in (('coding_sheet.json', sheet), ('coding_key.json', key)):
+    counts = {g: sum(1 for _, gg in items if gg == g) for g in GROUPS}
+
+    key_doc = {
+        'sample_digest': digest, 'seed': SEED, 'n_recall': N_RECALL,
+        'variants': list(preds), 'rule_pairs': RULE_PAIRS,
+        'population': {'pages': len(pages), 'recall_pool': len(st['recall_pool']),
+                       'strata': counts},
+        'items': key,
+    }
+    sheet_doc = {'sample_digest': digest, 'coder_prompt': coder_prompt(), 'items': sheet}
+    for name, obj in (('coding_sheet.json', sheet_doc), ('coding_key.json', key_doc)):
         p = os.path.join(HERE, name)
         with open(p, 'w', encoding='utf-8') as f:
-            json.dump({'sample_digest': digest, 'items': obj}, f,
-                      ensure_ascii=False, indent=1)
-        print('  %s (%d항목)' % (name, len(obj)))
+            json.dump(obj, f, ensure_ascii=False, indent=1)
+        print('  %s (%d항목)' % (name, len(obj['items'])))
 
     md = [
         '# 안전등급 수기 코딩 시트',
-        '',
-        '각 항목의 본문을 읽고 등급 1/2/3 중 하나를 매깁니다.',
-        '**규칙이 매긴 등급은 이 문서에 없습니다.** 본문만 보고 판단하세요.',
         '',
         '## 표본 지문',
         '',
@@ -229,23 +317,7 @@ def main():
         '항목 번호는 시트를 다시 만들 때마다 바뀝니다. 지문이 없거나 다르면 채점기가',
         '거부합니다 — 엉뚱한 페이지의 라벨로 수치가 찍히는 것을 막기 위해서입니다.',
         '',
-        '## 등급 정의',
-        '',
-        '| 등급 | 뜻 | 판정 기준 |',
-        '|:---:|---|---|',
-        '| 1 | 미흡·없음 | 안전보건 내용이 없거나, 있어도 스쳐 지나가는 수준 |',
-        '| 2 | 형식적 언급 | 안전·위험을 언급하지만 **무엇을 어떻게 하라는 조치가 없다** |',
-        '| 3 | 구체적 대책 | 실제 안전 조치·보호구·대응절차를 **구체적으로 제시**한다 |',
-        '',
-        '**등급을 정하기 어려우면 `?` 로 표시하고 넘어갑니다.** 어느 쪽으로도',
-        '기울이지 마십시오 — 불확실성을 등급으로 바꾸면 그 방향이 결과에 실립니다.',
-        '',
-        '본문이 길면 `(본문 1/3)` 처럼 나눠서 싣습니다. **나뉘어도 한 항목이고 판정도',
-        '하나입니다.** 끝까지 읽고 나서 매기십시오.',
-        '',
-        '판정 대상은 **작업자의 안전보건**입니다. 공정·품질·설비 관리 문맥의 서술은',
-        '해당하지 않습니다. 반대로 사전에 없을 법한 표현(예: 특정 보호구 이름을',
-        '직접 지목하거나, 환기·격리 같은 방법을 풀어 쓴 경우)도 조치로 셉니다.',
+        coder_prompt(),
         '',
         '## 항목',
         '',
@@ -257,8 +329,12 @@ def main():
         f.write('\n'.join(md))
     print('  coding_sheet.md')
 
-    print('\n분쟁군 %d쪽 / 대조군 %d쪽 = 총 %d항목'
-          % (len(disputed), len(control), len(items)))
+    chars = {g: sum(len(pages[k]['text']) for k, gg in items if gg == g) for g in GROUPS}
+    print('\n층별 쪽수 / 글자 수 (재현율 모집단 %d쪽, 전체 %d쪽):'
+          % (len(st['recall_pool']), len(pages)))
+    for g in GROUPS:
+        print('  %-9s %4d쪽  %9s자' % (g, counts[g], format(chars[g], ',')))
+    print('  %-9s %4d쪽  %9s자' % ('합계', len(items), format(sum(chars.values()), ',')))
     print('원본이 잘린 항목 %d개 (복구 불가, 고지 부착) / 분할 제시 항목 %d개'
           % (sum(1 for it in sheet if it['cell_truncated']),
              sum(1 for it in sheet if it['chars'] > CHUNK_CHARS)))
