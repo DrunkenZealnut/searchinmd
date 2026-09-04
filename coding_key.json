@@ -1,0 +1,9722 @@
+{
+ "sample_digest": "68a4575ffff0def9",
+ "seed": 20260904,
+ "n_recall": 300,
+ "variants": [
+  "baseline",
+  "D1 단어 경계",
+  "D2 길이 정규화",
+  "D1+D2 둘 다",
+  "D1+D2+D5 조건부면제",
+  "D1+D2+D4 round",
+  "D1+D2+D4 floor",
+  "V 어휘 확장",
+  "D1+D2+V"
+ ],
+ "rule_pairs": [
+  [
+   "baseline",
+   "D1+D2 둘 다"
+  ],
+  [
+   "V 어휘 확장",
+   "D1+D2+V"
+  ]
+ ],
+ "population": {
+  "pages": 1847,
+  "recall_pool": 1609,
+  "strata": {
+   "disputed": 44,
+   "control": 85,
+   "boundary": 109,
+   "recall": 300
+  }
+ },
+ "items": [
+  {
+   "id": 1,
+   "group": "recall",
+   "file": "LM1903060322_19v3_반도체_장비_기구_조립",
+   "page": 119,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 2,
+   "group": "disputed",
+   "file": "LM1903060308_18v2_반도체_장비_생산_외주관리",
+   "page": 75,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 3,
+   "group": "recall",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 73,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 4,
+   "group": "disputed",
+   "file": "LM1903060328_19v1_반도체_케미컬_가스_장비_유지보수",
+   "page": 67,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 5,
+   "group": "recall",
+   "file": "LM1903060425_23v3_반도체용_세정_공정_재료_제조",
+   "page": 92,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 6,
+   "group": "recall",
+   "file": "LM1903060126_23v4_어드밴스드_언더필_패키지_개발",
+   "page": 57,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 7,
+   "group": "recall",
+   "file": "LM1903060303_18v2_반도체_장비_주변부_기구_설계",
+   "page": 48,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 8,
+   "group": "boundary",
+   "file": "LM1903060326_19v1_반도체_광학_장비_유지보수",
+   "page": 42,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 9,
+   "group": "recall",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 43,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 10,
+   "group": "control",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 13,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 11,
+   "group": "recall",
+   "file": "LM1903060127_23v4_반도체_환경_시험",
+   "page": 34,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 12,
+   "group": "boundary",
+   "file": "LM1903060301_18v2_반도체_장비_콘셉트_설계",
+   "page": 71,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 13,
+   "group": "recall",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 12,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 14,
+   "group": "boundary",
+   "file": "LM1903060302_18v2_반도체_장비_주요부_기구_설계",
+   "page": 58,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 15,
+   "group": "boundary",
+   "file": "LM1903060328_19v1_반도체_케미컬_가스_장비_유지보수",
+   "page": 34,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 16,
+   "group": "recall",
+   "file": "LM1903060403_14v1_반도체용_가스_재료_제조",
+   "page": 96,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 17,
+   "group": "recall",
+   "file": "LM1903060124_23v4_어드밴스드_팬_아웃_패키지_개발",
+   "page": 47,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 18,
+   "group": "recall",
+   "file": "LM1903060215_19v4_반도체_유틸리티_운영",
+   "page": 85,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 19,
+   "group": "recall",
+   "file": "LM1903060324_19v2_반도체_장비_전장_조립",
+   "page": 16,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 20,
+   "group": "disputed",
+   "file": "LM1903060216_19v4_반도체_클린룸_시설_운영",
+   "page": 76,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 21,
+   "group": "recall",
+   "file": "LM1903060129_23v4_반도체_내성_시험",
+   "page": 54,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 22,
+   "group": "recall",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 32,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 23,
+   "group": "control",
+   "file": "LM1903060417_23v3_반도체용_세정_공정_가스_제조",
+   "page": 91,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 24,
+   "group": "recall",
+   "file": "LM1903060326_19v1_반도체_광학_장비_유지보수",
+   "page": 26,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 25,
+   "group": "recall",
+   "file": "LM1903060409_23v3_반도체_재료_생산관리",
+   "page": 68,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 26,
+   "group": "recall",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 46,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 27,
+   "group": "recall",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 96,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 28,
+   "group": "recall",
+   "file": "LM1903060423_23v3_반도체용_SOD_공정_재료_제조",
+   "page": 79,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 29,
+   "group": "disputed",
+   "file": "LM1903060402_14v1_반도체용_리소그래피_재료_제조",
+   "page": 90,
+   "cell_truncated": true,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 30,
+   "group": "control",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 88,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 31,
+   "group": "recall",
+   "file": "LM1903060422_23v3_반도체용_트랙_공정_재료_제조",
+   "page": 25,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 32,
+   "group": "control",
+   "file": "LM1903060307_18v2_반도체_장비_전장_설계",
+   "page": 31,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 33,
+   "group": "recall",
+   "file": "LM1903060109_23v4_반도체_제품_기능성능_검증",
+   "page": 66,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 34,
+   "group": "boundary",
+   "file": "LM1903060329_19v1_반도체_장비_안전관리",
+   "page": 149,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 35,
+   "group": "boundary",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 63,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 36,
+   "group": "recall",
+   "file": "LM1903060424_23v3_반도체용_박막_도금_공정_재료_제조",
+   "page": 39,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 37,
+   "group": "boundary",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 26,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 38,
+   "group": "recall",
+   "file": "LM1903060325_19v2_반도체_장비_전장_조립_검증",
+   "page": 67,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 39,
+   "group": "disputed",
+   "file": "LM1903060123_23v4_웨이퍼_레벨_패키지_개발",
+   "page": 29,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 40,
+   "group": "control",
+   "file": "LM1903060412_20v1_반도체용_마스크_재료_제조",
+   "page": 22,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 41,
+   "group": "recall",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 66,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 42,
+   "group": "recall",
+   "file": "LM1903060424_23v3_반도체용_박막_도금_공정_재료_제조",
+   "page": 94,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 43,
+   "group": "disputed",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 126,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 44,
+   "group": "control",
+   "file": "LM1903060328_19v1_반도체_케미컬_가스_장비_유지보수",
+   "page": 58,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 45,
+   "group": "recall",
+   "file": "LM1903060424_23v3_반도체용_박막_도금_공정_재료_제조",
+   "page": 100,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 46,
+   "group": "disputed",
+   "file": "LM1903060422_23v3_반도체용_트랙_공정_재료_제조",
+   "page": 23,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 47,
+   "group": "recall",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 64,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 48,
+   "group": "boundary",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 80,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 49,
+   "group": "recall",
+   "file": "LM1903060404_23v3_반도체용_금속_Target_재료_제조",
+   "page": 61,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 50,
+   "group": "recall",
+   "file": "LM1903060403_14v1_반도체용_가스_재료_제조",
+   "page": 56,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 51,
+   "group": "disputed",
+   "file": "LM1903060415_20v1_반도체용_CMP_재료_제조",
+   "page": 72,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 52,
+   "group": "disputed",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 23,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 53,
+   "group": "recall",
+   "file": "LM1903060214_19v4_반도체_패키징_후공정장비_운영",
+   "page": 105,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 54,
+   "group": "boundary",
+   "file": "LM1903060325_19v2_반도체_장비_전장_조립_검증",
+   "page": 73,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 55,
+   "group": "recall",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 119,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 56,
+   "group": "recall",
+   "file": "LM1903060325_19v2_반도체_장비_전장_조립_검증",
+   "page": 42,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 57,
+   "group": "control",
+   "file": "LM1903060423_23v3_반도체용_SOD_공정_재료_제조",
+   "page": 24,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 58,
+   "group": "recall",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 65,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 59,
+   "group": "recall",
+   "file": "LM1903060127_23v4_반도체_환경_시험",
+   "page": 30,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 60,
+   "group": "recall",
+   "file": "LM1903060101_23v6_반도체_제품_기획",
+   "page": 131,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 61,
+   "group": "recall",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 15,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 62,
+   "group": "recall",
+   "file": "LM1903060314_18v2_LM1903060315_18v2_반도체_장비_보드_설계",
+   "page": 20,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 63,
+   "group": "recall",
+   "file": "LM1903060301_18v2_반도체_장비_콘셉트_설계",
+   "page": 46,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 64,
+   "group": "recall",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 118,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 65,
+   "group": "recall",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 108,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 66,
+   "group": "recall",
+   "file": "LM1903060425_23v3_반도체용_세정_공정_재료_제조",
+   "page": 61,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 67,
+   "group": "control",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 57,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 68,
+   "group": "boundary",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 27,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 69,
+   "group": "boundary",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 29,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 70,
+   "group": "boundary",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 108,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 71,
+   "group": "disputed",
+   "file": "LM1903060201_14v3_Photo_장비운영",
+   "page": 52,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 72,
+   "group": "boundary",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 74,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 73,
+   "group": "recall",
+   "file": "LM1903060104_23v5_디지털_회로_설계_수정요청",
+   "page": 58,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 74,
+   "group": "recall",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 92,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 75,
+   "group": "recall",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 61,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 76,
+   "group": "recall",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 51,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 77,
+   "group": "recall",
+   "file": "LM1903060127_23v4_반도체_환경_시험",
+   "page": 109,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 78,
+   "group": "control",
+   "file": "LM1903060412_20v1_반도체용_마스크_재료_제조",
+   "page": 55,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 79,
+   "group": "boundary",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 47,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 80,
+   "group": "control",
+   "file": "LM1903060205_14v3_MI_장비_운영",
+   "page": 79,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 81,
+   "group": "recall",
+   "file": "LM1903060325_19v2_반도체_장비_전장_조립_검증",
+   "page": 18,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 82,
+   "group": "boundary",
+   "file": "LM1903060325_19v2_반도체_장비_전장_조립_검증",
+   "page": 71,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 83,
+   "group": "recall",
+   "file": "LM1903060318_18v2_LM1903060319_18v2_반도체_장비_시제품_성능평가",
+   "page": 19,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 84,
+   "group": "boundary",
+   "file": "LM1903060412_20v1_반도체용_마스크_재료_제조",
+   "page": 77,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 85,
+   "group": "control",
+   "file": "LM1903060417_23v3_반도체용_세정_공정_가스_제조",
+   "page": 100,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 86,
+   "group": "disputed",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 43,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 87,
+   "group": "control",
+   "file": "LM1903060329_19v1_반도체_장비_안전관리",
+   "page": 141,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 88,
+   "group": "recall",
+   "file": "LM1903060409_23v3_반도체_재료_생산관리",
+   "page": 67,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 89,
+   "group": "disputed",
+   "file": "LM1903060215_19v4_반도체_유틸리티_운영",
+   "page": 81,
+   "cell_truncated": true,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 90,
+   "group": "recall",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 119,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 91,
+   "group": "boundary",
+   "file": "LM1903060417_23v3_반도체용_세정_공정_가스_제조",
+   "page": 103,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 92,
+   "group": "control",
+   "file": "LM1903060216_19v4_반도체_클린룸_시설_운영",
+   "page": 75,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 93,
+   "group": "recall",
+   "file": "LM1903060104_23v5_디지털_회로_설계_수정요청",
+   "page": 69,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 94,
+   "group": "recall",
+   "file": "LM1903060424_23v3_반도체용_박막_도금_공정_재료_제조",
+   "page": 57,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 95,
+   "group": "boundary",
+   "file": "LM1903060403_14v1_반도체용_가스_재료_제조",
+   "page": 54,
+   "cell_truncated": true,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 96,
+   "group": "recall",
+   "file": "LM1903060202_14v3_Etch_장비_운영",
+   "page": 82,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 97,
+   "group": "control",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 104,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 98,
+   "group": "control",
+   "file": "LM1903060417_23v3_반도체용_세정_공정_가스_제조",
+   "page": 118,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 99,
+   "group": "recall",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 122,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 100,
+   "group": "boundary",
+   "file": "LM1903060328_19v1_반도체_케미컬_가스_장비_유지보수",
+   "page": 92,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 101,
+   "group": "recall",
+   "file": "LM1903060201_14v3_Photo_장비운영",
+   "page": 27,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 102,
+   "group": "recall",
+   "file": "LM1903060425_23v3_반도체용_세정_공정_재료_제조",
+   "page": 39,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 103,
+   "group": "recall",
+   "file": "LM1903060127_23v4_반도체_환경_시험",
+   "page": 49,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 104,
+   "group": "recall",
+   "file": "LM1903060124_23v4_어드밴스드_팬_아웃_패키지_개발",
+   "page": 25,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 105,
+   "group": "recall",
+   "file": "LM1903060303_18v2_반도체_장비_주변부_기구_설계",
+   "page": 21,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 106,
+   "group": "boundary",
+   "file": "LM1903060417_23v3_반도체용_세정_공정_가스_제조",
+   "page": 86,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 107,
+   "group": "control",
+   "file": "LM1903060123_23v4_웨이퍼_레벨_패키지_개발",
+   "page": 61,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 108,
+   "group": "recall",
+   "file": "LM1903060216_19v4_반도체_클린룸_시설_운영",
+   "page": 55,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 109,
+   "group": "recall",
+   "file": "LM1903060202_14v3_Etch_장비_운영",
+   "page": 95,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 110,
+   "group": "recall",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 55,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 111,
+   "group": "boundary",
+   "file": "LM1903060408_23v3_반도체_재료_개발",
+   "page": 118,
+   "cell_truncated": true,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 112,
+   "group": "recall",
+   "file": "LM1903060127_23v4_반도체_환경_시험",
+   "page": 88,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 113,
+   "group": "boundary",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 83,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 114,
+   "group": "recall",
+   "file": "LM1903060117_23v7_반도체_제조_단위_공정_공정_개발",
+   "page": 96,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 115,
+   "group": "recall",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 87,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 116,
+   "group": "boundary",
+   "file": "LM1903060403_14v1_반도체용_가스_재료_제조",
+   "page": 94,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 117,
+   "group": "recall",
+   "file": "LM1903060322_19v3_반도체_장비_기구_조립",
+   "page": 115,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 118,
+   "group": "recall",
+   "file": "LM1903060216_19v4_반도체_클린룸_시설_운영",
+   "page": 62,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 119,
+   "group": "recall",
+   "file": "LM1903060425_23v3_반도체용_세정_공정_재료_제조",
+   "page": 43,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 120,
+   "group": "recall",
+   "file": "LM1903060102_23v5_반도체_아키텍처_설계",
+   "page": 49,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 121,
+   "group": "boundary",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 57,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 122,
+   "group": "recall",
+   "file": "LM1903060404_23v3_반도체용_금속_Target_재료_제조",
+   "page": 26,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 123,
+   "group": "recall",
+   "file": "LM1903060406_20v2_반도체_패키지_재료_제조",
+   "page": 53,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 124,
+   "group": "recall",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 29,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 125,
+   "group": "boundary",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 93,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 126,
+   "group": "recall",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 37,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 127,
+   "group": "boundary",
+   "file": "LM1903060423_23v3_반도체용_SOD_공정_재료_제조",
+   "page": 90,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 128,
+   "group": "recall",
+   "file": "LM1903060326_19v1_반도체_광학_장비_유지보수",
+   "page": 30,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 129,
+   "group": "recall",
+   "file": "LM1903060129_23v4_반도체_내성_시험",
+   "page": 26,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 130,
+   "group": "recall",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 102,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 131,
+   "group": "recall",
+   "file": "LM1903060202_14v3_Etch_장비_운영",
+   "page": 60,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 132,
+   "group": "recall",
+   "file": "LM1903060406_20v2_반도체_패키지_재료_제조",
+   "page": 81,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 133,
+   "group": "recall",
+   "file": "LM1903060108_23v4_패키지_조립_공정_개발",
+   "page": 31,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 134,
+   "group": "recall",
+   "file": "LM1903060103_아날로그_회로_설계",
+   "page": 73,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 135,
+   "group": "recall",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 66,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 136,
+   "group": "control",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 93,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 137,
+   "group": "control",
+   "file": "LM1903060302_18v2_반도체_장비_주요부_기구_설계",
+   "page": 57,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 138,
+   "group": "recall",
+   "file": "LM1903060410_23v3_반도체_재료_품질관리",
+   "page": 71,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 139,
+   "group": "recall",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 98,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 140,
+   "group": "control",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 88,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 141,
+   "group": "recall",
+   "file": "LM1903060404_23v3_반도체용_금속_Target_재료_제조",
+   "page": 20,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 142,
+   "group": "disputed",
+   "file": "LM1903060106_반도체_제조_공정_개발",
+   "page": 110,
+   "cell_truncated": true,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 143,
+   "group": "recall",
+   "file": "LM1903060424_23v3_반도체용_박막_도금_공정_재료_제조",
+   "page": 92,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 144,
+   "group": "recall",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 35,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 145,
+   "group": "recall",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 63,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 146,
+   "group": "boundary",
+   "file": "LM1903060402_14v1_반도체용_리소그래피_재료_제조",
+   "page": 103,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 147,
+   "group": "disputed",
+   "file": "LM1903060424_23v3_반도체용_박막_도금_공정_재료_제조",
+   "page": 54,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 148,
+   "group": "recall",
+   "file": "LM1903060307_18v2_반도체_장비_전장_설계",
+   "page": 45,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 149,
+   "group": "recall",
+   "file": "LM1903060417_23v3_반도체용_세정_공정_가스_제조",
+   "page": 102,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 150,
+   "group": "boundary",
+   "file": "LM1903060421_23v3_반도체용_포토_공정_재료_제조",
+   "page": 88,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 151,
+   "group": "boundary",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 86,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 152,
+   "group": "recall",
+   "file": "LM1903060131_23v5_커스텀_레이아웃_설계",
+   "page": 117,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 153,
+   "group": "boundary",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 42,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 154,
+   "group": "control",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 95,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 155,
+   "group": "recall",
+   "file": "LM1903060322_19v3_반도체_장비_기구_조립",
+   "page": 96,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 156,
+   "group": "recall",
+   "file": "LM1903060202_14v3_Etch_장비_운영",
+   "page": 76,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 157,
+   "group": "recall",
+   "file": "LM1903060410_23v3_반도체_재료_품질관리",
+   "page": 52,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 158,
+   "group": "recall",
+   "file": "LM1903060417_23v3_반도체용_세정_공정_가스_제조",
+   "page": 79,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 159,
+   "group": "control",
+   "file": "LM1903060424_23v3_반도체용_박막_도금_공정_재료_제조",
+   "page": 55,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 160,
+   "group": "boundary",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 111,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 161,
+   "group": "control",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 69,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 162,
+   "group": "recall",
+   "file": "LM1903060203_14v3_박막확산_장비운영",
+   "page": 107,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 163,
+   "group": "recall",
+   "file": "LM1903060320_18v2_LM1903060321_18v2_반도체_장비_품질관리",
+   "page": 73,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 164,
+   "group": "recall",
+   "file": "LM1903060117_23v7_반도체_제조_단위_공정_공정_개발",
+   "page": 94,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 165,
+   "group": "recall",
+   "file": "LM1903060117_23v7_반도체_제조_단위_공정_공정_개발",
+   "page": 77,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 166,
+   "group": "recall",
+   "file": "LM1903060327_19v1_반도체_진공_플라스마_장비_유지보수",
+   "page": 68,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 167,
+   "group": "disputed",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 96,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 168,
+   "group": "control",
+   "file": "LM1903060410_23v3_반도체_재료_품질관리",
+   "page": 50,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 169,
+   "group": "control",
+   "file": "LM1903060415_20v1_반도체용_CMP_재료_제조",
+   "page": 60,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 170,
+   "group": "recall",
+   "file": "LM1903060322_19v3_반도체_장비_기구_조립",
+   "page": 104,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 171,
+   "group": "boundary",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 73,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 172,
+   "group": "recall",
+   "file": "LM1903060204_14v3_C_C_장비_운영",
+   "page": 103,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 173,
+   "group": "boundary",
+   "file": "LM1903060410_23v3_반도체_재료_품질관리",
+   "page": 21,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 174,
+   "group": "recall",
+   "file": "LM1903060106_반도체_제조_공정_개발",
+   "page": 154,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 175,
+   "group": "recall",
+   "file": "LM1903060409_23v3_반도체_재료_생산관리",
+   "page": 92,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 176,
+   "group": "recall",
+   "file": "LM1903060328_19v1_반도체_케미컬_가스_장비_유지보수",
+   "page": 78,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 177,
+   "group": "boundary",
+   "file": "LM1903060409_23v3_반도체_재료_생산관리",
+   "page": 53,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 178,
+   "group": "recall",
+   "file": "LM1903060301_18v2_반도체_장비_콘셉트_설계",
+   "page": 69,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 179,
+   "group": "boundary",
+   "file": "LM1903060125_23v4_이종_접합_패키지_개발",
+   "page": 58,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 180,
+   "group": "recall",
+   "file": "LM1903060129_23v4_반도체_내성_시험",
+   "page": 38,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 181,
+   "group": "recall",
+   "file": "LM1903060424_23v3_반도체용_박막_도금_공정_재료_제조",
+   "page": 56,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 182,
+   "group": "recall",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 48,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 183,
+   "group": "control",
+   "file": "LM1903060127_23v4_반도체_환경_시험",
+   "page": 28,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 184,
+   "group": "recall",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 89,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 185,
+   "group": "control",
+   "file": "LM1903060128_23v4_반도체_수명_시험",
+   "page": 56,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 186,
+   "group": "boundary",
+   "file": "LM1903060202_14v3_Etch_장비_운영",
+   "page": 31,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 187,
+   "group": "recall",
+   "file": "LM1903060215_19v4_반도체_유틸리티_운영",
+   "page": 94,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 188,
+   "group": "recall",
+   "file": "LM1903060301_18v2_반도체_장비_콘셉트_설계",
+   "page": 30,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 189,
+   "group": "recall",
+   "file": "LM1903060325_19v2_반도체_장비_전장_조립_검증",
+   "page": 25,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 190,
+   "group": "recall",
+   "file": "LM1903060201_14v3_Photo_장비운영",
+   "page": 35,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 191,
+   "group": "boundary",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 50,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 192,
+   "group": "recall",
+   "file": "LM1903060216_19v4_반도체_클린룸_시설_운영",
+   "page": 16,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 193,
+   "group": "recall",
+   "file": "LM1903060425_23v3_반도체용_세정_공정_재료_제조",
+   "page": 34,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 194,
+   "group": "disputed",
+   "file": "LM1903060423_23v3_반도체용_SOD_공정_재료_제조",
+   "page": 26,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 195,
+   "group": "recall",
+   "file": "LM1903060415_20v1_반도체용_CMP_재료_제조",
+   "page": 74,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 196,
+   "group": "control",
+   "file": "LM1903060322_19v3_반도체_장비_기구_조립",
+   "page": 121,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 197,
+   "group": "recall",
+   "file": "LM1903060113_23v2_반도체_설계_검증",
+   "page": 91,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 198,
+   "group": "recall",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 124,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 199,
+   "group": "recall",
+   "file": "LM1903060104_23v5_디지털_회로_설계_수정요청",
+   "page": 78,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 200,
+   "group": "recall",
+   "file": "LM1903060117_23v7_반도체_제조_단위_공정_공정_개발",
+   "page": 106,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 201,
+   "group": "recall",
+   "file": "LM1903060120_23v5_아날로그_회로_시스템_설계",
+   "page": 95,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 202,
+   "group": "control",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 45,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 203,
+   "group": "control",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 107,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 204,
+   "group": "recall",
+   "file": "LM1903060421_23v3_반도체용_포토_공정_재료_제조",
+   "page": 71,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 205,
+   "group": "boundary",
+   "file": "LM1903060209_14v3_반도체_품질관리",
+   "page": 52,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 206,
+   "group": "recall",
+   "file": "LM1903060128_23v4_반도체_수명_시험",
+   "page": 42,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 207,
+   "group": "recall",
+   "file": "LM1903060104_23v5_디지털_회로_설계_수정요청",
+   "page": 46,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 208,
+   "group": "control",
+   "file": "LM1903060322_19v3_반도체_장비_기구_조립",
+   "page": 40,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 209,
+   "group": "boundary",
+   "file": "LM1903060414_20v1_반도체용_플립칩_재료_제조",
+   "page": 49,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 210,
+   "group": "recall",
+   "file": "LM1903060318_18v2_LM1903060319_18v2_반도체_장비_시제품_성능평가",
+   "page": 43,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 211,
+   "group": "recall",
+   "file": "LM1903060130_23v5_커스텀_레이아웃_적용_공정_분석",
+   "page": 40,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 212,
+   "group": "recall",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 122,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 213,
+   "group": "boundary",
+   "file": "LM1903060203_14v3_박막확산_장비운영",
+   "page": 74,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 214,
+   "group": "boundary",
+   "file": "LM1903060307_18v2_반도체_장비_전장_설계",
+   "page": 21,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 215,
+   "group": "recall",
+   "file": "LM1903060124_23v4_어드밴스드_팬_아웃_패키지_개발",
+   "page": 77,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 216,
+   "group": "recall",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 93,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 217,
+   "group": "control",
+   "file": "LM1903060329_19v1_반도체_장비_안전관리",
+   "page": 154,
+   "cell_truncated": true,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 218,
+   "group": "control",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 29,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 219,
+   "group": "disputed",
+   "file": "LM1903060425_23v3_반도체용_세정_공정_재료_제조",
+   "page": 62,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 220,
+   "group": "recall",
+   "file": "LM1903060101_23v6_반도체_제품_기획",
+   "page": 119,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 221,
+   "group": "boundary",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 77,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 222,
+   "group": "disputed",
+   "file": "LM1903060426_23v3_반도체용_CMP_슬러리_재료_제조",
+   "page": 65,
+   "cell_truncated": true,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 223,
+   "group": "control",
+   "file": "LM1903060415_20v1_반도체용_CMP_재료_제조",
+   "page": 22,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 224,
+   "group": "control",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 32,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 225,
+   "group": "recall",
+   "file": "LM1903060215_19v4_반도체_유틸리티_운영",
+   "page": 86,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 226,
+   "group": "recall",
+   "file": "LM1903060121_23v4_와이어_본딩_패키지_개발",
+   "page": 81,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 227,
+   "group": "recall",
+   "file": "LM1903060324_19v2_반도체_장비_전장_조립",
+   "page": 22,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 228,
+   "group": "recall",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 70,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 229,
+   "group": "boundary",
+   "file": "LM1903060115_23v7_메모리_반도체_제조_공정_개발",
+   "page": 93,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 230,
+   "group": "recall",
+   "file": "LM1903060325_19v2_반도체_장비_전장_조립_검증",
+   "page": 39,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 231,
+   "group": "control",
+   "file": "LM1903060123_23v4_웨이퍼_레벨_패키지_개발",
+   "page": 85,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 232,
+   "group": "boundary",
+   "file": "LM1903060423_23v3_반도체용_SOD_공정_재료_제조",
+   "page": 110,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 233,
+   "group": "recall",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 71,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 234,
+   "group": "control",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 40,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 235,
+   "group": "recall",
+   "file": "LM1903060209_14v3_반도체_품질관리",
+   "page": 44,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 236,
+   "group": "recall",
+   "file": "LM1903060216_19v4_반도체_클린룸_시설_운영",
+   "page": 84,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 237,
+   "group": "boundary",
+   "file": "LM1903060205_14v3_MI_장비_운영",
+   "page": 41,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 238,
+   "group": "control",
+   "file": "LM1903060106_반도체_제조_공정_개발",
+   "page": 120,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 239,
+   "group": "recall",
+   "file": "LM1903060322_19v3_반도체_장비_기구_조립",
+   "page": 109,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 240,
+   "group": "boundary",
+   "file": "LM1903060107_패키지_제품설계",
+   "page": 55,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 241,
+   "group": "boundary",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 43,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 242,
+   "group": "control",
+   "file": "LM1903060329_19v1_반도체_장비_안전관리",
+   "page": 153,
+   "cell_truncated": true,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 243,
+   "group": "disputed",
+   "file": "LM1903060205_14v3_MI_장비_운영",
+   "page": 40,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 244,
+   "group": "disputed",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 41,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 245,
+   "group": "recall",
+   "file": "LM1903060406_20v2_반도체_패키지_재료_제조",
+   "page": 119,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 246,
+   "group": "recall",
+   "file": "LM1903060202_14v3_Etch_장비_운영",
+   "page": 34,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 247,
+   "group": "recall",
+   "file": "LM1903060204_14v3_C_C_장비_운영",
+   "page": 105,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 248,
+   "group": "control",
+   "file": "LM1903060322_19v3_반도체_장비_기구_조립",
+   "page": 22,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 249,
+   "group": "boundary",
+   "file": "LM1903060328_19v1_반도체_케미컬_가스_장비_유지보수",
+   "page": 83,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 250,
+   "group": "recall",
+   "file": "LM1903060410_23v3_반도체_재료_품질관리",
+   "page": 51,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 251,
+   "group": "recall",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 76,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 252,
+   "group": "recall",
+   "file": "LM1903060128_23v4_반도체_수명_시험",
+   "page": 57,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 253,
+   "group": "recall",
+   "file": "LM1903060328_19v1_반도체_케미컬_가스_장비_유지보수",
+   "page": 29,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 254,
+   "group": "recall",
+   "file": "LM1903060401_20v2_반도체용_웨이퍼_재료_제조",
+   "page": 62,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 255,
+   "group": "recall",
+   "file": "LM1903060327_19v1_반도체_진공_플라스마_장비_유지보수",
+   "page": 39,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 256,
+   "group": "recall",
+   "file": "LM1903060216_19v4_반도체_클린룸_시설_운영",
+   "page": 50,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 257,
+   "group": "recall",
+   "file": "LM1903060205_14v3_MI_장비_운영",
+   "page": 75,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 258,
+   "group": "recall",
+   "file": "LM1903060201_14v3_Photo_장비운영",
+   "page": 21,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 259,
+   "group": "recall",
+   "file": "LM1903060423_23v3_반도체용_SOD_공정_재료_제조",
+   "page": 63,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 260,
+   "group": "control",
+   "file": "LM1903060415_20v1_반도체용_CMP_재료_제조",
+   "page": 35,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 261,
+   "group": "boundary",
+   "file": "LM1903060215_19v4_반도체_유틸리티_운영",
+   "page": 98,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 262,
+   "group": "control",
+   "file": "LM1903060127_23v4_반도체_환경_시험",
+   "page": 83,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 263,
+   "group": "recall",
+   "file": "LM1903060101_23v6_반도체_제품_기획",
+   "page": 154,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 264,
+   "group": "boundary",
+   "file": "LM1903060325_19v2_반도체_장비_전장_조립_검증",
+   "page": 69,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 265,
+   "group": "recall",
+   "file": "LM1903060214_19v4_반도체_패키징_후공정장비_운영",
+   "page": 107,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 266,
+   "group": "recall",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 61,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 267,
+   "group": "recall",
+   "file": "LM1903060205_14v3_MI_장비_운영",
+   "page": 76,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 268,
+   "group": "recall",
+   "file": "LM1903060216_19v4_반도체_클린룸_시설_운영",
+   "page": 14,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 269,
+   "group": "recall",
+   "file": "LM1903060417_23v3_반도체용_세정_공정_가스_제조",
+   "page": 18,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 270,
+   "group": "recall",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 39,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 271,
+   "group": "control",
+   "file": "LM1903060410_23v3_반도체_재료_품질관리",
+   "page": 57,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 272,
+   "group": "boundary",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 103,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 273,
+   "group": "disputed",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 36,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 274,
+   "group": "recall",
+   "file": "LM1903060318_18v2_LM1903060319_18v2_반도체_장비_시제품_성능평가",
+   "page": 30,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 275,
+   "group": "disputed",
+   "file": "LM1903060417_23v3_반도체용_세정_공정_가스_제조",
+   "page": 76,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 276,
+   "group": "recall",
+   "file": "LM1903060216_19v4_반도체_클린룸_시설_운영",
+   "page": 83,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 277,
+   "group": "control",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 22,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 278,
+   "group": "boundary",
+   "file": "LM1903060403_14v1_반도체용_가스_재료_제조",
+   "page": 67,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 279,
+   "group": "boundary",
+   "file": "LM1903060127_23v4_반도체_환경_시험",
+   "page": 76,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 280,
+   "group": "recall",
+   "file": "LM1903060318_18v2_LM1903060319_18v2_반도체_장비_시제품_성능평가",
+   "page": 38,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 281,
+   "group": "recall",
+   "file": "LM1903060322_19v3_반도체_장비_기구_조립",
+   "page": 130,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 282,
+   "group": "boundary",
+   "file": "LM1903060109_23v4_반도체_제품_기능성능_검증",
+   "page": 44,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 283,
+   "group": "recall",
+   "file": "LM1903060305_18v2_반도체_장비_시스템_소프트웨어_개발",
+   "page": 52,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 284,
+   "group": "recall",
+   "file": "LM1903060118_23v5_아날로그_회로_아키텍처_설계",
+   "page": 99,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 285,
+   "group": "recall",
+   "file": "LM1903060216_19v4_반도체_클린룸_시설_운영",
+   "page": 63,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 286,
+   "group": "recall",
+   "file": "LM1903060422_23v3_반도체용_트랙_공정_재료_제조",
+   "page": 72,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 287,
+   "group": "boundary",
+   "file": "LM1903060128_23v4_반도체_수명_시험",
+   "page": 52,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 288,
+   "group": "recall",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 19,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 289,
+   "group": "control",
+   "file": "LM1903060124_23v4_어드밴스드_팬_아웃_패키지_개발",
+   "page": 76,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 290,
+   "group": "disputed",
+   "file": "LM1903060402_14v1_반도체용_리소그래피_재료_제조",
+   "page": 91,
+   "cell_truncated": true,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 291,
+   "group": "recall",
+   "file": "LM1903060204_14v3_C_C_장비_운영",
+   "page": 119,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 292,
+   "group": "recall",
+   "file": "LM1903060123_23v4_웨이퍼_레벨_패키지_개발",
+   "page": 89,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 293,
+   "group": "recall",
+   "file": "LM1903060127_23v4_반도체_환경_시험",
+   "page": 26,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 294,
+   "group": "recall",
+   "file": "LM1903060324_19v2_반도체_장비_전장_조립",
+   "page": 42,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 295,
+   "group": "recall",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 83,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 296,
+   "group": "boundary",
+   "file": "LM1903060211_19v4_반도체_웨이퍼_레벨_테스트_장비_운영",
+   "page": 31,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 297,
+   "group": "recall",
+   "file": "LM1903060424_23v3_반도체용_박막_도금_공정_재료_제조",
+   "page": 21,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 298,
+   "group": "boundary",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 107,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 299,
+   "group": "boundary",
+   "file": "LM1903060113_23v2_반도체_설계_검증",
+   "page": 25,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 300,
+   "group": "boundary",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 33,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 301,
+   "group": "boundary",
+   "file": "LM1903060408_23v3_반도체_재료_개발",
+   "page": 119,
+   "cell_truncated": true,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 302,
+   "group": "recall",
+   "file": "LM1903060329_19v1_반도체_장비_안전관리",
+   "page": 145,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 303,
+   "group": "recall",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 35,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 304,
+   "group": "recall",
+   "file": "LM1903060213_19v4_반도체_패키징_전공정_장비_운영",
+   "page": 84,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 305,
+   "group": "recall",
+   "file": "LM1903060320_18v2_LM1903060321_18v2_반도체_장비_품질관리",
+   "page": 62,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 306,
+   "group": "recall",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 22,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 307,
+   "group": "control",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 37,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 308,
+   "group": "recall",
+   "file": "LM1903060316_18v2_LM1903060317_18v2_반도체_장비_유틸리티_소프트웨어_개발",
+   "page": 57,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 309,
+   "group": "recall",
+   "file": "LM1903060117_23v7_반도체_제조_단위_공정_공정_개발",
+   "page": 85,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 310,
+   "group": "recall",
+   "file": "LM1903060127_23v4_반도체_환경_시험",
+   "page": 72,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 311,
+   "group": "control",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 38,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 312,
+   "group": "recall",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 72,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 313,
+   "group": "recall",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 97,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 314,
+   "group": "recall",
+   "file": "LM1903060202_14v3_Etch_장비_운영",
+   "page": 75,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 315,
+   "group": "boundary",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 55,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 316,
+   "group": "recall",
+   "file": "LM1903060203_14v3_박막확산_장비운영",
+   "page": 56,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 317,
+   "group": "recall",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 57,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 318,
+   "group": "control",
+   "file": "LM1903060329_19v1_반도체_장비_안전관리",
+   "page": 142,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 319,
+   "group": "recall",
+   "file": "LM1903060425_23v3_반도체용_세정_공정_재료_제조",
+   "page": 44,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 320,
+   "group": "recall",
+   "file": "LM1903060125_23v4_이종_접합_패키지_개발",
+   "page": 61,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 321,
+   "group": "disputed",
+   "file": "LM1903060202_14v3_Etch_장비_운영",
+   "page": 23,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 322,
+   "group": "boundary",
+   "file": "LM1903060203_14v3_박막확산_장비운영",
+   "page": 91,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 323,
+   "group": "control",
+   "file": "LM1903060117_23v7_반도체_제조_단위_공정_공정_개발",
+   "page": 74,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 324,
+   "group": "recall",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 19,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 325,
+   "group": "recall",
+   "file": "LM1903060313_18v2_반도체_장비_고객_지원",
+   "page": 36,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 326,
+   "group": "recall",
+   "file": "LM1903060414_20v1_반도체용_플립칩_재료_제조",
+   "page": 106,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 327,
+   "group": "boundary",
+   "file": "LM1903060410_23v3_반도체_재료_품질관리",
+   "page": 28,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 328,
+   "group": "boundary",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 45,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 329,
+   "group": "boundary",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 69,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 330,
+   "group": "recall",
+   "file": "LM1903060202_14v3_Etch_장비_운영",
+   "page": 28,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 331,
+   "group": "control",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 112,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 332,
+   "group": "recall",
+   "file": "LM1903060417_23v3_반도체용_세정_공정_가스_제조",
+   "page": 84,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 333,
+   "group": "boundary",
+   "file": "LM1903060421_23v3_반도체용_포토_공정_재료_제조",
+   "page": 77,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 334,
+   "group": "recall",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 39,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 335,
+   "group": "recall",
+   "file": "LM1903060423_23v3_반도체용_SOD_공정_재료_제조",
+   "page": 112,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 336,
+   "group": "recall",
+   "file": "LM1903060216_19v4_반도체_클린룸_시설_운영",
+   "page": 20,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 337,
+   "group": "disputed",
+   "file": "LM1903060204_14v3_C_C_장비_운영",
+   "page": 76,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 338,
+   "group": "control",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 56,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 339,
+   "group": "boundary",
+   "file": "LM1903060201_14v3_Photo_장비운영",
+   "page": 38,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 340,
+   "group": "disputed",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 113,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 341,
+   "group": "recall",
+   "file": "LM1903060425_23v3_반도체용_세정_공정_재료_제조",
+   "page": 106,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 342,
+   "group": "control",
+   "file": "LM1903060417_23v3_반도체용_세정_공정_가스_제조",
+   "page": 83,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 343,
+   "group": "control",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 37,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 344,
+   "group": "control",
+   "file": "LM1903060414_20v1_반도체용_플립칩_재료_제조",
+   "page": 48,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 345,
+   "group": "recall",
+   "file": "LM1903060215_19v4_반도체_유틸리티_운영",
+   "page": 96,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 346,
+   "group": "recall",
+   "file": "LM1903060102_23v5_반도체_아키텍처_설계",
+   "page": 65,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 347,
+   "group": "recall",
+   "file": "LM1903060325_19v2_반도체_장비_전장_조립_검증",
+   "page": 93,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 348,
+   "group": "recall",
+   "file": "LM1903060313_18v2_반도체_장비_고객_지원",
+   "page": 32,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 349,
+   "group": "boundary",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 109,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 350,
+   "group": "boundary",
+   "file": "LM1903060318_18v2_LM1903060319_18v2_반도체_장비_시제품_성능평가",
+   "page": 36,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 351,
+   "group": "control",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 36,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 352,
+   "group": "recall",
+   "file": "LM1903060303_18v2_반도체_장비_주변부_기구_설계",
+   "page": 67,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 353,
+   "group": "recall",
+   "file": "LM1903060101_23v6_반도체_제품_기획",
+   "page": 169,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 354,
+   "group": "recall",
+   "file": "LM1903060204_14v3_C_C_장비_운영",
+   "page": 99,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 355,
+   "group": "recall",
+   "file": "LM1903060424_23v3_반도체용_박막_도금_공정_재료_제조",
+   "page": 99,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 356,
+   "group": "recall",
+   "file": "LM1903060307_18v2_반도체_장비_전장_설계",
+   "page": 65,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 357,
+   "group": "recall",
+   "file": "LM1903060124_23v4_어드밴스드_팬_아웃_패키지_개발",
+   "page": 64,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 358,
+   "group": "control",
+   "file": "LM1903060417_23v3_반도체용_세정_공정_가스_제조",
+   "page": 77,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 359,
+   "group": "boundary",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 85,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 360,
+   "group": "recall",
+   "file": "LM1903060324_19v2_반도체_장비_전장_조립",
+   "page": 52,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 361,
+   "group": "boundary",
+   "file": "LM1903060216_19v4_반도체_클린룸_시설_운영",
+   "page": 56,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 362,
+   "group": "recall",
+   "file": "LM1903060412_20v1_반도체용_마스크_재료_제조",
+   "page": 18,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 363,
+   "group": "recall",
+   "file": "LM1903060405_14v1_반도체용_습식화공약품_Wet_Chemical_재료_제조",
+   "page": 69,
+   "cell_truncated": true,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 364,
+   "group": "recall",
+   "file": "LM1903060423_23v3_반도체용_SOD_공정_재료_제조",
+   "page": 109,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 365,
+   "group": "boundary",
+   "file": "LM1903060324_19v2_반도체_장비_전장_조립",
+   "page": 81,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 366,
+   "group": "recall",
+   "file": "LM1903060106_반도체_제조_공정_개발",
+   "page": 119,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 367,
+   "group": "recall",
+   "file": "LM1903060214_19v4_반도체_패키징_후공정장비_운영",
+   "page": 151,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 368,
+   "group": "recall",
+   "file": "LM1903060211_19v4_반도체_웨이퍼_레벨_테스트_장비_운영",
+   "page": 50,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 369,
+   "group": "recall",
+   "file": "LM1903060421_23v3_반도체용_포토_공정_재료_제조",
+   "page": 87,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 370,
+   "group": "recall",
+   "file": "LM1903060104_23v5_디지털_회로_설계_수정요청",
+   "page": 53,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 371,
+   "group": "recall",
+   "file": "LM1903060406_20v2_반도체_패키지_재료_제조",
+   "page": 106,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 372,
+   "group": "control",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 64,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 373,
+   "group": "recall",
+   "file": "LM1903060425_23v3_반도체용_세정_공정_재료_제조",
+   "page": 79,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 374,
+   "group": "control",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 62,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 375,
+   "group": "recall",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 99,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 376,
+   "group": "control",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 42,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 377,
+   "group": "recall",
+   "file": "LM1903060126_23v4_어드밴스드_언더필_패키지_개발",
+   "page": 40,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 378,
+   "group": "boundary",
+   "file": "LM1903060129_23v4_반도체_내성_시험",
+   "page": 51,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 379,
+   "group": "recall",
+   "file": "LM1903060417_23v3_반도체용_세정_공정_가스_제조",
+   "page": 28,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 380,
+   "group": "recall",
+   "file": "LM1903060110_반도체신뢰성평가",
+   "page": 85,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 381,
+   "group": "recall",
+   "file": "LM1903060328_19v1_반도체_케미컬_가스_장비_유지보수",
+   "page": 57,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 382,
+   "group": "boundary",
+   "file": "LM1903060103_아날로그_회로_설계",
+   "page": 30,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 383,
+   "group": "recall",
+   "file": "LM1903060423_23v3_반도체용_SOD_공정_재료_제조",
+   "page": 115,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 384,
+   "group": "recall",
+   "file": "LM1903060109_23v4_반도체_제품_기능성능_검증",
+   "page": 79,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 385,
+   "group": "control",
+   "file": "LM1903060211_19v4_반도체_웨이퍼_레벨_테스트_장비_운영",
+   "page": 38,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 386,
+   "group": "recall",
+   "file": "LM1903060203_14v3_박막확산_장비운영",
+   "page": 101,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 387,
+   "group": "boundary",
+   "file": "LM1903060114_23v2_반도체_펌웨어_개발",
+   "page": 24,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 388,
+   "group": "control",
+   "file": "LM1903060415_20v1_반도체용_CMP_재료_제조",
+   "page": 46,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 389,
+   "group": "boundary",
+   "file": "LM1903060209_14v3_반도체_품질관리",
+   "page": 27,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 390,
+   "group": "recall",
+   "file": "LM1903060329_19v1_반도체_장비_안전관리",
+   "page": 147,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 391,
+   "group": "disputed",
+   "file": "LM1903060421_23v3_반도체용_포토_공정_재료_제조",
+   "page": 60,
+   "cell_truncated": true,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 392,
+   "group": "recall",
+   "file": "LM1903060125_23v4_이종_접합_패키지_개발",
+   "page": 36,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 393,
+   "group": "recall",
+   "file": "LM1903060322_19v3_반도체_장비_기구_조립",
+   "page": 97,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 394,
+   "group": "recall",
+   "file": "LM1903060410_23v3_반도체_재료_품질관리",
+   "page": 47,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 395,
+   "group": "recall",
+   "file": "LM1903060403_14v1_반도체용_가스_재료_제조",
+   "page": 108,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 396,
+   "group": "recall",
+   "file": "LM1903060117_23v7_반도체_제조_단위_공정_공정_개발",
+   "page": 25,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 397,
+   "group": "recall",
+   "file": "LM1903060117_23v7_반도체_제조_단위_공정_공정_개발",
+   "page": 47,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 398,
+   "group": "disputed",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 99,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 399,
+   "group": "boundary",
+   "file": "LM1903060204_14v3_C_C_장비_운영",
+   "page": 97,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 400,
+   "group": "boundary",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 58,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 401,
+   "group": "disputed",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 24,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 402,
+   "group": "boundary",
+   "file": "LM1903060422_23v3_반도체용_트랙_공정_재료_제조",
+   "page": 90,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 403,
+   "group": "boundary",
+   "file": "LM1903060308_18v2_반도체_장비_생산_외주관리",
+   "page": 74,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 404,
+   "group": "recall",
+   "file": "LM1903060328_19v1_반도체_케미컬_가스_장비_유지보수",
+   "page": 65,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 405,
+   "group": "boundary",
+   "file": "LM1903060114_23v2_반도체_펌웨어_개발",
+   "page": 95,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 406,
+   "group": "control",
+   "file": "LM1903060322_19v3_반도체_장비_기구_조립",
+   "page": 101,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 407,
+   "group": "control",
+   "file": "LM1903060128_23v4_반도체_수명_시험",
+   "page": 25,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 408,
+   "group": "recall",
+   "file": "LM1903060409_23v3_반도체_재료_생산관리",
+   "page": 82,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 409,
+   "group": "control",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 30,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 410,
+   "group": "recall",
+   "file": "LM1903060109_23v4_반도체_제품_기능성능_검증",
+   "page": 45,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 411,
+   "group": "recall",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 93,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 412,
+   "group": "recall",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 115,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 413,
+   "group": "control",
+   "file": "LM1903060322_19v3_반도체_장비_기구_조립",
+   "page": 60,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 414,
+   "group": "boundary",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 87,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 415,
+   "group": "boundary",
+   "file": "LM1903060114_23v2_반도체_펌웨어_개발",
+   "page": 48,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 416,
+   "group": "boundary",
+   "file": "LM1903060417_23v3_반도체용_세정_공정_가스_제조",
+   "page": 99,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 417,
+   "group": "control",
+   "file": "LM1903060414_20v1_반도체용_플립칩_재료_제조",
+   "page": 136,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 418,
+   "group": "recall",
+   "file": "LM1903060101_23v6_반도체_제품_기획",
+   "page": 163,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 419,
+   "group": "disputed",
+   "file": "LM1903060210_14v3_반도체_생산성_향상",
+   "page": 70,
+   "cell_truncated": true,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 420,
+   "group": "recall",
+   "file": "LM1903060406_20v2_반도체_패키지_재료_제조",
+   "page": 114,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 421,
+   "group": "recall",
+   "file": "LM1903060116_23v7_시스템_반도체_제조_공정_개발",
+   "page": 71,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 422,
+   "group": "recall",
+   "file": "LM1903060211_19v4_반도체_웨이퍼_레벨_테스트_장비_운영",
+   "page": 77,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 423,
+   "group": "boundary",
+   "file": "LM1903060324_19v2_반도체_장비_전장_조립",
+   "page": 63,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 424,
+   "group": "disputed",
+   "file": "LM1903060212_19v4_반도체_패키지_레벨_테스트_장비_운영",
+   "page": 122,
+   "cell_truncated": true,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 425,
+   "group": "recall",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 26,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 426,
+   "group": "disputed",
+   "file": "LM1903060211_19v4_반도체_웨이퍼_레벨_테스트_장비_운영",
+   "page": 69,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 427,
+   "group": "recall",
+   "file": "LM1903060109_23v4_반도체_제품_기능성능_검증",
+   "page": 94,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 428,
+   "group": "control",
+   "file": "LM1903060414_20v1_반도체용_플립칩_재료_제조",
+   "page": 47,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 429,
+   "group": "control",
+   "file": "LM1903060424_23v3_반도체용_박막_도금_공정_재료_제조",
+   "page": 28,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 430,
+   "group": "recall",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 29,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 431,
+   "group": "boundary",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 73,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 432,
+   "group": "control",
+   "file": "LM1903060329_19v1_반도체_장비_안전관리",
+   "page": 46,
+   "cell_truncated": true,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 433,
+   "group": "disputed",
+   "file": "LM1903060216_19v4_반도체_클린룸_시설_운영",
+   "page": 72,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 434,
+   "group": "control",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 51,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 435,
+   "group": "disputed",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 44,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 436,
+   "group": "boundary",
+   "file": "LM1903060204_14v3_C_C_장비_운영",
+   "page": 83,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 437,
+   "group": "boundary",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 45,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 438,
+   "group": "recall",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 95,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 439,
+   "group": "recall",
+   "file": "LM1903060216_19v4_반도체_클린룸_시설_운영",
+   "page": 57,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 440,
+   "group": "recall",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 23,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 441,
+   "group": "recall",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 52,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 442,
+   "group": "disputed",
+   "file": "LM1903060215_19v4_반도체_유틸리티_운영",
+   "page": 80,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 443,
+   "group": "recall",
+   "file": "LM1903060101_23v6_반도체_제품_기획",
+   "page": 19,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 444,
+   "group": "recall",
+   "file": "LM1903060409_23v3_반도체_재료_생산관리",
+   "page": 86,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 445,
+   "group": "disputed",
+   "file": "LM1903060117_23v7_반도체_제조_단위_공정_공정_개발",
+   "page": 84,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 446,
+   "group": "recall",
+   "file": "LM1903060212_19v4_반도체_패키지_레벨_테스트_장비_운영",
+   "page": 113,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 447,
+   "group": "boundary",
+   "file": "LM1903060423_23v3_반도체용_SOD_공정_재료_제조",
+   "page": 122,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 448,
+   "group": "recall",
+   "file": "LM1903060422_23v3_반도체용_트랙_공정_재료_제조",
+   "page": 82,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 449,
+   "group": "boundary",
+   "file": "LM1903060322_19v3_반도체_장비_기구_조립",
+   "page": 102,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 450,
+   "group": "control",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 38,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 451,
+   "group": "recall",
+   "file": "LM1903060325_19v2_반도체_장비_전장_조립_검증",
+   "page": 91,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 452,
+   "group": "recall",
+   "file": "LM1903060305_18v2_반도체_장비_시스템_소프트웨어_개발",
+   "page": 75,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 453,
+   "group": "recall",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 89,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 454,
+   "group": "recall",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 45,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 455,
+   "group": "boundary",
+   "file": "LM1903060318_18v2_LM1903060319_18v2_반도체_장비_시제품_성능평가",
+   "page": 39,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 456,
+   "group": "recall",
+   "file": "LM1903060307_18v2_반도체_장비_전장_설계",
+   "page": 49,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 457,
+   "group": "control",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 89,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 458,
+   "group": "recall",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 109,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 459,
+   "group": "recall",
+   "file": "LM1903060423_23v3_반도체용_SOD_공정_재료_제조",
+   "page": 51,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 460,
+   "group": "recall",
+   "file": "LM1903060201_14v3_Photo_장비운영",
+   "page": 25,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 461,
+   "group": "boundary",
+   "file": "LM1903060204_14v3_C_C_장비_운영",
+   "page": 92,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 462,
+   "group": "recall",
+   "file": "LM1903060401_20v2_반도체용_웨이퍼_재료_제조",
+   "page": 26,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 463,
+   "group": "boundary",
+   "file": "LM1903060328_19v1_반도체_케미컬_가스_장비_유지보수",
+   "page": 90,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 464,
+   "group": "boundary",
+   "file": "LM1903060210_14v3_반도체_생산성_향상",
+   "page": 71,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 465,
+   "group": "recall",
+   "file": "LM1903060328_19v1_반도체_케미컬_가스_장비_유지보수",
+   "page": 60,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 466,
+   "group": "control",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 51,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 467,
+   "group": "control",
+   "file": "LM1903060211_19v4_반도체_웨이퍼_레벨_테스트_장비_운영",
+   "page": 53,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 468,
+   "group": "recall",
+   "file": "LM1903060424_23v3_반도체용_박막_도금_공정_재료_제조",
+   "page": 80,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 469,
+   "group": "control",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 23,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 470,
+   "group": "disputed",
+   "file": "LM1903060404_23v3_반도체용_금속_Target_재료_제조",
+   "page": 41,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 471,
+   "group": "disputed",
+   "file": "LM1903060204_14v3_C_C_장비_운영",
+   "page": 67,
+   "cell_truncated": true,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 472,
+   "group": "recall",
+   "file": "LM1903060328_19v1_반도체_케미컬_가스_장비_유지보수",
+   "page": 23,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 473,
+   "group": "boundary",
+   "file": "LM1903060404_23v3_반도체용_금속_Target_재료_제조",
+   "page": 80,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 474,
+   "group": "recall",
+   "file": "LM1903060102_23v5_반도체_아키텍처_설계",
+   "page": 60,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 475,
+   "group": "recall",
+   "file": "LM1903060127_23v4_반도체_환경_시험",
+   "page": 25,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 476,
+   "group": "control",
+   "file": "LM1903060417_23v3_반도체용_세정_공정_가스_제조",
+   "page": 88,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 477,
+   "group": "recall",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 31,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 478,
+   "group": "control",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 87,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 479,
+   "group": "recall",
+   "file": "LM1903060322_19v3_반도체_장비_기구_조립",
+   "page": 47,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 480,
+   "group": "boundary",
+   "file": "LM1903060324_19v2_반도체_장비_전장_조립",
+   "page": 105,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 481,
+   "group": "recall",
+   "file": "LM1903060417_23v3_반도체용_세정_공정_가스_제조",
+   "page": 53,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 482,
+   "group": "boundary",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 35,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 483,
+   "group": "boundary",
+   "file": "LM1903060318_18v2_LM1903060319_18v2_반도체_장비_시제품_성능평가",
+   "page": 56,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 484,
+   "group": "control",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 94,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 485,
+   "group": "control",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 100,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 486,
+   "group": "recall",
+   "file": "LM1903060216_19v4_반도체_클린룸_시설_운영",
+   "page": 64,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 487,
+   "group": "recall",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 34,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 488,
+   "group": "control",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 39,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 489,
+   "group": "recall",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 111,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 490,
+   "group": "control",
+   "file": "LM1903060424_23v3_반도체용_박막_도금_공정_재료_제조",
+   "page": 89,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 491,
+   "group": "recall",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 41,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 492,
+   "group": "recall",
+   "file": "LM1903060329_19v1_반도체_장비_안전관리",
+   "page": 144,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 493,
+   "group": "boundary",
+   "file": "LM1903060324_19v2_반도체_장비_전장_조립",
+   "page": 19,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 494,
+   "group": "recall",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 31,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 495,
+   "group": "disputed",
+   "file": "LM1903060416_23v3_반도체용_식각_공정_가스_제조",
+   "page": 90,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 496,
+   "group": "control",
+   "file": "LM1903060417_23v3_반도체용_세정_공정_가스_제조",
+   "page": 23,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 497,
+   "group": "disputed",
+   "file": "LM1903060424_23v3_반도체용_박막_도금_공정_재료_제조",
+   "page": 59,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 498,
+   "group": "boundary",
+   "file": "LM1903060107_패키지_제품설계",
+   "page": 54,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 499,
+   "group": "recall",
+   "file": "LM1903060404_23v3_반도체용_금속_Target_재료_제조",
+   "page": 66,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 500,
+   "group": "recall",
+   "file": "LM1903060406_20v2_반도체_패키지_재료_제조",
+   "page": 76,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 501,
+   "group": "recall",
+   "file": "LM1903060328_19v1_반도체_케미컬_가스_장비_유지보수",
+   "page": 56,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 502,
+   "group": "recall",
+   "file": "LM1903060104_23v5_디지털_회로_설계_수정요청",
+   "page": 32,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 503,
+   "group": "control",
+   "file": "LM1903060410_23v3_반도체_재료_품질관리",
+   "page": 56,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 504,
+   "group": "recall",
+   "file": "LM1903060328_19v1_반도체_케미컬_가스_장비_유지보수",
+   "page": 40,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 505,
+   "group": "recall",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 67,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 506,
+   "group": "disputed",
+   "file": "LM1903060211_19v4_반도체_웨이퍼_레벨_테스트_장비_운영",
+   "page": 49,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 507,
+   "group": "recall",
+   "file": "LM1903060119_23v5_아날로그_회로_소자_레벨_설계",
+   "page": 84,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 508,
+   "group": "boundary",
+   "file": "LM1903060417_23v3_반도체용_세정_공정_가스_제조",
+   "page": 33,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 509,
+   "group": "boundary",
+   "file": "LM1903060318_18v2_LM1903060319_18v2_반도체_장비_시제품_성능평가",
+   "page": 32,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 510,
+   "group": "recall",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 41,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 511,
+   "group": "recall",
+   "file": "LM1903060325_19v2_반도체_장비_전장_조립_검증",
+   "page": 24,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 512,
+   "group": "boundary",
+   "file": "LM1903060318_18v2_LM1903060319_18v2_반도체_장비_시제품_성능평가",
+   "page": 72,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 513,
+   "group": "disputed",
+   "file": "LM1903060201_14v3_Photo_장비운영",
+   "page": 55,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 514,
+   "group": "recall",
+   "file": "LM1903060425_23v3_반도체용_세정_공정_재료_제조",
+   "page": 104,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 515,
+   "group": "recall",
+   "file": "LM1903060122_23v4_플립_패키지_개발",
+   "page": 90,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 516,
+   "group": "boundary",
+   "file": "LM1903060115_23v7_메모리_반도체_제조_공정_개발",
+   "page": 55,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 517,
+   "group": "control",
+   "file": "LM1903060420_23v3_반도체용_박막_공정_전구체_제조",
+   "page": 101,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 518,
+   "group": "recall",
+   "file": "LM1903060106_반도체_제조_공정_개발",
+   "page": 161,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 519,
+   "group": "boundary",
+   "file": "LM1903060121_23v4_와이어_본딩_패키지_개발",
+   "page": 58,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 520,
+   "group": "recall",
+   "file": "LM1903060118_23v5_아날로그_회로_아키텍처_설계",
+   "page": 125,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 521,
+   "group": "disputed",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 101,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 522,
+   "group": "recall",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 61,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 523,
+   "group": "recall",
+   "file": "LM1903060316_18v2_LM1903060317_18v2_반도체_장비_유틸리티_소프트웨어_개발",
+   "page": 38,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 524,
+   "group": "recall",
+   "file": "LM1903060401_20v2_반도체용_웨이퍼_재료_제조",
+   "page": 78,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 525,
+   "group": "control",
+   "file": "LM1903060424_23v3_반도체용_박막_도금_공정_재료_제조",
+   "page": 58,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 526,
+   "group": "recall",
+   "file": "LM1903060320_18v2_LM1903060321_18v2_반도체_장비_품질관리",
+   "page": 17,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 527,
+   "group": "recall",
+   "file": "LM1903060412_20v1_반도체용_마스크_재료_제조",
+   "page": 39,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 528,
+   "group": "disputed",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 32,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 529,
+   "group": "boundary",
+   "file": "LM1903060410_23v3_반도체_재료_품질관리",
+   "page": 22,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 530,
+   "group": "control",
+   "file": "LM1903060323_19v3_반도체_장비_기구_조립_검증",
+   "page": 105,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 3,
+    "D1 단어 경계": 3,
+    "D2 길이 정규화": 3,
+    "D1+D2 둘 다": 3,
+    "D1+D2+D5 조건부면제": 3,
+    "D1+D2+D4 round": 3,
+    "D1+D2+D4 floor": 3,
+    "V 어휘 확장": 3,
+    "D1+D2+V": 3
+   }
+  },
+  {
+   "id": 531,
+   "group": "boundary",
+   "file": "LM1903060307_18v2_반도체_장비_전장_설계",
+   "page": 50,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 532,
+   "group": "recall",
+   "file": "LM1903060324_19v2_반도체_장비_전장_조립",
+   "page": 53,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 533,
+   "group": "recall",
+   "file": "LM1903060418_23v3_반도체용_박막_공정_가스_제조",
+   "page": 33,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 534,
+   "group": "boundary",
+   "file": "LM1903060329_19v1_반도체_장비_안전관리",
+   "page": 148,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 535,
+   "group": "boundary",
+   "file": "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조",
+   "page": 57,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 536,
+   "group": "recall",
+   "file": "LM1903060117_23v7_반도체_제조_단위_공정_공정_개발",
+   "page": 87,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  },
+  {
+   "id": 537,
+   "group": "recall",
+   "file": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 41,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 2,
+    "D1 단어 경계": 2,
+    "D2 길이 정규화": 2,
+    "D1+D2 둘 다": 2,
+    "D1+D2+D5 조건부면제": 2,
+    "D1+D2+D4 round": 2,
+    "D1+D2+D4 floor": 2,
+    "V 어휘 확장": 2,
+    "D1+D2+V": 2
+   }
+  },
+  {
+   "id": 538,
+   "group": "recall",
+   "file": "LM1903060324_19v2_반도체_장비_전장_조립",
+   "page": 88,
+   "cell_truncated": false,
+   "pred": {
+    "baseline": 1,
+    "D1 단어 경계": 1,
+    "D2 길이 정규화": 1,
+    "D1+D2 둘 다": 1,
+    "D1+D2+D5 조건부면제": 1,
+    "D1+D2+D4 round": 1,
+    "D1+D2+D4 floor": 1,
+    "V 어휘 확장": 1,
+    "D1+D2+V": 1
+   }
+  }
+ ]
+}

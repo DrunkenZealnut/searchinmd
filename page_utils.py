@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-공통 유틸리티: 페이지 매핑, 파일 검색, NFC 정규화
-add_fullpage.py와 insert_page_markers.py에서 공유
+공통 유틸리티: 페이지 매핑, 파일 검색, NFC 정규화, 엑셀 셀 절단 판정
+add_fullpage.py, insert_page_markers.py, recount_grades.py, regrade.py 에서 공유
 """
 
 import os
@@ -9,10 +9,40 @@ import re
 import json
 import unicodedata
 
+EXCEL_MAX_CHARS = 32767          # 엑셀 셀 한도. add_fullpage.py 가 여기서 가져다 쓴다
+# 재코딩 표본의 층 이름. make_coding_sheet(추출)·score_coding(채점)이 같이 쓴다 — 두 벌로 타이핑하면
+# 층을 하나 늘릴 때 한쪽만 고쳐지고 조용히 어긋난다. score_coding 은 regrade(openpyxl 가드)를 못
+# 부르므로 의존성 없는 이 모듈이 소유한다.
+CODING_GROUPS = ('disputed', 'control', 'boundary', 'recall')
+BASELINE = 'baseline'            # 재현 기준선(현행 규칙)의 변형 라벨. 다른 변형 라벨은 regrade.variant_grid() 가 소유한다
+TRUNCATION_MARK = '...'
+
 
 def nfc(s):
     """NFC normalize a string."""
     return unicodedata.normalize('NFC', s) if s else s
+
+
+def is_cell_truncated(text):
+    """엑셀 셀 한도에 붙어 잘린 본문인지 판정한다.
+
+    add_fullpage.py 는 `full_content[:EXCEL_MAX_CHARS - 3] + '...'` 로 자르므로
+    잘린 셀은 정확히 32,767자이고 '...' 로 끝난다. 두 조건을 **모두** 요구한다.
+
+      길이만 보면  원래 정확히 32,767자였던 본문을 절단으로 오판한다. 그런 본문은
+                   `len > EXCEL_MAX_CHARS` 가 거짓이라 자르지 않고 통과하므로
+                   '...' 가 붙지 않는다 — 마커가 이 둘을 가른다.
+      마커만 보면  '...' 로 끝나는 짧은 본문을 전부 절단으로 오판한다.
+
+    남는 오탐은 "원래 정확히 32,767자이면서 '...' 로 끝나는 본문" 하나뿐이다.
+    실측 NCS 1,847쪽·교과서 362쪽에서 두 조건이 갈리는 사례는 0건이었다.
+
+    **원시 셀 값으로 부르라.** str.strip() 을 거친 값을 넘기면 앞뒤 공백이 사라져
+    길이가 32,767 미만으로 줄고 탐지에 실패한다.
+    """
+    return (isinstance(text, str)
+            and len(text) == EXCEL_MAX_CHARS
+            and text.endswith(TRUNCATION_MARK))
 
 
 def find_md_and_meta(ncs_bases, rel_path):

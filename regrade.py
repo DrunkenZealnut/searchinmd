@@ -1,0 +1,531 @@
+#!/usr/bin/env python3
+"""
+안전등급 재채점 — 원본 페이지 본문에서 등급을 다시 계산한다.
+
+`recount_grades.py` 는 원본 워크북의 **기존 등급을 재매핑**할 뿐이다. 이 스크립트는
+`페이지전체내용` 열에서 등급을 **처음부터 다시 계산**한다.
+
+    pip install openpyxl
+    python3 regrade.py --validate        # 현재 규칙 재현율만 확인 (산출물 안 씀)
+    python3 regrade.py                   # 재채점 + 항목별 영향도 표
+
+## 현재 규칙 (커밋된 등급사유 4,000여 건에서 역설계)
+
+    안전어 ≤ 5                → 등급1  (1,567쪽에서 100% 일관)
+    안전어 > 5, 조치어 ≤ 4    → 등급2
+    안전어 > 5, 조치어 ≥ 5    → 등급3  (431쪽에서 겹침 0으로 분리)
+
+## 고치는 결함 셋
+
+D1 단어 경계 없음 — `진동`·`먼지` 같은 반도체 문맥 동음이의가 안전어로 잡힌다.
+   실측 175쪽이 이 넷만으로 등급이 정해졌다. 또 `안전` 이 `산업안전보건법`·
+   `안전장치` 안에도 들어 있어 한 출현이 두 번 세어진다.
+D2 길이 정규화 없음 — 임계 5건이 페이지 길이와 무관하다. 페이지 길이 편차가
+   커서(43%가 1,000자 미만, 최대 32,767자) 긴 페이지가 그냥 승급한다.
+D3 총계 off-by-one — 3쪽(0.16%). 나머지 168쪽의 "불일치" 는 사유 문자열이
+   상위 5개만 보여주는 표시 절단이지 채점 버그가 아니다.
+D4 이산화 부작용 — 카운트는 정수인데 정규화 임계는 연속값이라 비교가 사실상
+   ceil() 로 동작한다. 중앙값보다 1자 긴 페이지가 조치어를 5건이 아니라 6건
+   요구받는다. 실측 분쟁군 39쪽 중 11쪽이 임계와의 차이 -2.3 이내에서 떨어졌고
+   그중 7쪽은 코더 두 명이 모두 "진짜 등급3" 이라고 판정했다. DISCRETIZE 참조.
+D5 조건부 정규화 — **기각됨**. "안전 전담 페이지는 원래 길고 조치가 많으니
+   정규화가 부당하게 깎는다" 는 가설이었으나 데이터가 반대였다. 코더가 진짜
+   등급3이라 한 쪽은 조치어 중앙 5건·길이 중앙 1,268자로 짧았고, 강등이 정당한
+   쪽이 조치어 중앙 8건·길이 중앙 6,436자로 길었다. 면제를 켜면 4쪽이 되살아나는데
+   코더는 그 4쪽 모두 등급3이 아니라고 했다(F1 0.813→0.790). 재현을 위해 코드는
+   남기되 켜지 않는다. ACTION_EXEMPT 참조.
+V  어휘 확장 — 원본 채점기의 **사전 자체**가 불완전했다. `등급사유` 에 이름 붙은
+   용어는 0종 누락이지만 본문에는 `장갑`(145쪽)·`화상`·`협착` 처럼 사전에 없는
+   안전·조치어가 있다. 21종(조치 12 / 안전 9)을 **변형**으로만 둔다 — 기준선(재현)에
+   넣으면 99.6% 재현이 깨진다. 현행+V 는 등급3을 108→129쪽으로 **올리는** 방향이라
+   D1·D2 와 반대다. 채택 여부는 재코딩 라벨이 판정한다(vocab-search.analysis.md,
+   recoding.design.md). EXTRA_*_TERMS 참조.
+
+각 결함을 따로 켜고 끌 수 있어 영향도를 항목별로 뗄 수 있다. 기본값은 현재
+발행된 동작(ceil, 면제 없음)이며, 채택 여부는 별도 판단이다 — 산출물의 숫자를
+조용히 바꾸지 않는다.
+"""
+import argparse
+import hashlib
+import json
+import os
+import re
+import sys
+from collections import Counter, defaultdict
+
+try:
+    from openpyxl import load_workbook
+except ImportError:
+    sys.exit('openpyxl이 필요합니다: pip install openpyxl')
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from page_utils import is_cell_truncated, BASELINE  # noqa: E402
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(HERE, 'data')
+OUT_DIR = os.path.join(HERE, 'docs', '03-analysis', 'data')
+
+NCS_FILE = 'ncs_keywords_in_markdown_results_20260402.xlsx'
+TXT_FILE = 'ncs_keywords_in_markdown_results_교과서_results_20260415.xlsx'
+
+# 산출물에서 "수정본" 으로 읽히는 변형. 아래 variants 목록의 표시용 라벨과 같은
+# 문자열이지만, score_coding 이 이 라벨을 직접 타이핑하지 않도록 이름을 준다.
+# regrade_impact.json 에 `adopted_variant` 로도 실어서, 소비자가 라벨을 알 필요
+# 없이 산출물에게 물어보게 한다 — 라벨을 손봐도 KeyError 로 죽지 않는다.
+ADOPTED_VARIANT = 'D1+D2 둘 다'
+VOCAB_VARIANT = 'V 어휘 확장'            # 현행 규칙 + 21종 (V)
+ADOPTED_VOCAB_VARIANT = 'D1+D2+V'        # 수정본 + 21종
+
+# 회귀 검증 기대값. recount_grades.py 와 같은 이유로 둔다 — 이 산출물이
+# score_coding.population() 을 거쳐 발표되는 정밀도·재현율의 분모가 되므로,
+# 어휘 목록이나 임계를 손보면 조용히 바뀐다. 집계만 비교하면 페이지 간 재배정이
+# 상쇄되므로 baseline 배정 전체의 해시도 함께 고정한다.
+EXPECTED = {
+    'pages': 1847,
+    'median_page_len': 1066,
+    'reproduction': {'agree': 1839, 'total': 1847, 'rate': 99.57},
+    'baseline_digest': '1a60c160d80b9fdc',
+    'dist': {
+        BASELINE:                  {1: 1261, 2: 478, 3: 108},
+        'D1 단어 경계':              {1: 1274, 2: 465, 3: 108},
+        'D2 길이 정규화':             {1: 1371, 2: 404, 3: 72},
+        'D1+D2 둘 다':              {1: 1386, 2: 389, 3: 72},
+        'D1+D2+D5 조건부면제':        {1: 1386, 2: 384, 3: 77},
+        'D1+D2+D4 round':          {1: 1359, 2: 409, 3: 79},
+        'D1+D2+D4 floor':          {1: 1338, 2: 424, 3: 85},
+        'V 어휘 확장':               {1: 1247, 2: 471, 3: 129},
+        'D1+D2+V':                 {1: 1366, 2: 391, 3: 90},
+    },
+}
+
+
+def impact_digest(graded):
+    """(교재,페이지)→등급 배정 전체의 해시. 총계가 그대로여도 재배정을 잡는다."""
+    body = '\n'.join('%s|%s|%s' % (fn, pg, graded[(fn, pg)]['g'])
+                     for fn, pg in sorted(graded, key=lambda k: (str(k[0]), k[1] or 0)))
+    return hashlib.sha256(body.encode('utf-8')).hexdigest()[:16]
+
+
+def check_expected(got):
+    """기대값과 대조하고 어긋난 항목을 출력한다. 통과면 True."""
+    bad = []
+    for k, v in EXPECTED.items():
+        if got.get(k) != v:
+            bad.append('%s: %s ≠ %s' % (k, got.get(k), v))
+    print('  회귀 검증 %s' % ('통과' if not bad else '실패 — ' + '; '.join(bad)))
+    return not bad
+
+
+# 등급사유에 실제로 등장한 어휘 전부. 손으로 고른 목록이 아니라 커밋된 CSV 의
+# 4,000여 건에서 뽑았다 — 원본 채점기가 쓰던 사전 그 자체다.
+SAFETY_TERMS = [
+    '안전', '위험', '주의', '유의 사항', '유의사항', '사고', '유해', '진동', '누출',
+    'MSDS', '보건', '폭발', '화재', '먼지', '화학물질', '보호구', '소음', '방사선',
+    '감전', '질식', '분진', '중독', '끼임', '작업환경', '물질안전보건자료', '인화',
+    '부상', '산업안전보건법', '질병', 'PSM', '추락', '사망',
+]
+ACTION_TERMS = [
+    '방지', '예방', '착용', '환기', '차단', '안전관리', '대처', '마스크', '안전장치',
+    '안전화', '대피', '응급조치', '격리', '소화기', '보안경', '보호복', '안전모',
+    '안전교육', '방독면', '안전수칙', '조치사항', '보호장비', '안전대책', '안전조치',
+    '관리방법',
+]
+
+# V: 본문 탐색에서 나온 누락 어휘 (docs/03-analysis/vocab-search.analysis.md §3).
+# 기준선 재현에는 **쓰지 않는다** — 원본 채점기에 없던 어휘라 넣으면 재현이 깨진다.
+# 변형(extra_vocab=True)에서만 켠다. 보류 6종(접지·정전기·감지기·노출·취급·인체)은
+# 동음이의 처리가 필요해 넣지 않았다.
+EXTRA_SAFETY_TERMS = [
+    '화상', '협착', '낙하', '비산', '발암', '직업병', '맹독성', '유독', '발화성',
+]
+EXTRA_ACTION_TERMS = [
+    '장갑', '고글', '보호안경', '방진복', '방진화', '귀마개', '보호장구',
+    '국소배기', '인터록', '경고표지', '방열복', '안전난간',
+]
+
+SAFETY_MIN = 6          # 이 이상이어야 등급1을 벗어난다 (원본의 "5건 이하" 경계)
+ACTION_MIN = 5          # 이 이상이면 등급3
+DENSITY_BASE = 1000     # D2: 1,000자당으로 환산
+
+# D4: 정규화 임계의 이산화 방식. 카운트는 정수인데 임계는 연속값이라, 비교
+# `an >= 5*배율` 은 실제로는 `an >= ceil(5*배율)` 로 동작한다. 그래서 중앙값보다
+# 1자만 긴 페이지도 요구치가 5건에서 6건으로 뛴다 — 길이 0.1% 차이에 요구치가
+# 20% 오르는 것이고, 설계된 동작이 아니라 부작용이다.
+#   'ceil'  현재 동작. 중앙값을 넘는 순간 즉시 1건을 더 요구한다(가장 가혹).
+#   'round' 계단을 중간점에 둔다. 원 임계를 가장 덜 왜곡하는 선택.
+#   'floor' 임계가 다음 정수에 완전히 도달해야 1건을 더 요구한다(가장 관대).
+#
+# 이 셋 중 무엇을 채택할지는 69쪽 코딩 표본으로 결정할 수 없다(검정력 부족 +
+# 과적합). D4 결함의 **존재** 는 라벨과 무관하게 코드로 증명되지만, 방식 선택은
+# 신규 표본이 필요하다. 'round' 가 선험적으로 방어 가능하다는 것과 점수가 더
+# 높은 'floor' 를 채택하지 않았다는 것까지가 현재 말할 수 있는 전부다.
+# 이전 주석은 이를 "라벨을 보기 전에 고른 사전 선택" 이라 했으나 철회한다 —
+# D4 라는 결함 범주 자체가 라벨 검토 중에 착안됐으므로 사전등록이 아니다.
+DISCRETIZE = 'ceil'
+
+# D5: 조건부 정규화 — 조치어 절대수가 이만큼이면 길이와 무관하게 등급3을 준다.
+# "안전 전담 페이지는 원래 길고 원래 조치가 많으므로 정규화가 부당하게 깎는다"
+# 는 가설에서 나온 값이다. ACTION_MIN 의 2배를 사전에 정한 것이고 라벨에서
+# 역산하지 않았다. 검증 결과는 docs 를 볼 것 — 가설은 기각됐다.
+ACTION_EXEMPT = 2 * ACTION_MIN
+
+# D1: 반도체 문맥에서 안전과 무관하게 쓰이는 출현. 용어 자체를 버리지 않고
+# 이 문맥에서 나온 것만 뺀다 — 진동·소음은 실제 직업병 인자이기도 하다.
+HOMONYM_CONTEXTS = {
+    '진동': ['진동자', '진동수', '진동식', '초음파 진동', '진동 주파수', '격자 진동',
+             '분자 진동', '진동 모드', '진동 스펙트럼'],
+    '먼지': ['파티클', '미세 입자', '먼지 입자 수', '파티클 카운트'],
+    '분진': ['분진 입자 수'],
+    '소음': ['신호 대 잡음', '노이즈 비', '소음 지수'],
+}
+
+# D1: 더 긴 용어의 부분 문자열로 들어가 두 번 세어지는 것들.
+# 예) '산업안전보건법' 한 번 나오면 naive 매칭은 '안전' 도 한 번 더 센다.
+CONTAINING = {
+    '안전': ['산업안전보건법', '물질안전보건자료', '안전관리', '안전장치', '안전화',
+             '안전모', '안전교육', '안전수칙', '안전대책', '안전조치', '안전보건'],
+    '보건': ['산업안전보건법', '물질안전보건자료', '안전보건'],
+}
+
+
+_VOCAB_CACHE = {}
+
+
+def build_vocab(terms):
+    """D1 어휘를 만든다. 반환: (정규식, {매칭문자열: 귀속term 또는 None})
+
+    귀속이 None 이면 그 구간은 소비하되 세지 않는다(동음이의).
+
+    ## 왜 총계 뺄셈이 아니라 구간 매칭인가
+
+    이전 구현은 `n -= text.count(ctx)` 로 총계끼리 뺐다. 위치 대응이 없어서
+    별개 위치의 정상 출현이 삭제됐다 — `먼지`×3 과 `파티클`×10 이 같은 페이지에
+    있으면 먼지가 0이 됐다. `max(n, 0)` 이 음수를 삼켜 드러나지도 않았다.
+    실제 분진·소음 유해성을 서술하거나 산업안전보건법을 인용한 페이지가 표적으로
+    0점 처리됐고, 오차 방향이 전부 강등이라 보고서 논지에 유리했다.
+
+    구간 매칭은 각 출현의 위치를 보고 판정하므로 이 오류가 구조적으로 불가능하다.
+    정규식 교차(긴 것 우선)로 왼쪽부터 겹치지 않게 소비한다.
+
+    ## 세 부류
+
+    1. `terms` 자기 자신 → 자신에게 귀속
+    2. `CONTAINING` 의 더 긴 용어 → **1건으로 센다.** `안전보건` 은 안전 내용이므로
+       0이 아니라 1이어야 한다. 계수 대상 용어면 자신에게, 아니면 기저어에 귀속한다.
+       원래 의도는 같은 출현을 두 번 세지 말자는 것이지 지우자는 것이 아니었다.
+    3. `HOMONYM_CONTEXTS` 중 **기저어를 문자열로 포함하는 것**만 → 귀속 None
+
+    비포함형 동음이의(`파티클`, `미세 입자`, `신호 대 잡음`, `노이즈 비`,
+    `파티클 카운트`)는 **버린다.** 기저어를 포함하지 않으므로 어떤 출현도 흡수하지
+    못한다. 이것을 살리려면 "같은 문장/줄 안에 있으면 제외" 같은 근접성 규칙이
+    필요한데, 창 크기라는 새 임의 파라미터가 생긴다. 버리는 쪽이 안전어를 더 많이
+    세므로 등급이 올라가는 방향이고, 논지에 불리한 쪽이라 편향 통제에도 낫다.
+    """
+    key = tuple(terms)
+    hit = _VOCAB_CACHE.get(key)
+    if hit is not None:
+        return hit
+
+    attr = {}
+    for t in terms:
+        attr.setdefault(t, t)
+    for base, longers in CONTAINING.items():
+        if base not in attr:
+            continue                     # 이 사전에 없는 기저어는 건드리지 않는다
+        for lg in longers:
+            if lg != base:
+                attr.setdefault(lg, lg if lg in key else base)
+    for base, ctxs in HOMONYM_CONTEXTS.items():
+        if base not in attr:
+            continue
+        for ctx in ctxs:
+            if base in ctx:              # 포함형만. 비포함형은 흡수할 수 없다
+                attr.setdefault(ctx, None)
+
+    # 긴 것 우선 — 파이썬 정규식 교차는 왼쪽 우선이라 정렬이 최장일치를 만든다
+    pat = re.compile('|'.join(re.escape(s) for s in
+                              sorted(attr, key=len, reverse=True)))
+    _VOCAB_CACHE[key] = (pat, attr)
+    return pat, attr
+
+
+def count_terms(text, terms, word_boundary=False):
+    """용어별 출현 수. word_boundary=True 면 D1 보정을 적용한다."""
+    out = Counter()
+    if not word_boundary:
+        # 원본 규칙 그대로. 부분 문자열 중복 계수를 포함한다 — 재현용이므로
+        # 고치지 않는다. 이 경로는 구간 매칭을 타지 않으므로 D1 결함과 무관하다.
+        for t in terms:
+            n = text.count(t)
+            if n:
+                out[t] = n
+        return out
+
+    pat, attr = build_vocab(terms)
+    for m in pat.finditer(text):
+        a = attr[m.group(0)]
+        if a is not None:
+            out[a] += 1
+    return out
+
+
+def length_scale(text_len, base):
+    """D2 임계 배율.
+
+    제곱근을 쓴다. 선형(len/base)은 "안전 내용이 페이지 길이에 비례해야 한다" 는
+    가정인데 근거가 없다 — 32,767자 페이지에 32배의 안전어를 요구하게 된다.
+    제곱근은 긴 페이지에 불이익을 주되 그 강도를 완만하게 한다.
+
+    base 는 임의 상수가 아니라 **해당 데이터의 페이지 길이 중앙값**이다. 중앙값
+    길이의 페이지는 배율 1.0 이 되어 원본 임계(6건/5건)가 그대로 적용된다.
+    원본 임계가 암묵적으로 '보통 길이 페이지' 기준으로 잡혔다고 보는 것이다.
+    base 미만 페이지는 배율을 1.0 으로 묶어 짧다는 이유로 승급하지 않게 한다.
+    """
+    import math
+    return math.sqrt(max(text_len, base) / base)
+
+
+def discretize(x, how):
+    """연속 임계를 정수 카운트에 맞춰 자른다. D4 주석 참조."""
+    import math
+    if how == 'floor':
+        return math.floor(x)
+    if how == 'round':
+        return math.floor(x + 0.5)          # 은행가 반올림을 피한다
+    return math.ceil(x)                     # 'ceil' — 현재 동작
+
+
+def grade_page(text, word_boundary=False, normalize=False,
+               how=DISCRETIZE, exempt=False, extra_vocab=False):
+    """페이지 본문 하나에 등급을 매긴다. 반환: (등급, 안전수, 조치수, 사유)
+
+    normalize 는 False 이거나 length_scale() 이 돌려준 배율(float)이다.
+    how     는 정규화 임계의 이산화 방식(D4).
+    exempt  가 True 면 조치어 절대수 >= ACTION_EXEMPT 인 페이지는 조치어
+            임계를 정규화하지 않는다(D5, 조건부 정규화).
+    extra_vocab 가 True 면 21종 확장 사전을 더한다(V). 기본값 False 가 재현 기준선이다.
+    """
+    s_terms = SAFETY_TERMS + EXTRA_SAFETY_TERMS if extra_vocab else SAFETY_TERMS
+    a_terms = ACTION_TERMS + EXTRA_ACTION_TERMS if extra_vocab else ACTION_TERMS
+    s = count_terms(text, s_terms, word_boundary)
+    a = count_terms(text, a_terms, word_boundary)
+    sn, an = sum(s.values()), sum(a.values())
+
+    s_min, a_min = SAFETY_MIN, ACTION_MIN
+    if normalize:
+        s_min = discretize(SAFETY_MIN * normalize, how)
+        if exempt and an >= ACTION_EXEMPT:
+            a_min = ACTION_MIN              # 길이와 무관하게 원래 임계
+        else:
+            a_min = discretize(ACTION_MIN * normalize, how)
+
+    if sn < s_min:
+        g = 1
+    elif an >= a_min:
+        g = 3
+    else:
+        g = 2
+
+    top = ', '.join('%s(%d)' % (k, v) for k, v in s.most_common(5))
+    reason = '안전 %d건 [%s]' % (sn, top)
+    if an:
+        reason += ', 조치 %d건 [%s]' % (an, ', '.join(
+            '%s(%d)' % (k, v) for k, v in a.most_common(5)))
+    else:
+        reason += ', 구체적 조치 언급 없음'
+    return g, sn, an, reason
+
+
+# 열은 위치로 읽는다. 헤더 텍스트가 시트마다 다르기 때문이다 — '사망' 시트는
+# 헤더 행이 아예 없고, '부상'·'끼임' 등은 4번 열을 '페이지전체내용' 으로 잘못
+# 이름 붙여 놓았다(실제로는 page). 30개 시트 전부 9열이고 위치는 일정하다(실측).
+# recount_grades.py 가 헤더 대신 앵커 탐색을 쓰는 것도 같은 이유다.
+COL_FILENAME, COL_PAGE, COL_TEXT, COL_GRADE = 2, 4, 5, 7
+N_COLS = 9
+
+
+def load_pages(path):
+    """워크북에서 고유 (교재, 페이지) -> {text, grade} 를 모은다.
+
+    시트는 키워드별이고 같은 페이지가 여러 시트에 중복 등장한다. 등급은 페이지
+    속성이므로 먼저 고유 페이지로 접는다.
+    """
+    wb = load_workbook(path, read_only=True, data_only=True)
+    pages, skipped = {}, 0
+    for sn in wb.sheetnames:
+        for row in wb[sn].iter_rows(values_only=True):
+            if not row or len(row) < N_COLS:
+                continue
+            if str(row[0]).strip() == 'number':          # 헤더 행
+                continue
+            fn, pg, tx, gr = (row[COL_FILENAME], row[COL_PAGE],
+                              row[COL_TEXT], row[COL_GRADE])
+            if not fn or pg is None or not isinstance(tx, str) or not tx.strip():
+                skipped += 1
+                continue
+            try:
+                pg = int(float(str(pg)))
+            except (TypeError, ValueError):
+                skipped += 1
+                continue
+            key = (str(fn), pg)
+            if key not in pages:
+                # truncated: 이 본문이 엑셀 셀 한도에서 잘렸는가. 원본이 남아 있지
+                # 않아 복구는 불가이고, 코딩 시트 고지와 층화 분석에만 쓴다.
+                pages[key] = {'text': tx, 'grade': gr,
+                              'truncated': is_cell_truncated(tx)}
+    wb.close()
+    if skipped:
+        print('  (형식이 맞지 않아 건너뛴 행 %d개)' % skipped)
+    return pages
+
+
+def median_length(pages):
+    L = sorted(len(r['text']) for r in pages.values())
+    return L[len(L) // 2] if L else DENSITY_BASE
+
+
+def run(pages, word_boundary, normalize, base=None,
+        how=DISCRETIZE, exempt=False, extra_vocab=False):
+    """normalize=True 면 페이지별 길이 배율을 적용한다."""
+    out = {}
+    for key, rec in pages.items():
+        scale = length_scale(len(rec['text']), base) if normalize else False
+        g, sn, an, reason = grade_page(rec['text'], word_boundary, scale,
+                                       how, exempt, extra_vocab)
+        out[key] = {'g': g, 'sn': sn, 'an': an, 'reason': reason,
+                    'len': len(rec['text'])}
+    return out
+
+
+def variant_grid():
+    """산출물에 싣는 변형 목록 (라벨, run() 인자).
+
+    라벨은 **여기서만** 정의한다. make_coding_sheet 와 score_coding 은 이 목록을
+    불러 쓰지 다시 타이핑하지 않는다 — 두 벌이 되면 라벨을 손보는 순간 어긋난다.
+    """
+    return [
+        ('D1 단어 경계', dict(word_boundary=True, normalize=False)),
+        ('D2 길이 정규화', dict(word_boundary=False, normalize=True)),
+        (ADOPTED_VARIANT, dict(word_boundary=True, normalize=True)),
+        ('D1+D2+D5 조건부면제',
+         dict(word_boundary=True, normalize=True, exempt=True)),
+        ('D1+D2+D4 round',
+         dict(word_boundary=True, normalize=True, how='round')),
+        ('D1+D2+D4 floor',
+         dict(word_boundary=True, normalize=True, how='floor')),
+        (VOCAB_VARIANT, dict(word_boundary=False, normalize=False, extra_vocab=True)),
+        (ADOPTED_VOCAB_VARIANT,
+         dict(word_boundary=True, normalize=True, extra_vocab=True)),
+    ]
+
+
+def dist(graded):
+    c = Counter(v['g'] for v in graded.values())
+    return {g: c.get(g, 0) for g in (1, 2, 3)}
+
+
+def agree(graded, pages):
+    """원본 등급과 일치하는 비율."""
+    ok = tot = 0
+    for key, rec in pages.items():
+        try:
+            orig = int(rec['grade'])
+        except (TypeError, ValueError):
+            continue
+        tot += 1
+        ok += (graded[key]['g'] == orig)
+    return ok, tot
+
+
+def main():
+    ap = argparse.ArgumentParser(description='안전등급 재채점')
+    ap.add_argument('--data', default=DATA_DIR, help='원본 엑셀 위치')
+    ap.add_argument('--validate', action='store_true',
+                    help='현재 규칙 재현율만 출력하고 산출물은 쓰지 않는다')
+    ap.add_argument('--force', action='store_true',
+                    help='회귀 검증에 실패해도 산출물을 덮어쓴다 (EXPECTED 를 바꿀 때)')
+    args = ap.parse_args()
+
+    src = os.path.join(args.data, NCS_FILE)
+    if not os.path.exists(src):
+        sys.exit('원본 엑셀을 찾을 수 없습니다: %s\n'
+                 '  --data 로 위치를 지정하세요.' % src)
+
+    print('원본 읽는 중… %s' % os.path.basename(src))
+    pages = load_pages(src)
+    print('  고유 페이지 %d쪽' % len(pages))
+
+    base = run(pages, word_boundary=False, normalize=False)
+    ok, tot = agree(base, pages)
+    print('\n=== 현재 규칙 재현 ===')
+    print('  원본 등급과 일치: %d/%d (%.1f%%)' % (ok, tot, ok * 100.0 / max(tot, 1)))
+    print('  분포: %s' % dist(base))
+
+    if args.validate:
+        return
+
+    med = median_length(pages)
+    print('  페이지 길이 중앙값 %d자 (D2 기준 길이로 사용)' % med)
+
+    variants = variant_grid()
+    print('\n=== 항목별 영향도 (재현 기준 대비) ===')
+    results = {}
+    for name, kw in variants:
+        g = run(pages, base=med, **kw)
+        results[name] = g
+        moved = sum(1 for k in g if g[k]['g'] != base[k]['g'])
+        d = dist(g)
+        print('  %-20s 분포 %s  등급3 %.1f%%  변동 %d쪽 (%.1f%%)'
+              % (name, d, d[3] * 100.0 / len(g), moved, moved * 100.0 / max(len(g), 1)))
+
+    final = results[ADOPTED_VARIANT]
+    print('\n=== 최종 (D1+D2) 대비 원본 ===')
+    move = Counter()
+    for k in final:
+        try:
+            o = int(pages[k]['grade'])
+        except (TypeError, ValueError):
+            continue
+        if o != final[k]['g']:
+            move['%d→%d' % (o, final[k]['g'])] += 1
+    for k, v in sorted(move.items()):
+        print('  등급 %s : %d쪽' % (k, v))
+
+    repro = {'agree': ok, 'total': tot, 'rate': round(ok * 100.0 / max(tot, 1), 2)}
+    dists = {BASELINE: dist(base), **{n: dist(g) for n, g in results.items()}}
+    print('\n=== 회귀 검증 ===')
+    passed = check_expected({'pages': len(pages), 'median_page_len': med,
+                             'reproduction': repro, 'dist': dists,
+                             'baseline_digest': impact_digest(base)})
+    if not passed and not args.force:
+        sys.exit('\n회귀 검증에 실패해 산출물을 쓰지 않습니다. 원본이나 규칙이 바뀐 것이라면 '
+                 'EXPECTED 를 고치고 다시 실행하거나 --force 로 덮어쓰십시오.')
+
+    os.makedirs(OUT_DIR, exist_ok=True)
+    out = os.path.join(OUT_DIR, 'regrade_impact.json')
+    payload = {
+        'source': os.path.basename(src),
+        'pages': len(pages),
+        'median_page_len': med,
+        'rule': {'safety_min': SAFETY_MIN, 'action_min': ACTION_MIN,
+                 'normalize': 'sqrt(len/median)',
+                 'discretize': DISCRETIZE, 'action_exempt': ACTION_EXEMPT,
+                 'extra_safety_terms': EXTRA_SAFETY_TERMS,
+                 'extra_action_terms': EXTRA_ACTION_TERMS},
+        'reproduction': repro,
+        'adopted_variant': ADOPTED_VARIANT,   # 소비자가 라벨을 타이핑하지 않게
+        'baseline_digest': impact_digest(base),
+        'dist': dists,
+        'moves_vs_original': dict(move),
+    }
+    tmp = out + '.tmp'
+    with open(tmp, 'w', encoding='utf-8') as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, out)
+    print('\n영향도 요약을 %s 에 썼습니다.' % os.path.relpath(out, HERE))
+    print('대시보드 수치는 아직 바꾸지 않았습니다 — 반영 여부는 별도 판단입니다.')
+
+
+if __name__ == '__main__':
+    main()
