@@ -20,7 +20,7 @@ import json
 import glob
 import shutil
 import argparse
-from page_utils import nfc, build_page_map
+from page_utils import nfc, build_page_map, PAGE_MARKER_RE
 
 
 DEFAULT_NCS_DIRS = [
@@ -28,7 +28,6 @@ DEFAULT_NCS_DIRS = [
     "/Users/zealnutkim/Documents/DEV/SafeFactory/documents/semiconductor/ncs/data",
 ]
 
-PAGE_MARKER_RE = re.compile(r'<!--\s*page:\s*\d+\s*-->')
 
 
 def has_page_markers(content):
