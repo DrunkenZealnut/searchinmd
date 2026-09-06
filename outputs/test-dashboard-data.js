@@ -101,6 +101,9 @@ const rows = (html) => (html.match(/<tr>/g) || []).length;
 const order = (html) => [...html.matchAll(/<strong>([^<]+)<\/strong>/g)].map(m => m[1]);
 
 const summary = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs/03-analysis/data/summary.json'), 'utf8'));
+// NCS 쪽 단위 수치의 정본은 2026-09-06 부터 재세그먼트 산출물이다 (resegment.py, EXPECTED 가드). summary.ncs 의 쪽 단위 값은 라벨 기준 계보.
+const reseg = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs/03-analysis/data/reseg_summary.json'), 'utf8'));
+const fmt = (n) => n.toLocaleString('en-US');
 
 // =====================================================================
 // docs/index.html (NCS)
@@ -127,11 +130,11 @@ check('D2e 사고사례 행수 == summary.ncs.cases_rows(28)', sum(NKW, 'cs') ==
 check('D3a 전 키워드가 pg 보유(숫자)', NKW.every(r => typeof r.pg === 'number'), 'rKT 가 r.pg.toLocaleString() 를 무가드 호출');
 check('D3b pg <= t (검출쪽은 검출건수를 넘을 수 없음)', NKW.every(r => r.pg <= r.t), NKW.filter(r => r.pg > r.t).map(r => r.k).join(','));
 check('D3c t>0 이면 pg>0', NKW.every(r => r.t === 0 || r.pg > 0));
-check('D3d 최대 pg <= 고유 검출쪽 총계(1,847)', Math.max(...NKW.map(r => r.pg)) <= summary.ncs.pages);
-check('D3e pg 합 >= 고유쪽수 (키워드 중복 계수)', sum(NKW, 'pg') >= summary.ncs.pages);
-check('D3e2 키워드별 pg == summary.ncs.kw_pages (독립 대조)',
-  NKW.every(r => r.pg === (summary.ncs.kw_pages[r.k] || 0)),
-  NKW.filter(r => r.pg !== (summary.ncs.kw_pages[r.k] || 0)).map(r => r.k + ':' + r.pg).join(','));
+check('D3d 최대 pg <= 검출 실제 쪽 총계(reseg.pages)', Math.max(...NKW.map(r => r.pg)) <= reseg.pages);
+check('D3e pg 합 >= 검출 쪽수 (키워드 중복 계수)', sum(NKW, 'pg') >= reseg.pages);
+check('D3e2 키워드별 pg == reseg.kw_pages (독립 대조)',
+  NKW.every(r => r.pg === (reseg.kw_pages[r.k] || 0)),
+  NKW.filter(r => r.pg !== (reseg.kw_pages[r.k] || 0)).map(r => r.k + ':' + r.pg).join(','));
 
 // D4 — 차트 하드코딩 수치
 N.buildCharts();
@@ -142,24 +145,24 @@ check('D10 테마 재빌드 시 기존 Chart 인스턴스를 destroy (누수 방
   'destroyed=' + N.destroyed.length + ' / 기대=' + chartsAfterFirst);
 N.charts.length = chartsAfterFirst;                // 이후 어서션은 1회분 기준
 const nDough = N.charts.find(c => c.type === 'doughnut');
-check('D4a 등급 도넛 == summary.ncs.page_g [1267,472,108]',
-  JSON.stringify(nDough.data.datasets[0].data) === JSON.stringify([summary.ncs.page_g['1'], summary.ncs.page_g['2'], summary.ncs.page_g['3']]),
+check('D4a 등급 도넛 == reseg.page_g [1519,525,145]',
+  JSON.stringify(nDough.data.datasets[0].data) === JSON.stringify([reseg.page_g['1'], reseg.page_g['2'], reseg.page_g['3']]),
   JSON.stringify(nDough.data.datasets[0].data));
-check('D4b 도넛 합계 == summary.ncs.pages(1,847)',
-  nDough.data.datasets[0].data.reduce((a, b) => a + b, 0) === summary.ncs.pages);
+check('D4b 도넛 합계 == reseg.pages(2,189)',
+  nDough.data.datasets[0].data.reduce((a, b) => a + b, 0) === reseg.pages);
 
 // c3 = 영역별 등급 스택(개발/제조/장비/재료) — 영역 단위 하드코딩 수치의 유일한 기계 검증점
 const c3 = N.charts.find(c => c.type === 'bar' && /등급1/.test(c.data.datasets[0].label));
 const c3d = c3.data.datasets.map(d => d.data);
-check('D4e c3 영역별 등급1 합 == page_g[1](1,267)',
-  c3d[0].reduce((a, b) => a + b, 0) === summary.ncs.page_g['1'], c3d[0].reduce((a, b) => a + b, 0));
-check('D4f c3 영역별 등급2 합 == page_g[2](472)',
-  c3d[1].reduce((a, b) => a + b, 0) === summary.ncs.page_g['2'], c3d[1].reduce((a, b) => a + b, 0));
-check('D4g c3 영역별 등급3 합 == page_g[3](108)',
-  c3d[2].reduce((a, b) => a + b, 0) === summary.ncs.page_g['3'], c3d[2].reduce((a, b) => a + b, 0));
+check('D4e c3 영역별 등급1 합 == reseg.page_g[1](1,519)',
+  c3d[0].reduce((a, b) => a + b, 0) === reseg.page_g['1'], c3d[0].reduce((a, b) => a + b, 0));
+check('D4f c3 영역별 등급2 합 == reseg.page_g[2](525)',
+  c3d[1].reduce((a, b) => a + b, 0) === reseg.page_g['2'], c3d[1].reduce((a, b) => a + b, 0));
+check('D4g c3 영역별 등급3 합 == reseg.page_g[3](145)',
+  c3d[2].reduce((a, b) => a + b, 0) === reseg.page_g['3'], c3d[2].reduce((a, b) => a + b, 0));
 const areaPages = c3d[0].map((_, i) => c3d[0][i] + c3d[1][i] + c3d[2][i]);   // 개발,제조,장비,재료
-check('D4h 영역 페이지 합 == summary.ncs.pages(1,847)',
-  areaPages.reduce((a, b) => a + b, 0) === summary.ncs.pages, areaPages.join('/'));
+check('D4h 영역 페이지 합 == reseg.pages(2,189)',
+  areaPages.reduce((a, b) => a + b, 0) === reseg.pages, areaPages.join('/'));
 
 // c1 = 안전관련(등급2+3) 비율 — 라벨 순서가 c3 와 반대(재료/제조/장비/개발)
 const c1 = N.charts.find(c => c.type === 'bar' && /안전관련/.test(c.data.datasets[0].label));
@@ -188,7 +191,7 @@ N.rKT();
 let kb = N.__els['kb'].innerHTML;
 check('D5a rKT 30행 렌더', rows(kb) === 30, rows(kb));
 check('D5b 행당 9셀 (검출쪽 컬럼 추가 후)', cells(kb) === 30 * 9, cells(kb) / 30);
-check('D5c 첫 행에 검출쪽 1,308 출력', /<td>3,405<\/td><td>1,308<\/td>/.test(kb));
+check('D5c 첫 행에 검출쪽(안전, reseg.kw_pages) 출력', new RegExp('<td>3,405<\\/td><td>' + fmt(reseg.kw_pages['안전']) + '<\\/td>').test(kb), fmt(reseg.kw_pages['안전']));
 check('D5d 예외 없이 전 키워드 렌더', order(kb).length === 30);
 
 const before = order(kb);
@@ -383,17 +386,17 @@ console.log('\n[인용] docs/osha.html');
 const osha = fs.readFileSync(path.join(ROOT, 'docs/osha.html'), 'utf8');
 const num = (n) => n.toLocaleString('en-US');
 [
-  ['NCS 검출쪽 1,847', num(summary.ncs.pages) + '쪽'],
+  ['NCS 검출쪽 ' + num(reseg.pages) + ' (재세그먼트)', num(reseg.pages) + '쪽'],
   ['NCS 검출건수 7,769', num(summary.ncs.rows) + '건'],
   ['교과서 검출쪽 362', num(summary.textbook.pages) + '쪽'],
   ['교과서 검출건수 981', num(summary.textbook.rows) + '건'],
-  ['NCS 등급3 108쪽', '108쪽'],
+  ['NCS 등급3 ' + reseg.page_g['3'] + '쪽 (재세그먼트)', reseg.page_g['3'] + '쪽'],
 ].forEach(([label, needle]) => {
   check('D9 osha.html 이 ' + label + ' 인용', osha.includes(needle), needle);
 });
 check('D9 osha.html 에 구(舊) 사고사례 "7건" 잔존 없음', !/사고사례[^<]{0,12}7건/.test(osha));
 check('D9 osha.html 에 구(舊) 교과서 "982건" 잔존 없음', !osha.includes('982건'));
-check('D9a index.html 이 등급3 108쪽 인용', idxHtml.includes('108'));
+check('D9a index.html 시사점이 등급3 쪽수·비율을 인용', idxHtml.includes('구체적 안전대책이 제시된 페이지는 <strong>' + reseg.page_g['3'] + '쪽(' + (reseg.page_g['3'] / reseg.pages * 100).toFixed(1) + '%)'));
 
 // =====================================================================
 // D11 — 가로 스크롤 영역의 구조 회귀
@@ -467,6 +470,126 @@ PAGES.forEach(([name, html]) => {
   check(`D12c ${name} — 진입 애니메이션 클래스가 마크업에 남아 있지 않음`,
     staged.length === 0, staged.join(' | '));
 });
+
+// =====================================================================
+// D13 — 재세그먼트 정본(reseg_summary.json) ↔ 대시보드·비교표·CSV (2026-09-06 수치 교체)
+// =====================================================================
+console.log('\n[재세그먼트] reseg_summary.json ↔ docs/index.html · textbook.html · ncs_pages_reseg.csv');
+const idx2 = idxHtml;                                            // D9 가 이미 읽은 index.html
+const tb2 = fs.readFileSync(path.join(ROOT, 'docs/textbook.html'), 'utf8');
+const pct = (a, b) => (a / b * 100).toFixed(1);
+check('D13a reseg 자체 정합 — 등급 합 == 쪽 수, meta.expected 있음(가드 통과 실행), 교재 86',
+  reseg.page_g['1'] + reseg.page_g['2'] + reseg.page_g['3'] === reseg.pages && reseg.meta.expected && reseg.meta.expected.pages === reseg.pages && reseg.books === summary.ncs.books,
+  JSON.stringify([reseg.pages, reseg.page_g, !!reseg.meta.expected]));
+check('D13b index.html 히어로 검출 페이지 == reseg.pages', (idx2.match(/id="hero-total">([\d,]+)</) || [])[1] === fmt(reseg.pages), (idx2.match(/id="hero-total">([\d,]+)</) || [])[1]);
+['1', '2', '3'].forEach(g => {
+  const m = idx2.match(new RegExp('<div class="kpi-v" style="color:var\\(--g' + g + '\\)">([\\d,]+)</div>[^]*?<div class="ts" style="margin-top:8px">([\\d.]+)% of ([\\d,]+)쪽'));
+  check('D13c KPI 등급' + g + ' 카드 == reseg.page_g[' + g + '] / 비율 / 분모',
+    !!m && m[1] === fmt(reseg.page_g[g]) && m[2] === pct(reseg.page_g[g], reseg.pages) && m[3] === fmt(reseg.pages), m && m.slice(1, 4).join('/'));
+});
+check('D13d KPI 사고사례 카드 == reseg.cases_pages', (idx2.match(/<div class="kpi-v" style="color:var\(--danger\)">(\d+)<\/div><div class="kpi-l">사고사례 판정 페이지/) || [])[1] === String(reseg.cases_pages));
+const caseTbl = idx2.slice(idx2.indexOf('class="tbl case-detail"'), idx2.indexOf('</tbody>', idx2.indexOf('class="tbl case-detail"')));
+check('D13e 사고사례 원문 검증 표 행수 == reseg.cases_pages(13)', (caseTbl.match(/<tr><td>\d+<\/td>/g) || []).length === reseg.cases_pages, (caseTbl.match(/<tr><td>\d+<\/td>/g) || []).length);
+const casePages = new Set(reseg.case_pages.map(c => c.book.replace(/^LM\d+_[^_]+_/, '').replace(/_/g, ' ') + ':' + c.page));
+const tblPages = [...caseTbl.matchAll(/<tr><td>\d+<\/td><td>([^<]+)<\/td><td>[^<]*<\/td><td>(\d+)<\/td>/g)].map(m => m[1] + ':' + m[2]);
+check('D13e2 사고사례 표의 (교재, 쪽) == reseg.case_pages', tblPages.length === casePages.size && tblPages.every(x => casePages.has(x)), tblPages.filter(x => !casePages.has(x)).join(','));
+Object.entries(reseg.areas).forEach(([name, a]) => {
+  const card = (idx2.match(new RegExp('<div class="card"><div class="ah"><h3>' + name + '</h3>[^\\n]*')) || [''])[0];
+  const pages = (card.match(/검출 ([\d,]+)쪽/) || [])[1];
+  const cn = [...card.matchAll(/<span class="cn">(\d+)<\/span>/g)].map(m => +m[1]);
+  const ap = (card.match(/<div class="ap"[^>]*>([\d.]+)%/) || [])[1];
+  check('D13f 영역 카드 ' + name + ' == reseg.areas (쪽·등급1/2/3·안전관련 비율)',
+    pages === fmt(a.pages) && JSON.stringify(cn) === JSON.stringify([a.page_g['1'], a.page_g['2'], a.page_g['3']]) && ap === pct(a.page_g['2'] + a.page_g['3'], a.pages),
+    [pages, cn.join('/'), ap].join(' | '));
+});
+check('D13g 도넛 툴팁 분모 == reseg.pages', idx2.includes('(x.raw/' + reseg.pages + '*100)'));
+const g3zero = Object.values(reseg.per_book).filter(b => b.page_g['3'] === 0).length;
+[['키워드 검출 페이지', fmt(reseg.pages) + '쪽 (실제 쪽 기준)'],
+ ['등급1 (미흡·없음)', fmt(reseg.page_g['1']) + '쪽 (' + pct(reseg.page_g['1'], reseg.pages) + '%)'],
+ ['등급2 (형식적 언급)', fmt(reseg.page_g['2']) + '쪽 (' + pct(reseg.page_g['2'], reseg.pages) + '%)'],
+ ['등급3 (구체적 대책)', fmt(reseg.page_g['3']) + '쪽 (' + pct(reseg.page_g['3'], reseg.pages) + '%)'],
+ ['등급3이 0쪽인 교재', g3zero + '/86권 (' + Math.round(g3zero / 86 * 100) + '%)'],
+].forEach(([row, cell]) => check('D13h textbook.html 비교표 NCS 열 "' + row + '" == reseg', tb2.includes('<td><strong>' + row + '</strong></td><td>' + cell + '</td>'), cell));
+const rsCsv = readCsv('docs/03-analysis/data/ncs_pages_reseg.csv');
+const rg = gradeCol(rsCsv, 3);
+check('D13i ncs_pages_reseg.csv 행수·등급 분포·사고사례 == reseg (12열, 구라벨 마지막)',
+  rsCsv.length - 1 === reseg.pages && +rg['1'] === reseg.page_g['1'] && +rg['2'] === reseg.page_g['2'] && +rg['3'] === reseg.page_g['3']
+  && rsCsv.slice(1).filter(r => r[5] === '예').length === reseg.cases_pages && rsCsv[0].length === 12 && rsCsv[0][11] === '구라벨',
+  JSON.stringify([rsCsv.length - 1, rg, rsCsv[0].length]));
+const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
+check('D13j README 핵심 수치 == reseg (등급3 비율·분모, 화살표 문구 2곳)', readme.includes('NCS ' + pct(reseg.page_g['3'], reseg.pages) + '%, 교과서 2.2%') && readme.includes(reseg.page_g['3'] + '/' + fmt(reseg.pages)) && readme.includes('1,847→' + fmt(reseg.pages) + '쪽') && readme.includes('108쪽(5.8%)→' + reseg.page_g['3'] + '쪽(' + pct(reseg.page_g['3'], reseg.pages) + '%)'));
+
+// D13k — 시사점·권고안의 파생 수치 (교재 단위): reseg.per_book + CSV 영역 → 등급3 0쪽 교재·안전 0쪽 교재·등급3 보유 교재·최다 교재
+const areaOfBook = {}; rsCsv.slice(1).forEach(r => { areaOfBook[r[1]] = r[0]; });
+const pbs = Object.entries(reseg.per_book);
+const g3zeroBy = {}, g3haveBy = {}, safeZeroBy = {};
+pbs.forEach(([b, v]) => { const a = areaOfBook[b]; if (v.page_g['3'] === 0) g3zeroBy[a] = (g3zeroBy[a] || 0) + 1; else g3haveBy[a] = (g3haveBy[a] || 0) + 1; if (v.page_g['2'] + v.page_g['3'] === 0) safeZeroBy[a] = (safeZeroBy[a] || 0) + 1; });
+const topBook = pbs.reduce((m, [b, v]) => v.page_g['3'] > m[1] ? [b, v.page_g['3']] : m, ['', 0]);
+check('D13k1 시사점 1 — 등급3 0쪽 교재 수·비율, 최다 교재 쪽수·비중 == reseg',
+  idx2.includes('86권 중 ' + g3zero + '권(' + Math.round(g3zero / 86 * 100) + '%)이 등급3 페이지를 단 한 쪽도') && idx2.includes(fmt(reseg.page_g['3']) + '쪽 중 ' + topBook[1] + '쪽(' + Math.round(topBook[1] / reseg.page_g['3'] * 100) + '%)이 『반도체 장비 안전관리』') && /반도체_장비_안전관리$/.test(topBook[0]),
+  [g3zero, topBook].join(' | '));
+check('D13k2 시사점 3 — 개발 영역 안전 관련 쪽·비율, 등급3 쪽·비율, 등급3 0쪽 교재, 안전 0쪽 교재 == reseg',
+  (() => { const a = reseg.areas['반도체개발']; return idx2.includes('30권의 검출 ' + a.pages + '쪽 중 안전 관련(등급2+3)은 <strong>' + (a.page_g['2'] + a.page_g['3']) + '쪽(' + pct(a.page_g['2'] + a.page_g['3'], a.pages) + '%)</strong>') && idx2.includes('<strong>' + a.page_g['3'] + '쪽(' + pct(a.page_g['3'], a.pages) + '%)</strong>뿐이다') && idx2.includes('30권 중 ' + g3zeroBy['반도체개발'] + '권이 등급3 0쪽</strong>, 그중 ' + safeZeroBy['반도체개발'] + '권은 안전 관련 페이지 자체가 0쪽'); })(),
+  JSON.stringify([g3zeroBy, safeZeroBy]));
+check('D13k3 권고안 즉시 1·3, 구조 3 — 영역별 등급3 0쪽 교재, 안전 0쪽 교재, 등급3 보유 교재 == reseg',
+  idx2.includes('반도체개발 ' + g3zeroBy['반도체개발'] + '권, 반도체장비 ' + g3zeroBy['반도체장비'] + '권, 반도체재료 ' + g3zeroBy['반도체재료'] + '권, 반도체제조 ' + g3zeroBy['반도체제조'] + '권이 해당한다')
+  && idx2.includes('안전 관련 페이지가 0쪽인 ' + safeZeroBy['반도체개발'] + '권을 포함해')
+  && idx2.includes('개발 ' + g3haveBy['반도체개발'] + '권, 제조 ' + g3haveBy['반도체제조'] + '권, 장비 ' + g3haveBy['반도체장비'] + '권, 재료 ' + g3haveBy['반도체재료'] + '권뿐'),
+  JSON.stringify([g3zeroBy, safeZeroBy, g3haveBy]));
+check('D13k4 시사점 2·4, 권고안 구조 1 — 등급1+2 비율, 오탐 10/13 == reseg',
+  idx2.includes('합하면 <strong>' + pct(reseg.page_g['1'] + reseg.page_g['2'], reseg.pages) + '%</strong>') && idx2.includes('자동 판정의 ' + (reseg.cases_pages - 3) + '/' + reseg.cases_pages + '이 오탐') && idx2.includes('오탐률(' + reseg.cases_pages + '쪽 중 ' + (reseg.cases_pages - 3) + '쪽)'),
+  pct(reseg.page_g['1'] + reseg.page_g['2'], reseg.pages));
+
+// D13l~p — /ship 커버리지 감사 (2026-09-06, resegment-publish): 합계만 보던 곳의 개별 값, 카드 안쪽 비율·막대, 정본 JSON 자기 정합, 산문 파생 수치, 구 수치 잔존
+const c3Areas = c3.data.labels.map(l => '반도체' + l);
+check('D13l c3 영역×등급 개별 값 == reseg.areas (D4e~h 는 행·열 합만 본다 — 두 영역의 값을 맞바꿔도 합은 같다); 도넛 범례 라벨의 쪽수 == reseg.page_g',
+  c3Areas.every((name, i) => ['1', '2', '3'].every((g, k) => c3d[k][i] === reseg.areas[name].page_g[g]))
+  && ['1', '2', '3'].every((g, k) => nDough.data.labels[k].includes('(' + fmt(reseg.page_g[g]) + '쪽)')),
+  JSON.stringify([c3Areas, c3d, nDough.data.labels]));
+const caseByArea = {}; reseg.case_pages.forEach(c => { const a = areaOfBook[c.book]; caseByArea[a] = (caseByArea[a] || 0) + 1; });
+check('D13m 영역 카드의 등급별 비율(ct)·막대 폭(bf) == 등급/영역쪽, "사고사례 N쪽" == reseg.case_pages 의 영역별 수(없는 영역은 문구 없음); KPI 막대 폭 == 비율, 사고사례 KPI 의 "N권" == reseg.cases_books',
+  Object.entries(reseg.areas).every(([name, a]) => {
+    const card = (idx2.match(new RegExp('<div class="card"><div class="ah"><h3>' + name + '</h3>[^\\n]*')) || [''])[0];
+    const ct = [...card.matchAll(/<span class="ct">([\d.]+)%<\/span>/g)].map(m => m[1]);
+    const bf = [...card.matchAll(/class="bf" style="width:([\d.]+)%/g)].map(m => m[1]);
+    const want = ['1', '2', '3'].map(g => pct(a.page_g[g], a.pages));
+    const cs = (card.match(/사고사례 (\d+)쪽/) || [])[1];
+    return JSON.stringify(ct) === JSON.stringify(want) && JSON.stringify(bf) === JSON.stringify(want) && (caseByArea[name] || 0) === (cs ? +cs : 0);
+  })
+  && ['1', '2', '3'].every(g => idx2.includes('<div class="kpi-bar"><i style="width:' + pct(reseg.page_g[g], reseg.pages) + '%;background:var(--g' + g + ')'))
+  && idx2.includes('<div class="kpi-bar"><i style="width:' + pct(reseg.cases_pages, reseg.pages) + '%;background:var(--danger)')
+  && idx2.includes(pct(reseg.cases_pages, reseg.pages) + '% · ' + reseg.cases_books + '권 · 원문 대조'),
+  JSON.stringify(caseByArea));
+const sumG = (objs, g) => objs.reduce((s, o) => s + o.page_g[g], 0);
+const eqObj = (a, b) => JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort());
+check('D13n reseg_summary.json 자기 정합 — hybrid_lines == Σ per_book.hybrid_lines(구 레이아웃은 match_stats 안) == meta.expected.hybrid_lines (>0); 영역·교재별 쪽·등급·권수 합 == 총계; case_pages ↔ cases_pages/books; 미해결 쪽 == 미해결 교재 new_pages 합; kw_pages ≤ pages; method_books == per_book 집계',
+  reseg.hybrid_lines === pbs.reduce((s, [, v]) => s + ((v.hybrid_lines !== undefined ? v.hybrid_lines : (v.match_stats || {}).hybrid_lines) || 0), 0) && reseg.meta.expected.hybrid_lines === reseg.hybrid_lines && reseg.hybrid_lines > 0
+  && Object.values(reseg.areas).reduce((s, a) => s + a.pages, 0) === reseg.pages && Object.values(reseg.areas).reduce((s, a) => s + a.books, 0) === reseg.books
+  && ['1', '2', '3'].every(g => sumG(Object.values(reseg.areas), g) === reseg.page_g[g] && sumG(pbs.map(([, v]) => v), g) === reseg.page_g[g])
+  && reseg.case_pages.length === reseg.cases_pages && new Set(reseg.case_pages.map(c => c.book)).size === reseg.cases_books
+  && pbs.filter(([, v]) => v.status === 'unresolved').reduce((s, [, v]) => s + v.new_pages, 0) === reseg.unresolved.pages
+  && Math.max(...Object.values(reseg.kw_pages)) <= reseg.pages
+  && eqObj(reseg.method_books, pbs.reduce((m, [, v]) => (m[v.method || v.status] = (m[v.method || v.status] || 0) + 1, m), {})),
+  JSON.stringify([reseg.hybrid_lines, reseg.method_books, reseg.unresolved]));
+check('D13o index.html 산문의 파생 수치 — 히어로 "키워드가 검출된 페이지 N쪽" == reseg.pages, 분모 기준 문단의 "검출 항목(N건)" == summary.ncs.rows, 라벨 기준 구 발표 괄호의 쪽수·등급3 == summary.ncs(라벨 계보), 미해결 "N권 N쪽(N건)" == reseg.unresolved',
+  idx2.includes('키워드가 검출된 페이지 ' + fmt(reseg.pages) + '쪽') && idx2.includes('검출 항목(' + fmt(summary.ncs.rows) + '건)')
+  && idx2.includes('(' + fmt(summary.ncs.pages) + '쪽·등급3 ' + summary.ncs.page_g['3'] + '쪽)')
+  && idx2.includes('마크다운이 없는 ' + reseg.unresolved.books + '권 ' + reseg.unresolved.pages + '쪽(' + reseg.unresolved.rows + '건)은 구 라벨·구 등급 그대로'),
+  [fmt(reseg.pages), fmt(summary.ncs.rows), fmt(summary.ncs.pages), summary.ncs.page_g['3'], JSON.stringify(reseg.unresolved)].join('/'));
+const retired = (html, needle) => [...html.matchAll(new RegExp(needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'))].every(m => /라벨 기준|더 이상|이전 발표/.test(html.slice(Math.max(0, m.index - 160), m.index + 160)));
+check('D13p 라벨 기준 구 수치(1,847쪽·등급3 108쪽)는 index.html 에서 "더 이상 쓰지 않는다" 문장 안에만 남고 textbook/osha.html 에는 없다(2,173 도); textbook 비교표 "검출 항목" == summary.ncs.rows',
+  (idx2.match(/1,847/g) || []).length >= 1 && retired(idx2, '1,847') && retired(idx2, '108쪽')
+  && !/1,847|2,173|108쪽/.test(tb2) && !/1,847|2,173|108쪽/.test(osha)
+  && tb2.includes('<td><strong>검출 항목 (키워드×쪽)</strong></td><td>' + fmt(summary.ncs.rows) + '건</td>'),
+  JSON.stringify([(idx2.match(/1,847/g) || []).length, (tb2.match(/1,847|2,173|108쪽/g) || []), (osha.match(/1,847|2,173|108쪽/g) || [])]));
+
+// D14 — README·CLAUDE.md 가 적은 이 하니스의 단언 수 == 실제 (수치를 손으로 옮기는 곳이라 썩기 쉽다)
+{
+  const total = pass + fail + 1;                                   // 이 단언 자신을 포함
+  const md = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8') + fs.readFileSync(path.join(ROOT, 'CLAUDE.md'), 'utf8');
+  const cited = [...md.matchAll(/test-dashboard-data\.js\s+# (\d+)/g)].map(m => +m[1]);
+  check('D14 README·CLAUDE.md 의 test-dashboard-data.js 단언 수 == ' + total, cited.length === 2 && cited.every(n => n === total), cited.join('/'));
+}
 
 console.log(`\n결과: ${pass}/${pass + fail} PASS${fail ? `, ${fail} FAIL` : ''}${warned ? `, ${warned} KNOWN ISSUE` : ''}`);
 process.exit(fail ? 1 : 0);
