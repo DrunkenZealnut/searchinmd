@@ -41,7 +41,7 @@ python3 outputs/server.py 9000     # 포트 지정
 
 ## 산출물 재생성 (원본 보유 시)
 
-대시보드 수치는 손으로 넣지 않았습니다. 원본 엑셀에서 스크립트로 뽑습니다.
+대시보드 수치는 손으로 넣지 않았습니다. 원본 엑셀에서 스크립트로 뽑고, NCS 쪽 단위 수치는 원본 PDF 까지 써서 `resegment.py` 로 냅니다(아래).
 
 **원본이 있어야 실행됩니다.** 없으면 커밋된 `docs/03-analysis/data/` 가 곧 산출물입니다 — 스크립트는 원본을 못 찾으면 안내 메시지를 내고 종료합니다.
 
@@ -101,7 +101,7 @@ node    outputs/test-sri.js                  # 38 — 외부 스크립트 SRI (-
 
 Node 기반 하니스 세 개는 HTML 안의 실제 `<script>` 블록을 `vm` + DOM mock으로 불러옵니다. 복사해 붙인 사본을 테스트하지 않습니다. `test-core-logic.html` 은 브라우저에서 열어 탭 제목으로 봐도 됩니다 — `run-core-logic-tests.js` 는 같은 HTML 을 헤드리스로 돌릴 뿐입니다. `test-recount-grades.py`는 `openpyxl`을 스텁으로 주입해 pip 패키지 없이도, 원본 엑셀 없이도 돕니다.
 
-대시보드의 하드코딩 데이터 배열은 **자기 자신이 아니라 `summary.json`에 대조**합니다.
+대시보드의 하드코딩 데이터 배열은 **자기 자신이 아니라 산출물에 대조**합니다 — NCS 쪽 단위 수치는 `reseg_summary.json`, 행 단위 수치와 교과서는 `summary.json`. 위 블록의 단언 수 가운데 152·372 는 하니스가 README·`CLAUDE.md` 의 인용값과 직접 대조하므로(D14·R17), 손으로 고치지 말고 하니스가 찍는 수를 두 파일에 옮기세요.
 
 ## 저장소 구성
 
@@ -110,13 +110,14 @@ outputs/markdown-search-app.html   검색 앱 (HTML+CSS+JS 단일 파일, ~2,040
 outputs/server.py                  개발 서버 (표준 라이브러리만, LM Studio 프록시 포함)
 recount_grades.py                  원본 엑셀 → 등급 재집계 → CSV/JSON
 regrade.py                         페이지 본문에서 등급 재채점 (검증용, 미발표)
-resegment.py                       워크북 페이지 라벨을 원본 PDF 실제 쪽으로 재배치해 등급 재집계 (검증용, 미발표)
+resegment.py                       워크북 페이지 라벨을 원본 PDF 실제 쪽으로 재배치해 등급 재집계 (NCS 쪽 단위 발표 정본, 2026-09-06 부터)
 make_coding_sheet.py, code_pages.py, score_coding.py  코딩 표본 생성 · AI 코더 항목별 호출 · 교차 판정 채점
 truncation_audit.py                엑셀 셀 한도 절단 전수 실측 (pip 불필요)
 *_downloader.py                    OSHA·KOSHA·NIOSH·EU-OSHA·SafeWork AU 발간물 수집기
 page_utils.py 외                   PDF→마크다운→Excel 페이지 매핑 유틸
 docs/                              대시보드 3종 + 분석 문서 (GitHub Pages)
 docs/03-analysis/data/             재집계 산출물 (CSV, summary.json) + 재채점·재코딩·재세그먼트 수치 (regrade_impact.json, recoding_scores*.json, ncs_pages_reseg.csv, reseg_summary.json)
+docs/03-analysis/data/README.md    산출물 계보 — 어느 파일이 발표 정본이고 어느 것이 계보 확인용인지
 ```
 
 다운로더는 저장 위치를 환경변수로 받습니다:

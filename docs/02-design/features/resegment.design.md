@@ -63,7 +63,7 @@ PDF (86권, 마크다운과 짝이 되는 84권만 연다) ──PyMuPDF get_tex
 | `data/markdown/ncs_paged/<코드>.pages.json` | `{md, pdf, line_pages}` — 줄→쪽 대응(재현·검증용) | gitignore(data/) |
 | `data/markdown/ncs_paged/rows_map.csv` | 교재, 시트, 구라벨, 새쪽, 구등급, 사고사례 — 행 단위 구→신 대응표(계획 FR-05) | gitignore |
 
-`EXPECTED`(모듈 상수, Act-3): `pages 2189, page_g {1: 1519, 2: 525, 3: 145}, books 86, unresolved_pages 51, digest adb736e25db0c400, cases_pages 13, cases_books 5, moved_rows 4270, unmatched_rows 94, label_fallback_pages 24, hybrid_lines 1575, hybrid_emptied_marker_pages 0, kw_pages_digest·case_pages_digest, alignment_overall(nogap_* 포함) {21711/18142/20613, all 32486/25219/29329}, match_stats {293/1118/118}`. 대응표(`<코드>.pages.json`·`rows_map.csv`)는 이 검사를 지난 뒤(또는 `--force`)에만 쓴다 — 거부된 실행이 추적본과 어긋난 대응표를 남기지 않게. 입력이 정당하게 바뀌면 `--force` 로 쓰고 `EXPECTED` 를 갱신한다. `--force` 로 어긋난 채 쓰면 `meta.expected` 는 null 이고 `meta.expected_mismatch` 에 불일치 목록이 남는다; `meta.limit` 은 부분 실행 표시.
+`EXPECTED`(모듈 상수, Act-3): `pages 2189, page_g {1: 1519, 2: 525, 3: 145}, books 86, unresolved_pages 51, digest 20855b3bc05d906b, cases_pages 13, cases_books 5, moved_rows 4270, unmatched_rows 94, label_fallback_pages 24, hybrid_lines 1575, hybrid_emptied_marker_pages 0, kw_pages_digest·case_pages_digest, alignment_overall(nogap_* 포함) {21711/18142/20613, all 32486/25219/29329}, match_stats {293/1118/118}`. 대응표(`<코드>.pages.json`·`rows_map.csv`)는 이 검사를 지난 뒤(또는 `--force`)에만 쓴다 — 거부된 실행이 추적본과 어긋난 대응표를 남기지 않게. 입력이 정당하게 바뀌면 `--force` 로 쓰고 `EXPECTED` 를 갱신한다. `--force` 로 어긋난 채 쓰면 `meta.expected` 는 null 이고 `meta.expected_mismatch` 에 불일치 목록이 남는다; `meta.limit` 은 부분 실행 표시.
 
 ## 4. 테스트 (`outputs/test-recount-grades.py` R16, 픽스처만 — PDF·워크북 없음)
 
