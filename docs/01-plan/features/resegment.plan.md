@@ -78,7 +78,7 @@
 | FR-04 | 실제 쪽 본문(정렬로 그 쪽에 속한 줄)에 `regrade.grade_page(text)` 기준선을 적용해 등급·사유를 만든다. 셀 한도 절단은 발생하지 않는다(엑셀을 거치지 않음) | High | Done (`regrade_page`, R16e) |
 | FR-05 | 페이지 단위 집계(교재·영역·등급·사고사례)를 구 산출물(`summary.json`)과 같은 스키마로 쓰고, 구→신 대응(라벨→실제 쪽 목록, 이동 행 수)을 남긴다 | High | Done (`aggregate`, `rows_map.csv`, CSV `구라벨`, R16f·j) |
 | FR-06 | 마크다운 또는 PDF 가 없는 책은 구 라벨·구 등급을 그대로 쓰고 `unresolved` 로 센다. 총계에 그 수를 병기한다 | Medium | Done (`unresolved_pages`, R16l·n) |
-| FR-07 | 사고사례 판정 8쪽의 실제 쪽을 별도 표로 낸다(감사 C1(c)·3절 갱신용) | Medium | Done (`case_pages`, 결과 문서 §3.4 — 실제 쪽 기준 13쪽) |
+| FR-07 | 사고사례 판정이 붙은 구 라벨 8개의 실제 쪽을 별도 표로 낸다(감사 C1(c)·3절 갱신용) — 라벨 하나가 여러 쪽을 묶고 있어 실제 쪽은 8개보다 많다 | Medium | Done (`case_pages`, 결과 문서 §3.4 — 구 라벨 8개 → 실제 13쪽/5권) |
 | FR-08 | 실행 재현: `python3.13 resegment.py --pdf-root <dir> --md-root data/markdown/ncs --workbook data/…xlsx --out docs/03-analysis/data/`; 기본 경로는 환경변수 `NCS_PDF_ROOT`. 입력이 바뀌면 `--force` 로 쓰고 `EXPECTED` 갱신 | Medium | Done (약 30초, R16h·n) |
 
 ### 3.2 Non-Functional Requirements

@@ -11,9 +11,9 @@
 ## 1. 데이터 흐름
 
 ```
-PDF (84권)  ──PyMuPDF get_text──▶ 쪽별 텍스트 ─┐
+PDF (86권, 마크다운과 짝이 되는 84권만 연다) ──PyMuPDF get_text──▶ 쪽별 텍스트 ─┐
                                               ├─▶ align_lines(): 줄→쪽 (단조 DP) ─┐
-마크다운 (84권) ──split('\n')──▶ 줄 목록 ─────┘                                 │  마커가 PDF 쪽수의 80% 이상(23권)이면
+마크다운 (84권; 없는 2권은 unresolved) ──split('\n')──▶ 줄 목록 ─────┘                                 │  마커가 PDF 쪽수의 80% 이상(23권)이면
                        │                                                         │  marker_pages() 가 줄→쪽을 대신하고
                        └── 마커 밀도 판정 (DENSE_MARKER_RATIO=0.8) ───────────────┤  정렬 결과는 check_alignment() 검증에만 쓴다
                                                                                  ▼
