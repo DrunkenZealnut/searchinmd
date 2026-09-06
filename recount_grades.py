@@ -47,7 +47,7 @@ except ImportError:
     sys.exit('openpyxl이 필요합니다:  pip install openpyxl')
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from page_utils import is_cell_truncated  # noqa: E402
+from page_utils import is_cell_truncated, GRADE_LABEL  # noqa: E402
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(_HERE, 'data')
@@ -60,7 +60,6 @@ TXT_FILE = 'ncs_keywords_in_markdown_results_교과서_results_20260415.xlsx'
 NCS_MAP = {1: 1, 2: 2, 3: 3}
 TXT_MAP = {1: 2, 2: 3, 3: 1}
 
-GRADE_LABEL = {1: '미흡·없음', 2: '형식적 언급', 3: '구체적 대책'}
 
 TXT_TOTAL_PAGES = 2055           # 교과서 9권 원본 총 쪽수
 

@@ -1,5 +1,7 @@
 # 안전보건 등급 재집계 분석 (원본 데이터 기준)
 
+> ⚠️ **주의 (2026-09-06)**: 이 문서의 NCS 페이지 수(1,847쪽, 등급3 108쪽)는 워크북의 '페이지' 라벨 기준이다. 그 라벨은 여러 쪽을 묶은 블록인 경우가 많아, 원본 PDF 실제 쪽으로 재배치하면 2,173쪽·등급3 147쪽(6.8%)이 된다 — `docs/03-analysis/resegment-results.analysis.md`. 대시보드 교체 여부는 미결.
+
 > 작성일: 2026-09-03
 > 재현: `python3 recount_grades.py` (repo root, 요구 패키지: `openpyxl`)
 > 산출물: `docs/03-analysis/data/{ncs_pages.csv, txt_pages.csv, summary.json}`

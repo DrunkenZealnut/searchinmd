@@ -25,6 +25,7 @@ import sys
 import tempfile
 import types
 import contextlib
+import unicodedata
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -2407,6 +2408,527 @@ with tempfile.TemporaryDirectory() as _td:
         SC.HERE, SC.load = _o_here5, _o_load5
 check('R15z17 두 코더의 prompt_sha256 이 다르면 채점을 거부한다 (다른 지시문의 라벨은 비교 대상이 아니다)',
       isinstance(_ph_code, str) and '지시문' in _ph_code, (_ph_code, _ph_out[-100:]))
+
+
+# ============================================================================
+# R16 — 재세그먼트 (resegment.py): PDF 쪽 텍스트 ↔ 마크다운 줄 정렬, 행→쪽 재배치, 재집계 (픽스처만)
+# ============================================================================
+print('\n[R16] 재세그먼트 — 정렬 DP·전파·행 매칭·집계')
+RS = _call(lambda: __import__('resegment'))
+_ok_rs = not isinstance(RS, Exception)
+check('R16a norm_text 는 공백·마크다운 기호를 지우고 NFC 로 통일한다',
+      _ok_rs and RS.norm_text('## **안전** · 유의 사항!') == '안전유의사항'
+      and RS.norm_text(unicodedata.normalize('NFD', '안전')) == '안전', RS if not _ok_rs else RS.norm_text('## **안전** · 유의 사항!'))
+_pg = ['첫째 쪽 본문 문장이 여기 있습니다. 안전 교육을 정기적으로 실시한다. 보호구를 반드시 착용해야 한다.',
+       '둘째 쪽 본문 문장이 여기 있습니다. 위험 요인을 사전에 확인한다. 안전 점검 절차를 따른다.',
+       '셋째 쪽 본문 문장이 여기 있습니다. 사고 발생 시 즉시 보고한다. 안전 교육을 정기적으로 실시한다.']
+_ln = ['# 제목', '첫째 쪽 본문 문장이 여기 있습니다.', '안전 교육을 정기적으로 실시한다.', '보호구를 반드시 착용해야 한다.',
+       '| 표 | 셀 |', '둘째 쪽 본문 문장이 여기 있습니다.', '위험 요인을 사전에 확인한다.', '안전 점검 절차를 따른다.',
+       '셋째 쪽 본문 문장이 여기 있습니다.', '사고 발생 시 즉시 보고한다.', '안전 교육을 정기적으로 실시한다.']
+_as = _call(lambda: RS.align_lines(_ln, _pg)) if _ok_rs else None
+check('R16b align_lines 는 줄을 제 쪽에 놓고 단조를 지킨다 (양쪽에 있는 문장은 앞 쪽 우선, 뒤에서는 뒤 쪽)',
+      isinstance(_as, dict) and _as.get(1) == 1 and _as.get(2) == 1 and _as.get(3) == 1 and _as.get(5) == 2
+      and _as.get(6) == 2 and _as.get(8) == 3 and _as.get(10) == 3 and 0 not in _as and 4 not in _as
+      and all(_as[a] <= _as[b] for a, b in zip(sorted(_as), sorted(_as)[1:])), _as)
+_pr = _call(lambda: RS.propagate(len(_ln), _as)) if isinstance(_as, dict) else None
+check('R16c 미정렬 줄(표·짧은 줄)은 직전 정렬 줄의 쪽을, 문서 첫머리는 다음 정렬 줄의 쪽을 물려받는다',
+      isinstance(_pr, list) and _pr[0] == 1 and _pr[4] == 1 and _pr[7] == 2 and _pr[9] == 3 and _pr[10] == 3
+      and RS.propagate(3, {}) == [None, None, None], _pr)
+_rows = [{'sheet': '안전', 'contents': '[제목]\n안전 교육을 정기적으로 실시한다.'},
+         {'sheet': '안전', 'contents': '[제목]\n안전 교육을 정기적으로 실시한다.'},
+         {'sheet': '보호구', 'contents': '안전 교육을 정기적으로 실시한다.'},
+         {'sheet': '안전', 'contents': '없는 문장이라서 어디에도 없습니다.'},
+         {'sheet': '안전', 'contents': '[제목]\n안전 교육을 정기적으로 실시한다.'}]
+_mr = _call(lambda: RS.match_rows(_rows, _ln)) if _ok_rs else None
+check('R16d match_rows — 같은 시트의 같은 문장은 문서 순서로 다른 줄에, 다른 시트의 같은 문장은 같은 줄에, 없는 문장은 None, 적중이 모자라면 마지막 적중',
+      _mr == [2, 10, 2, None, 10], _mr)
+_pt = _call(lambda: RS.page_texts(_ln, _pr)) if isinstance(_pr, list) else None
+_blk = '\n'.join(_ln)
+_gb = _call(lambda: RS.regrade_page(_blk)) if _ok_rs else None
+_gp = _call(lambda: [RS.regrade_page(_pt[p])[0] for p in sorted(_pt)]) if isinstance(_pt, dict) else None
+check('R16e page_texts 가 쪽별 본문을 만들고 regrade_page 는 기준선 규칙(grade_page 와 동일)을 적용한다',
+      isinstance(_pt, dict) and sorted(_pt) == [1, 2, 3] and '첫째 쪽' in _pt[1] and '# 제목' in _pt[1] and '셋째 쪽' in _pt[3]
+      and isinstance(_gb, tuple) and _gb == G.grade_page(_blk, word_boundary=False, normalize=False)
+      and isinstance(_gp, list) and all(g <= _gb[0] for g in _gp), (_gb, _gp, sorted(_pt) if isinstance(_pt, dict) else _pt))
+_books = {'A책': {'area': '반도체재료', 'status': 'resolved', 'rows': 3, 'moved_rows': 2, 'unmatched_rows': 0,
+                 'old_labels': {'10'}, 'align': {'lines': 10, 'exact': 9, 'near': 10},
+                 'pages': {5: {'grade': 3, 'reason': 'r', 'case': True, 'old_labels': {'10'}, 'kws': {'안전', '사망'}},
+                           6: {'grade': 1, 'reason': 'r', 'case': False, 'old_labels': {'10'}, 'kws': {'안전'}}}},
+          'B책': {'area': '반도체개발', 'status': 'unresolved', 'rows': 1, 'moved_rows': 0, 'unmatched_rows': 0,
+                 'old_labels': {'3'}, 'align': None,
+                 'pages': {3: {'grade': 2, 'reason': 'r', 'case': False, 'old_labels': {'3'}, 'kws': {'위험'}}}}}
+_sm = _call(lambda: RS.aggregate(_books)) if _ok_rs else None
+check('R16f aggregate — 고유 쪽·등급 분포·사고사례·영역·미해결·이동 행·정렬 검증을 summary.json 스키마로 낸다',
+      isinstance(_sm, dict) and _sm['pages'] == 3 and _sm['books'] == 2 and _sm['page_g'] == {'1': 1, '2': 1, '3': 1}
+      and sum(_sm['page_g'].values()) == _sm['pages'] and _sm['cases_pages'] == 1 and _sm['cases_books'] == 1
+      and _sm['areas']['반도체재료']['pages'] == 2 and _sm['areas']['반도체재료']['page_g']['3'] == 1
+      and _sm['unresolved'] == {'books': 1, 'pages': 1, 'rows': 1} and _sm['moved_rows'] == 2
+      and _sm['kw_pages'] == {'안전': 2, '사망': 1, '위험': 1}
+      and _sm['alignment_check']['overall']['exact'] == 9 and _sm['alignment_check']['overall']['lines'] == 10
+      and _sm['alignment_check']['books'] == 1, _sm)
+_tl = ['<!-- page: 1 -->', 'a', 'b', '<!-- page: 2 -->', 'c', 'd', '<!-- page: 3 -->', 'e']
+_ca = _call(lambda: RS.check_alignment(_tl, {1: 1, 2: 1, 4: 2, 5: 3, 7: 1})) if _ok_rs else None
+check('R16g check_alignment 는 마커 정답과 대조해 정확·±1 을 센다',
+      _ca == {'lines': 5, 'exact': 3, 'near': 4}, _ca)
+with tempfile.TemporaryDirectory() as _td:
+    _g1, _o1 = _run_main(RS.main, ['resegment.py', '--pdf-root', os.path.join(_td, 'nope'), '--workbook', os.path.join(_td, 'nope.xlsx')]) if _ok_rs else ('', '')
+    open(os.path.join(_td, 'w.xlsx'), 'w').close()
+    _g2, _o2 = _run_main(RS.main, ['resegment.py', '--pdf-root', os.path.join(_td, 'nope'), '--workbook', os.path.join(_td, 'w.xlsx')]) if _ok_rs else ('', '')
+check('R16h main 가드 — 워크북·PDF 루트가 없으면 트레이스백 없이 한 줄로 끝난다',
+      isinstance(_g1, str) and '워크북' in _g1 and isinstance(_g2, str) and 'PDF' in _g2, (_g1, _g2))
+
+
+# 쪽 단위 마커를 이미 가진 교재는 정렬 대신 마커를 쓴다 (정렬은 검증용으로만 돈다)
+_mlines = ['<!-- page: 2 -->', '첫째 쪽 본문 문장이 여기 있습니다.', '<!-- page: 3 -->', '둘째 쪽 본문 문장이 여기 있습니다.', '셋째 쪽 본문 문장이 여기 있습니다.']
+_mp = _call(lambda: RS.marker_pages(_mlines)) if _ok_rs else None
+_rows_m = [{'sheet': '안전', 'contents': '둘째 쪽 본문 문장이 여기 있습니다.', 'label': 9, 'case': False, 'grade': 1, 'reason': ''},
+           {'sheet': '안전', 'contents': '셋째 쪽 본문 문장이 여기 있습니다.', 'label': 9, 'case': True, 'grade': 1, 'reason': ''}]
+_rb = _call(lambda: RS.resegment_book(_rows_m, _mlines, _pg, prefer_markers=True)) if _ok_rs else None
+_rb2 = _call(lambda: RS.resegment_book(_rows_m, _mlines, _pg, prefer_markers=False)) if _ok_rs else None
+check('R16i marker_pages 는 마커로 줄→쪽을 만들고, prefer_markers 면 resegment_book 이 정렬 대신 마커 쪽을 쓴다 (정렬은 3쪽이라 하지만 마커는 3쪽 한 장)',
+      _mp == [2, 2, 3, 3, 3]
+      and isinstance(_rb, tuple) and sorted(_rb[0]) == [3] and _rb[0][3]['case'] is True and _rb[1] == 2
+      and isinstance(_rb2, tuple) and sorted(_rb2[0]) == [2, 3], (_mp, _rb[0] if isinstance(_rb, tuple) else _rb, _rb2[0] if isinstance(_rb2, tuple) else _rb2))
+
+
+# --- Act-1 (Gap 분석 G1·G2·G6): I/O 경계·회귀 가드·라벨 폴백 출처
+print('\n[R16] 재세그먼트 — Act-1: 산출물 쓰기·행 읽기·미해결·마크다운 선택·회귀 가드·main 완주')
+with tempfile.TemporaryDirectory() as _td:
+    _wo = _call(lambda: RS.write_outputs(_books, {'pages': 3}, os.path.join(_td, 'out')))
+    _csv_rows = list(csv.reader(open(os.path.join(_td, 'out', 'ncs_pages_reseg.csv'), encoding='utf-8-sig'))) if isinstance(_wo, tuple) else None
+    _js = json.load(open(os.path.join(_td, 'out', 'reseg_summary.json'), encoding='utf-8')) if isinstance(_wo, tuple) else None
+check('R16j write_outputs 는 CSV 12열(영역·교재·페이지·등급·등급명·사고사례·등급사유·상태·출처·md자수·pdf자수·구라벨)을 교재·쪽 순으로 쓰고 JSON 을 남긴다; 자수가 없는 레코드는 빈 칸',
+      isinstance(_csv_rows, list) and _csv_rows[0] == ['영역', '교재', '페이지', '등급', '등급명', '사고사례', '등급사유', '상태', '출처', 'md자수', 'pdf자수', '구라벨'] and _csv_rows[1][9:11] == ['', '']
+      and [r[1:3] for r in _csv_rows[1:]] == [['A책', '5'], ['A책', '6'], ['B책', '3']]
+      and _csv_rows[1][3:6] == ['3', '구체적 대책', '예'] and _csv_rows[1][7] == 'resolved' and _csv_rows[3][7] == 'unresolved'
+      and _csv_rows[1][8] == 'text' and _js == {'pages': 3}, _csv_rows)
+_hdr = ('number', '영역', 'filename', 'contents', 'page', '페이지전체내용', '사고사례여부', '등급', '등급사유')
+_wbk = FakeWB({'안전': [_hdr, (1, '반도체재료', 'filename', 'x', 'p', 't', 'a', 'g', 'r'),
+                        (2, '반도체재료', 'LM1903060001_책', '[제목]\n문장 하나', '12', '본문', '예', '3', '안전 7건'),
+                        (3, '반도체재료', 'LM1903060001_책', '문장 둘', 'p.9', '본문', '아니오', 'x', '')],
+               '사망': [(4, '반도체장비', 'LM1903060002_책', '문장 셋', 7.0, '본문', '아니오', 2, '사유')]})
+_lr = _call(lambda: RS.load_rows('dummy.xlsx', loader=lambda *a, **k: _wbk)) if _ok_rs else None
+check('R16k load_rows 는 열을 위치로 읽고 헤더·filename 잡행을 건너뛰며 라벨·등급을 정수로, 사고사례를 불리언으로 만든다 (실패하면 None)',
+      isinstance(_lr, list) and len(_lr) == 3
+      and _lr[0]['sheet'] == '안전' and _lr[0]['filename'] == 'LM1903060001_책' and _lr[0]['label'] == 12 and _lr[0]['grade'] == 3 and _lr[0]['case'] is True and _lr[0]['reason'] == '안전 7건'
+      and _lr[1]['label'] is None and _lr[1]['grade'] is None and _lr[1]['case'] is False
+      and _lr[2]['sheet'] == '사망' and _lr[2]['label'] == 7 and _lr[2]['grade'] == 2 and _wbk.closed, _lr)
+_ur = _call(lambda: RS.unresolved_pages([
+    {'label': 5, 'grade': 3, 'reason': '첫 행', 'case': False, 'sheet': '안전'},
+    {'label': 5, 'grade': 1, 'reason': '둘째 행', 'case': True, 'sheet': '사망'},
+    {'label': None, 'grade': 2, 'reason': 'x', 'case': True, 'sheet': '안전'},
+    {'label': 6, 'grade': None, 'reason': 'y', 'case': False, 'sheet': '위험'}])) if _ok_rs else None
+check('R16l unresolved_pages 는 구 라벨을 쪽으로 쓰고 등급은 행 최저(recount 규칙), 사유는 그 최저 등급 행의 것, 사고사례는 OR, 라벨 없는 행은 버리고, 자수는 None',
+      isinstance(_ur, dict) and sorted(_ur) == [5, 6] and _ur[5]['grade'] == 1 and _ur[5]['reason'] == '둘째 행' and _ur[5]['case'] is True and _ur[5]['md_chars'] is None and _ur[5]['pdf_chars'] is None
+      and _ur[5]['kws'] == {'안전', '사망'} and _ur[5]['old_labels'] == {'5'} and _ur[6]['grade'] is None and _ur[6].get('source') == 'label', _ur)
+_mdi = {'LM1903060001': ['/x/20260101_000000_LM1903060001_반도체_장비_운영.md', '/x/LM1903060001_반도체_장비_유지보수.md'], 'LM1903060002': ['/y/one.md']}
+with tempfile.TemporaryDirectory() as _td:                     # 동점(공백 vs _ 만 다른 이름): 마커가 많은 파일이 이긴다 (Gap G16)
+    _tie_a = os.path.join(_td, 'LM1903060205_14v3_MI 장비 운영.md'); _tie_b = os.path.join(_td, 'LM1903060205_14v3_MI_장비_운영.md')
+    open(_tie_a, 'w', encoding='utf-8').write('본문\n' * 5)
+    open(_tie_b, 'w', encoding='utf-8').write('<!-- page: 1 -->\n본문\n<!-- page: 2 -->\n본문\n')
+    _tie_pick = _call(lambda: RS.pick_md('LM1903060205', 'LM1903060205_14v3_MI_장비_운영', {'LM1903060205': [_tie_a, _tie_b]})) if _ok_rs else None
+    _tie_pick2 = _call(lambda: RS.pick_md('LM1903060205', 'LM1903060205_14v3_MI_장비_운영', {'LM1903060205': [_tie_b, _tie_a]})) if _ok_rs else None
+check('R16m pick_md 는 같은 코드의 후보가 여럿이면 워크북 파일명과 공통 접두가 가장 긴 것을, 동점이면 마커가 많은 것을(glob 순서 무관), 하나면 그것을, 없으면 None 을 고른다',
+      _ok_rs and RS.pick_md('LM1903060001', 'LM1903060001_반도체_장비_유지보수', _mdi) == '/x/LM1903060001_반도체_장비_유지보수.md'
+      and RS.pick_md('LM1903060001', 'LM1903060001_반도체_장비_운영', _mdi) == '/x/20260101_000000_LM1903060001_반도체_장비_운영.md'
+      and RS.pick_md('LM1903060002', 'zzz', _mdi) == '/y/one.md' and RS.pick_md('LM1903060009', 'zzz', _mdi) is None
+      and _tie_pick == _tie_b and _tie_pick2 == _tie_b, (_tie_pick, _tie_pick2))
+_dg1 = _call(lambda: RS.page_grade_digest(_books)) if _ok_rs else None
+_books_swapped = {'B책': _books['B책'], 'A책': dict(_books['A책'], pages={6: _books['A책']['pages'][6], 5: _books['A책']['pages'][5]})}
+_books_moved = {'A책': dict(_books['A책'], pages={5: dict(_books['A책']['pages'][5], grade=1), 6: dict(_books['A책']['pages'][6], grade=3)}), 'B책': _books['B책']}
+_ce_ok = _call(lambda: RS.check_expected({'pages': 3, 'books': 2, 'page_g': {'1': 1, '2': 1, '3': 1}, 'unresolved': {'pages': 1}, 'page_grade_digest': _dg1},
+                                        expected={'pages': 3, 'books': 2, 'page_g': {'1': 1, '2': 1, '3': 1}, 'unresolved_pages': 1, 'digest': _dg1})) if _ok_rs else None
+_ce_bad = _call(lambda: RS.check_expected({'pages': 3, 'books': 2, 'page_g': {'1': 1, '2': 1, '3': 1}, 'unresolved': {'pages': 1}, 'page_grade_digest': RS.page_grade_digest(_books_moved)},
+                                         expected={'pages': 3, 'books': 2, 'page_g': {'1': 1, '2': 1, '3': 1}, 'unresolved_pages': 1, 'digest': _dg1})) if _ok_rs else None
+check('R16o page_grade_digest 는 순서와 무관하고 쪽→등급 재배정에는 바뀌며, check_expected 는 총계가 같아도 지문 불일치를 잡는다',
+      isinstance(_dg1, str) and len(_dg1) == 16 and RS.page_grade_digest(_books_swapped) == _dg1 and RS.page_grade_digest(_books_moved) != _dg1
+      and _ce_ok == [] and isinstance(_ce_bad, list) and len(_ce_bad) == 1 and 'digest' in _ce_bad[0]
+      and isinstance(RS.EXPECTED, dict) and {'pages', 'page_g', 'books', 'unresolved_pages', 'digest'} <= set(RS.EXPECTED), (_dg1, _ce_ok, _ce_bad))
+# main 완주: 가짜 fitz + 가짜 행 + 임시 md/pdf 루트. EXPECTED 는 실데이터 값이라 --force 없이는 거부해야 한다.
+class _FakePage:
+    def __init__(self, t): self._t = t
+    def get_text(self): return self._t
+class _FakeDoc:
+    def __init__(self, pages): self._p = [_FakePage(t) for t in pages]
+    def __len__(self): return len(self._p)
+    def __getitem__(self, i): return self._p[i]
+    def close(self): pass
+_fitz = types.ModuleType('fitz'); _fitz.open = lambda path: _FakeDoc(_pg)
+_o_fitz, _o_lr = sys.modules.get('fitz'), (RS.load_rows if _ok_rs else None)
+_rows_main = [{'sheet': '안전', 'area': '반도체재료', 'filename': 'LM1903060001_시험_교재', 'contents': '[제목]\n둘째 쪽 본문 문장이 여기 있습니다.', 'label': 9, 'case': False, 'grade': 2, 'reason': 'r1'},
+              {'sheet': '사망', 'area': '반도체재료', 'filename': 'LM1903060001_시험_교재', 'contents': '셋째 쪽 본문 문장이 여기 있습니다.', 'label': 9, 'case': True, 'grade': 2, 'reason': 'r2'},
+              {'sheet': '안전', 'area': '반도체개발', 'filename': 'LM1903060002_없는_교재', 'contents': '아무 문장', 'label': 4, 'case': False, 'grade': 1, 'reason': 'r3'}]
+with tempfile.TemporaryDirectory() as _td:
+    _mdr, _pdr, _out, _pgd = [os.path.join(_td, x) for x in ('md', 'pdf', 'out', 'paged')]
+    os.makedirs(os.path.join(_mdr, 'sub')); os.makedirs(_pdr)
+    open(os.path.join(_mdr, 'sub', 'LM1903060001_시험_교재.md'), 'w', encoding='utf-8').write('\n'.join(_ln))
+    open(os.path.join(_pdr, 'LM1903060001_시험 교재.pdf'), 'w').close()
+    _wbp = os.path.join(_td, 'w.xlsx'); open(_wbp, 'w').close()
+    try:
+        sys.modules['fitz'] = _fitz
+        if _ok_rs: RS.load_rows = lambda path, loader=None: list(_rows_main)
+        _argv = ['resegment.py', '--pdf-root', _pdr, '--md-root', _mdr, '--workbook', _wbp, '--out', _out, '--paged-dir', _pgd]
+        _mc1, _mo1 = _run_main(RS.main, _argv) if _ok_rs else ('', '')
+        _wrote_early = os.path.exists(os.path.join(_out, 'reseg_summary.json'))
+        _mc2, _mo2 = _run_main(RS.main, _argv + ['--force']) if _ok_rs else ('', '')
+        _sm2 = json.load(open(os.path.join(_out, 'reseg_summary.json'), encoding='utf-8')) if os.path.exists(os.path.join(_out, 'reseg_summary.json')) else None
+        _csv2 = list(csv.reader(open(os.path.join(_out, 'ncs_pages_reseg.csv'), encoding='utf-8-sig'))) if os.path.exists(os.path.join(_out, 'ncs_pages_reseg.csv')) else None
+        _paged = sorted(os.listdir(_pgd)) if os.path.isdir(_pgd) else None
+    finally:
+        if _o_fitz is None: sys.modules.pop('fitz', None)
+        else: sys.modules['fitz'] = _o_fitz
+        if _ok_rs: RS.load_rows = _o_lr
+check('R16n main 은 EXPECTED 와 어긋나면 쓰지 않고 한 줄로 거부하며, --force 면 CSV·JSON·pages.json·rows_map.csv 를 쓰고 미해결 교재를 센다',
+      isinstance(_mc1, str) and 'EXPECTED' in _mc1 and not _wrote_early
+      and _mc2 == 0 and isinstance(_sm2, dict) and _sm2['pages'] == 3 and _sm2['books'] == 2 and _sm2['unresolved'] == {'books': 1, 'pages': 1, 'rows': 1}
+      and _sm2['page_g'] == {'1': 3, '2': 0, '3': 0} and _sm2['cases_pages'] == 1 and len(_sm2['page_grade_digest']) == 16
+      and _sm2['meta']['rows'] == 3 and '/Users/' not in json.dumps(_sm2['meta'])
+      and isinstance(_csv2, list) and len(_csv2) == 4 and _paged == ['LM1903060001.pages.json', 'rows_map.csv'],
+      (_mc1, _mo1[-200:], _mc2, _mo2[-300:], _sm2 and {k: _sm2[k] for k in ('pages', 'books', 'page_g', 'unresolved')}, _paged))
+
+
+# --- Act-2 (/ship 커버리지 감사): 정렬 경계·원거리 점프·마커/검증 경계·짧은 키·라벨 폴백·가드·--limit·마커 우선 완주·추적 산출물 교차검증
+print('\n[R16] 재세그먼트 — Act-2: 정렬 경계·라벨 폴백·가드·--limit·마커 우선 완주·추적 산출물')
+_ln_none = 'abcdefghijklmnopqrstuvwxyz'                         # 정규화 길이 26 — 어느 쪽에도 없는 줄
+_al_empty = _call(lambda: RS.align_lines(_ln, [])) if _ok_rs else None
+_al_none = _call(lambda: RS.align_lines([_ln_none, '# 제목'], _pg)) if _ok_rs else None
+_al_mixed = _call(lambda: RS.align_lines(_ln + [_ln_none], _pg)) if _ok_rs else None
+check('R16p align_lines 경계 — 쪽이 없거나 후보 줄이 없으면 빈 dict, 어느 쪽에도 없는 긴 줄은 후보에서 빠지고 나머지는 그대로 놓인다; norm_text(None) 은 빈 문자열, 3자 미만은 gram 없음',
+      _al_empty == {} and _al_none == {} and isinstance(_al_mixed, dict) and _al_mixed == _as and 11 not in _al_mixed
+      and RS.norm_text(None) == '' and RS.grams('ab') == set(), (_al_empty, _al_none, _al_mixed))
+_p1 = ['반도체 웨이퍼 세정 공정의 개요를 설명한다.', '보호구를 반드시 착용해야 한다.']
+_p10 = ['위험 요인을 사전에 확인한다.', '안전 점검 절차를 빠짐없이 따른다.', '사고 발생 시 즉시 관리자에게 보고한다.']
+_pg_far = [' '.join(_p1)] + ['중간 %d쪽 무관한 내용' % i for i in range(2, 10)] + [' '.join(_p10)]
+_al_far = _call(lambda: RS.align_lines(_p1 + _p10, _pg_far)) if _ok_rs else None
+_al_back = _call(lambda: RS.align_lines([_p10[0], _p1[0]], [' '.join(_p1), ' '.join(_p10)])) if _ok_rs else None
+_al_tie = _call(lambda: RS.align_lines([_p1[1]], [' '.join(_p1), ' '.join(_p1)])) if _ok_rs else None
+check('R16q align_lines DP — window 를 넘는 원거리 점프는 far_pen 을 내고 건너뛰며(중간 쪽 미사용), 뒤로는 못 가고(역순 줄도 단조), 첫 줄 동점은 앞 쪽',
+      _al_far == {0: 1, 1: 1, 2: 10, 3: 10, 4: 10}
+      and isinstance(_al_back, dict) and sorted(_al_back) == [0, 1] and _al_back[0] <= _al_back[1]
+      and _al_tie == {0: 1}, (_al_far, _al_back, _al_tie))
+_ml2 = ['머리말 줄', '<!-- page: 4 -->', 'a', '<!-- page: 5 -->', 'b']
+_mp2 = _call(lambda: RS.marker_pages(_ml2)) if _ok_rs else None
+_pt2 = _call(lambda: RS.page_texts(_ml2, [4, 4, 4, 5, None])) if _ok_rs else None
+_ca2 = _call(lambda: RS.check_alignment(_ml2, {0: 4, 1: 4, 2: 4, 4: 7})) if _ok_rs else None
+check('R16r 마커 경계 — 첫 마커 앞 줄은 첫 마커의 쪽, 마커가 없으면 전부 None; page_texts 는 마커 줄·쪽 미정 줄을 뺀다; check_alignment 는 첫 마커 앞 줄과 마커 줄 자체를 분모에서 뺀다',
+      _mp2 == [4, 4, 4, 5, 5] and _ok_rs and RS.marker_pages(['a', 'b']) == [None, None]
+      and _pt2 == {4: '머리말 줄\na'} and _ca2 == {'lines': 2, 'exact': 1, 'near': 1}, (_mp2, _pt2, _ca2))
+_ln_s = ['# 안전 · 유의 사항', '안전 · 유의 사항', '본문 첫 줄 안전 유의 사항 하나 더', '설비 점검 절차 개요 유의 사항 안내']
+_rows_s = [{'sheet': 's', 'contents': '[제목]\n안전 유의 사항'}, {'sheet': 's', 'contents': '[제목]\n안전 유의 사항'},
+           {'sheet': 's', 'contents': '설비 점검 절차 개요\n유의 사항'}, {'sheet': 's', 'contents': '없음\n유의'}]
+_mr_s = _call(lambda: RS.match_rows(_rows_s, _ln_s)) if _ok_rs else None
+_S4 = '반도체 공정 안전 관리 지침에 따라 작업자는 보호구를 착용하고 ' * 4           # 정규화 104자 — 80자 접두 축소가 필요한 길이
+_row_long = [{'sheet': 's', 'contents': _S4 + '덧붙은 꼬리'}]
+_mr_80 = _call(lambda: RS.match_rows(_row_long, ['무관한 줄', _S4])) if _ok_rs else None
+_mr_30 = _call(lambda: RS.match_rows(_row_long, ['반도체 공정 안전 관리 지침에 따라 작업자는 보호구를 착용하고 반도체 공정 안전'])) if _ok_rs else None
+_mr_no = _call(lambda: RS.match_rows(_row_long, ['전혀 다른 내용의 줄입니다'])) if _ok_rs else None
+check('R16s match_rows — 10자 미만 짧은 키는 줄 전체가 같을 때만(포함은 불가), 없으면 전체 키로 재시도, 그것도 짧으면 None; 긴 문장은 80·50·30자 접두로 줄여 가며 찾고 접두마저 없으면 None; sentence_key(None) 은 빈 키',
+      _mr_s == [0, 1, 3, None] and _mr_80 == [1] and _mr_30 == [0] and _mr_no == [None]
+      and _ok_rs and RS.sentence_key(None) == ('', ''), (_mr_s, _mr_80, _mr_30, _mr_no))
+_rows_lf = [{'sheet': '안전', 'contents': '둘째 쪽 본문 문장이 여기 있습니다.', 'label': 2, 'case': False, 'grade': 2, 'reason': 'r0'},
+            {'sheet': '안전', 'contents': '전혀 없는 문장이라 매칭되지 않습니다.', 'label': 9, 'case': True, 'grade': 3, 'reason': 'r1'},
+            {'sheet': '사망', 'contents': '이것도 없는 문장입니다 정말로.', 'label': 9, 'case': False, 'grade': 1, 'reason': 'r2'},
+            {'sheet': '안전', 'contents': '없는 문장 셋째 번째입니다.', 'label': None, 'case': False, 'grade': 1, 'reason': 'r3'},
+            {'sheet': '위험', 'contents': '셋째 쪽 본문 문장이 여기 있습니다.', 'label': 1, 'case': False, 'grade': 1, 'reason': 'r4'}]
+_lf = _call(lambda: RS.resegment_book(_rows_lf, _ln, _pg)) if _ok_rs else None
+_lf_pages = _lf[0] if isinstance(_lf, tuple) else {}
+_lf_nomk = _call(lambda: RS.resegment_book(_rows_lf, _ln, _pg, prefer_markers=True)) if _ok_rs else None
+_lf_none = _call(lambda: RS.resegment_book(_rows_lf, [_ln_none], _pg, prefer_markers=True)) if _ok_rs else None
+check('R16t resegment_book 라벨 폴백 — 미매칭 행은 구 라벨 쪽에 source=label 로 남고 등급은 행 최저·사유는 그 최저 등급 행의 것·사고사례 OR, 라벨 없는 미매칭 행은 버리며, 제자리 행은 이동으로 세지 않는다; 마커가 없으면 prefer_markers 라도 정렬로, 정렬도 안 되면 None',
+      isinstance(_lf, tuple) and sorted(_lf_pages) == [2, 3, 9] and _lf[1] == 1 and _lf[2] == 3
+      and _lf_pages[9]['source'] == 'label' and _lf_pages[9]['grade'] == 1 and _lf_pages[9]['case'] is True and _lf_pages[9]['reason'] == 'r2' and _lf_pages[9]['md_chars'] == 0 and _lf_pages[9]['pdf_chars'] is None
+      and _lf_pages[9]['kws'] == {'안전', '사망'} and _lf_pages[9]['old_labels'] == {'9'}
+      and _lf_pages[2]['source'] == 'text' and _lf_pages[2]['old_labels'] == {'2'} and _lf_pages[3]['old_labels'] == {'1'} and _lf[5][3] is None
+      and isinstance(_lf_nomk, tuple) and _lf_nomk[0].keys() == _lf_pages.keys() and _lf_none is None,
+      (_lf[:3] if isinstance(_lf, tuple) else _lf, 'ok' if isinstance(_lf_nomk, tuple) else _lf_nomk, _lf_none))
+_books_lf = {'A책': dict(_books['A책'], pages={5: dict(_books['A책']['pages'][5], source='text'),
+                                              9: {'grade': None, 'reason': '', 'case': False, 'old_labels': {'9', '10'}, 'kws': set(), 'source': 'label'}}),
+             'B책': dict(_books['B책'], pages={3: dict(_books['B책']['pages'][3], source='label')})}
+_sm_lf = _call(lambda: RS.aggregate(_books_lf)) if _ok_rs else None
+with tempfile.TemporaryDirectory() as _td:
+    _wo2 = _call(lambda: RS.write_outputs(_books_lf, {}, os.path.join(_td, 'o'))) if _ok_rs else None
+    _csv_lf = list(csv.reader(open(os.path.join(_td, 'o', 'ncs_pages_reseg.csv'), encoding='utf-8-sig'))) if isinstance(_wo2, tuple) else None
+check('R16u aggregate 는 해결 교재의 label 출처 쪽만 label_fallback_pages 로 세고(미해결 교재는 제외), write_outputs 는 등급 None 을 빈 칸으로, 구라벨을 숫자순(9;10)으로, 출처를 그대로 쓴다',
+      isinstance(_sm_lf, dict) and _sm_lf['label_fallback_pages'] == 1 and _sm_lf['pages'] == 3
+      and isinstance(_csv_lf, list) and [r[1:3] for r in _csv_lf[1:]] == [['A책', '5'], ['A책', '9'], ['B책', '3']]
+      and _csv_lf[2][3:5] == ['', ''] and _csv_lf[2][8] == 'label' and _csv_lf[2][11] == '9;10' and _csv_lf[1][8] == 'text' and _csv_lf[3][8] == 'label',
+      (_sm_lf['label_fallback_pages'] if isinstance(_sm_lf, dict) else _sm_lf, _csv_lf))
+_e_ok = {'pages': 3, 'books': 2, 'page_g': {'1': 1, '2': 1, '3': 1}, 'unresolved_pages': 1, 'digest': 'abc'}
+_ce_all = _call(lambda: RS.check_expected({'pages': 4, 'books': 1, 'page_g': {'1': 2, '2': 1, '3': 1}, 'unresolved': None, 'page_grade_digest': 'zzz'}, expected=_e_ok)) if _ok_rs else None
+_ce_nodg = _call(lambda: RS.check_expected({'pages': 3, 'books': 2, 'page_g': {'1': 1, '2': 1, '3': 1}, 'unresolved': {'pages': 1}, 'page_grade_digest': 'whatever'},
+                                          expected=dict(_e_ok, digest=None))) if _ok_rs else None
+_ce_dflt = _call(lambda: RS.check_expected({})) if _ok_rs else None
+check('R16v check_expected 는 어긋난 항목마다 한 줄씩(pages·books·page_g·unresolved_pages·digest, 그리고 EXPECTED 가 가진 사고사례·이동·미매칭·폴백 수치) 짚고, unresolved 가 없어도 죽지 않으며, 기대 digest 가 None 이면 지문을 비교하지 않고, expected 생략 시 모듈 EXPECTED(12키: 자기 검증·약한 배정 수치까지) 를 쓴다',
+      isinstance(_ce_all, list) and [l.split(':')[0] for l in _ce_all] == ['pages', 'books', 'page_g', 'unresolved_pages', 'digest']
+      and _ce_nodg == [] and isinstance(_ce_dflt, list) and len(_ce_dflt) == 12 and str(RS.EXPECTED['pages']) in _ce_dflt[0]
+      and [l.split(':')[0] for l in _ce_dflt[5:]] == ['cases_pages', 'cases_books', 'moved_rows', 'unmatched_rows', 'label_fallback_pages', 'alignment_overall', 'match_stats'], (_ce_all, _ce_nodg, _ce_dflt))
+_wbk2 = FakeWB({'s': [None, (), (1, 'a', 'LM1903060001_x', 'c', '1', 't', 'a', '2'),
+                       (1, 'a', None, 'c', '1', 't', 'a', '2', 'r'),
+                       (1, 'a', 'LM1903060001_x', None, None, 't', None, None, None)]})
+_lr2 = _call(lambda: RS.load_rows('dummy.xlsx', loader=lambda *a, **k: _wbk2)) if _ok_rs else None
+_lr_dflt = _call(lambda: RS.load_rows('dummy.xlsx')) if _ok_rs else None
+check('R16w load_rows 는 빈 행·9열 미만·filename 없는 행을 건너뛰고 본문·라벨·등급·사유 None 을 빈 값/None 으로 받으며, loader 를 안 주면 openpyxl 을 쓴다 (하니스에선 스텁이 잡힌다)',
+      isinstance(_lr2, list) and len(_lr2) == 1 and _lr2[0]['contents'] == '' and _lr2[0]['label'] is None and _lr2[0]['grade'] is None
+      and _lr2[0]['case'] is False and _lr2[0]['reason'] == '' and _wbk2.closed
+      and isinstance(_lr_dflt, RuntimeError) and '스텁' in str(_lr_dflt), (_lr2, _lr_dflt))
+with tempfile.TemporaryDirectory() as _td:
+    os.makedirs(os.path.join(_td, 'a', 'b'))
+    for _rel in ('a/LM1903060001_x.md', 'a/b/LM1903060002_y.md', 'LM1903060001_dup.md', 'nocode.md', 'a/LM1903060003_z.pdf'):
+        open(os.path.join(_td, _rel), 'w', encoding='utf-8').write('본문')
+    _ix_md = _call(lambda: RS.index_files(_td, '*.md')) if _ok_rs else None
+    _ix_pdf = _call(lambda: RS.index_files(_td, '*.pdf')) if _ok_rs else None
+    _sha = _call(lambda: RS.sha256_file(os.path.join(_td, 'nocode.md'))) if _ok_rs else None
+check('R16x index_files 는 하위 디렉터리까지 훑어 LM 코드별 파일 목록을 정렬된 순서로 만들고(같은 코드 여럿 허용, glob 순서 무관) 코드 없는 파일은 버리며, sha256_file 은 hashlib 과 같다',
+      isinstance(_ix_md, dict) and sorted(_ix_md) == ['LM1903060001', 'LM1903060002'] and len(_ix_md['LM1903060001']) == 2 and len(_ix_md['LM1903060002']) == 1 and _ix_md['LM1903060001'] == sorted(_ix_md['LM1903060001'])
+      and isinstance(_ix_pdf, dict) and list(_ix_pdf) == ['LM1903060003'] and _sha == hashlib.sha256('본문'.encode('utf-8')).hexdigest(),
+      (_ix_md, _ix_pdf, _sha))
+# main 가드 나머지 셋: PDF 루트 미지정(플래그도 환경변수도 없음) → 마크다운 루트 없음 → PyMuPDF 없음
+_env_pdf = os.environ.pop('NCS_PDF_ROOT', None)
+_o_fitz2 = sys.modules.get('fitz')
+with tempfile.TemporaryDirectory() as _td:
+    _mdr, _pdr = os.path.join(_td, 'md'), os.path.join(_td, 'pdf'); os.makedirs(_mdr); os.makedirs(_pdr)
+    _wbp = os.path.join(_td, 'w.xlsx'); open(_wbp, 'w').close()
+    try:
+        _g3, _ = _run_main(RS.main, ['resegment.py', '--workbook', _wbp]) if _ok_rs else ('', '')
+        _g4, _ = _run_main(RS.main, ['resegment.py', '--pdf-root', _pdr, '--workbook', _wbp, '--md-root', os.path.join(_td, 'nomd')]) if _ok_rs else ('', '')
+        sys.modules['fitz'] = None                                  # sys.modules 의 None 은 import 를 ImportError 로 만든다
+        _g5, _ = _run_main(RS.main, ['resegment.py', '--pdf-root', _pdr, '--workbook', _wbp, '--md-root', _mdr]) if _ok_rs else ('', '')
+    finally:
+        if _o_fitz2 is None: sys.modules.pop('fitz', None)
+        else: sys.modules['fitz'] = _o_fitz2
+        if _env_pdf is not None: os.environ['NCS_PDF_ROOT'] = _env_pdf
+check('R16y main 가드 — --pdf-root 도 NCS_PDF_ROOT 도 없으면, 마크다운 루트가 없으면, PyMuPDF 가 없으면 각각 트레이스백 없이 한 줄로 끝난다 (순서: 워크북 → PDF → 마크다운 → PyMuPDF)',
+      isinstance(_g3, str) and 'NCS_PDF_ROOT' in _g3 and isinstance(_g4, str) and '마크다운' in _g4
+      and isinstance(_g5, str) and 'PyMuPDF' in _g5, (_g3, _g4, _g5))
+# --limit: 앞 N권만, EXPECTED 검사 생략 → --force 없이도 쓴다
+_o_lr2 = RS.load_rows if _ok_rs else None
+with tempfile.TemporaryDirectory() as _td:
+    _mdr, _pdr, _out, _pgd = [os.path.join(_td, x) for x in ('md', 'pdf', 'out', 'paged')]
+    os.makedirs(_mdr); os.makedirs(_pdr)
+    open(os.path.join(_mdr, 'LM1903060001_시험_교재.md'), 'w', encoding='utf-8').write('\n'.join(_ln))
+    open(os.path.join(_pdr, 'LM1903060001.pdf'), 'w').close()
+    _wbp = os.path.join(_td, 'w.xlsx'); open(_wbp, 'w').close()
+    _o_fitz2 = sys.modules.get('fitz')
+    try:
+        sys.modules['fitz'] = _fitz
+        if _ok_rs: RS.load_rows = lambda path, loader=None: list(_rows_main)
+        _lc, _lo = _run_main(RS.main, ['resegment.py', '--pdf-root', _pdr, '--md-root', _mdr, '--workbook', _wbp, '--out', _out, '--paged-dir', _pgd, '--limit', '1']) if _ok_rs else ('', '')
+        _lsm = json.load(open(os.path.join(_out, 'reseg_summary.json'), encoding='utf-8')) if os.path.exists(os.path.join(_out, 'reseg_summary.json')) else None
+    finally:
+        if _o_fitz2 is None: sys.modules.pop('fitz', None)
+        else: sys.modules['fitz'] = _o_fitz2
+        if _ok_rs: RS.load_rows = _o_lr2
+check('R16z --limit N 은 앞 N권만 처리하고 EXPECTED 회귀 검사를 건너뛰어 --force 없이 산출물을 쓰되 meta.expected 는 싣지 않고 meta.limit 으로 부분 실행임을 남긴다 (디버그 경로)',
+      _lc == 0 and isinstance(_lsm, dict) and _lsm['books'] == 1 and list(_lsm['per_book']) == ['LM1903060001_시험_교재'] and _lsm['meta']['expected'] is None and _lsm['meta']['limit'] == 1
+      and _lsm['unresolved'] == {'books': 0, 'pages': 0, 'rows': 0} and _lsm['pages'] == 2, (_lc, _lo[-300:], _lsm['books'] if isinstance(_lsm, dict) else _lsm))
+# 마커 우선 완주: 쪽 단위 마커 교재(마커 방식 + 정렬 검증), PDF 없는 교재(no pdf), 정렬 실패 교재, 미매칭 행의 rows_map 빈 칸, $HOME → '~', 재실행 동일성
+_md_marked = ['<!-- page: 1 -->'] + _ln[0:5] + ['<!-- page: 2 -->'] + _ln[5:8] + ['<!-- page: 3 -->'] + _ln[8:]
+_rows_z = [{'sheet': '안전', 'area': '반도체재료', 'filename': 'LM1903060001_시험_교재', 'contents': '[제목]\n둘째 쪽 본문 문장이 여기 있습니다.', 'label': 9, 'case': False, 'grade': 2, 'reason': 'r1'},
+           {'sheet': '사망', 'area': '반도체재료', 'filename': 'LM1903060001_시험_교재', 'contents': '워크북에만 있는 문장이라 마크다운에 없습니다.', 'label': 7, 'case': True, 'grade': 3, 'reason': 'r2'},
+           {'sheet': '안전', 'area': '반도체개발', 'filename': 'LM1903060002_PDF_없음', 'contents': '아무 문장', 'label': 4, 'case': False, 'grade': 1, 'reason': 'r3'},
+           {'sheet': '안전', 'area': '반도체장비', 'filename': 'LM1903060003_정렬_실패', 'contents': '아무 문장', 'label': 5, 'case': False, 'grade': 2, 'reason': 'r4'}]
+_env_home = os.environ.get('HOME')
+with tempfile.TemporaryDirectory() as _td:
+    _mdr, _pdr, _out, _pgd = [os.path.join(_td, x) for x in ('md', 'pdf', 'out', 'paged')]
+    os.makedirs(_mdr); os.makedirs(_pdr)
+    open(os.path.join(_mdr, 'LM1903060001_시험_교재.md'), 'w', encoding='utf-8').write('\n'.join(_md_marked))
+    open(os.path.join(_mdr, 'LM1903060002_PDF_없음.md'), 'w', encoding='utf-8').write('본문')
+    open(os.path.join(_mdr, 'LM1903060003_정렬_실패.md'), 'w', encoding='utf-8').write('\n'.join([_ln_none] * 3))
+    for _c in ('LM1903060001', 'LM1903060003'):
+        open(os.path.join(_pdr, _c + '.pdf'), 'w').close()
+    _wbp = os.path.join(_td, 'w.xlsx'); open(_wbp, 'w').close()
+    _o_fitz2 = sys.modules.get('fitz')
+    _zargv = ['resegment.py', '--pdf-root', _pdr, '--md-root', _mdr, '--workbook', _wbp, '--out', _out, '--paged-dir', _pgd, '--force']
+    try:
+        sys.modules['fitz'] = _fitz
+        os.environ['HOME'] = _td                                  # 산출물의 경로가 홈 아래일 때 '~' 로 바뀌는지
+        if _ok_rs: RS.load_rows = lambda path, loader=None: list(_rows_z)
+        _zc, _zo = _run_main(RS.main, _zargv) if _ok_rs else ('', '')
+        _zs = json.load(open(os.path.join(_out, 'reseg_summary.json'), encoding='utf-8')) if os.path.exists(os.path.join(_out, 'reseg_summary.json')) else None
+        _zcsv = open(os.path.join(_out, 'ncs_pages_reseg.csv'), 'rb').read() if os.path.exists(os.path.join(_out, 'ncs_pages_reseg.csv')) else None
+        _zmap = list(csv.reader(open(os.path.join(_pgd, 'rows_map.csv'), encoding='utf-8-sig'))) if os.path.exists(os.path.join(_pgd, 'rows_map.csv')) else None
+        _zpg = json.load(open(os.path.join(_pgd, 'LM1903060001.pages.json'), encoding='utf-8')) if os.path.exists(os.path.join(_pgd, 'LM1903060001.pages.json')) else None
+        _zc2, _ = _run_main(RS.main, _zargv) if _ok_rs else ('', '')
+        _zs2 = json.load(open(os.path.join(_out, 'reseg_summary.json'), encoding='utf-8')) if os.path.exists(os.path.join(_out, 'reseg_summary.json')) else None
+        _zcsv2 = open(os.path.join(_out, 'ncs_pages_reseg.csv'), 'rb').read() if os.path.exists(os.path.join(_out, 'ncs_pages_reseg.csv')) else None
+    finally:
+        if _o_fitz2 is None: sys.modules.pop('fitz', None)
+        else: sys.modules['fitz'] = _o_fitz2
+        if _env_home is None: os.environ.pop('HOME', None)
+        else: os.environ['HOME'] = _env_home
+        if _ok_rs: RS.load_rows = _o_lr2
+_zb = (_zs or {}).get('per_book', {})
+check('R16z2 main 완주(마커 우선) — 쪽 단위 마커 교재는 method=markers 로 가고 정렬은 검증만(후보 7/7, 전체 본문 줄 11/11), PDF 없는 교재는 no pdf, 정렬이 안 되는 교재는 alignment failed 로 미해결, 미매칭 행은 구 라벨 쪽(label 출처)과 rows_map 빈 새쪽, 홈 아래 경로는 ~ 로, --force 로 어긋난 채 쓰면 meta.expected 는 None 이고 expected_mismatch 에 불일치가 남는다',
+      _zc == 0 and isinstance(_zs, dict) and _zs['books'] == 3 and _zs['pages'] == 4 and _zs['page_g'] == {'1': 2, '2': 1, '3': 1}
+      and _zb.get('LM1903060001_시험_교재', {}).get('method') == 'markers' and _zb['LM1903060001_시험_교재']['align'] == {'lines': 7, 'exact': 7, 'near': 7, 'all_lines': 11, 'all_exact': 11, 'all_near': 11}
+      and _zb['LM1903060001_시험_교재']['new_pages'] == 2 and _zb['LM1903060001_시험_교재']['unmatched_rows'] == 1 and _zb['LM1903060001_시험_교재']['moved_rows'] == 1
+      and _zb.get('LM1903060002_PDF_없음', {}).get('why') == 'no pdf' and _zb.get('LM1903060003_정렬_실패', {}).get('why') == 'alignment failed'
+      and _zs['unresolved'] == {'books': 2, 'pages': 2, 'rows': 2} and _zs['label_fallback_pages'] == 1
+      and _zs['method_books'] == {'markers': 1, 'unresolved': 2} and _zs['alignment_check']['books'] == 1 and _zs['alignment_check']['overall'] == {'lines': 7, 'exact': 7, 'near': 7, 'all_lines': 11, 'all_exact': 11, 'all_near': 11}
+      and _zs['meta']['expected'] is None and isinstance(_zs['meta']['expected_mismatch'], list) and _zs['meta']['expected_mismatch'] and _zs['meta']['limit'] is None
+      and _zs['case_pages'] == [{'book': 'LM1903060001_시험_교재', 'page': 7, 'old_labels': ['7'], 'grade': 3}]
+      and _zs['meta']['pdf_root'] == '~/pdf' and _zs['meta']['md_root'] == '~/md'
+      and _zmap == [['교재', '시트', '구라벨', '새쪽', '구등급', '사고사례'], ['LM1903060001_시험_교재', '안전', '9', '2', '2', '아니오'], ['LM1903060001_시험_교재', '사망', '7', '', '3', '예']]
+      and isinstance(_zpg, dict) and _zpg['line_pages'] == [1] * 6 + [2] * 4 + [3] * 4
+      and '정렬 검증' in _zo and 'no pdf' in _zo and '정렬 실패' in _zo and '--force 로 씀' in _zo,
+      (_zc, _zo[-400:], {k: (_zs[k] if isinstance(_zs, dict) else None) for k in ('books', 'pages', 'page_g', 'unresolved', 'label_fallback_pages', 'method_books')}, _zmap, _zs['meta'] if isinstance(_zs, dict) else None))
+check('R16z3 같은 입력으로 다시 돌리면 지문·CSV 바이트·summary(run_at 제외) 가 같다 (재실행 동일성)',
+      _zc2 == 0 and isinstance(_zs, dict) and isinstance(_zs2, dict) and _zs['page_grade_digest'] == _zs2['page_grade_digest']
+      and _zcsv is not None and _zcsv == _zcsv2
+      and dict(_zs, meta=dict(_zs['meta'], run_at=None)) == dict(_zs2, meta=dict(_zs2['meta'], run_at=None)), (_zc2,))
+# 추적 산출물 교차검증 (R14m·R5l 과 같은 패턴): 보고서가 인용하는 수치는 커밋된 파일 ↔ EXPECTED ↔ CSV 가 서로 맞물려야 한다
+_rs_sum = json.load(open(os.path.join(ROOT, 'docs', '03-analysis', 'data', 'reseg_summary.json'), encoding='utf-8'))
+_rs_csv = list(csv.reader(open(os.path.join(ROOT, 'docs', '03-analysis', 'data', 'ncs_pages_reseg.csv'), encoding='utf-8-sig')))
+_rs_body = _rs_csv[1:]
+check('R16z4 커밋된 reseg_summary.json 이 resegment.EXPECTED 와 일치한다 (총계·등급 분포·미해결·지문·meta.expected, 등급 합 = 쪽 수, per_book·method_books 합 = 교재 수, 홈 경로 없음)',
+      _ok_rs and RS.check_expected(_rs_sum) == [] and _rs_sum['meta']['expected'] == RS.EXPECTED
+      and sum(_rs_sum['page_g'].values()) == _rs_sum['pages'] and len(_rs_sum['per_book']) == _rs_sum['books']
+      and sum(_rs_sum['method_books'].values()) == _rs_sum['books'] and '/Users/' not in json.dumps(_rs_sum['meta']),
+      RS.check_expected(_rs_sum) if _ok_rs else RS)
+_rs_digest = hashlib.sha256('\n'.join(sorted('%s\t%s\t%s' % (r[1], r[2], r[3]) for r in _rs_body)).encode('utf-8')).hexdigest()[:16]
+check('R16z5 커밋된 ncs_pages_reseg.csv 가 summary·EXPECTED 와 맞물린다 — 행 수 = 쪽 수, (교재, 쪽) 유일, 등급 분포·미해결 쪽·라벨 폴백 쪽(label + text-fallback) 일치, 행에서 재계산한 지문 = EXPECTED.digest, 등급명 = GRADE_LABEL, 출처 9열·자수 10~11열(해결 쪽은 정수)·구라벨 마지막 열',
+      _ok_rs and _rs_csv[0][-1] == '구라벨' and _rs_csv[0][8] == '출처' and _rs_csv[0][9:11] == ['md자수', 'pdf자수'] and len(_rs_csv[0]) == 12 and len(_rs_body) == RS.EXPECTED['pages']
+      and all(r[9].isdigit() and r[10].isdigit() for r in _rs_body if r[7] == 'resolved' and r[8] != 'label')
+      and len({(r[1], r[2]) for r in _rs_body}) == len(_rs_body)
+      and {g: sum(1 for r in _rs_body if r[3] == g) for g in ('1', '2', '3')} == RS.EXPECTED['page_g']
+      and sum(1 for r in _rs_body if r[7] == 'unresolved') == RS.EXPECTED['unresolved_pages']
+      and sum(1 for r in _rs_body if r[7] == 'resolved' and r[8] in ('label', 'text-fallback')) == _rs_sum['label_fallback_pages'] == RS.EXPECTED['label_fallback_pages']
+      and {r[8] for r in _rs_body} == {'text', 'text-fallback', 'label'} and _rs_sum['cases_pages'] == RS.EXPECTED['cases_pages'] and _rs_sum['moved_rows'] == RS.EXPECTED['moved_rows']
+      and all(r[4] == RS.GRADE_LABEL.get(int(r[3])) for r in _rs_body) and _rs_digest == RS.EXPECTED['digest'], (len(_rs_body), _rs_digest))
+
+# 동시 편집으로 들어온 세 경로: public_path (realpath 기반 공개 경로), --limit 의 추적 산출물 보호, index_files 정렬
+with tempfile.TemporaryDirectory() as _td:
+    _here, _home = os.path.join(_td, 'repo'), os.path.join(_td, 'home')
+    os.makedirs(os.path.join(_here, 'data', 'md')); os.makedirs(os.path.join(_home, 'x'))
+    _pp = _call(lambda: [RS.public_path(os.path.join(_here, 'data', 'md'), here=_here, home=_home),
+                         RS.public_path(_here, here=_here, home=_home),
+                         RS.public_path(os.path.join(_home, 'x'), here=_here, home=_home),
+                         RS.public_path(_home, here=_here, home=_home),
+                         RS.public_path(os.path.join(_td, 'elsewhere', 'vol'), here=_here, home=_home),
+                         RS.public_path(os.path.join(_home + '2', 'x'), here=_here, home=_home),
+                         RS.public_path(os.path.join(RS.HERE, 'docs'))]) if _ok_rs else None
+check('R16z6 public_path 는 저장소 안이면 상대 경로, 저장소 자체는 ".", 홈 아래면 ~/…, 홈 자체는 ~, 그 밖은 마지막 이름만 싣고, 접두만 닮은 디렉터리(home2)는 홈으로 오인하지 않으며, 기본 here 는 저장소 루트다',
+      _pp == ['data/md', '.', '~/x', '~', 'vol', 'x', 'docs'], _pp)
+with tempfile.TemporaryDirectory() as _td:
+    _mdr, _pdr = os.path.join(_td, 'md'), os.path.join(_td, 'pdf'); os.makedirs(_mdr); os.makedirs(_pdr)
+    _wbp = os.path.join(_td, 'w.xlsx'); open(_wbp, 'w').close()
+    _tracked = os.path.join(ROOT, 'docs', '03-analysis', 'data', 'reseg_summary.json')
+    _before = open(_tracked, 'rb').read()
+    _o_fitz2 = sys.modules.get('fitz')
+    try:
+        sys.modules['fitz'] = _fitz
+        if _ok_rs: RS.load_rows = lambda path, loader=None: list(_rows_main)
+        _lg, _ = _run_main(RS.main, ['resegment.py', '--pdf-root', _pdr, '--md-root', _mdr, '--workbook', _wbp, '--limit', '1', '--out', RS.DEFAULT_OUT]) if _ok_rs else ('', '')
+        _lg2, _ = _run_main(RS.main, ['resegment.py', '--pdf-root', _pdr, '--md-root', _mdr, '--workbook', _wbp, '--limit', '1']) if _ok_rs else ('', '')
+    finally:
+        if _o_fitz2 is None: sys.modules.pop('fitz', None)
+        else: sys.modules['fitz'] = _o_fitz2
+        if _ok_rs: RS.load_rows = _o_lr2
+    _after = open(_tracked, 'rb').read()
+check('R16z7 --limit 는 부분 실행이라 추적 산출물 경로(DEFAULT_OUT — 명시든 기본값이든)에는 쓰지 않고 한 줄로 거부한다; 커밋된 reseg_summary.json 은 그대로다',
+      isinstance(_lg, str) and '--out' in _lg and isinstance(_lg2, str) and '--out' in _lg2 and _before == _after, (_lg, _lg2))
+
+# 코드가 없는 교재명은 마크다운을 찾지 않고 'no md' 로 미해결, 같은 코드의 PDF 가 여럿이면 정렬된 첫 파일을 쓴다 (index_files 정렬 덕에 결정적)
+_rows_nc = list(_rows_main) + [{'sheet': '안전', 'area': '반도체제조', 'filename': '코드없는_교재', 'contents': '아무 문장', 'label': 2, 'case': False, 'grade': 3, 'reason': 'r5'}]
+with tempfile.TemporaryDirectory() as _td:
+    _mdr, _pdr, _out, _pgd = [os.path.join(_td, x) for x in ('md', 'pdf', 'out', 'paged')]
+    os.makedirs(_mdr); os.makedirs(_pdr)
+    open(os.path.join(_mdr, 'LM1903060001_시험_교재.md'), 'w', encoding='utf-8').write('\n'.join(_ln))
+    open(os.path.join(_mdr, '코드없는_교재.md'), 'w', encoding='utf-8').write('\n'.join(_ln))
+    for _n in ('LM1903060001_b.pdf', 'LM1903060001_a.pdf'):
+        open(os.path.join(_pdr, _n), 'w').close()
+    _wbp = os.path.join(_td, 'w.xlsx'); open(_wbp, 'w').close()
+    _o_fitz2 = sys.modules.get('fitz')
+    try:
+        sys.modules['fitz'] = _fitz
+        if _ok_rs: RS.load_rows = lambda path, loader=None: list(_rows_nc)
+        _nc, _no = _run_main(RS.main, ['resegment.py', '--pdf-root', _pdr, '--md-root', _mdr, '--workbook', _wbp, '--out', _out, '--paged-dir', _pgd, '--force']) if _ok_rs else ('', '')
+        _ns = json.load(open(os.path.join(_out, 'reseg_summary.json'), encoding='utf-8')) if os.path.exists(os.path.join(_out, 'reseg_summary.json')) else None
+        _npg = json.load(open(os.path.join(_pgd, 'LM1903060001.pages.json'), encoding='utf-8')) if os.path.exists(os.path.join(_pgd, 'LM1903060001.pages.json')) else None
+    finally:
+        if _o_fitz2 is None: sys.modules.pop('fitz', None)
+        else: sys.modules['fitz'] = _o_fitz2
+        if _ok_rs: RS.load_rows = _o_lr2
+check('R16z8 LM 코드가 없는 교재명은 같은 이름의 마크다운이 있어도 no md 로 미해결(구 라벨·구 등급 유지)이고, 같은 코드의 PDF 가 여럿이면 정렬된 첫 파일을 쓴다',
+      _nc == 0 and isinstance(_ns, dict) and _ns['books'] == 3 and _ns['per_book'].get('코드없는_교재', {}).get('why') == 'no md'
+      and _ns['per_book']['코드없는_교재']['page_g'] == {'1': 0, '2': 0, '3': 1} and _ns['unresolved'] == {'books': 2, 'pages': 2, 'rows': 2}
+      and isinstance(_npg, dict) and _npg['pdf'] == 'LM1903060001_a.pdf', (_nc, _no[-300:], _ns and _ns['per_book'].get('코드없는_교재'), _npg and _npg.get('pdf')))
+
+# --- 출하 전 적대적 리뷰 반영: 출처 3값·약한 배정 집계·전체 줄 자기검증·--paged-dir 가드
+_rows_tf = [{'sheet': '안전', 'contents': '[제목]\n안전 교육을 정기적으로 실시한다.', 'label': 1, 'case': False, 'grade': 2, 'reason': 'x'},
+            {'sheet': '안전', 'contents': '[제목]\n안전 교육을 정기적으로 실시한다.', 'label': 1, 'case': False, 'grade': 2, 'reason': 'x'},
+            {'sheet': '안전', 'contents': '[제목]\n안전 교육을 정기적으로 실시한다.', 'label': 1, 'case': False, 'grade': 2, 'reason': 'x'},
+            {'sheet': '보호구', 'contents': '보호구를 반드시', 'label': 3, 'case': False, 'grade': 1, 'reason': 'y'},
+            {'sheet': '없음', 'contents': '전혀 없는 문장이라 매칭되지 않습니다.', 'label': 2, 'case': True, 'grade': 3, 'reason': 'z'}]
+_st_tf = {}
+_tf = _call(lambda: RS.resegment_book(_rows_tf, _ln, _pg, stats=_st_tf)) if _ok_rs else None
+_tf_pages = _tf[0] if isinstance(_tf, tuple) else {}
+_st_only = {}
+_mr_st = _call(lambda: RS.match_rows(_rows_tf, _ln, _st_only)) if _ok_rs else None
+check('R16z9 출처 3값 — 매칭 행이 놓인 쪽은 text, 미매칭 행의 구 라벨로만 왔지만 본문이 있는 쪽은 text-fallback(본문으로 채점, 매칭 0), 본문도 없으면 label; md/pdf 자수는 정규화 길이; match_rows 의 stats 는 overflow(적중 2곳에 행 3개 → 1)·ambiguous(3)·partial(0) 을 세고 stats 없이도 같은 배정',
+      isinstance(_tf, tuple) and {p: r['source'] for p, r in _tf_pages.items()} == {1: 'text', 2: 'text-fallback', 3: 'text'}
+      and _tf_pages[2]['matched'] == 0 and _tf_pages[1]['matched'] == 1 and _tf_pages[3]['matched'] == 2
+      and _tf_pages[2]['md_chars'] == len(RS.norm_text('\n'.join(_ln[5:8]))) and _tf_pages[2]['pdf_chars'] == len(RS.norm_text(_pg[1]))
+      and _tf_pages[2]['case'] is True and _tf_pages[2]['old_labels'] == {'2'} and _tf[2] == 2 and _tf[1] == 2
+      and _st_tf == {'overflow': 1, 'ambiguous': 3, 'partial': 0} and _st_only == _st_tf and _mr_st == _tf[5] == [2, 10, 10, None, None],
+      (_st_tf, _mr_st, {p: (r['source'], r['matched'], r['md_chars'], r['pdf_chars']) for p, r in _tf_pages.items()} if isinstance(_tf, tuple) else _tf))
+_books_tf = {'A책': {'area': '반도체재료', 'status': 'resolved', 'rows': 5, 'moved_rows': 2, 'unmatched_rows': 2, 'old_labels': {'1', '2', '3'},
+                    'align': {'lines': 7, 'exact': 6, 'near': 7, 'all_lines': 11, 'all_exact': 9, 'all_near': 10}, 'pages': _tf_pages, 'match': dict(_st_tf)},
+             'B책': dict(_books['B책'])}
+_ag_tf = _call(lambda: RS.aggregate(_books_tf)) if isinstance(_tf, tuple) else None
+check('R16z10 aggregate 는 text-fallback 도 label_fallback_pages 로 세고(미해결 교재의 label 은 제외), 교재별 match 를 match_stats 로 합치며, alignment_check.overall 에 all_* 를 더하고 all_* 이 없는 옛 align dict 도 0 으로 받는다',
+      isinstance(_ag_tf, dict) and _ag_tf['label_fallback_pages'] == 1 and _ag_tf['match_stats'] == {'overflow': 1, 'ambiguous': 3, 'partial': 0}
+      and _ag_tf['alignment_check']['overall'] == {'lines': 7, 'exact': 6, 'near': 7, 'all_lines': 11, 'all_exact': 9, 'all_near': 10}
+      and _ok_rs and RS.aggregate({'A책': dict(_books_tf['A책'], align={'lines': 2, 'exact': 1, 'near': 2})})['alignment_check']['overall'] == {'lines': 2, 'exact': 1, 'near': 2, 'all_lines': 0, 'all_exact': 0, 'all_near': 0},
+      _ag_tf if not isinstance(_ag_tf, dict) else (_ag_tf['label_fallback_pages'], _ag_tf['match_stats'], _ag_tf['alignment_check']['overall']))
+_ml3 = ['머리말', '<!-- page: 1 -->', '첫째 쪽 본문 문장이 여기 있습니다.', '', '<!-- page: 2 -->', '둘째 쪽 본문 문장이 여기 있습니다.', '| 표 |', '<!-- page: 3 -->', '셋째 쪽']
+_caa = _call(lambda: RS.check_alignment_all(_ml3, [None, None, 1, 1, 1, 1, 3, 3, 1])) if _ok_rs else None
+_caa_short = _call(lambda: RS.check_alignment_all(_ml3, [None, None, 1])) if _ok_rs else None
+check('R16z11 check_alignment_all 은 본문 있는 모든 줄(빈 줄·마커 줄·첫 마커 앞 줄 제외)을 마커와 대조한다 — 후보 줄만 세는 check_alignment 와 달리 전파로 채운 줄(표)도 분모; line_pages 가 짧으면 없는 줄은 뺀다',
+      _caa == {'all_lines': 4, 'all_exact': 1, 'all_near': 3} and _caa_short == {'all_lines': 1, 'all_exact': 1, 'all_near': 1}, (_caa, _caa_short))
+with tempfile.TemporaryDirectory() as _td:
+    _mdr, _pdr, _out = [os.path.join(_td, x) for x in ('md', 'pdf', 'out')]; os.makedirs(_mdr); os.makedirs(_pdr)
+    _wbp = os.path.join(_td, 'w.xlsx'); open(_wbp, 'w').close()
+    _lg3, _ = _run_main(RS.main, ['resegment.py', '--pdf-root', _pdr, '--md-root', _mdr, '--workbook', _wbp, '--limit', '1', '--out', _out]) if _ok_rs else ('', '')
+    _lg4, _ = _run_main(RS.main, ['resegment.py', '--pdf-root', _pdr, '--md-root', _mdr, '--workbook', _wbp, '--limit', '1', '--out', _out, '--paged-dir', RS.DEFAULT_PAGED]) if _ok_rs else ('', '')
+check('R16z12 --limit 가드는 --paged-dir 가 기본 대응표 디렉터리(명시든 기본값이든)여도 거부한다 — 부분 실행이 pages.json·rows_map.csv 를 이전 실행과 섞지 않게',
+      isinstance(_lg3, str) and '--paged-dir' in _lg3 and isinstance(_lg4, str) and '--paged-dir' in _lg4, (_lg3, _lg4))
+# 레드팀: 매칭 쪽에 합류한 미매칭 행 · 거부된 실행은 대응표도 남기지 않는다 · 반쪽 산출물 gitignore
+_rows_fb = list(_rows_tf) + [{'sheet': '폭발', 'contents': '역시 없는 문장이라 매칭되지 않습니다.', 'label': 1, 'case': True, 'grade': 3, 'reason': 'w'}]
+_fb = _call(lambda: RS.resegment_book(_rows_fb, _ln, _pg)) if _ok_rs else None
+_fb_pages = _fb[0] if isinstance(_fb, tuple) else {}
+_ag_fb = _call(lambda: RS.aggregate({'A책': {'area': 'x', 'status': 'resolved', 'rows': 6, 'moved_rows': 0, 'unmatched_rows': 3, 'old_labels': set(), 'align': None, 'pages': _fb_pages}})) if isinstance(_fb, tuple) else None
+check('R16z13 매칭 행이 있는 쪽에 구 라벨 번호로 온 미매칭 행은 fallback_rows 로만 세고 kws·case 를 보태지 않는다(위치 불명); 매칭 행이 없는 쪽(text-fallback·label)은 그대로 받는다; aggregate 가 fallback_rows_on_text_pages 로 합친다',
+      isinstance(_fb, tuple) and _fb_pages[1]['fallback_rows'] == 1 and _fb_pages[1]['case'] is False and '폭발' not in _fb_pages[1]['kws'] and _fb_pages[1]['source'] == 'text'
+      and _fb_pages[2]['source'] == 'text-fallback' and _fb_pages[2]['case'] is True and _fb_pages[2]['kws'] == {'없음'} and _fb_pages[2]['fallback_rows'] == 1
+      and not any(k.startswith('_fb') for rec in _fb_pages.values() for k in rec) and _fb[2] == 3
+      and _fb_pages[3]['fallback_rows'] == 1 and '보호구' not in _fb_pages[3]['kws']
+      and isinstance(_ag_fb, dict) and _ag_fb['fallback_rows_on_text_pages'] == 2 and _ag_fb['label_fallback_pages'] == 1 and _ag_fb['kw_pages'].get('폭발') is None and _ag_fb['kw_pages'].get('보호구') is None,
+      ({p: (r['source'], r['matched'], r['fallback_rows'], sorted(r['kws']), r['case']) for p, r in _fb_pages.items()} if isinstance(_fb, tuple) else _fb, _ag_fb and _ag_fb.get('fallback_rows_on_text_pages')))
+with tempfile.TemporaryDirectory() as _td:
+    _mdr, _pdr, _out, _pgd = [os.path.join(_td, x) for x in ('md', 'pdf', 'out', 'paged')]
+    os.makedirs(_mdr); os.makedirs(_pdr)
+    open(os.path.join(_mdr, 'LM1903060001_시험_교재.md'), 'w', encoding='utf-8').write('\n'.join(_ln))
+    open(os.path.join(_pdr, 'LM1903060001.pdf'), 'w').close()
+    _wbp = os.path.join(_td, 'w.xlsx'); open(_wbp, 'w').close()
+    _o_fitz2 = sys.modules.get('fitz')
+    try:
+        sys.modules['fitz'] = _fitz
+        if _ok_rs: RS.load_rows = lambda path, loader=None: list(_rows_main)
+        _rc, _ro = _run_main(RS.main, ['resegment.py', '--pdf-root', _pdr, '--md-root', _mdr, '--workbook', _wbp, '--out', _out, '--paged-dir', _pgd]) if _ok_rs else ('', '')
+        _paged_after_refuse = sorted(os.listdir(_pgd)) if os.path.isdir(_pgd) else 'absent'
+        _out_after_refuse = sorted(os.listdir(_out)) if os.path.isdir(_out) else 'absent'
+        _rc2, _ = _run_main(RS.main, ['resegment.py', '--pdf-root', _pdr, '--md-root', _mdr, '--workbook', _wbp, '--out', _out, '--paged-dir', _pgd, '--force']) if _ok_rs else ('', '')
+        _paged_after_force = sorted(os.listdir(_pgd)) if os.path.isdir(_pgd) else 'absent'
+    finally:
+        if _o_fitz2 is None: sys.modules.pop('fitz', None)
+        else: sys.modules['fitz'] = _o_fitz2
+        if _ok_rs: RS.load_rows = _o_lr2
+check('R16z14 EXPECTED 에 어긋나 거부된 실행은 추적 산출물은 물론 대응표(pages.json·rows_map.csv)도 쓰지 않는다 — 대응표는 검사를 지난 뒤에만 쓴다; --force 면 둘 다 생긴다; 반쪽 산출물 *.tmp 는 .gitignore 로 막는다',
+      isinstance(_rc, str) and '쓰지 않습니다' in _rc and _paged_after_refuse in ([], 'absent') and _out_after_refuse in ([], 'absent')
+      and _rc2 == 0 and _paged_after_force == ['LM1903060001.pages.json', 'rows_map.csv']
+      and '/docs/03-analysis/data/*.tmp' in open(os.path.join(ROOT, '.gitignore'), encoding='utf-8').read(),
+      (_rc, _paged_after_refuse, _out_after_refuse, _paged_after_force))
 
 print('\n결과: %d/%d PASS%s%s' % (
     PASS, PASS + FAIL, ', %d FAIL' % FAIL if FAIL else '',

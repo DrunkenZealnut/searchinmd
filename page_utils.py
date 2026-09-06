@@ -16,6 +16,8 @@ EXCEL_MAX_CHARS = 32767          # 엑셀 셀 한도. add_fullpage.py 가 여기
 CODING_GROUPS = ('disputed', 'control', 'boundary', 'recall')
 BASELINE = 'baseline'            # 재현 기준선(현행 규칙)의 변형 라벨. 다른 변형 라벨은 regrade.variant_grid() 가 소유한다
 TRUNCATION_MARK = '...'
+GRADE_LABEL = {1: '미흡·없음', 2: '형식적 언급', 3: '구체적 대책'}   # 출하 등급 라벨 — recount_grades.py·resegment.py 가 공유한다
+PAGE_MARKER_RE = re.compile(r'<!--\s*page:\s*(\d+)\s*-->')          # <!-- page: N --> 마커 — build_page_map·insert_page_markers.py·resegment.py 가 공유한다
 
 
 def nfc(s):
@@ -93,7 +95,7 @@ def build_page_map(lines, metadata):
     marker_count = 0
     current_page = None
     for i, line in enumerate(lines):
-        m = re.search(r'<!--\s*page:\s*(\d+)\s*-->', line)
+        m = PAGE_MARKER_RE.search(line)
         if m:
             current_page = int(m.group(1))
             marker_count += 1

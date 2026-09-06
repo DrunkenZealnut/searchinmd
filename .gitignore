@@ -33,3 +33,5 @@ venv/
 # 코더 API 키 (code_pages.py --provider-env). 절대 커밋하지 않는다.
 /.env
 /.env.local
+# write_atomic 이 강제 종료(SIGKILL) 때 남길 수 있는 반쪽 산출물 — 추적 디렉터리에 커밋되지 않게
+/docs/03-analysis/data/*.tmp

@@ -1,0 +1,2568 @@
+{
+ "pages": 2173,
+ "books": 86,
+ "page_g": {
+  "1": 1502,
+  "2": 524,
+  "3": 147
+ },
+ "cases_pages": 13,
+ "cases_books": 5,
+ "areas": {
+  "반도체개발": {
+   "books": 30,
+   "pages": 396,
+   "page_g": {
+    "1": 358,
+    "2": 31,
+    "3": 7
+   }
+  },
+  "반도체장비": {
+   "books": 19,
+   "pages": 561,
+   "page_g": {
+    "1": 383,
+    "2": 117,
+    "3": 61
+   }
+  },
+  "반도체재료": {
+   "books": 24,
+   "pages": 893,
+   "page_g": {
+    "1": 514,
+    "2": 306,
+    "3": 73
+   }
+  },
+  "반도체제조": {
+   "books": 13,
+   "pages": 323,
+   "page_g": {
+    "1": 247,
+    "2": 70,
+    "3": 6
+   }
+  }
+ },
+ "unresolved": {
+  "books": 2,
+  "pages": 51,
+  "rows": 222
+ },
+ "moved_rows": 4316,
+ "unmatched_rows": 94,
+ "label_fallback_pages": 27,
+ "match_stats": {
+  "overflow": 293,
+  "ambiguous": 1118,
+  "partial": 118
+ },
+ "fallback_rows_on_text_pages": 65,
+ "page_grade_digest": "39d00effeb0dfe6c",
+ "kw_pages": {
+  "안전": 1482,
+  "위험": 551,
+  "먼지": 93,
+  "진동": 208,
+  "누출": 231,
+  "감전": 35,
+  "MSDS": 225,
+  "소음": 52,
+  "보건": 178,
+  "사망": 18,
+  "화재": 168,
+  "방사선": 45,
+  "화학물질": 139,
+  "부상": 23,
+  "폭발": 216,
+  "안전보건": 90,
+  "인화": 121,
+  "중독": 24,
+  "보호구": 94,
+  "물질안전보건자료": 31,
+  "산업안전보건법": 25,
+  "분진": 38,
+  "작업환경": 32,
+  "질병": 6,
+  "직업병": 4,
+  "추락": 1,
+  "유해인자": 1,
+  "끼임": 25,
+  "PSM": 7,
+  "공정안전관리": 1
+ },
+ "alignment_check": {
+  "books": 23,
+  "overall": {
+   "lines": 21711,
+   "exact": 18142,
+   "near": 20613,
+   "all_lines": 32486,
+   "all_exact": 25219,
+   "all_near": 29329
+  },
+  "per_book": {
+   "LM1903060318_18v2_LM1903060319_18v2_반도체_장비_시제품_성능평가": {
+    "lines": 1143,
+    "exact": 933,
+    "near": 1031,
+    "all_lines": 1419,
+    "all_exact": 1087,
+    "all_near": 1213
+   },
+   "LM1903060320_18v2_LM1903060321_18v2_반도체_장비_품질관리": {
+    "lines": 814,
+    "exact": 729,
+    "near": 790,
+    "all_lines": 1274,
+    "all_exact": 1040,
+    "all_near": 1165
+   },
+   "LM1903060324_19v2_반도체_장비_전장_조립": {
+    "lines": 1048,
+    "exact": 922,
+    "near": 1038,
+    "all_lines": 1480,
+    "all_exact": 1241,
+    "all_near": 1410
+   },
+   "LM1903060202_14v3_Etch_장비_운영": {
+    "lines": 1294,
+    "exact": 1183,
+    "near": 1289,
+    "all_lines": 1782,
+    "all_exact": 1529,
+    "all_near": 1697
+   },
+   "LM1903060307_18v2_반도체_장비_전장_설계": {
+    "lines": 457,
+    "exact": 395,
+    "near": 450,
+    "all_lines": 825,
+    "all_exact": 636,
+    "all_near": 737
+   },
+   "LM1903060213_19v4_반도체_패키징_전공정_장비_운영": {
+    "lines": 775,
+    "exact": 705,
+    "near": 769,
+    "all_lines": 1218,
+    "all_exact": 1033,
+    "all_near": 1152
+   },
+   "LM1903060301_18v2_반도체_장비_콘셉트_설계": {
+    "lines": 754,
+    "exact": 658,
+    "near": 714,
+    "all_lines": 1278,
+    "all_exact": 1034,
+    "all_near": 1143
+   },
+   "LM1903060303_18v2_반도체_장비_주변부_기구_설계": {
+    "lines": 559,
+    "exact": 515,
+    "near": 552,
+    "all_lines": 896,
+    "all_exact": 712,
+    "all_near": 810
+   },
+   "LM1903060308_18v2_반도체_장비_생산_외주관리": {
+    "lines": 686,
+    "exact": 513,
+    "near": 611,
+    "all_lines": 1185,
+    "all_exact": 825,
+    "all_near": 994
+   },
+   "LM1903060326_19v1_반도체_광학_장비_유지보수": {
+    "lines": 516,
+    "exact": 468,
+    "near": 511,
+    "all_lines": 888,
+    "all_exact": 729,
+    "all_near": 823
+   },
+   "LM1903060216_19v4_반도체_클린룸_시설_운영": {
+    "lines": 972,
+    "exact": 640,
+    "near": 784,
+    "all_lines": 1554,
+    "all_exact": 975,
+    "all_near": 1222
+   },
+   "LM1903060314_18v2_LM1903060315_18v2_반도체_장비_보드_설계": {
+    "lines": 779,
+    "exact": 614,
+    "near": 679,
+    "all_lines": 1324,
+    "all_exact": 942,
+    "all_near": 1090
+   },
+   "LM1903060327_19v1_반도체_진공_플라스마_장비_유지보수": {
+    "lines": 617,
+    "exact": 476,
+    "near": 540,
+    "all_lines": 1018,
+    "all_exact": 700,
+    "all_near": 828
+   },
+   "LM1903060201_14v3_Photo_장비운영": {
+    "lines": 782,
+    "exact": 742,
+    "near": 774,
+    "all_lines": 1092,
+    "all_exact": 945,
+    "all_near": 1003
+   },
+   "LM1903060203_14v3_박막확산_장비운영": {
+    "lines": 1414,
+    "exact": 1275,
+    "near": 1410,
+    "all_lines": 1947,
+    "all_exact": 1683,
+    "all_near": 1862
+   },
+   "LM1903060313_18v2_반도체_장비_고객_지원": {
+    "lines": 636,
+    "exact": 585,
+    "near": 630,
+    "all_lines": 1066,
+    "all_exact": 889,
+    "all_near": 977
+   },
+   "LM1903060328_19v1_반도체_케미컬_가스_장비_유지보수": {
+    "lines": 1333,
+    "exact": 1148,
+    "near": 1247,
+    "all_lines": 1824,
+    "all_exact": 1498,
+    "all_near": 1641
+   },
+   "LM1903060214_19v4_반도체_패키징_후공정장비_운영": {
+    "lines": 1238,
+    "exact": 1089,
+    "near": 1214,
+    "all_lines": 1893,
+    "all_exact": 1576,
+    "all_near": 1798
+   },
+   "LM1903060209_14v3_반도체_품질관리": {
+    "lines": 667,
+    "exact": 621,
+    "near": 655,
+    "all_lines": 990,
+    "all_exact": 818,
+    "all_near": 898
+   },
+   "LM1903060205_14v3_MI_장비_운영": {
+    "lines": 823,
+    "exact": 753,
+    "near": 799,
+    "all_lines": 1292,
+    "all_exact": 1053,
+    "all_near": 1185
+   },
+   "LM1903060329_19v1_반도체_장비_안전관리": {
+    "lines": 1776,
+    "exact": 1034,
+    "near": 1722,
+    "all_lines": 2713,
+    "all_exact": 1504,
+    "all_near": 2551
+   },
+   "LM1903060215_19v4_반도체_유틸리티_운영": {
+    "lines": 1035,
+    "exact": 910,
+    "near": 1030,
+    "all_lines": 1566,
+    "all_exact": 1309,
+    "all_near": 1501
+   },
+   "LM1903060204_14v3_C_C_장비_운영": {
+    "lines": 1593,
+    "exact": 1234,
+    "near": 1374,
+    "all_lines": 1962,
+    "all_exact": 1461,
+    "all_near": 1629
+   }
+  }
+ },
+ "per_book": {
+  "LM1903060129_23v4_반도체_내성_시험": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 21,
+   "old_pages": 14,
+   "new_pages": 12,
+   "moved_rows": 12,
+   "unmatched_rows": 0,
+   "pdf_pages": 74,
+   "md_markers": 29,
+   "aligned_lines": 570,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 2,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 11,
+    "2": 1,
+    "3": 0
+   }
+  },
+  "LM1903060318_18v2_LM1903060319_18v2_반도체_장비_시제품_성능평가": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 85,
+   "old_pages": 32,
+   "new_pages": 29,
+   "moved_rows": 48,
+   "unmatched_rows": 1,
+   "pdf_pages": 94,
+   "md_markers": 79,
+   "aligned_lines": 1143,
+   "align": {
+    "lines": 1143,
+    "exact": 933,
+    "near": 1031,
+    "all_lines": 1419,
+    "all_exact": 1087,
+    "all_near": 1213
+   },
+   "match_stats": {
+    "overflow": 7,
+    "ambiguous": 10,
+    "partial": 3
+   },
+   "page_g": {
+    "1": 20,
+    "2": 9,
+    "3": 0
+   }
+  },
+  "LM1903060320_18v2_LM1903060321_18v2_반도체_장비_품질관리": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 43,
+   "old_pages": 23,
+   "new_pages": 24,
+   "moved_rows": 19,
+   "unmatched_rows": 2,
+   "pdf_pages": 97,
+   "md_markers": 92,
+   "aligned_lines": 814,
+   "align": {
+    "lines": 814,
+    "exact": 729,
+    "near": 790,
+    "all_lines": 1274,
+    "all_exact": 1040,
+    "all_near": 1165
+   },
+   "match_stats": {
+    "overflow": 3,
+    "ambiguous": 0,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 22,
+    "2": 2,
+    "3": 0
+   }
+  },
+  "LM1903060324_19v2_반도체_장비_전장_조립": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 132,
+   "old_pages": 36,
+   "new_pages": 36,
+   "moved_rows": 78,
+   "unmatched_rows": 1,
+   "pdf_pages": 107,
+   "md_markers": 100,
+   "aligned_lines": 1050,
+   "align": {
+    "lines": 1048,
+    "exact": 922,
+    "near": 1038,
+    "all_lines": 1480,
+    "all_exact": 1241,
+    "all_near": 1410
+   },
+   "match_stats": {
+    "overflow": 3,
+    "ambiguous": 3,
+    "partial": 3
+   },
+   "page_g": {
+    "1": 27,
+    "2": 7,
+    "3": 2
+   }
+  },
+  "LM1903060417_23v3_반도체용_세정_공정_가스_제조": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 413,
+   "old_pages": 84,
+   "new_pages": 91,
+   "moved_rows": 166,
+   "unmatched_rows": 2,
+   "pdf_pages": 126,
+   "md_markers": 34,
+   "aligned_lines": 1742,
+   "align": null,
+   "match_stats": {
+    "overflow": 4,
+    "ambiguous": 21,
+    "partial": 2
+   },
+   "page_g": {
+    "1": 51,
+    "2": 29,
+    "3": 11
+   }
+  },
+  "LM1903060423_23v3_반도체용_SOD_공정_재료_제조": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 141,
+   "old_pages": 46,
+   "new_pages": 49,
+   "moved_rows": 52,
+   "unmatched_rows": 2,
+   "pdf_pages": 125,
+   "md_markers": 35,
+   "aligned_lines": 1474,
+   "align": null,
+   "match_stats": {
+    "overflow": 3,
+    "ambiguous": 39,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 34,
+    "2": 15,
+    "3": 0
+   }
+  },
+  "LM1903060202_14v3_Etch_장비_운영": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 86,
+   "old_pages": 32,
+   "new_pages": 33,
+   "moved_rows": 54,
+   "unmatched_rows": 0,
+   "pdf_pages": 105,
+   "md_markers": 98,
+   "aligned_lines": 1294,
+   "align": {
+    "lines": 1294,
+    "exact": 1183,
+    "near": 1289,
+    "all_lines": 1782,
+    "all_exact": 1529,
+    "all_near": 1697
+   },
+   "match_stats": {
+    "overflow": 9,
+    "ambiguous": 43,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 22,
+    "2": 10,
+    "3": 1
+   }
+  },
+  "LM1903060307_18v2_반도체_장비_전장_설계": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 69,
+   "old_pages": 16,
+   "new_pages": 18,
+   "moved_rows": 31,
+   "unmatched_rows": 1,
+   "pdf_pages": 68,
+   "md_markers": 63,
+   "aligned_lines": 459,
+   "align": {
+    "lines": 457,
+    "exact": 395,
+    "near": 450,
+    "all_lines": 825,
+    "all_exact": 636,
+    "all_near": 737
+   },
+   "match_stats": {
+    "overflow": 2,
+    "ambiguous": 6,
+    "partial": 2
+   },
+   "page_g": {
+    "1": 13,
+    "2": 4,
+    "3": 1
+   }
+  },
+  "LM1903060213_19v4_반도체_패키징_전공정_장비_운영": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 22,
+   "old_pages": 13,
+   "new_pages": 16,
+   "moved_rows": 10,
+   "unmatched_rows": 3,
+   "pdf_pages": 101,
+   "md_markers": 96,
+   "aligned_lines": 777,
+   "align": {
+    "lines": 775,
+    "exact": 705,
+    "near": 769,
+    "all_lines": 1218,
+    "all_exact": 1033,
+    "all_near": 1152
+   },
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 8,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 16,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060301_18v2_반도체_장비_콘셉트_설계": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 19,
+   "old_pages": 13,
+   "new_pages": 13,
+   "moved_rows": 13,
+   "unmatched_rows": 0,
+   "pdf_pages": 79,
+   "md_markers": 73,
+   "aligned_lines": 756,
+   "align": {
+    "lines": 754,
+    "exact": 658,
+    "near": 714,
+    "all_lines": 1278,
+    "all_exact": 1034,
+    "all_near": 1143
+   },
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 6,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 12,
+    "2": 1,
+    "3": 0
+   }
+  },
+  "LM1903060303_18v2_반도체_장비_주변부_기구_설계": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 17,
+   "old_pages": 13,
+   "new_pages": 11,
+   "moved_rows": 2,
+   "unmatched_rows": 0,
+   "pdf_pages": 71,
+   "md_markers": 67,
+   "aligned_lines": 559,
+   "align": {
+    "lines": 559,
+    "exact": 515,
+    "near": 552,
+    "all_lines": 896,
+    "all_exact": 712,
+    "all_near": 810
+   },
+   "match_stats": {
+    "overflow": 1,
+    "ambiguous": 0,
+    "partial": 1
+   },
+   "page_g": {
+    "1": 11,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060308_18v2_반도체_장비_생산_외주관리": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 30,
+   "old_pages": 3,
+   "new_pages": 15,
+   "moved_rows": 30,
+   "unmatched_rows": 0,
+   "pdf_pages": 79,
+   "md_markers": 68,
+   "aligned_lines": 686,
+   "align": {
+    "lines": 686,
+    "exact": 513,
+    "near": 611,
+    "all_lines": 1185,
+    "all_exact": 825,
+    "all_near": 994
+   },
+   "match_stats": {
+    "overflow": 3,
+    "ambiguous": 3,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 14,
+    "2": 1,
+    "3": 0
+   }
+  },
+  "LM1903060411_23v3_반도체_재료_안전관리": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 409,
+   "old_pages": 61,
+   "new_pages": 60,
+   "moved_rows": 136,
+   "unmatched_rows": 10,
+   "pdf_pages": 81,
+   "md_markers": 42,
+   "aligned_lines": 767,
+   "align": null,
+   "match_stats": {
+    "overflow": 15,
+    "ambiguous": 35,
+    "partial": 14
+   },
+   "page_g": {
+    "1": 12,
+    "2": 35,
+    "3": 13
+   }
+  },
+  "LM1903060416_23v3_반도체용_식각_공정_가스_제조": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 359,
+   "old_pages": 64,
+   "new_pages": 61,
+   "moved_rows": 164,
+   "unmatched_rows": 2,
+   "pdf_pages": 104,
+   "md_markers": 29,
+   "aligned_lines": 1174,
+   "align": null,
+   "match_stats": {
+    "overflow": 11,
+    "ambiguous": 43,
+    "partial": 6
+   },
+   "page_g": {
+    "1": 27,
+    "2": 27,
+    "3": 7
+   }
+  },
+  "LM1903060130_23v5_커스텀_레이아웃_적용_공정_분석": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 23,
+   "old_pages": 15,
+   "new_pages": 15,
+   "moved_rows": 6,
+   "unmatched_rows": 0,
+   "pdf_pages": 128,
+   "md_markers": 30,
+   "aligned_lines": 1461,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 2,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 15,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060326_19v1_반도체_광학_장비_유지보수": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 13,
+   "old_pages": 9,
+   "new_pages": 10,
+   "moved_rows": 7,
+   "unmatched_rows": 1,
+   "pdf_pages": 73,
+   "md_markers": 69,
+   "aligned_lines": 518,
+   "align": {
+    "lines": 516,
+    "exact": 468,
+    "near": 511,
+    "all_lines": 888,
+    "all_exact": 729,
+    "all_near": 823
+   },
+   "match_stats": {
+    "overflow": 1,
+    "ambiguous": 2,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 9,
+    "2": 1,
+    "3": 0
+   }
+  },
+  "LM1903060420_23v3_반도체용_박막_공정_전구체_제조": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 267,
+   "old_pages": 70,
+   "new_pages": 73,
+   "moved_rows": 131,
+   "unmatched_rows": 1,
+   "pdf_pages": 128,
+   "md_markers": 28,
+   "aligned_lines": 1784,
+   "align": null,
+   "match_stats": {
+    "overflow": 4,
+    "ambiguous": 14,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 47,
+    "2": 22,
+    "3": 4
+   }
+  },
+  "LM1903060216_19v4_반도체_클린룸_시설_운영": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 169,
+   "old_pages": 46,
+   "new_pages": 39,
+   "moved_rows": 108,
+   "unmatched_rows": 3,
+   "pdf_pages": 100,
+   "md_markers": 80,
+   "aligned_lines": 972,
+   "align": {
+    "lines": 972,
+    "exact": 640,
+    "near": 784,
+    "all_lines": 1554,
+    "all_exact": 975,
+    "all_near": 1222
+   },
+   "match_stats": {
+    "overflow": 8,
+    "ambiguous": 58,
+    "partial": 3
+   },
+   "page_g": {
+    "1": 27,
+    "2": 9,
+    "3": 3
+   }
+  },
+  "LM1903060104_23v5_디지털_회로_설계_수정요청": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 10,
+   "old_pages": 10,
+   "new_pages": 7,
+   "moved_rows": 9,
+   "unmatched_rows": 0,
+   "pdf_pages": 86,
+   "md_markers": 37,
+   "aligned_lines": 644,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 10,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 7,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060126_23v4_어드밴스드_언더필_패키지_개발": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 18,
+   "old_pages": 14,
+   "new_pages": 12,
+   "moved_rows": 4,
+   "unmatched_rows": 0,
+   "pdf_pages": 92,
+   "md_markers": 32,
+   "aligned_lines": 824,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 4,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 12,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060314_18v2_LM1903060315_18v2_반도체_장비_보드_설계": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 9,
+   "old_pages": 8,
+   "new_pages": 8,
+   "moved_rows": 4,
+   "unmatched_rows": 0,
+   "pdf_pages": 88,
+   "md_markers": 74,
+   "aligned_lines": 779,
+   "align": {
+    "lines": 779,
+    "exact": 614,
+    "near": 679,
+    "all_lines": 1324,
+    "all_exact": 942,
+    "all_near": 1090
+   },
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 0,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 8,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060327_19v1_반도체_진공_플라스마_장비_유지보수": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 22,
+   "old_pages": 15,
+   "new_pages": 15,
+   "moved_rows": 8,
+   "unmatched_rows": 3,
+   "pdf_pages": 87,
+   "md_markers": 72,
+   "aligned_lines": 619,
+   "align": {
+    "lines": 617,
+    "exact": 476,
+    "near": 540,
+    "all_lines": 1018,
+    "all_exact": 700,
+    "all_near": 828
+   },
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 4,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 15,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060401_20v2_반도체용_웨이퍼_재료_제조": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 34,
+   "old_pages": 18,
+   "new_pages": 18,
+   "moved_rows": 10,
+   "unmatched_rows": 0,
+   "pdf_pages": 104,
+   "md_markers": 58,
+   "aligned_lines": 1047,
+   "align": null,
+   "match_stats": {
+    "overflow": 2,
+    "ambiguous": 6,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 17,
+    "2": 1,
+    "3": 0
+   }
+  },
+  "LM1903060404_23v3_반도체용_금속_Target_재료_제조": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 30,
+   "old_pages": 15,
+   "new_pages": 17,
+   "moved_rows": 15,
+   "unmatched_rows": 0,
+   "pdf_pages": 83,
+   "md_markers": 38,
+   "aligned_lines": 713,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 16,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 16,
+    "2": 1,
+    "3": 0
+   }
+  },
+  "LM1903060410_23v3_반도체_재료_품질관리": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 169,
+   "old_pages": 32,
+   "new_pages": 31,
+   "moved_rows": 91,
+   "unmatched_rows": 5,
+   "pdf_pages": 118,
+   "md_markers": 43,
+   "aligned_lines": 1306,
+   "align": null,
+   "match_stats": {
+    "overflow": 14,
+    "ambiguous": 42,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 21,
+    "2": 8,
+    "3": 2
+   }
+  },
+  "LM1903060419_23v3_반도체용_이온_주입_공정_가스_제조": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 480,
+   "old_pages": 77,
+   "new_pages": 75,
+   "moved_rows": 248,
+   "unmatched_rows": 8,
+   "pdf_pages": 112,
+   "md_markers": 36,
+   "aligned_lines": 1247,
+   "align": null,
+   "match_stats": {
+    "overflow": 12,
+    "ambiguous": 54,
+    "partial": 7
+   },
+   "page_g": {
+    "1": 28,
+    "2": 39,
+    "3": 8
+   }
+  },
+  "LM1903060425_23v3_반도체용_세정_공정_재료_제조": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 228,
+   "old_pages": 53,
+   "new_pages": 54,
+   "moved_rows": 103,
+   "unmatched_rows": 6,
+   "pdf_pages": 114,
+   "md_markers": 44,
+   "aligned_lines": 1113,
+   "align": null,
+   "match_stats": {
+    "overflow": 5,
+    "ambiguous": 12,
+    "partial": 4
+   },
+   "page_g": {
+    "1": 37,
+    "2": 16,
+    "3": 1
+   }
+  },
+  "LM1903060201_14v3_Photo_장비운영": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 33,
+   "old_pages": 12,
+   "new_pages": 12,
+   "moved_rows": 18,
+   "unmatched_rows": 0,
+   "pdf_pages": 75,
+   "md_markers": 69,
+   "aligned_lines": 782,
+   "align": {
+    "lines": 782,
+    "exact": 742,
+    "near": 774,
+    "all_lines": 1092,
+    "all_exact": 945,
+    "all_near": 1003
+   },
+   "match_stats": {
+    "overflow": 4,
+    "ambiguous": 5,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 7,
+    "2": 5,
+    "3": 0
+   }
+  },
+  "LM1903060203_14v3_박막확산_장비운영": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 44,
+   "old_pages": 22,
+   "new_pages": 23,
+   "moved_rows": 22,
+   "unmatched_rows": 0,
+   "pdf_pages": 117,
+   "md_markers": 110,
+   "aligned_lines": 1414,
+   "align": {
+    "lines": 1414,
+    "exact": 1275,
+    "near": 1410,
+    "all_lines": 1947,
+    "all_exact": 1683,
+    "all_near": 1862
+   },
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 1,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 18,
+    "2": 5,
+    "3": 0
+   }
+  },
+  "LM1903060108_23v4_패키지_조립_공정_개발": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 14,
+   "old_pages": 12,
+   "new_pages": 12,
+   "moved_rows": 5,
+   "unmatched_rows": 1,
+   "pdf_pages": 90,
+   "md_markers": 35,
+   "aligned_lines": 818,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 2,
+    "partial": 1
+   },
+   "page_g": {
+    "1": 12,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060125_23v4_이종_접합_패키지_개발": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 32,
+   "old_pages": 8,
+   "new_pages": 7,
+   "moved_rows": 30,
+   "unmatched_rows": 0,
+   "pdf_pages": 74,
+   "md_markers": 35,
+   "aligned_lines": 492,
+   "align": null,
+   "match_stats": {
+    "overflow": 4,
+    "ambiguous": 6,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 3,
+    "2": 4,
+    "3": 0
+   }
+  },
+  "LM1903060313_18v2_반도체_장비_고객_지원": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 36,
+   "old_pages": 18,
+   "new_pages": 14,
+   "moved_rows": 16,
+   "unmatched_rows": 0,
+   "pdf_pages": 74,
+   "md_markers": 71,
+   "aligned_lines": 638,
+   "align": {
+    "lines": 636,
+    "exact": 585,
+    "near": 630,
+    "all_lines": 1066,
+    "all_exact": 889,
+    "all_near": 977
+   },
+   "match_stats": {
+    "overflow": 5,
+    "ambiguous": 8,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 10,
+    "2": 4,
+    "3": 0
+   }
+  },
+  "LM1903060323_19v3_반도체_장비_기구_조립_검증": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 309,
+   "old_pages": 58,
+   "new_pages": 61,
+   "moved_rows": 127,
+   "unmatched_rows": 5,
+   "pdf_pages": 130,
+   "md_markers": 84,
+   "aligned_lines": 1684,
+   "align": null,
+   "match_stats": {
+    "overflow": 18,
+    "ambiguous": 52,
+    "partial": 2
+   },
+   "page_g": {
+    "1": 37,
+    "2": 15,
+    "3": 9
+   }
+  },
+  "LM1903060424_23v3_반도체용_박막_도금_공정_재료_제조": {
+   "status": "unresolved",
+   "why": "no md",
+   "rows": 202,
+   "old_pages": 49,
+   "new_pages": 49,
+   "page_g": {
+    "1": 31,
+    "2": 12,
+    "3": 6
+   }
+  },
+  "LM1903060102_23v5_반도체_아키텍처_설계": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 28,
+   "old_pages": 17,
+   "new_pages": 15,
+   "moved_rows": 14,
+   "unmatched_rows": 0,
+   "pdf_pages": 101,
+   "md_markers": 43,
+   "aligned_lines": 946,
+   "align": null,
+   "match_stats": {
+    "overflow": 4,
+    "ambiguous": 5,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 14,
+    "2": 1,
+    "3": 0
+   }
+  },
+  "LM1903060121_23v4_와이어_본딩_패키지_개발": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 13,
+   "old_pages": 12,
+   "new_pages": 11,
+   "moved_rows": 6,
+   "unmatched_rows": 0,
+   "pdf_pages": 95,
+   "md_markers": 31,
+   "aligned_lines": 1132,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 4,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 10,
+    "2": 1,
+    "3": 0
+   }
+  },
+  "LM1903060131_23v5_커스텀_레이아웃_설계": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 12,
+   "old_pages": 9,
+   "new_pages": 9,
+   "moved_rows": 7,
+   "unmatched_rows": 0,
+   "pdf_pages": 163,
+   "md_markers": 37,
+   "aligned_lines": 2075,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 3,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 9,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060316_18v2_LM1903060317_18v2_반도체_장비_유틸리티_소프트웨어_개발": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 19,
+   "old_pages": 16,
+   "new_pages": 15,
+   "moved_rows": 10,
+   "unmatched_rows": 1,
+   "pdf_pages": 75,
+   "md_markers": 40,
+   "aligned_lines": 653,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 2,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 15,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060322_19v3_반도체_장비_기구_조립": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 120,
+   "old_pages": 52,
+   "new_pages": 48,
+   "moved_rows": 49,
+   "unmatched_rows": 1,
+   "pdf_pages": 138,
+   "md_markers": 108,
+   "aligned_lines": 1442,
+   "align": null,
+   "match_stats": {
+    "overflow": 3,
+    "ambiguous": 42,
+    "partial": 1
+   },
+   "page_g": {
+    "1": 40,
+    "2": 4,
+    "3": 4
+   }
+  },
+  "LM1903060409_23v3_반도체_재료_생산관리": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 33,
+   "old_pages": 18,
+   "new_pages": 16,
+   "moved_rows": 16,
+   "unmatched_rows": 1,
+   "pdf_pages": 102,
+   "md_markers": 50,
+   "aligned_lines": 847,
+   "align": null,
+   "match_stats": {
+    "overflow": 3,
+    "ambiguous": 9,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 12,
+    "2": 4,
+    "3": 0
+   }
+  },
+  "LM1903060412_20v1_반도체용_마스크_재료_제조": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 30,
+   "old_pages": 14,
+   "new_pages": 16,
+   "moved_rows": 12,
+   "unmatched_rows": 0,
+   "pdf_pages": 78,
+   "md_markers": 31,
+   "aligned_lines": 784,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 6,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 13,
+    "2": 2,
+    "3": 1
+   }
+  },
+  "LM1903060415_20v1_반도체용_CMP_재료_제조": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 41,
+   "old_pages": 13,
+   "new_pages": 9,
+   "moved_rows": 9,
+   "unmatched_rows": 0,
+   "pdf_pages": 75,
+   "md_markers": 35,
+   "aligned_lines": 815,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 27,
+    "partial": 1
+   },
+   "page_g": {
+    "1": 4,
+    "2": 0,
+    "3": 5
+   }
+  },
+  "LM1903060120_23v5_아날로그_회로_시스템_설계": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 20,
+   "old_pages": 13,
+   "new_pages": 14,
+   "moved_rows": 8,
+   "unmatched_rows": 1,
+   "pdf_pages": 112,
+   "md_markers": 61,
+   "aligned_lines": 1174,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 0,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 14,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060325_19v2_반도체_장비_전장_조립_검증": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 103,
+   "old_pages": 29,
+   "new_pages": 31,
+   "moved_rows": 55,
+   "unmatched_rows": 1,
+   "pdf_pages": 96,
+   "md_markers": 65,
+   "aligned_lines": 1100,
+   "align": null,
+   "match_stats": {
+    "overflow": 1,
+    "ambiguous": 4,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 26,
+    "2": 5,
+    "3": 0
+   }
+  },
+  "LM1903060328_19v1_반도체_케미컬_가스_장비_유지보수": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 172,
+   "old_pages": 47,
+   "new_pages": 46,
+   "moved_rows": 78,
+   "unmatched_rows": 2,
+   "pdf_pages": 114,
+   "md_markers": 100,
+   "aligned_lines": 1335,
+   "align": {
+    "lines": 1333,
+    "exact": 1148,
+    "near": 1247,
+    "all_lines": 1824,
+    "all_exact": 1498,
+    "all_near": 1641
+   },
+   "match_stats": {
+    "overflow": 2,
+    "ambiguous": 14,
+    "partial": 1
+   },
+   "page_g": {
+    "1": 33,
+    "2": 12,
+    "3": 1
+   }
+  },
+  "LM1903060418_23v3_반도체용_박막_공정_가스_제조": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 404,
+   "old_pages": 73,
+   "new_pages": 72,
+   "moved_rows": 185,
+   "unmatched_rows": 3,
+   "pdf_pages": 112,
+   "md_markers": 34,
+   "aligned_lines": 1139,
+   "align": null,
+   "match_stats": {
+    "overflow": 14,
+    "ambiguous": 69,
+    "partial": 20
+   },
+   "page_g": {
+    "1": 22,
+    "2": 41,
+    "3": 9
+   }
+  },
+  "LM1903060422_23v3_반도체용_트랙_공정_재료_제조": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 60,
+   "old_pages": 23,
+   "new_pages": 24,
+   "moved_rows": 16,
+   "unmatched_rows": 3,
+   "pdf_pages": 91,
+   "md_markers": 35,
+   "aligned_lines": 707,
+   "align": null,
+   "match_stats": {
+    "overflow": 3,
+    "ambiguous": 0,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 15,
+    "2": 9,
+    "3": 0
+   }
+  },
+  "LM1903060211_19v4_반도체_웨이퍼_레벨_테스트_장비_운영": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 56,
+   "old_pages": 18,
+   "new_pages": 14,
+   "moved_rows": 27,
+   "unmatched_rows": 0,
+   "pdf_pages": 92,
+   "md_markers": 51,
+   "aligned_lines": 909,
+   "align": null,
+   "match_stats": {
+    "overflow": 5,
+    "ambiguous": 34,
+    "partial": 1
+   },
+   "page_g": {
+    "1": 8,
+    "2": 6,
+    "3": 0
+   }
+  },
+  "LM1903060114_23v2_반도체_펌웨어_개발": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 26,
+   "old_pages": 7,
+   "new_pages": 9,
+   "moved_rows": 21,
+   "unmatched_rows": 0,
+   "pdf_pages": 165,
+   "md_markers": 47,
+   "aligned_lines": 1875,
+   "align": null,
+   "match_stats": {
+    "overflow": 5,
+    "ambiguous": 13,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 4,
+    "2": 5,
+    "3": 0
+   }
+  },
+  "LM1903060122_23v4_플립_패키지_개발": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 23,
+   "old_pages": 17,
+   "new_pages": 16,
+   "moved_rows": 6,
+   "unmatched_rows": 1,
+   "pdf_pages": 111,
+   "md_markers": 44,
+   "aligned_lines": 921,
+   "align": null,
+   "match_stats": {
+    "overflow": 2,
+    "ambiguous": 2,
+    "partial": 1
+   },
+   "page_g": {
+    "1": 16,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060101_23v6_반도체_제품_기획": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 32,
+   "old_pages": 27,
+   "new_pages": 27,
+   "moved_rows": 16,
+   "unmatched_rows": 1,
+   "pdf_pages": 171,
+   "md_markers": 70,
+   "aligned_lines": 1591,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 1,
+    "partial": 1
+   },
+   "page_g": {
+    "1": 27,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060113_23v2_반도체_설계_검증": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 10,
+   "old_pages": 6,
+   "new_pages": 5,
+   "moved_rows": 1,
+   "unmatched_rows": 0,
+   "pdf_pages": 145,
+   "md_markers": 40,
+   "aligned_lines": 1377,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 1,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 4,
+    "2": 1,
+    "3": 0
+   }
+  },
+  "LM1903060117_23v7_반도체_제조_단위_공정_공정_개발": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 69,
+   "old_pages": 24,
+   "new_pages": 24,
+   "moved_rows": 24,
+   "unmatched_rows": 1,
+   "pdf_pages": 123,
+   "md_markers": 42,
+   "aligned_lines": 1544,
+   "align": null,
+   "match_stats": {
+    "overflow": 5,
+    "ambiguous": 5,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 21,
+    "2": 2,
+    "3": 1
+   }
+  },
+  "LM1903060128_23v4_반도체_수명_시험": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 65,
+   "old_pages": 19,
+   "new_pages": 21,
+   "moved_rows": 23,
+   "unmatched_rows": 0,
+   "pdf_pages": 102,
+   "md_markers": 30,
+   "aligned_lines": 1282,
+   "align": null,
+   "match_stats": {
+    "overflow": 2,
+    "ambiguous": 17,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 16,
+    "2": 4,
+    "3": 1
+   }
+  },
+  "LM1903060305_18v2_반도체_장비_시스템_소프트웨어_개발": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 11,
+   "old_pages": 10,
+   "new_pages": 8,
+   "moved_rows": 5,
+   "unmatched_rows": 0,
+   "pdf_pages": 79,
+   "md_markers": 28,
+   "aligned_lines": 668,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 3,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 8,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060214_19v4_반도체_패키징_후공정장비_운영": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 28,
+   "old_pages": 23,
+   "new_pages": 25,
+   "moved_rows": 13,
+   "unmatched_rows": 2,
+   "pdf_pages": 158,
+   "md_markers": 141,
+   "aligned_lines": 1240,
+   "align": {
+    "lines": 1238,
+    "exact": 1089,
+    "near": 1214,
+    "all_lines": 1893,
+    "all_exact": 1576,
+    "all_near": 1798
+   },
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 4,
+    "partial": 1
+   },
+   "page_g": {
+    "1": 25,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060118_23v5_아날로그_회로_아키텍처_설계": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 24,
+   "old_pages": 10,
+   "new_pages": 13,
+   "moved_rows": 7,
+   "unmatched_rows": 0,
+   "pdf_pages": 126,
+   "md_markers": 37,
+   "aligned_lines": 1546,
+   "align": null,
+   "match_stats": {
+    "overflow": 5,
+    "ambiguous": 0,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 12,
+    "2": 1,
+    "3": 0
+   }
+  },
+  "LM1903060112_23v5_자동_배치_배선_레이아웃_설계": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 12,
+   "old_pages": 7,
+   "new_pages": 8,
+   "moved_rows": 4,
+   "unmatched_rows": 0,
+   "pdf_pages": 127,
+   "md_markers": 40,
+   "aligned_lines": 1823,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 1,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 8,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060209_14v3_반도체_품질관리": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 24,
+   "old_pages": 17,
+   "new_pages": 18,
+   "moved_rows": 12,
+   "unmatched_rows": 0,
+   "pdf_pages": 78,
+   "md_markers": 75,
+   "aligned_lines": 668,
+   "align": {
+    "lines": 667,
+    "exact": 621,
+    "near": 655,
+    "all_lines": 990,
+    "all_exact": 818,
+    "all_near": 898
+   },
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 3,
+    "partial": 1
+   },
+   "page_g": {
+    "1": 17,
+    "2": 1,
+    "3": 0
+   }
+  },
+  "LM1903060115_23v7_메모리_반도체_제조_공정_개발": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 31,
+   "old_pages": 16,
+   "new_pages": 15,
+   "moved_rows": 17,
+   "unmatched_rows": 0,
+   "pdf_pages": 127,
+   "md_markers": 42,
+   "aligned_lines": 1376,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 3,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 13,
+    "2": 2,
+    "3": 0
+   }
+  },
+  "LM1903060124_23v4_어드밴스드_팬_아웃_패키지_개발": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 24,
+   "old_pages": 13,
+   "new_pages": 13,
+   "moved_rows": 14,
+   "unmatched_rows": 1,
+   "pdf_pages": 92,
+   "md_markers": 32,
+   "aligned_lines": 817,
+   "align": null,
+   "match_stats": {
+    "overflow": 1,
+    "ambiguous": 1,
+    "partial": 1
+   },
+   "page_g": {
+    "1": 12,
+    "2": 0,
+    "3": 1
+   }
+  },
+  "LM1903060127_23v4_반도체_환경_시험": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 89,
+   "old_pages": 25,
+   "new_pages": 25,
+   "moved_rows": 25,
+   "unmatched_rows": 0,
+   "pdf_pages": 111,
+   "md_markers": 31,
+   "aligned_lines": 1234,
+   "align": null,
+   "match_stats": {
+    "overflow": 4,
+    "ambiguous": 16,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 17,
+    "2": 6,
+    "3": 2
+   }
+  },
+  "LM1903060123_23v4_웨이퍼_레벨_패키지_개발": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 26,
+   "old_pages": 9,
+   "new_pages": 11,
+   "moved_rows": 8,
+   "unmatched_rows": 0,
+   "pdf_pages": 106,
+   "md_markers": 44,
+   "aligned_lines": 882,
+   "align": null,
+   "match_stats": {
+    "overflow": 2,
+    "ambiguous": 1,
+    "partial": 1
+   },
+   "page_g": {
+    "1": 10,
+    "2": 0,
+    "3": 1
+   }
+  },
+  "LM1903060103_아날로그_회로_설계": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 15,
+   "old_pages": 12,
+   "new_pages": 12,
+   "moved_rows": 11,
+   "unmatched_rows": 0,
+   "pdf_pages": 90,
+   "md_markers": 42,
+   "aligned_lines": 804,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 6,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 12,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060132_23v5_커스텀_레이아웃_검증": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 6,
+   "old_pages": 6,
+   "new_pages": 5,
+   "moved_rows": 3,
+   "unmatched_rows": 0,
+   "pdf_pages": 125,
+   "md_markers": 36,
+   "aligned_lines": 1612,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 1,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 5,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060406_20v2_반도체_패키지_재료_제조": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 50,
+   "old_pages": 21,
+   "new_pages": 21,
+   "moved_rows": 11,
+   "unmatched_rows": 1,
+   "pdf_pages": 126,
+   "md_markers": 56,
+   "aligned_lines": 1409,
+   "align": null,
+   "match_stats": {
+    "overflow": 5,
+    "ambiguous": 7,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 19,
+    "2": 2,
+    "3": 0
+   }
+  },
+  "LM1903060110_반도체신뢰성평가": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 11,
+   "old_pages": 7,
+   "new_pages": 9,
+   "moved_rows": 6,
+   "unmatched_rows": 2,
+   "pdf_pages": 98,
+   "md_markers": 48,
+   "aligned_lines": 942,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 0,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 9,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060414_20v1_반도체용_플립칩_재료_제조": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 66,
+   "old_pages": 21,
+   "new_pages": 23,
+   "moved_rows": 33,
+   "unmatched_rows": 1,
+   "pdf_pages": 152,
+   "md_markers": 39,
+   "aligned_lines": 2004,
+   "align": null,
+   "match_stats": {
+    "overflow": 1,
+    "ambiguous": 8,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 17,
+    "2": 4,
+    "3": 2
+   }
+  },
+  "LM1903060403_14v1_반도체용_가스_재료_제조": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 72,
+   "old_pages": 20,
+   "new_pages": 33,
+   "moved_rows": 58,
+   "unmatched_rows": 0,
+   "pdf_pages": 109,
+   "md_markers": 54,
+   "aligned_lines": 869,
+   "align": null,
+   "match_stats": {
+    "overflow": 1,
+    "ambiguous": 21,
+    "partial": 5
+   },
+   "page_g": {
+    "1": 27,
+    "2": 6,
+    "3": 0
+   }
+  },
+  "LM1903060205_14v3_MI_장비_운영": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 32,
+   "old_pages": 12,
+   "new_pages": 19,
+   "moved_rows": 17,
+   "unmatched_rows": 1,
+   "pdf_pages": 90,
+   "md_markers": 84,
+   "aligned_lines": 824,
+   "align": {
+    "lines": 823,
+    "exact": 753,
+    "near": 799,
+    "all_lines": 1292,
+    "all_exact": 1053,
+    "all_near": 1185
+   },
+   "match_stats": {
+    "overflow": 2,
+    "ambiguous": 2,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 18,
+    "2": 1,
+    "3": 0
+   }
+  },
+  "LM1903060109_23v4_반도체_제품_기능성능_검증": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 18,
+   "old_pages": 13,
+   "new_pages": 16,
+   "moved_rows": 9,
+   "unmatched_rows": 0,
+   "pdf_pages": 107,
+   "md_markers": 61,
+   "aligned_lines": 967,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 3,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 16,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060329_19v1_반도체_장비_안전관리": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 945,
+   "old_pages": 20,
+   "new_pages": 136,
+   "moved_rows": 942,
+   "unmatched_rows": 2,
+   "pdf_pages": 155,
+   "md_markers": 154,
+   "aligned_lines": 1776,
+   "align": {
+    "lines": 1776,
+    "exact": 1034,
+    "near": 1722,
+    "all_lines": 2713,
+    "all_exact": 1504,
+    "all_near": 2551
+   },
+   "match_stats": {
+    "overflow": 23,
+    "ambiguous": 91,
+    "partial": 19
+   },
+   "page_g": {
+    "1": 43,
+    "2": 51,
+    "3": 42
+   }
+  },
+  "LM1903060107_패키지_제품설계": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 17,
+   "old_pages": 10,
+   "new_pages": 13,
+   "moved_rows": 15,
+   "unmatched_rows": 0,
+   "pdf_pages": 82,
+   "md_markers": 54,
+   "aligned_lines": 476,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 9,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 13,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060405_14v1_반도체용_습식화공약품_Wet_Chemical_재료_제조": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 118,
+   "old_pages": 9,
+   "new_pages": 32,
+   "moved_rows": 95,
+   "unmatched_rows": 1,
+   "pdf_pages": 83,
+   "md_markers": 48,
+   "aligned_lines": 777,
+   "align": null,
+   "match_stats": {
+    "overflow": 2,
+    "ambiguous": 1,
+    "partial": 3
+   },
+   "page_g": {
+    "1": 19,
+    "2": 13,
+    "3": 0
+   }
+  },
+  "LM1903060302_18v2_반도체_장비_주요부_기구_설계": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 49,
+   "old_pages": 4,
+   "new_pages": 23,
+   "moved_rows": 45,
+   "unmatched_rows": 2,
+   "pdf_pages": 76,
+   "md_markers": 53,
+   "aligned_lines": 578,
+   "align": null,
+   "match_stats": {
+    "overflow": 1,
+    "ambiguous": 1,
+    "partial": 1
+   },
+   "page_g": {
+    "1": 20,
+    "2": 1,
+    "3": 2
+   }
+  },
+  "LM1903060421_23v3_반도체용_포토_공정_재료_제조": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 46,
+   "old_pages": 15,
+   "new_pages": 20,
+   "moved_rows": 25,
+   "unmatched_rows": 0,
+   "pdf_pages": 89,
+   "md_markers": 39,
+   "aligned_lines": 641,
+   "align": null,
+   "match_stats": {
+    "overflow": 5,
+    "ambiguous": 1,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 12,
+    "2": 8,
+    "3": 0
+   }
+  },
+  "LM1903060215_19v4_반도체_유틸리티_운영": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 296,
+   "old_pages": 15,
+   "new_pages": 47,
+   "moved_rows": 247,
+   "unmatched_rows": 4,
+   "pdf_pages": 101,
+   "md_markers": 96,
+   "aligned_lines": 1037,
+   "align": {
+    "lines": 1035,
+    "exact": 910,
+    "near": 1030,
+    "all_lines": 1566,
+    "all_exact": 1309,
+    "all_near": 1501
+   },
+   "match_stats": {
+    "overflow": 20,
+    "ambiguous": 61,
+    "partial": 10
+   },
+   "page_g": {
+    "1": 25,
+    "2": 20,
+    "3": 2
+   }
+  },
+  "LM1903060119_23v5_아날로그_회로_소자_레벨_설계": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 4,
+   "old_pages": 4,
+   "new_pages": 4,
+   "moved_rows": 2,
+   "unmatched_rows": 0,
+   "pdf_pages": 85,
+   "md_markers": 40,
+   "aligned_lines": 779,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 3,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 4,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060426_23v3_반도체용_CMP_슬러리_재료_제조": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 48,
+   "old_pages": 2,
+   "new_pages": 10,
+   "moved_rows": 47,
+   "unmatched_rows": 0,
+   "pdf_pages": 67,
+   "md_markers": 28,
+   "aligned_lines": 669,
+   "align": null,
+   "match_stats": {
+    "overflow": 4,
+    "ambiguous": 14,
+    "partial": 1
+   },
+   "page_g": {
+    "1": 5,
+    "2": 1,
+    "3": 4
+   }
+  },
+  "LM1903060204_14v3_C_C_장비_운영": {
+   "status": "resolved",
+   "method": "markers",
+   "rows": 111,
+   "old_pages": 23,
+   "new_pages": 39,
+   "moved_rows": 92,
+   "unmatched_rows": 0,
+   "pdf_pages": 125,
+   "md_markers": 104,
+   "aligned_lines": 1593,
+   "align": {
+    "lines": 1593,
+    "exact": 1234,
+    "near": 1374,
+    "all_lines": 1962,
+    "all_exact": 1461,
+    "all_near": 1629
+   },
+   "match_stats": {
+    "overflow": 10,
+    "ambiguous": 22,
+    "partial": 1
+   },
+   "page_g": {
+    "1": 31,
+    "2": 8,
+    "3": 0
+   }
+  },
+  "LM1903060210_14v3_반도체_생산성_향상": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 18,
+   "old_pages": 6,
+   "new_pages": 17,
+   "moved_rows": 16,
+   "unmatched_rows": 0,
+   "pdf_pages": 97,
+   "md_markers": 41,
+   "aligned_lines": 924,
+   "align": null,
+   "match_stats": {
+    "overflow": 0,
+    "ambiguous": 0,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 17,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060116_23v7_시스템_반도체_제조_공정_개발": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 5,
+   "old_pages": 3,
+   "new_pages": 3,
+   "moved_rows": 2,
+   "unmatched_rows": 0,
+   "pdf_pages": 129,
+   "md_markers": 32,
+   "aligned_lines": 1723,
+   "align": null,
+   "match_stats": {
+    "overflow": 1,
+    "ambiguous": 4,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 3,
+    "2": 0,
+    "3": 0
+   }
+  },
+  "LM1903060402_14v1_반도체용_리소그래피_재료_제조": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 64,
+   "old_pages": 7,
+   "new_pages": 37,
+   "moved_rows": 57,
+   "unmatched_rows": 2,
+   "pdf_pages": 104,
+   "md_markers": 47,
+   "aligned_lines": 914,
+   "align": null,
+   "match_stats": {
+    "overflow": 4,
+    "ambiguous": 28,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 28,
+    "2": 9,
+    "3": 0
+   }
+  },
+  "LM1903060106_반도체_제조_공정_개발": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 96,
+   "old_pages": 17,
+   "new_pages": 33,
+   "moved_rows": 51,
+   "unmatched_rows": 1,
+   "pdf_pages": 198,
+   "md_markers": 95,
+   "aligned_lines": 2059,
+   "align": null,
+   "match_stats": {
+    "overflow": 11,
+    "ambiguous": 23,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 29,
+    "2": 3,
+    "3": 1
+   }
+  },
+  "LM1903060212_19v4_반도체_패키지_레벨_테스트_장비_운영": {
+   "status": "resolved",
+   "method": "alignment",
+   "rows": 69,
+   "old_pages": 3,
+   "new_pages": 21,
+   "moved_rows": 67,
+   "unmatched_rows": 1,
+   "pdf_pages": 124,
+   "md_markers": 59,
+   "aligned_lines": 1120,
+   "align": null,
+   "match_stats": {
+    "overflow": 4,
+    "ambiguous": 5,
+    "partial": 0
+   },
+   "page_g": {
+    "1": 16,
+    "2": 5,
+    "3": 0
+   }
+  },
+  "LM1903060408_23v3_반도체_재료_개발": {
+   "status": "unresolved",
+   "why": "no md",
+   "rows": 20,
+   "old_pages": 2,
+   "new_pages": 2,
+   "page_g": {
+    "1": 0,
+    "2": 2,
+    "3": 0
+   }
+  }
+ },
+ "method_books": {
+  "alignment": 61,
+  "markers": 23,
+  "unresolved": 2
+ },
+ "case_pages": [
+  {
+   "book": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 27,
+   "old_labels": [
+    "27",
+    "28"
+   ],
+   "grade": 2
+  },
+  {
+   "book": "LM1903060411_23v3_반도체_재료_안전관리",
+   "page": 33,
+   "old_labels": [
+    "33"
+   ],
+   "grade": 2
+  },
+  {
+   "book": "LM1903060422_23v3_반도체용_트랙_공정_재료_제조",
+   "page": 78,
+   "old_labels": [
+    "78"
+   ],
+   "grade": 2
+  },
+  {
+   "book": "LM1903060329_19v1_반도체_장비_안전관리",
+   "page": 33,
+   "old_labels": [
+    "46"
+   ],
+   "grade": 2
+  },
+  {
+   "book": "LM1903060329_19v1_반도체_장비_안전관리",
+   "page": 53,
+   "old_labels": [
+    "142",
+    "143"
+   ],
+   "grade": 3
+  },
+  {
+   "book": "LM1903060329_19v1_반도체_장비_안전관리",
+   "page": 105,
+   "old_labels": [
+    "154"
+   ],
+   "grade": 3
+  },
+  {
+   "book": "LM1903060329_19v1_반도체_장비_안전관리",
+   "page": 97,
+   "old_labels": [
+    "154"
+   ],
+   "grade": 2
+  },
+  {
+   "book": "LM1903060329_19v1_반도체_장비_안전관리",
+   "page": 103,
+   "old_labels": [
+    "154"
+   ],
+   "grade": 3
+  },
+  {
+   "book": "LM1903060329_19v1_반도체_장비_안전관리",
+   "page": 107,
+   "old_labels": [
+    "154"
+   ],
+   "grade": 3
+  },
+  {
+   "book": "LM1903060329_19v1_반도체_장비_안전관리",
+   "page": 110,
+   "old_labels": [
+    "154"
+   ],
+   "grade": 3
+  },
+  {
+   "book": "LM1903060329_19v1_반도체_장비_안전관리",
+   "page": 112,
+   "old_labels": [
+    "154"
+   ],
+   "grade": 3
+  },
+  {
+   "book": "LM1903060421_23v3_반도체용_포토_공정_재료_제조",
+   "page": 67,
+   "old_labels": [
+    "67",
+    "68"
+   ],
+   "grade": 2
+  },
+  {
+   "book": "LM1903060402_14v1_반도체용_리소그래피_재료_제조",
+   "page": 69,
+   "old_labels": [
+    "91"
+   ],
+   "grade": 2
+  }
+ ],
+ "meta": {
+  "workbook": "ncs_keywords_in_markdown_results_20260402.xlsx",
+  "workbook_sha256": "18437cd37839c72b525e7bdb067647def561e7d63f9c3af96170ceb1f2728486",
+  "pdf_root": "~/DEV/SemiconductorAcademy/data/ncs",
+  "md_root": "data/markdown/ncs",
+  "rows": 7769,
+  "md_files": 85,
+  "pdf_files": 86,
+  "limit": null,
+  "rule": "regrade.grade_page baseline (word_boundary=False, normalize=False)",
+  "run_at": "2026-09-06T05:56:30+00:00",
+  "expected": {
+   "pages": 2173,
+   "page_g": {
+    "1": 1502,
+    "2": 524,
+    "3": 147
+   },
+   "books": 86,
+   "unresolved_pages": 51,
+   "digest": "39d00effeb0dfe6c",
+   "cases_pages": 13,
+   "cases_books": 5,
+   "moved_rows": 4316,
+   "unmatched_rows": 94,
+   "label_fallback_pages": 27,
+   "alignment_overall": {
+    "lines": 21711,
+    "exact": 18142,
+    "near": 20613,
+    "all_lines": 32486,
+    "all_exact": 25219,
+    "all_near": 29329
+   },
+   "match_stats": {
+    "overflow": 293,
+    "ambiguous": 1118,
+    "partial": 118
+   }
+  },
+  "expected_mismatch": null
+ }
+}
