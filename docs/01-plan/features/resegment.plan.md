@@ -6,7 +6,7 @@
 > **Version**: main `81e3dc2` 이후
 > **Author**: Claude (연구 책임자 결정: 2026-09-06 "2. A")
 > **Date**: 2026-09-06
-> **Status**: Done (2026-09-06) — 실측: 정렬 정확 83.6% / ±1쪽 94.9% (마커 보유 23권), 1:1 쪽 등급 일치 98.7%, 미매칭 94행(1.2%), 미해결 2권(마크다운 없음). 결과 `docs/03-analysis/resegment-results.analysis.md`
+> **Status**: Done (2026-09-06; Act-3 하이브리드 배정 후 2,189쪽 · 등급3 145쪽 6.6%, `resegment-publish.plan.md`) — 실측: 정렬 정확 83.6% / ±1쪽 94.9% (마커 보유 23권), 1:1 쪽 등급 일치 98.7%, 미매칭 94행(1.2%), 미해결 2권(마크다운 없음). 결과 `docs/03-analysis/resegment-results.analysis.md`
 
 ---
 

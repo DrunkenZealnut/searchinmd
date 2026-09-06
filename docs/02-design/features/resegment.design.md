@@ -15,7 +15,7 @@ PDF (86권, 마크다운과 짝이 되는 84권만 연다) ──PyMuPDF get_tex
                                               ├─▶ align_lines(): 줄→쪽 (단조 DP) ─┐
 마크다운 (84권; 없는 2권은 unresolved) ──split('\n')──▶ 줄 목록 ─────┘                                 │  마커가 PDF 쪽수의 80% 이상(23권)이면
                        │                                                         │  marker_pages() 가 줄→쪽을 대신하고
-                       └── 마커 밀도 판정 (DENSE_MARKER_RATIO=0.8) ───────────────┤  정렬 결과는 check_alignment() 검증에만 쓴다
+                       └── 마커 밀도 판정 (DENSE_MARKER_RATIO=0.8) ───────────────┤  정렬 결과는 check_alignment() 검증과 hybrid_pages()(마커 결손 쪽 보정, Act-3)에 쓴다
                                                                                  ▼
                                                   propagate(): 전 줄 쪽 ─▶ page_texts(): 쪽→본문
                                                                                  │
@@ -38,15 +38,16 @@ PDF (86권, 마크다운과 짝이 되는 84권만 연다) ──PyMuPDF get_tex
 | `propagate(n, assigned)` | 줄 수, 정렬 결과 | 줄별 쪽 목록 | 미정렬 줄은 직전 정렬 줄의 쪽, 앞에 없으면 다음 정렬 줄의 쪽. 정렬 줄이 없으면 전부 None |
 | `marker_pages(lines)` | 줄 목록 | 줄별 쪽 목록 | `<!-- page: N -->` 마커로 줄→쪽. 첫 마커 앞 줄은 첫 마커의 쪽 |
 | `page_texts(lines, line_pages)` | | `{쪽: 본문}` | 마커 줄 제외, 쪽별 줄을 `\n` 으로 이어붙임 |
-| `check_alignment(lines, assigned)` | 마커 보유 교재 | `{lines, exact, near}` | 마커로 만든 정답과 정렬 결과 비교(정확, ±1) — DP 후보 줄만 |
+| `check_alignment(lines, assigned, exclude=())` | 마커 보유 교재 | `{lines, exact, near}` | 마커로 만든 정답과 정렬 결과 비교(정확, ±1) — DP 후보 줄만; `exclude`(결손 구간 줄)를 빼면 `nogap_*` |
+| `hybrid_pages(lines, marker_lp, dp_lp, n_pages)` | 마커 교재 | 줄→쪽 | 마커 N 다음 마커가 N+2 이상이면 그 사이 줄은 DP 쪽([N, 다음−1], 구간 단조; 근거 없는 줄은 앞 줄), 마지막 마커 뒤는 PDF 끝쪽까지; 빠진 쪽 없는 구간·첫 마커 앞은 마커 그대로. 구간 첫 본문 줄의 DP 가 N 보다 앞서면 그 차이(드리프트)를 구간 전체에서 빼고 판정(앵커) — 마커 쪽이 비지 않게. `gap_lines`·`emptied_marker_pages`·`marker_positions` 가 보조. `resegment_book` 이 `stats['hybrid_lines']` 를 센다 (Act-3, `resegment-publish.design.md`) |
 | `check_alignment_all(lines, line_pages)` | 마커 보유 교재 | `{all_lines, all_exact, all_near}` | `propagate` 까지 마친 줄→쪽을 마커와 대조 — 본문이 있는 모든 줄이 분모(빈 줄·마커 줄·첫 마커 앞 줄 제외). 후보 줄만 세는 값보다 낮다(실측 77.6% / 90.3%) |
 | `sentence_key(contents)` | 워크북 contents | `(짧은 키, 전체 키)` | 짧은 키 = 마지막 줄(제목 맥락 제거) 정규화, 전체 키 = contents 전체 정규화. 어느 쪽을 쓸지는 `match_rows` 가 정한다 |
 | `match_rows(rows, lines, stats=None)` | 행 목록(문서 순서), 줄 목록, (선택) 집계 dict | 행별 줄 idx 또는 None; `stats` 에 overflow(적중보다 행이 많아 마지막 적중 재사용)·ambiguous(적중 둘 이상)·partial(긴 줄의 일부로 적중) | 짧은 키가 10자 이상이면 그 키의 전체→80→50→30자 접두로 줄 검색. 10자 미만(‘안전 · 유의 사항’ 같은 정형구)이면 줄 전체가 같은 줄만 적중으로 보고, 없으면 전체 키로 검색. 같은 (시트, 키) 의 행들은 문서 순서로 서로 다른 적중에 1:1 배정, 적중이 모자라면 마지막 적중 재사용. 못 찾으면 None |
 | `regrade_page(text)` | 본문 | (등급, 안전수, 조치수, 사유) | `regrade.grade_page(text, word_boundary=False, normalize=False)` 기준선 |
 | `unresolved_pages(rows)` | 한 교재의 행 | `{라벨: rec}` | 라벨을 쪽으로, 등급은 행 최저(recount 규칙), 사유는 그 최저 등급 행의 것, 사고사례 OR, `source='label'` |
-| `resegment_book(rows, lines, pages_text, prefer_markers=False, stats=None)` | | `(pages, moved, unmatched, line_pages, assigned, idx)` 또는 None | `prefer_markers` 면 `marker_pages`, 아니면 `propagate(align_lines)`. 쪽 레코드 `source`: `text`(매칭 행이 놓인 쪽) / `text-fallback`(매칭 행은 없고 미매칭 행의 구 라벨로만 왔지만 본문이 있어 `regrade_page` 로 채점) / `label`(본문도 없어 행 최저 등급, 사유는 그 최저 등급 행의 것). `md_chars`·`pdf_chars` 는 쪽에 붙은 마크다운·PDF 본문의 정규화 길이. `stats` 는 `match_rows` 로 전달 |
+| `resegment_book(rows, lines, pages_text, prefer_markers=False, stats=None)` | | `(pages, moved, unmatched, line_pages, assigned, idx)` 또는 None | `prefer_markers` 면 `marker_pages` → `hybrid_pages`(마커 결손 쪽을 DP 로 보정, Act-3; `stats['hybrid_lines']`), 아니면 `propagate(align_lines)`. 쪽 레코드 `source`: `text`(매칭 행이 놓인 쪽) / `text-fallback`(매칭 행은 없고 미매칭 행의 구 라벨로만 왔지만 본문이 있어 `regrade_page` 로 채점) / `label`(본문도 없어 행 최저 등급, 사유는 그 최저 등급 행의 것). `md_chars`·`pdf_chars` 는 쪽에 붙은 마크다운·PDF 본문의 정규화 길이. `stats` 는 `match_rows` 로 전달 |
 | `page_grade_digest(books)` | 책별 결과 | 16자리 sha256 | 정렬된 (교재, 쪽, 등급) 전체의 지문 — 순서 무관, 한 쪽의 등급만 바뀌어도 달라짐 |
-| `check_expected(summary, expected=EXPECTED)` | 요약 | 불일치 문자열 목록 | pages·books·page_g·unresolved_pages·digest 에 더해 expected 가 가진 cases_pages·cases_books·moved_rows·unmatched_rows·label_fallback_pages 대조(지문이 못 잡는 수치). `digest` 가 None 이면 지문은 비교하지 않음 |
+| `check_expected(summary, expected=EXPECTED)` | 요약 | 불일치 문자열 목록 | pages·books·page_g·unresolved_pages·digest 에 더해 expected 가 가진 cases_pages·cases_books·moved_rows·unmatched_rows·label_fallback_pages·hybrid_lines·alignment_overall·match_stats 대조(지문이 못 잡는 수치). `digest` 가 None 이면 지문은 비교하지 않음 |
 | `aggregate(books)` | 책별 결과 | summary dict | `pages, books, page_g, cases_pages, cases_books, areas{books,pages,page_g}, unresolved{books,pages,rows}, moved_rows, unmatched_rows, label_fallback_pages, kw_pages, page_grade_digest, alignment_check{books, overall, per_book}`. `per_book`(page_g 포함)·`method_books`·`case_pages`·`meta` 는 `main()` 이 붙인다 |
 | `load_rows(path, loader=None)` | 워크북 경로 | 행 dict 목록 | 열은 위치(`COL_*`)로 읽는다. 헤더 행과 `filename` 잡행 스킵, 라벨·등급은 int 또는 None, 사고사례는 `'예'` → True. `loader` 는 시험용 주입점 |
 | `index_files(root, pattern)` / `pick_md(code, filename, md_index)` | | | 파일명의 `LM\d{10}` 코드로 색인. 같은 코드가 여럿이면 워크북 파일명과 공통 접두가 가장 긴 것, 동점이면 마커가 많은 것(공백/밑줄만 다른 중복 파일) |
@@ -62,7 +63,7 @@ PDF (86권, 마크다운과 짝이 되는 84권만 연다) ──PyMuPDF get_tex
 | `data/markdown/ncs_paged/<코드>.pages.json` | `{md, pdf, line_pages}` — 줄→쪽 대응(재현·검증용) | gitignore(data/) |
 | `data/markdown/ncs_paged/rows_map.csv` | 교재, 시트, 구라벨, 새쪽, 구등급, 사고사례 — 행 단위 구→신 대응표(계획 FR-05) | gitignore |
 
-`EXPECTED`(모듈 상수): `pages 2173, page_g {1: 1502, 2: 524, 3: 147}, books 86, unresolved_pages 51, digest 39d00effeb0dfe6c, cases_pages 13, cases_books 5, moved_rows 4316, unmatched_rows 94, label_fallback_pages 27, alignment_overall {21711/18142/20613, all 32486/25219/29329}, match_stats {293/1118/118}`. 대응표(`<코드>.pages.json`·`rows_map.csv`)는 이 검사를 지난 뒤(또는 `--force`)에만 쓴다 — 거부된 실행이 추적본과 어긋난 대응표를 남기지 않게. 입력이 정당하게 바뀌면 `--force` 로 쓰고 `EXPECTED` 를 갱신한다. `--force` 로 어긋난 채 쓰면 `meta.expected` 는 null 이고 `meta.expected_mismatch` 에 불일치 목록이 남는다; `meta.limit` 은 부분 실행 표시.
+`EXPECTED`(모듈 상수, Act-3): `pages 2189, page_g {1: 1519, 2: 525, 3: 145}, books 86, unresolved_pages 51, digest 20855b3bc05d906b, cases_pages 13, cases_books 5, moved_rows 4270, unmatched_rows 94, label_fallback_pages 24, hybrid_lines 1575, hybrid_emptied_marker_pages 0, kw_pages_digest·case_pages_digest, alignment_overall(nogap_* 포함) {21711/18142/20613, all 32486/25219/29329}, match_stats {293/1118/118}`. 대응표(`<코드>.pages.json`·`rows_map.csv`)는 이 검사를 지난 뒤(또는 `--force`)에만 쓴다 — 거부된 실행이 추적본과 어긋난 대응표를 남기지 않게. 입력이 정당하게 바뀌면 `--force` 로 쓰고 `EXPECTED` 를 갱신한다. `--force` 로 어긋난 채 쓰면 `meta.expected` 는 null 이고 `meta.expected_mismatch` 에 불일치 목록이 남는다; `meta.limit` 은 부분 실행 표시.
 
 ## 4. 테스트 (`outputs/test-recount-grades.py` R16, 픽스처만 — PDF·워크북 없음)
 
@@ -83,7 +84,7 @@ PDF (86권, 마크다운과 짝이 되는 84권만 연다) ──PyMuPDF get_tex
 | R16m | `pick_md` 공통 접두 점수, 동점(공백/밑줄만 다른 중복)이면 마커 많은 파일, glob 순서 무관 |
 | R16n | `main` 완주(가짜 fitz·행·임시 루트): `EXPECTED` 불일치 시 쓰지 않고 거부, `--force` 면 CSV·JSON·pages.json·rows_map.csv 생성, 미해결 집계, 홈 경로 없음 |
 | R16o | `page_grade_digest` 순서 무관·재배정 민감, `check_expected` 가 총계 같아도 지문 불일치를 잡음, `EXPECTED` 키 |
-| R16p–R16z14 | 출하 전 커버리지 감사·리뷰 반영(2026-09-06): 정렬 경계·원거리 점프·마커/검증 경계·짧은 키·라벨 폴백·가드 4종·`--limit`·마커 우선 완주·재실행 동일성·추적 산출물 교차검증(R16z4·z5)·`public_path`·출처 3값과 `match_stats`·`check_alignment_all`·`--paged-dir` 가드·매칭 쪽 폴백 행·거부 실행의 대응표 미작성 |
+| R16p–R16z21 | 출하 전 커버리지 감사·리뷰 반영(2026-09-06, 두 차례): 정렬 경계·원거리 점프·마커/검증 경계·짧은 키·라벨 폴백·가드 4종·`--limit`·마커 우선 완주·재실행 동일성·추적 산출물 교차검증(R16z4·z5)·`public_path`·출처 3값과 `match_stats`·`check_alignment_all`·`--paged-dir` 가드·매칭 쪽 폴백 행·거부 실행의 대응표 미작성·`hybrid_pages`(R16z15~z21: 앵커·상한·첫 마커 앞·결손 구간·`emptied_marker_pages`·지문·main 완주) |
 
 ## 5. 보고서 반영 (재수정 목록 [재집계] 항목)
 
