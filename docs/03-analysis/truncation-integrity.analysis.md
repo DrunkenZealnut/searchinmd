@@ -1,5 +1,7 @@
 # Gap 분석: 절단 무결성 (truncation-integrity)
 
+> ⚠️ **정정 (2026-09-06)**: 여기서 "셀 한도 절단 16쪽" 이라 부른 것은 잘린 쪽이 아니라 **여러 쪽을 한 셀에 묶은 워크북 라벨**이었다(외부감사 C1). 재세그먼트로 그 라벨들은 10~58쪽으로 풀렸고 "등급3 108~112쪽" 구간은 폐기한다. 현재 수치는 `docs/03-analysis/resegment-results.analysis.md`. 아래 본문은 작성 시점의 기록으로 둔다.
+
 > 대상: `docs/02-design/features/truncation-integrity.design.md` vs 구현
 > 분석일: 2026-09-04 · 기준 커밋: `e37cbce` + 미커밋 작업트리
 >
