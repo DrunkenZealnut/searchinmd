@@ -20,7 +20,7 @@ PDF (84권)  ──PyMuPDF get_text──▶ 쪽별 텍스트 ─┐
                                                   propagate(): 전 줄 쪽 ─▶ page_texts(): 쪽→본문
                                                                                  │
 워크북 7,769행 ──load_rows()──▶ (시트, 영역, 교재, contents, 라벨, 사고사례, 구등급, 사유) ─▶ match_rows(): 행→줄 ─▶ 행→실제 쪽
-                                                                                 │           (미매칭 행은 구 라벨을 쪽으로, source='label')
+                                                                                 │           (미매칭 행은 구 라벨을 쪽으로 — 본문 있으면 text-fallback, 없으면 label, 매칭 쪽에 합류하면 fallback_rows)
                                                          regrade_page(본문) 기준선 ◀──────────┘
                                                                                  ▼
                                    aggregate(): (교재, 실제 쪽) 고유 → 등급·사고사례·영역·kw_pages·지문 ─▶ check_expected() 가드 ─▶ CSV / JSON / 대응표
@@ -43,7 +43,7 @@ PDF (84권)  ──PyMuPDF get_text──▶ 쪽별 텍스트 ─┐
 | `sentence_key(contents)` | 워크북 contents | `(짧은 키, 전체 키)` | 짧은 키 = 마지막 줄(제목 맥락 제거) 정규화, 전체 키 = contents 전체 정규화. 어느 쪽을 쓸지는 `match_rows` 가 정한다 |
 | `match_rows(rows, lines, stats=None)` | 행 목록(문서 순서), 줄 목록, (선택) 집계 dict | 행별 줄 idx 또는 None; `stats` 에 overflow(적중보다 행이 많아 마지막 적중 재사용)·ambiguous(적중 둘 이상)·partial(긴 줄의 일부로 적중) | 짧은 키가 10자 이상이면 그 키의 전체→80→50→30자 접두로 줄 검색. 10자 미만(‘안전 · 유의 사항’ 같은 정형구)이면 줄 전체가 같은 줄만 적중으로 보고, 없으면 전체 키로 검색. 같은 (시트, 키) 의 행들은 문서 순서로 서로 다른 적중에 1:1 배정, 적중이 모자라면 마지막 적중 재사용. 못 찾으면 None |
 | `regrade_page(text)` | 본문 | (등급, 안전수, 조치수, 사유) | `regrade.grade_page(text, word_boundary=False, normalize=False)` 기준선 |
-| `unresolved_pages(rows)` | 한 교재의 행 | `{라벨: rec}` | 라벨을 쪽으로, 등급은 행 최저(recount 규칙), 사유는 첫 행, 사고사례 OR, `source='label'` |
+| `unresolved_pages(rows)` | 한 교재의 행 | `{라벨: rec}` | 라벨을 쪽으로, 등급은 행 최저(recount 규칙), 사유는 그 최저 등급 행의 것, 사고사례 OR, `source='label'` |
 | `resegment_book(rows, lines, pages_text, prefer_markers=False, stats=None)` | | `(pages, moved, unmatched, line_pages, assigned, idx)` 또는 None | `prefer_markers` 면 `marker_pages`, 아니면 `propagate(align_lines)`. 쪽 레코드 `source`: `text`(매칭 행이 놓인 쪽) / `text-fallback`(매칭 행은 없고 미매칭 행의 구 라벨로만 왔지만 본문이 있어 `regrade_page` 로 채점) / `label`(본문도 없어 행 최저 등급, 사유는 그 최저 등급 행의 것). `md_chars`·`pdf_chars` 는 쪽에 붙은 마크다운·PDF 본문의 정규화 길이. `stats` 는 `match_rows` 로 전달 |
 | `page_grade_digest(books)` | 책별 결과 | 16자리 sha256 | 정렬된 (교재, 쪽, 등급) 전체의 지문 — 순서 무관, 한 쪽의 등급만 바뀌어도 달라짐 |
 | `check_expected(summary, expected=EXPECTED)` | 요약 | 불일치 문자열 목록 | pages·books·page_g·unresolved_pages·digest 에 더해 expected 가 가진 cases_pages·cases_books·moved_rows·unmatched_rows·label_fallback_pages 대조(지문이 못 잡는 수치). `digest` 가 None 이면 지문은 비교하지 않음 |
@@ -77,9 +77,9 @@ PDF (84권)  ──PyMuPDF get_text──▶ 쪽별 텍스트 ─┐
 | R16g | `check_alignment` 정확·±1 |
 | R16h | `main` 가드: 워크북·PDF 루트 없음 → 한 줄 종료 |
 | R16i | `marker_pages`; `prefer_markers` 면 `resegment_book` 이 정렬 대신 마커 쪽을 쓴다 |
-| R16j | `write_outputs` CSV 10열·순서·출처, JSON |
+| R16j | `write_outputs` CSV 12열·순서·출처, JSON |
 | R16k | `load_rows` 열 위치·헤더/잡행 스킵·형 변환·close |
-| R16l | `unresolved_pages` 행 최저 등급·OR·첫 행 사유·`source='label'` |
+| R16l | `unresolved_pages` 행 최저 등급·OR·최저 등급 행의 사유·`source='label'` |
 | R16m | `pick_md` 공통 접두 점수, 동점(공백/밑줄만 다른 중복)이면 마커 많은 파일, glob 순서 무관 |
 | R16n | `main` 완주(가짜 fitz·행·임시 루트): `EXPECTED` 불일치 시 쓰지 않고 거부, `--force` 면 CSV·JSON·pages.json·rows_map.csv 생성, 미해결 집계, 홈 경로 없음 |
 | R16o | `page_grade_digest` 순서 무관·재배정 민감, `check_expected` 가 총계 같아도 지문 불일치를 잡음, `EXPECTED` 키 |
