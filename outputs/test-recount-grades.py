@@ -2658,10 +2658,10 @@ _ce_all = _call(lambda: RS.check_expected({'pages': 4, 'books': 1, 'page_g': {'1
 _ce_nodg = _call(lambda: RS.check_expected({'pages': 3, 'books': 2, 'page_g': {'1': 1, '2': 1, '3': 1}, 'unresolved': {'pages': 1}, 'page_grade_digest': 'whatever'},
                                           expected=dict(_e_ok, digest=None))) if _ok_rs else None
 _ce_dflt = _call(lambda: RS.check_expected({})) if _ok_rs else None
-check('R16v check_expected 는 어긋난 항목마다 한 줄씩(pages·books·page_g·unresolved_pages·digest, 그리고 EXPECTED 가 가진 사고사례·이동·미매칭·폴백 수치) 짚고, unresolved 가 없어도 죽지 않으며, 기대 digest 가 None 이면 지문을 비교하지 않고, expected 생략 시 모듈 EXPECTED(12키: 자기 검증·약한 배정 수치까지) 를 쓴다',
+check('R16v check_expected 는 어긋난 항목마다 한 줄씩(pages·books·page_g·unresolved_pages·digest, 그리고 EXPECTED 가 가진 사고사례·이동·미매칭·폴백 수치) 짚고, unresolved 가 없어도 죽지 않으며, 기대 digest 가 None 이면 지문을 비교하지 않고, expected 생략 시 모듈 EXPECTED(16키: 지문 3종·자기 검증·약한 배정·hybrid_lines·hybrid_emptied_marker_pages 까지) 를 쓴다',
       isinstance(_ce_all, list) and [l.split(':')[0] for l in _ce_all] == ['pages', 'books', 'page_g', 'unresolved_pages', 'digest']
-      and _ce_nodg == [] and isinstance(_ce_dflt, list) and len(_ce_dflt) == 12 and str(RS.EXPECTED['pages']) in _ce_dflt[0]
-      and [l.split(':')[0] for l in _ce_dflt[5:]] == ['cases_pages', 'cases_books', 'moved_rows', 'unmatched_rows', 'label_fallback_pages', 'alignment_overall', 'match_stats'], (_ce_all, _ce_nodg, _ce_dflt))
+      and _ce_nodg == [] and isinstance(_ce_dflt, list) and len(_ce_dflt) == 16 and str(RS.EXPECTED['pages']) in _ce_dflt[0]
+      and [l.split(':')[0] for l in _ce_dflt[5:]] == ['kw_pages_digest', 'case_pages_digest', 'cases_pages', 'cases_books', 'moved_rows', 'unmatched_rows', 'label_fallback_pages', 'hybrid_lines', 'hybrid_emptied_marker_pages', 'alignment_overall', 'match_stats'], (_ce_all, _ce_nodg, _ce_dflt))
 _wbk2 = FakeWB({'s': [None, (), (1, 'a', 'LM1903060001_x', 'c', '1', 't', 'a', '2'),
                        (1, 'a', None, 'c', '1', 't', 'a', '2', 'r'),
                        (1, 'a', 'LM1903060001_x', None, None, 't', None, None, None)]})
@@ -2760,11 +2760,11 @@ with tempfile.TemporaryDirectory() as _td:
 _zb = (_zs or {}).get('per_book', {})
 check('R16z2 main 완주(마커 우선) — 쪽 단위 마커 교재는 method=markers 로 가고 정렬은 검증만(후보 7/7, 전체 본문 줄 11/11), PDF 없는 교재는 no pdf, 정렬이 안 되는 교재는 alignment failed 로 미해결, 미매칭 행은 구 라벨 쪽(label 출처)과 rows_map 빈 새쪽, 홈 아래 경로는 ~ 로, --force 로 어긋난 채 쓰면 meta.expected 는 None 이고 expected_mismatch 에 불일치가 남는다',
       _zc == 0 and isinstance(_zs, dict) and _zs['books'] == 3 and _zs['pages'] == 4 and _zs['page_g'] == {'1': 2, '2': 1, '3': 1}
-      and _zb.get('LM1903060001_시험_교재', {}).get('method') == 'markers' and _zb['LM1903060001_시험_교재']['align'] == {'lines': 7, 'exact': 7, 'near': 7, 'all_lines': 11, 'all_exact': 11, 'all_near': 11}
+      and _zb.get('LM1903060001_시험_교재', {}).get('method') == 'markers' and _zb['LM1903060001_시험_교재']['align'] == {'lines': 7, 'exact': 7, 'near': 7, 'all_lines': 11, 'all_exact': 11, 'all_near': 11, 'nogap_lines': 7, 'nogap_exact': 7, 'nogap_near': 7}
       and _zb['LM1903060001_시험_교재']['new_pages'] == 2 and _zb['LM1903060001_시험_교재']['unmatched_rows'] == 1 and _zb['LM1903060001_시험_교재']['moved_rows'] == 1
       and _zb.get('LM1903060002_PDF_없음', {}).get('why') == 'no pdf' and _zb.get('LM1903060003_정렬_실패', {}).get('why') == 'alignment failed'
       and _zs['unresolved'] == {'books': 2, 'pages': 2, 'rows': 2} and _zs['label_fallback_pages'] == 1
-      and _zs['method_books'] == {'markers': 1, 'unresolved': 2} and _zs['alignment_check']['books'] == 1 and _zs['alignment_check']['overall'] == {'lines': 7, 'exact': 7, 'near': 7, 'all_lines': 11, 'all_exact': 11, 'all_near': 11}
+      and _zs['method_books'] == {'markers': 1, 'unresolved': 2} and _zs['alignment_check']['books'] == 1 and _zs['alignment_check']['overall'] == {'lines': 7, 'exact': 7, 'near': 7, 'all_lines': 11, 'all_exact': 11, 'all_near': 11, 'nogap_lines': 7, 'nogap_exact': 7, 'nogap_near': 7}
       and _zs['meta']['expected'] is None and isinstance(_zs['meta']['expected_mismatch'], list) and _zs['meta']['expected_mismatch'] and _zs['meta']['limit'] is None
       and _zs['case_pages'] == [{'book': 'LM1903060001_시험_교재', 'page': 7, 'old_labels': ['7'], 'grade': 3}]
       and _zs['meta']['pdf_root'] == '~/pdf' and _zs['meta']['md_root'] == '~/md'
@@ -2878,8 +2878,8 @@ _books_tf = {'A책': {'area': '반도체재료', 'status': 'resolved', 'rows': 5
 _ag_tf = _call(lambda: RS.aggregate(_books_tf)) if isinstance(_tf, tuple) else None
 check('R16z10 aggregate 는 text-fallback 도 label_fallback_pages 로 세고(미해결 교재의 label 은 제외), 교재별 match 를 match_stats 로 합치며, alignment_check.overall 에 all_* 를 더하고 all_* 이 없는 옛 align dict 도 0 으로 받는다',
       isinstance(_ag_tf, dict) and _ag_tf['label_fallback_pages'] == 1 and _ag_tf['match_stats'] == {'overflow': 1, 'ambiguous': 3, 'partial': 0}
-      and _ag_tf['alignment_check']['overall'] == {'lines': 7, 'exact': 6, 'near': 7, 'all_lines': 11, 'all_exact': 9, 'all_near': 10}
-      and _ok_rs and RS.aggregate({'A책': dict(_books_tf['A책'], align={'lines': 2, 'exact': 1, 'near': 2})})['alignment_check']['overall'] == {'lines': 2, 'exact': 1, 'near': 2, 'all_lines': 0, 'all_exact': 0, 'all_near': 0},
+      and _ag_tf['alignment_check']['overall'] == {'lines': 7, 'exact': 6, 'near': 7, 'all_lines': 11, 'all_exact': 9, 'all_near': 10, 'nogap_lines': 0, 'nogap_exact': 0, 'nogap_near': 0}
+      and _ok_rs and RS.aggregate({'A책': dict(_books_tf['A책'], align={'lines': 2, 'exact': 1, 'near': 2})})['alignment_check']['overall'] == {'lines': 2, 'exact': 1, 'near': 2, 'all_lines': 0, 'all_exact': 0, 'all_near': 0, 'nogap_lines': 0, 'nogap_exact': 0, 'nogap_near': 0},
       _ag_tf if not isinstance(_ag_tf, dict) else (_ag_tf['label_fallback_pages'], _ag_tf['match_stats'], _ag_tf['alignment_check']['overall']))
 _ml3 = ['머리말', '<!-- page: 1 -->', '첫째 쪽 본문 문장이 여기 있습니다.', '', '<!-- page: 2 -->', '둘째 쪽 본문 문장이 여기 있습니다.', '| 표 |', '<!-- page: 3 -->', '셋째 쪽']
 _caa = _call(lambda: RS.check_alignment_all(_ml3, [None, None, 1, 1, 1, 1, 3, 3, 1])) if _ok_rs else None
@@ -2929,6 +2929,152 @@ check('R16z14 EXPECTED 에 어긋나 거부된 실행은 추적 산출물은 물
       and _rc2 == 0 and _paged_after_force == ['LM1903060001.pages.json', 'rows_map.csv']
       and '/docs/03-analysis/data/*.tmp' in open(os.path.join(ROOT, '.gitignore'), encoding='utf-8').read(),
       (_rc, _paged_after_refuse, _out_after_refuse, _paged_after_force))
+
+# Act-3 (연구 책임자 결정 2026-09-06 ②): 마커 결손 쪽의 하이브리드 배정
+_hl = ['<!-- page: 1 -->'] + _ln[0:5] + _ln[5:8] + ['<!-- page: 3 -->'] + _ln[8:]     # 2쪽 마커가 빠진 마커 교재
+_h_stats = {}
+_hb = _call(lambda: RS.resegment_book(_rows_main[:1], _hl, _pg, prefer_markers=True, stats=_h_stats)) if _ok_rs else None
+_h_lp = _hb[3] if isinstance(_hb, tuple) else None
+_h_mk = _call(lambda: RS.marker_pages(_hl)) if _ok_rs else None
+_h_dp = _call(lambda: RS.hybrid_pages(_hl, [1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 3], [1, 1, 1, 1, 1, 1, 2, None, 2, 3, 3, 3, 3], 3)) if _ok_rs else None
+_h_nogap = _call(lambda: RS.hybrid_pages(['<!-- page: 1 -->', 'a', '<!-- page: 2 -->', 'b'], [1, 1, 2, 2], [2, 2, 1, 1], 2)) if _ok_rs else None
+_h_tail = _call(lambda: RS.hybrid_pages(['<!-- page: 1 -->', 'a', 'b', 'c'], [1, 1, 1, 1], [1, 1, 3, 2], 3)) if _ok_rs else None
+check('R16z15 hybrid_pages — 마커 사이에 빠진 쪽이 있으면 그 구간 줄은 DP 쪽([N, 다음-1] 안, 구간 단조)을 쓰고 근거 없는 줄은 앞 줄을 잇는다; 빠진 쪽이 없는 구간·첫 마커 앞은 마커 그대로; 마지막 마커 뒤는 PDF 끝쪽까지; resegment_book 은 마커 교재에서 이를 적용해 2쪽 줄을 2쪽에 놓고 hybrid_lines 를 센다',
+      _h_dp == [1, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3] and _h_nogap == [1, 1, 2, 2] and _h_tail == [1, 1, 3, 3]
+      and _h_mk == [1] * 9 + [3] * 4 and isinstance(_h_lp, list) and _h_lp[6:9] == [2, 2, 2] and _h_lp[1:6] == [1] * 5 and _h_lp[9:] == [3] * 4
+      and _h_stats.get('hybrid_lines') == 3 and isinstance(_hb, tuple) and sorted(_hb[0]) == [2]
+      and RS.hybrid_pages(['a'], [None], [1], 1) == [None], (_h_dp, _h_nogap, _h_tail, _h_lp, _h_stats))
+
+# --- /ship 커버리지 감사 (2026-09-06, resegment-publish): hybrid_pages 경계·정렬 근거 없는 마커 교재·aggregate 합산·main 완주(마커 결손)
+_hx_lines = ['머리말', '<!-- page: 1 -->', 'a', 'b', 'c', 'd', 'e', 'f', '<!-- page: 4 -->', 'g']   # 2·3쪽 마커 결손
+_hx_mk = [1, 1, 1, 1, 1, 1, 1, 1, 4, 4]
+_hx_mk_copy = list(_hx_mk)
+_hx_dp = [3, 3, 1, 2, 9, 3, 2, None, 4, 4]        # 첫 마커 앞·마커 줄의 DP(3)는 무시, 9 는 상한 밖, 뒤의 2 는 역행, None 은 앞 줄 계승
+_hx = _call(lambda: RS.hybrid_pages(_hx_lines, _hx_mk, _hx_dp, 4)) if _ok_rs else None
+_hx_short = _call(lambda: RS.hybrid_pages(['<!-- page: 1 -->', 'a', 'b', 'c', 'd'], [1, 1, 1, 1, 1], [1, 1, 2], 3)) if _ok_rs else None
+_hx_empty = _call(lambda: RS.hybrid_pages(['<!-- page: 1 -->', 'a', 'b'], [1, 1, 1], [], 3)) if _ok_rs else None
+_hx_over = _call(lambda: RS.hybrid_pages(['<!-- page: 5 -->', 'a'], [5, 5], [3, 3], 3)) if _ok_rs else None
+_hx_back_lines = ['<!-- page: 3 -->', 'a', '<!-- page: 2 -->', 'b', '<!-- page: 2 -->', 'c']
+_hx_back = _call(lambda: RS.hybrid_pages(_hx_back_lines, RS.marker_pages(_hx_back_lines), [1, 1, 1, 1, 1, 1], 2)) if _ok_rs else None
+check('R16z16 hybrid_pages 경계 — 첫 마커 앞 줄·마커 줄은 DP 가 달라도 그대로; 결손 구간 안에서 상한(다음 마커-1)을 넘는 DP 는 무시하고 역행 DP 는 현재 쪽을 유지하며 None 은 앞 줄을 잇는다(2·3쪽 결손을 1→2→3 으로 오름); dp_lp 가 짧거나 비면 없는 줄은 현재 쪽 계승; 마지막 마커가 PDF 끝쪽을 넘거나 마커가 역행·중복이면 손대지 않는다; 입력 marker_lp 는 바뀌지 않고 길이는 같다',
+      _hx == [1, 1, 1, 2, 2, 3, 3, 3, 4, 4] and _hx_mk == _hx_mk_copy and len(_hx) == len(_hx_mk)
+      and _hx_short == [1, 1, 2, 2, 2] and _hx_empty == [1, 1, 1] and _hx_over == [5, 5] and _hx_back == [3, 3, 2, 2, 2, 2],
+      (_hx, _hx_short, _hx_empty, _hx_over, _hx_back))
+_hn = _call(lambda: RS.resegment_book(_rows_main[:1], _hl, _pg, prefer_markers=True)) if _ok_rs else None            # stats 없이도 보정은 적용
+_hs_scan, _hs_full = {}, {}
+_hsc = _call(lambda: RS.resegment_book(_rows_main[:1], _hl, ['', '', ''], prefer_markers=True, stats=_hs_scan)) if _ok_rs else None   # 스캔 PDF: 본문 없음 → 정렬 근거 0
+_hsf = _call(lambda: RS.resegment_book(_rows_m, _mlines, _pg, prefer_markers=True, stats=_hs_full)) if _ok_rs else None            # 결손 없는 마커 교재
+check('R16z17 resegment_book — stats 없이도(None) 마커 결손 보정은 적용된다; 마커는 있지만 정렬 근거가 없으면(스캔 PDF, 본문 빈 쪽) 마커 그대로 두고 hybrid_lines 는 기록하지 않으며 pdf 자수는 0; 결손 없는 마커 교재는 hybrid_lines 0 을 기록한다',
+      isinstance(_hn, tuple) and sorted(_hn[0]) == [2] and _hn[3][6:9] == [2, 2, 2]
+      and isinstance(_hsc, tuple) and _hsc[3] == RS.marker_pages(_hl) and 'hybrid_lines' not in _hs_scan and sorted(_hsc[0]) == [1]
+      and _hsc[0][1]['pdf_chars'] == 0 and _hsc[4] == {} and set(_hs_scan) == {'overflow', 'ambiguous', 'partial'}
+      and isinstance(_hsf, tuple) and _hs_full.get('hybrid_lines') == 0 and sorted(_hsf[0]) == [3],
+      (_hn[3] if isinstance(_hn, tuple) else _hn, _hs_scan, _hs_full, _hsc[3] if isinstance(_hsc, tuple) else _hsc))
+_bk_h = {'A': dict(_books['A책'], hybrid_lines=5, match={'overflow': 0, 'ambiguous': 1, 'partial': 0}),        # 마커 교재 (보정 5줄) — 교재 상위 키
+         'B': dict(_books['B책']),                                                                              # 미해결 — 키 없음
+         'C': dict(_books['A책'], match={'overflow': 1, 'ambiguous': 0, 'partial': 0, 'hybrid_lines': 9})}      # match 안에 남은 값은 세지 않는다 (main 이 pop 해 옮긴다)
+_ag_h = _call(lambda: RS.aggregate(_bk_h)) if _ok_rs else None
+_E = RS.EXPECTED if _ok_rs else {}
+_sm_ok = {**{k: v for k, v in _E.items() if k not in ('unresolved_pages', 'digest', 'alignment_overall')},   # EXPECTED 의 키를 summary 모양으로 (키가 늘어도 따라간다)
+          'unresolved': {'pages': _E.get('unresolved_pages')}, 'page_grade_digest': _E.get('digest'), 'alignment_check': {'overall': _E.get('alignment_overall')}}
+_ce_ok = _call(lambda: RS.check_expected(_sm_ok)) if _ok_rs else None
+_ce_h1 = _call(lambda: RS.check_expected(dict(_sm_ok, hybrid_lines=_E['hybrid_lines'] + 1))) if _ok_rs else None
+_ce_h0 = _call(lambda: RS.check_expected(dict(_sm_ok, hybrid_lines=None), expected={k: v for k, v in _E.items() if k != 'hybrid_lines'})) if _ok_rs else None
+_ce_new = _call(lambda: RS.check_expected(_sm_ok, expected=dict(_E, novel_key=1))) if _ok_rs else None
+check('R16z18 aggregate 는 교재 상위 hybrid_lines 를 합치되(키 없는 미해결·정렬 교재는 0, match 안에 남은 값은 세지 않고 match_stats 세 키에도 섞지 않음) 아무 교재도 없으면 0; check_expected 는 EXPECTED 의 키가 다 맞으면 빈 목록, hybrid_lines 만 어긋나면 그 한 줄, 키 없는 옛 EXPECTED 면 비교하지 않으며, EXPECTED 에 더한 새 키는 자동으로 대조된다',
+      isinstance(_ag_h, dict) and _ag_h['hybrid_lines'] == 5 and _ag_h['match_stats'] == {'overflow': 1, 'ambiguous': 1, 'partial': 0}
+      and _ok_rs and RS.aggregate(_books)['hybrid_lines'] == 0
+      and _ce_ok == [] and _ce_h1 == ['hybrid_lines: %d != %d' % (_E['hybrid_lines'] + 1, _E['hybrid_lines'])] and _ce_h0 == [] and _ce_new == ['novel_key: None != 1'],
+      (_ag_h and (_ag_h['hybrid_lines'], _ag_h['match_stats']), _ce_ok, _ce_h1, _ce_h0, _ce_new))
+# main 완주: 5쪽 PDF 에 마커 4개(4쪽 결손) → 마커 밀도 0.8 로 마커 우선 → 4쪽 줄은 hybrid 로 4쪽에, 그 줄의 행도 4쪽에 놓인다 (Act-2 였다면 3쪽)
+_pg5 = _pg + ['넷째 쪽 본문 문장이 여기 있습니다. 화학물질 누출 시 즉시 대피한다.', '다섯째 쪽 본문 문장이 여기 있습니다. 작업 전 안전 점검을 실시한다.']
+_md_gap = (['<!-- page: 1 -->'] + _ln[0:5] + ['<!-- page: 2 -->'] + _ln[5:8] + ['<!-- page: 3 -->'] + _ln[8:]
+           + ['넷째 쪽 본문 문장이 여기 있습니다.', '화학물질 누출 시 즉시 대피한다.']
+           + ['<!-- page: 5 -->', '다섯째 쪽 본문 문장이 여기 있습니다.', '작업 전 안전 점검을 실시한다.'])
+_rows_gap = [{'sheet': '안전', 'area': '반도체재료', 'filename': 'LM1903060001_시험_교재', 'contents': '[제목]\n둘째 쪽 본문 문장이 여기 있습니다.', 'label': 9, 'case': False, 'grade': 2, 'reason': 'r1'},
+             {'sheet': '누출', 'area': '반도체재료', 'filename': 'LM1903060001_시험_교재', 'contents': '화학물질 누출 시 즉시 대피한다.', 'label': 3, 'case': True, 'grade': 2, 'reason': 'r2'},
+             {'sheet': '안전', 'area': '반도체재료', 'filename': 'LM1903060001_시험_교재', 'contents': '작업 전 안전 점검을 실시한다.', 'label': 5, 'case': False, 'grade': 1, 'reason': 'r3'}]
+_fitz5 = types.ModuleType('fitz'); _fitz5.open = lambda path: _FakeDoc(_pg5)
+_o_lr3 = RS.load_rows if _ok_rs else None
+with tempfile.TemporaryDirectory() as _td:
+    _mdr, _pdr, _out, _pgd = [os.path.join(_td, x) for x in ('md', 'pdf', 'out', 'paged')]
+    os.makedirs(_mdr); os.makedirs(_pdr)
+    open(os.path.join(_mdr, 'LM1903060001_시험_교재.md'), 'w', encoding='utf-8').write('\n'.join(_md_gap))
+    open(os.path.join(_pdr, 'LM1903060001.pdf'), 'w').close()
+    _wbp = os.path.join(_td, 'w.xlsx'); open(_wbp, 'w').close()
+    _o_fitz3 = sys.modules.get('fitz')
+    try:
+        sys.modules['fitz'] = _fitz5
+        if _ok_rs: RS.load_rows = lambda path, loader=None: list(_rows_gap)
+        _gc, _go = _run_main(RS.main, ['resegment.py', '--pdf-root', _pdr, '--md-root', _mdr, '--workbook', _wbp, '--out', _out, '--paged-dir', _pgd, '--force']) if _ok_rs else ('', '')
+        _gs = json.load(open(os.path.join(_out, 'reseg_summary.json'), encoding='utf-8')) if os.path.exists(os.path.join(_out, 'reseg_summary.json')) else None
+        _gcsv = list(csv.reader(open(os.path.join(_out, 'ncs_pages_reseg.csv'), encoding='utf-8-sig'))) if os.path.exists(os.path.join(_out, 'ncs_pages_reseg.csv')) else None
+        _gmap = list(csv.reader(open(os.path.join(_pgd, 'rows_map.csv'), encoding='utf-8-sig'))) if os.path.exists(os.path.join(_pgd, 'rows_map.csv')) else None
+        _gpg = json.load(open(os.path.join(_pgd, 'LM1903060001.pages.json'), encoding='utf-8')) if os.path.exists(os.path.join(_pgd, 'LM1903060001.pages.json')) else None
+    finally:
+        if _o_fitz3 is None: sys.modules.pop('fitz', None)
+        else: sys.modules['fitz'] = _o_fitz3
+        if _ok_rs: RS.load_rows = _o_lr3
+_gb = ((_gs or {}).get('per_book') or {}).get('LM1903060001_시험_교재', {})
+check('R16z19 main 완주(마커 결손) — 5쪽 PDF·마커 4개(4쪽 결손)는 마커 우선으로 가되 4쪽 줄은 hybrid 로 4쪽에 놓여(마커만이면 3쪽) 그 행도 4쪽에 놓이고(rows_map·CSV), summary.hybrid_lines == per_book.hybrid_lines == 2 (match_stats 에는 섞이지 않음), pages.json 은 보정된 줄→쪽, 정렬 자기 검증은 여전히 마커 기준(4쪽 두 줄은 ±1)이되 결손 구간을 뺀 nogap 은 7/7, 마커 쪽이 비지 않고(emptied 0) 지문 두 개와 재현성 meta(md_corpus_sha256·python·pymupdf)가 실린다',
+      _gc == 0 and isinstance(_gs, dict) and _gs['books'] == 1 and _gs['pages'] == 3 and _gs['hybrid_lines'] == 2 and _gs['unresolved'] == {'books': 0, 'pages': 0, 'rows': 0}
+      and _gb.get('method') == 'markers' and _gb.get('hybrid_lines') == 2 and _gb.get('match_stats') == {'overflow': 0, 'ambiguous': 0, 'partial': 0} and _gb.get('moved_rows') == 2 and _gb.get('new_pages') == 3
+      and isinstance(_gpg, dict) and _gpg['line_pages'] == [1] * 6 + [2] * 4 + [3] * 4 + [4] * 2 + [5] * 3 and RS.marker_pages(_md_gap)[14:16] == [3, 3]
+      and isinstance(_gmap, list) and [r[3] for r in _gmap[1:]] == ['2', '4', '5']
+      and isinstance(_gcsv, list) and sorted(int(r[2]) for r in _gcsv[1:]) == [2, 4, 5]
+      and [(c['book'], c['page'], c['old_labels']) for c in _gs['case_pages']] == [('LM1903060001_시험_교재', 4, ['3'])]
+      and _gb.get('align') == {'lines': 11, 'exact': 9, 'near': 11, 'all_lines': 15, 'all_exact': 13, 'all_near': 15, 'nogap_lines': 7, 'nogap_exact': 7, 'nogap_near': 7}
+      and _gb.get('emptied_marker_pages') == 0 and _gs.get('hybrid_emptied_marker_pages') == 0 and len(_gs.get('kw_pages_digest', '')) == 16 and len(_gs.get('case_pages_digest', '')) == 16
+      and _gs['meta']['expected'] is None and 'hybrid_lines' in ' '.join(_gs['meta']['expected_mismatch'] or [])
+      and len(_gs['meta'].get('md_corpus_sha256', '')) == 64 and _gs['meta'].get('python') == sys.version.split()[0] and _gs['meta'].get('pymupdf') is None,   # 재현성 meta: 쓴 마크다운 지문·인터프리터·PyMuPDF(가짜 fitz 는 버전 없음)
+      (_gc, _go[-300:], {k: _gs.get(k) for k in ('books', 'pages', 'hybrid_lines', 'page_g')} if isinstance(_gs, dict) else _gs, _gb.get('align'), _gb.get('match_stats'),
+       _gpg and _gpg['line_pages'], _gmap, _gs and _gs.get('case_pages')))
+
+# 앵커(출하 전 리뷰 F1) · 마커 쪽 보존 · 결손 구간 제외 검증 · 본문 줄만 계수 · 지문 (2026-09-06 18:20 리팩터 경로)
+_an_lines = ['<!-- page: 3 -->', 'a', 'b', 'c', '<!-- page: 6 -->', 'd']
+_an = _call(lambda: RS.hybrid_pages(_an_lines, [3, 3, 3, 3, 6, 6], [3, 4, 5, 5, 6, 6], 6)) if _ok_rs else None                       # 첫 본문 줄 DP 4 → shift 1
+_an_blank = _call(lambda: RS.hybrid_pages(['<!-- page: 3 -->', '', 'a', 'b', '<!-- page: 6 -->'], [3, 3, 3, 3, 6], [3, 4, 4, 5, 6], 6)) if _ok_rs else None   # 빈 줄은 앵커가 아니다
+_an_behind = _call(lambda: RS.hybrid_pages(['<!-- page: 3 -->', 'a', 'b', '<!-- page: 6 -->'], [3, 3, 3, 6], [3, 2, 4, 6], 6)) if _ok_rs else None           # 첫 줄 DP 가 마커보다 뒤면 shift 0
+_em = _call(lambda: RS.emptied_marker_pages(_an_lines, [3, 4, 5, 5, 6, 6])) if _ok_rs else None
+_em0 = _call(lambda: RS.emptied_marker_pages(_an_lines, _an)) if isinstance(_an, list) else None
+_em_nobody = _call(lambda: RS.emptied_marker_pages(['<!-- page: 1 -->', '', '<!-- page: 2 -->', 'x'], [1, 1, 2, 5])) if _ok_rs else None
+_gl = _call(lambda: RS.gap_lines(_hx_lines, 4)) if _ok_rs else None
+_gl5 = _call(lambda: RS.gap_lines(_hx_lines, 5)) if _ok_rs else None
+_ca_ex = _call(lambda: RS.check_alignment(_tl, {1: 1, 2: 1, 4: 2, 5: 3, 7: 1}, exclude={5, 7})) if _ok_rs else None
+_hb_body = {}
+_hbb = _call(lambda: RS.resegment_book(_rows_main[:1], _hl[:9] + ['', '   '] + _hl[9:], _pg, prefer_markers=True, stats=_hb_body)) if _ok_rs else None
+_bk_e = {'A': dict(_books['A책'], hybrid_lines=2, emptied_marker_pages=1, align={'lines': 4, 'exact': 4, 'near': 4, 'all_lines': 5, 'all_exact': 5, 'all_near': 5, 'nogap_lines': 3, 'nogap_exact': 2, 'nogap_near': 3}),
+         'B': dict(_books['B책'])}
+_ag_e = _call(lambda: RS.aggregate(_bk_e)) if _ok_rs else None
+_ce_dg = _call(lambda: RS.check_expected(dict(_sm_ok, kw_pages_digest='x', case_pages_digest='y'), expected=dict(_E, kw_pages_digest='x', case_pages_digest='z'))) if _ok_rs else None
+check('R16z21 앵커·마커 쪽 보존 — 결손 구간 첫 본문 줄의 DP 가 마커 쪽보다 앞서면 그 차이만큼 구간 DP 를 내려 마커 쪽이 비지 않고(빈 줄은 앵커가 아니며, 뒤처진 DP 는 shift 0); emptied_marker_pages 는 본문이 있는데 최종 쪽에 한 줄도 안 남은 마커 쪽을 세고(빈 줄뿐인 마커는 제외); gap_lines 는 결손 구간(꼬리 포함) 줄 집합; check_alignment(exclude) 는 그 줄을 분모에서 뺀다; hybrid_lines 는 빈 줄을 세지 않는다; aggregate 는 nogap_*·hybrid_emptied_marker_pages 를 합치고 kw/case_pages_digest(16자) 를 내며 check_expected 가 그 지문을 대조한다',
+      _an == [3, 3, 4, 4, 6, 6] and _an_blank == [3, 3, 3, 4, 6] and _an_behind == [3, 3, 4, 6]
+      and _em == 1 and _em0 == 0 and _em_nobody == 1
+      and _gl == {2, 3, 4, 5, 6, 7} and _gl5 == {2, 3, 4, 5, 6, 7, 9} and _ok_rs and RS.gap_lines(['a', 'b'], 3) == set()
+      and _ca_ex == {'lines': 3, 'exact': 3, 'near': 3}
+      and isinstance(_hbb, tuple) and _hb_body.get('hybrid_lines') == 3 and _hbb[3][9:11] == [2, 2]
+      and isinstance(_ag_e, dict) and _ag_e['hybrid_emptied_marker_pages'] == 1 and _ag_e['hybrid_lines'] == 2
+      and {k: _ag_e['alignment_check']['overall'][k] for k in ('nogap_lines', 'nogap_exact', 'nogap_near')} == {'nogap_lines': 3, 'nogap_exact': 2, 'nogap_near': 3}
+      and len(_ag_e['kw_pages_digest']) == 16 and len(_ag_e['case_pages_digest']) == 16 and _ag_e['kw_pages_digest'] != _ag_e['case_pages_digest']
+      and _ce_dg == ['case_pages_digest: y != z'],
+      (_an, _an_blank, _an_behind, _em, _em0, _em_nobody, _gl, _gl5, _ca_ex, _hb_body, _hbb[3] if isinstance(_hbb, tuple) else _hbb,
+       _ag_e and (_ag_e.get('hybrid_emptied_marker_pages'), _ag_e['alignment_check']['overall']), _ce_dg))
+
+# 커밋된 산출물의 per_book 레이아웃 ↔ 코드가 쓰는 레이아웃 (2026-09-06 리팩터: hybrid_lines 를 match_stats 에서 교재 상위 키로 옮김).
+# 코드와 데이터가 어긋나면(리팩터 뒤 재실행 전) 여기서 드러난다 — 총계·지문이 같아 check_expected 는 못 잡는다.
+_pb_res = [v for v in _rs_sum['per_book'].values() if v.get('status') == 'resolved']
+_pb_unres = [v for v in _rs_sum['per_book'].values() if v.get('status') != 'resolved']
+check('R16z20 커밋된 reseg_summary.json 의 per_book 레이아웃이 코드와 같다 — 해결 교재는 상위 hybrid_lines(정수)와 세 키(overflow·ambiguous·partial)만의 match_stats, 미해결 교재는 둘 다 없음, 상위 hybrid_lines 합 == summary.hybrid_lines',
+      _ok_rs and _pb_res and all(isinstance(v.get('hybrid_lines'), int) and set(v.get('match_stats') or {}) == {'overflow', 'ambiguous', 'partial'} for v in _pb_res)
+      and all('hybrid_lines' not in v and 'match_stats' not in v for v in _pb_unres)
+      and sum(v['hybrid_lines'] for v in _pb_res) == _rs_sum['hybrid_lines'],
+      (_rs_sum['meta'].get('run_at'), sum(1 for v in _rs_sum['per_book'].values() if 'hybrid_lines' in (v.get('match_stats') or {})),
+       sum(1 for v in _pb_res if isinstance(v.get('hybrid_lines'), int))))
+
+# R17 — README·CLAUDE.md 가 적은 이 하니스의 단언 수 == 실제 (손으로 옮기는 수치라 썩기 쉽다; 이 단언 자신을 포함)
+_md = open(os.path.join(ROOT, 'README.md'), encoding='utf-8').read() + open(os.path.join(ROOT, 'CLAUDE.md'), encoding='utf-8').read()
+_cited = [int(x) for x in __import__('re').findall(r'test-recount-grades\.py\s+# (\d+)', _md)]
+check('R17 README·CLAUDE.md 의 test-recount-grades.py 단언 수 == %d' % (PASS + FAIL + 1), len(_cited) == 2 and all(n == PASS + FAIL + 1 for n in _cited), _cited)
 
 print('\n결과: %d/%d PASS%s%s' % (
     PASS, PASS + FAIL, ', %d FAIL' % FAIL if FAIL else '',

@@ -1,10 +1,10 @@
 {
- "pages": 2173,
+ "pages": 2189,
  "books": 86,
  "page_g": {
-  "1": 1502,
-  "2": 524,
-  "3": 147
+  "1": 1519,
+  "2": 525,
+  "3": 145
  },
  "cases_pages": 13,
  "cases_books": 5,
@@ -20,11 +20,11 @@
   },
   "반도체장비": {
    "books": 19,
-   "pages": 561,
+   "pages": 566,
    "page_g": {
-    "1": 383,
+    "1": 389,
     "2": 117,
-    "3": 61
+    "3": 60
    }
   },
   "반도체재료": {
@@ -38,11 +38,11 @@
   },
   "반도체제조": {
    "books": 13,
-   "pages": 323,
+   "pages": 334,
    "page_g": {
-    "1": 247,
-    "2": 70,
-    "3": 6
+    "1": 258,
+    "2": 71,
+    "3": 5
    }
   }
  },
@@ -51,32 +51,36 @@
   "pages": 51,
   "rows": 222
  },
- "moved_rows": 4316,
+ "moved_rows": 4270,
  "unmatched_rows": 94,
- "label_fallback_pages": 27,
+ "label_fallback_pages": 24,
  "match_stats": {
   "overflow": 293,
   "ambiguous": 1118,
   "partial": 118
  },
- "fallback_rows_on_text_pages": 65,
- "page_grade_digest": "39d00effeb0dfe6c",
+ "hybrid_lines": 1575,
+ "hybrid_emptied_marker_pages": 0,
+ "fallback_rows_on_text_pages": 68,
+ "page_grade_digest": "20855b3bc05d906b",
+ "kw_pages_digest": "4eae1c027aa25261",
+ "case_pages_digest": "7c97d3ceb40a64ff",
  "kw_pages": {
-  "안전": 1482,
-  "위험": 551,
-  "먼지": 93,
-  "진동": 208,
+  "안전": 1490,
+  "위험": 552,
+  "먼지": 94,
+  "진동": 211,
   "누출": 231,
   "감전": 35,
   "MSDS": 225,
-  "소음": 52,
-  "보건": 178,
+  "소음": 55,
+  "보건": 180,
   "사망": 18,
-  "화재": 168,
+  "화재": 169,
   "방사선": 45,
   "화학물질": 139,
-  "부상": 23,
   "폭발": 216,
+  "부상": 23,
   "안전보건": 90,
   "인화": 121,
   "중독": 24,
@@ -101,7 +105,10 @@
    "near": 20613,
    "all_lines": 32486,
    "all_exact": 25219,
-   "all_near": 29329
+   "all_near": 29329,
+   "nogap_lines": 19698,
+   "nogap_exact": 17456,
+   "nogap_near": 19397
   },
   "per_book": {
    "LM1903060318_18v2_LM1903060319_18v2_반도체_장비_시제품_성능평가": {
@@ -110,7 +117,10 @@
     "near": 1031,
     "all_lines": 1419,
     "all_exact": 1087,
-    "all_near": 1213
+    "all_near": 1213,
+    "nogap_lines": 982,
+    "nogap_exact": 908,
+    "nogap_near": 977
    },
    "LM1903060320_18v2_LM1903060321_18v2_반도체_장비_품질관리": {
     "lines": 814,
@@ -118,7 +128,10 @@
     "near": 790,
     "all_lines": 1274,
     "all_exact": 1040,
-    "all_near": 1165
+    "all_near": 1165,
+    "nogap_lines": 798,
+    "nogap_exact": 728,
+    "nogap_near": 778
    },
    "LM1903060324_19v2_반도체_장비_전장_조립": {
     "lines": 1048,
@@ -126,7 +139,10 @@
     "near": 1038,
     "all_lines": 1480,
     "all_exact": 1241,
-    "all_near": 1410
+    "all_near": 1410,
+    "nogap_lines": 937,
+    "nogap_exact": 872,
+    "nogap_near": 933
    },
    "LM1903060202_14v3_Etch_장비_운영": {
     "lines": 1294,
@@ -134,7 +150,10 @@
     "near": 1289,
     "all_lines": 1782,
     "all_exact": 1529,
-    "all_near": 1697
+    "all_near": 1697,
+    "nogap_lines": 1172,
+    "nogap_exact": 1108,
+    "nogap_near": 1168
    },
    "LM1903060307_18v2_반도체_장비_전장_설계": {
     "lines": 457,
@@ -142,7 +161,10 @@
     "near": 450,
     "all_lines": 825,
     "all_exact": 636,
-    "all_near": 737
+    "all_near": 737,
+    "nogap_lines": 427,
+    "nogap_exact": 380,
+    "nogap_near": 422
    },
    "LM1903060213_19v4_반도체_패키징_전공정_장비_운영": {
     "lines": 775,
@@ -150,7 +172,10 @@
     "near": 769,
     "all_lines": 1218,
     "all_exact": 1033,
-    "all_near": 1152
+    "all_near": 1152,
+    "nogap_lines": 744,
+    "nogap_exact": 689,
+    "nogap_near": 740
    },
    "LM1903060301_18v2_반도체_장비_콘셉트_설계": {
     "lines": 754,
@@ -158,7 +183,10 @@
     "near": 714,
     "all_lines": 1278,
     "all_exact": 1034,
-    "all_near": 1143
+    "all_near": 1143,
+    "nogap_lines": 741,
+    "nogap_exact": 648,
+    "nogap_near": 704
    },
    "LM1903060303_18v2_반도체_장비_주변부_기구_설계": {
     "lines": 559,
@@ -166,7 +194,10 @@
     "near": 552,
     "all_lines": 896,
     "all_exact": 712,
-    "all_near": 810
+    "all_near": 810,
+    "nogap_lines": 550,
+    "nogap_exact": 515,
+    "nogap_near": 545
    },
    "LM1903060308_18v2_반도체_장비_생산_외주관리": {
     "lines": 686,
@@ -174,7 +205,10 @@
     "near": 611,
     "all_lines": 1185,
     "all_exact": 825,
-    "all_near": 994
+    "all_near": 994,
+    "nogap_lines": 619,
+    "nogap_exact": 488,
+    "nogap_near": 568
    },
    "LM1903060326_19v1_반도체_광학_장비_유지보수": {
     "lines": 516,
@@ -182,7 +216,10 @@
     "near": 511,
     "all_lines": 888,
     "all_exact": 729,
-    "all_near": 823
+    "all_near": 823,
+    "nogap_lines": 507,
+    "nogap_exact": 460,
+    "nogap_near": 503
    },
    "LM1903060216_19v4_반도체_클린룸_시설_운영": {
     "lines": 972,
@@ -190,7 +227,10 @@
     "near": 784,
     "all_lines": 1554,
     "all_exact": 975,
-    "all_near": 1222
+    "all_near": 1222,
+    "nogap_lines": 735,
+    "nogap_exact": 612,
+    "nogap_near": 713
    },
    "LM1903060314_18v2_LM1903060315_18v2_반도체_장비_보드_설계": {
     "lines": 779,
@@ -198,7 +238,10 @@
     "near": 679,
     "all_lines": 1324,
     "all_exact": 942,
-    "all_near": 1090
+    "all_near": 1090,
+    "nogap_lines": 673,
+    "nogap_exact": 607,
+    "nogap_near": 662
    },
    "LM1903060327_19v1_반도체_진공_플라스마_장비_유지보수": {
     "lines": 617,
@@ -206,7 +249,10 @@
     "near": 540,
     "all_lines": 1018,
     "all_exact": 700,
-    "all_near": 828
+    "all_near": 828,
+    "nogap_lines": 513,
+    "nogap_exact": 460,
+    "nogap_near": 496
    },
    "LM1903060201_14v3_Photo_장비운영": {
     "lines": 782,
@@ -214,7 +260,10 @@
     "near": 774,
     "all_lines": 1092,
     "all_exact": 945,
-    "all_near": 1003
+    "all_near": 1003,
+    "nogap_lines": 705,
+    "nogap_exact": 681,
+    "nogap_near": 700
    },
    "LM1903060203_14v3_박막확산_장비운영": {
     "lines": 1414,
@@ -222,7 +271,10 @@
     "near": 1410,
     "all_lines": 1947,
     "all_exact": 1683,
-    "all_near": 1862
+    "all_near": 1862,
+    "nogap_lines": 1249,
+    "nogap_exact": 1179,
+    "nogap_near": 1246
    },
    "LM1903060313_18v2_반도체_장비_고객_지원": {
     "lines": 636,
@@ -230,7 +282,10 @@
     "near": 630,
     "all_lines": 1066,
     "all_exact": 889,
-    "all_near": 977
+    "all_near": 977,
+    "nogap_lines": 626,
+    "nogap_exact": 576,
+    "nogap_near": 621
    },
    "LM1903060328_19v1_반도체_케미컬_가스_장비_유지보수": {
     "lines": 1333,
@@ -238,7 +293,10 @@
     "near": 1247,
     "all_lines": 1824,
     "all_exact": 1498,
-    "all_near": 1641
+    "all_near": 1641,
+    "nogap_lines": 1171,
+    "nogap_exact": 1098,
+    "nogap_near": 1167
    },
    "LM1903060214_19v4_반도체_패키징_후공정장비_운영": {
     "lines": 1238,
@@ -246,7 +304,10 @@
     "near": 1214,
     "all_lines": 1893,
     "all_exact": 1576,
-    "all_near": 1798
+    "all_near": 1798,
+    "nogap_lines": 1092,
+    "nogap_exact": 1022,
+    "nogap_near": 1088
    },
    "LM1903060209_14v3_반도체_품질관리": {
     "lines": 667,
@@ -254,7 +315,10 @@
     "near": 655,
     "all_lines": 990,
     "all_exact": 818,
-    "all_near": 898
+    "all_near": 898,
+    "nogap_lines": 652,
+    "nogap_exact": 613,
+    "nogap_near": 647
    },
    "LM1903060205_14v3_MI_장비_운영": {
     "lines": 823,
@@ -262,7 +326,10 @@
     "near": 799,
     "all_lines": 1292,
     "all_exact": 1053,
-    "all_near": 1185
+    "all_near": 1185,
+    "nogap_lines": 716,
+    "nogap_exact": 701,
+    "nogap_near": 712
    },
    "LM1903060329_19v1_반도체_장비_안전관리": {
     "lines": 1776,
@@ -270,7 +337,10 @@
     "near": 1722,
     "all_lines": 2713,
     "all_exact": 1504,
-    "all_near": 2551
+    "all_near": 2551,
+    "nogap_lines": 1771,
+    "nogap_exact": 1033,
+    "nogap_near": 1721
    },
    "LM1903060215_19v4_반도체_유틸리티_운영": {
     "lines": 1035,
@@ -278,7 +348,10 @@
     "near": 1030,
     "all_lines": 1566,
     "all_exact": 1309,
-    "all_near": 1501
+    "all_near": 1501,
+    "nogap_lines": 1023,
+    "nogap_exact": 910,
+    "nogap_near": 1019
    },
    "LM1903060204_14v3_C_C_장비_운영": {
     "lines": 1593,
@@ -286,7 +359,10 @@
     "near": 1374,
     "all_lines": 1962,
     "all_exact": 1461,
-    "all_near": 1629
+    "all_near": 1629,
+    "nogap_lines": 1295,
+    "nogap_exact": 1168,
+    "nogap_near": 1267
    }
   }
  },
@@ -308,6 +384,8 @@
     "ambiguous": 2,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 11,
     "2": 1,
@@ -319,8 +397,8 @@
    "method": "markers",
    "rows": 85,
    "old_pages": 32,
-   "new_pages": 29,
-   "moved_rows": 48,
+   "new_pages": 31,
+   "moved_rows": 46,
    "unmatched_rows": 1,
    "pdf_pages": 94,
    "md_markers": 79,
@@ -331,15 +409,20 @@
     "near": 1031,
     "all_lines": 1419,
     "all_exact": 1087,
-    "all_near": 1213
+    "all_near": 1213,
+    "nogap_lines": 982,
+    "nogap_exact": 908,
+    "nogap_near": 977
    },
    "match_stats": {
     "overflow": 7,
     "ambiguous": 10,
     "partial": 3
    },
+   "hybrid_lines": 153,
+   "emptied_marker_pages": 0,
    "page_g": {
-    "1": 20,
+    "1": 22,
     "2": 9,
     "3": 0
    }
@@ -361,13 +444,18 @@
     "near": 790,
     "all_lines": 1274,
     "all_exact": 1040,
-    "all_near": 1165
+    "all_near": 1165,
+    "nogap_lines": 798,
+    "nogap_exact": 728,
+    "nogap_near": 778
    },
    "match_stats": {
     "overflow": 3,
     "ambiguous": 0,
     "partial": 0
    },
+   "hybrid_lines": 23,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 22,
     "2": 2,
@@ -379,8 +467,8 @@
    "method": "markers",
    "rows": 132,
    "old_pages": 36,
-   "new_pages": 36,
-   "moved_rows": 78,
+   "new_pages": 38,
+   "moved_rows": 60,
    "unmatched_rows": 1,
    "pdf_pages": 107,
    "md_markers": 100,
@@ -391,17 +479,22 @@
     "near": 1038,
     "all_lines": 1480,
     "all_exact": 1241,
-    "all_near": 1410
+    "all_near": 1410,
+    "nogap_lines": 937,
+    "nogap_exact": 872,
+    "nogap_near": 933
    },
    "match_stats": {
     "overflow": 3,
     "ambiguous": 3,
     "partial": 3
    },
+   "hybrid_lines": 66,
+   "emptied_marker_pages": 0,
    "page_g": {
-    "1": 27,
+    "1": 30,
     "2": 7,
-    "3": 2
+    "3": 1
    }
   },
   "LM1903060417_23v3_반도체용_세정_공정_가스_제조": {
@@ -421,6 +514,8 @@
     "ambiguous": 21,
     "partial": 2
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 51,
     "2": 29,
@@ -444,6 +539,8 @@
     "ambiguous": 39,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 34,
     "2": 15,
@@ -467,13 +564,18 @@
     "near": 1289,
     "all_lines": 1782,
     "all_exact": 1529,
-    "all_near": 1697
+    "all_near": 1697,
+    "nogap_lines": 1172,
+    "nogap_exact": 1108,
+    "nogap_near": 1168
    },
    "match_stats": {
     "overflow": 9,
     "ambiguous": 43,
     "partial": 0
    },
+   "hybrid_lines": 69,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 22,
     "2": 10,
@@ -497,13 +599,18 @@
     "near": 450,
     "all_lines": 825,
     "all_exact": 636,
-    "all_near": 737
+    "all_near": 737,
+    "nogap_lines": 427,
+    "nogap_exact": 380,
+    "nogap_near": 422
    },
    "match_stats": {
     "overflow": 2,
     "ambiguous": 6,
     "partial": 2
    },
+   "hybrid_lines": 6,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 13,
     "2": 4,
@@ -527,13 +634,18 @@
     "near": 769,
     "all_lines": 1218,
     "all_exact": 1033,
-    "all_near": 1152
+    "all_near": 1152,
+    "nogap_lines": 744,
+    "nogap_exact": 689,
+    "nogap_near": 740
    },
    "match_stats": {
     "overflow": 0,
     "ambiguous": 8,
     "partial": 0
    },
+   "hybrid_lines": 14,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 16,
     "2": 0,
@@ -557,13 +669,18 @@
     "near": 714,
     "all_lines": 1278,
     "all_exact": 1034,
-    "all_near": 1143
+    "all_near": 1143,
+    "nogap_lines": 741,
+    "nogap_exact": 648,
+    "nogap_near": 704
    },
    "match_stats": {
     "overflow": 0,
     "ambiguous": 6,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 12,
     "2": 1,
@@ -587,13 +704,18 @@
     "near": 552,
     "all_lines": 896,
     "all_exact": 712,
-    "all_near": 810
+    "all_near": 810,
+    "nogap_lines": 550,
+    "nogap_exact": 515,
+    "nogap_near": 545
    },
    "match_stats": {
     "overflow": 1,
     "ambiguous": 0,
     "partial": 1
    },
+   "hybrid_lines": 1,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 11,
     "2": 0,
@@ -617,13 +739,18 @@
     "near": 611,
     "all_lines": 1185,
     "all_exact": 825,
-    "all_near": 994
+    "all_near": 994,
+    "nogap_lines": 619,
+    "nogap_exact": 488,
+    "nogap_near": 568
    },
    "match_stats": {
     "overflow": 3,
     "ambiguous": 3,
     "partial": 0
    },
+   "hybrid_lines": 19,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 14,
     "2": 1,
@@ -647,6 +774,8 @@
     "ambiguous": 35,
     "partial": 14
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 12,
     "2": 35,
@@ -670,6 +799,8 @@
     "ambiguous": 43,
     "partial": 6
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 27,
     "2": 27,
@@ -693,6 +824,8 @@
     "ambiguous": 2,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 15,
     "2": 0,
@@ -716,13 +849,18 @@
     "near": 511,
     "all_lines": 888,
     "all_exact": 729,
-    "all_near": 823
+    "all_near": 823,
+    "nogap_lines": 507,
+    "nogap_exact": 460,
+    "nogap_near": 503
    },
    "match_stats": {
     "overflow": 1,
     "ambiguous": 2,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 9,
     "2": 1,
@@ -746,6 +884,8 @@
     "ambiguous": 14,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 47,
     "2": 22,
@@ -757,8 +897,8 @@
    "method": "markers",
    "rows": 169,
    "old_pages": 46,
-   "new_pages": 39,
-   "moved_rows": 108,
+   "new_pages": 45,
+   "moved_rows": 92,
    "unmatched_rows": 3,
    "pdf_pages": 100,
    "md_markers": 80,
@@ -769,17 +909,22 @@
     "near": 784,
     "all_lines": 1554,
     "all_exact": 975,
-    "all_near": 1222
+    "all_near": 1222,
+    "nogap_lines": 735,
+    "nogap_exact": 612,
+    "nogap_near": 713
    },
    "match_stats": {
     "overflow": 8,
     "ambiguous": 58,
     "partial": 3
    },
+   "hybrid_lines": 280,
+   "emptied_marker_pages": 0,
    "page_g": {
-    "1": 27,
-    "2": 9,
-    "3": 3
+    "1": 32,
+    "2": 11,
+    "3": 2
    }
   },
   "LM1903060104_23v5_디지털_회로_설계_수정요청": {
@@ -799,6 +944,8 @@
     "ambiguous": 10,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 7,
     "2": 0,
@@ -822,6 +969,8 @@
     "ambiguous": 4,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 12,
     "2": 0,
@@ -834,7 +983,7 @@
    "rows": 9,
    "old_pages": 8,
    "new_pages": 8,
-   "moved_rows": 4,
+   "moved_rows": 3,
    "unmatched_rows": 0,
    "pdf_pages": 88,
    "md_markers": 74,
@@ -845,13 +994,18 @@
     "near": 679,
     "all_lines": 1324,
     "all_exact": 942,
-    "all_near": 1090
+    "all_near": 1090,
+    "nogap_lines": 673,
+    "nogap_exact": 607,
+    "nogap_near": 662
    },
    "match_stats": {
     "overflow": 0,
     "ambiguous": 0,
     "partial": 0
    },
+   "hybrid_lines": 157,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 8,
     "2": 0,
@@ -875,13 +1029,18 @@
     "near": 540,
     "all_lines": 1018,
     "all_exact": 700,
-    "all_near": 828
+    "all_near": 828,
+    "nogap_lines": 513,
+    "nogap_exact": 460,
+    "nogap_near": 496
    },
    "match_stats": {
     "overflow": 0,
     "ambiguous": 4,
     "partial": 0
    },
+   "hybrid_lines": 104,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 15,
     "2": 0,
@@ -905,6 +1064,8 @@
     "ambiguous": 6,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 17,
     "2": 1,
@@ -928,6 +1089,8 @@
     "ambiguous": 16,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 16,
     "2": 1,
@@ -951,6 +1114,8 @@
     "ambiguous": 42,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 21,
     "2": 8,
@@ -974,6 +1139,8 @@
     "ambiguous": 54,
     "partial": 7
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 28,
     "2": 39,
@@ -997,6 +1164,8 @@
     "ambiguous": 12,
     "partial": 4
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 37,
     "2": 16,
@@ -1020,13 +1189,18 @@
     "near": 774,
     "all_lines": 1092,
     "all_exact": 945,
-    "all_near": 1003
+    "all_near": 1003,
+    "nogap_lines": 705,
+    "nogap_exact": 681,
+    "nogap_near": 700
    },
    "match_stats": {
     "overflow": 4,
     "ambiguous": 5,
     "partial": 0
    },
+   "hybrid_lines": 15,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 7,
     "2": 5,
@@ -1038,8 +1212,8 @@
    "method": "markers",
    "rows": 44,
    "old_pages": 22,
-   "new_pages": 23,
-   "moved_rows": 22,
+   "new_pages": 24,
+   "moved_rows": 21,
    "unmatched_rows": 0,
    "pdf_pages": 117,
    "md_markers": 110,
@@ -1050,15 +1224,20 @@
     "near": 1410,
     "all_lines": 1947,
     "all_exact": 1683,
-    "all_near": 1862
+    "all_near": 1862,
+    "nogap_lines": 1249,
+    "nogap_exact": 1179,
+    "nogap_near": 1246
    },
    "match_stats": {
     "overflow": 0,
     "ambiguous": 1,
     "partial": 0
    },
+   "hybrid_lines": 75,
+   "emptied_marker_pages": 0,
    "page_g": {
-    "1": 18,
+    "1": 19,
     "2": 5,
     "3": 0
    }
@@ -1080,6 +1259,8 @@
     "ambiguous": 2,
     "partial": 1
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 12,
     "2": 0,
@@ -1103,6 +1284,8 @@
     "ambiguous": 6,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 3,
     "2": 4,
@@ -1126,13 +1309,18 @@
     "near": 630,
     "all_lines": 1066,
     "all_exact": 889,
-    "all_near": 977
+    "all_near": 977,
+    "nogap_lines": 626,
+    "nogap_exact": 576,
+    "nogap_near": 621
    },
    "match_stats": {
     "overflow": 5,
     "ambiguous": 8,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 10,
     "2": 4,
@@ -1156,6 +1344,8 @@
     "ambiguous": 52,
     "partial": 2
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 37,
     "2": 15,
@@ -1191,6 +1381,8 @@
     "ambiguous": 5,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 14,
     "2": 1,
@@ -1214,6 +1406,8 @@
     "ambiguous": 4,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 10,
     "2": 1,
@@ -1237,6 +1431,8 @@
     "ambiguous": 3,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 9,
     "2": 0,
@@ -1260,6 +1456,8 @@
     "ambiguous": 2,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 15,
     "2": 0,
@@ -1283,6 +1481,8 @@
     "ambiguous": 42,
     "partial": 1
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 40,
     "2": 4,
@@ -1306,6 +1506,8 @@
     "ambiguous": 9,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 12,
     "2": 4,
@@ -1329,6 +1531,8 @@
     "ambiguous": 6,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 13,
     "2": 2,
@@ -1352,6 +1556,8 @@
     "ambiguous": 27,
     "partial": 1
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 4,
     "2": 0,
@@ -1375,6 +1581,8 @@
     "ambiguous": 0,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 14,
     "2": 0,
@@ -1398,6 +1606,8 @@
     "ambiguous": 4,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 26,
     "2": 5,
@@ -1409,8 +1619,8 @@
    "method": "markers",
    "rows": 172,
    "old_pages": 47,
-   "new_pages": 46,
-   "moved_rows": 78,
+   "new_pages": 47,
+   "moved_rows": 74,
    "unmatched_rows": 2,
    "pdf_pages": 114,
    "md_markers": 100,
@@ -1421,15 +1631,20 @@
     "near": 1247,
     "all_lines": 1824,
     "all_exact": 1498,
-    "all_near": 1641
+    "all_near": 1641,
+    "nogap_lines": 1171,
+    "nogap_exact": 1098,
+    "nogap_near": 1167
    },
    "match_stats": {
     "overflow": 2,
     "ambiguous": 14,
     "partial": 1
    },
+   "hybrid_lines": 156,
+   "emptied_marker_pages": 0,
    "page_g": {
-    "1": 33,
+    "1": 34,
     "2": 12,
     "3": 1
    }
@@ -1451,6 +1666,8 @@
     "ambiguous": 69,
     "partial": 20
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 22,
     "2": 41,
@@ -1474,6 +1691,8 @@
     "ambiguous": 0,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 15,
     "2": 9,
@@ -1497,6 +1716,8 @@
     "ambiguous": 34,
     "partial": 1
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 8,
     "2": 6,
@@ -1520,6 +1741,8 @@
     "ambiguous": 13,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 4,
     "2": 5,
@@ -1543,6 +1766,8 @@
     "ambiguous": 2,
     "partial": 1
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 16,
     "2": 0,
@@ -1566,6 +1791,8 @@
     "ambiguous": 1,
     "partial": 1
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 27,
     "2": 0,
@@ -1589,6 +1816,8 @@
     "ambiguous": 1,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 4,
     "2": 1,
@@ -1612,6 +1841,8 @@
     "ambiguous": 5,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 21,
     "2": 2,
@@ -1635,6 +1866,8 @@
     "ambiguous": 17,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 16,
     "2": 4,
@@ -1658,6 +1891,8 @@
     "ambiguous": 3,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 8,
     "2": 0,
@@ -1670,7 +1905,7 @@
    "rows": 28,
    "old_pages": 23,
    "new_pages": 25,
-   "moved_rows": 13,
+   "moved_rows": 12,
    "unmatched_rows": 2,
    "pdf_pages": 158,
    "md_markers": 141,
@@ -1681,13 +1916,18 @@
     "near": 1214,
     "all_lines": 1893,
     "all_exact": 1576,
-    "all_near": 1798
+    "all_near": 1798,
+    "nogap_lines": 1092,
+    "nogap_exact": 1022,
+    "nogap_near": 1088
    },
    "match_stats": {
     "overflow": 0,
     "ambiguous": 4,
     "partial": 1
    },
+   "hybrid_lines": 121,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 25,
     "2": 0,
@@ -1711,6 +1951,8 @@
     "ambiguous": 0,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 12,
     "2": 1,
@@ -1734,6 +1976,8 @@
     "ambiguous": 1,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 8,
     "2": 0,
@@ -1757,13 +2001,18 @@
     "near": 655,
     "all_lines": 990,
     "all_exact": 818,
-    "all_near": 898
+    "all_near": 898,
+    "nogap_lines": 652,
+    "nogap_exact": 613,
+    "nogap_near": 647
    },
    "match_stats": {
     "overflow": 0,
     "ambiguous": 3,
     "partial": 1
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 17,
     "2": 1,
@@ -1787,6 +2036,8 @@
     "ambiguous": 3,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 13,
     "2": 2,
@@ -1810,6 +2061,8 @@
     "ambiguous": 1,
     "partial": 1
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 12,
     "2": 0,
@@ -1833,6 +2086,8 @@
     "ambiguous": 16,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 17,
     "2": 6,
@@ -1856,6 +2111,8 @@
     "ambiguous": 1,
     "partial": 1
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 10,
     "2": 0,
@@ -1879,6 +2136,8 @@
     "ambiguous": 6,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 12,
     "2": 0,
@@ -1902,6 +2161,8 @@
     "ambiguous": 1,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 5,
     "2": 0,
@@ -1925,6 +2186,8 @@
     "ambiguous": 7,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 19,
     "2": 2,
@@ -1948,6 +2211,8 @@
     "ambiguous": 0,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 9,
     "2": 0,
@@ -1971,6 +2236,8 @@
     "ambiguous": 8,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 17,
     "2": 4,
@@ -1994,6 +2261,8 @@
     "ambiguous": 21,
     "partial": 5
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 27,
     "2": 6,
@@ -2005,8 +2274,8 @@
    "method": "markers",
    "rows": 32,
    "old_pages": 12,
-   "new_pages": 19,
-   "moved_rows": 17,
+   "new_pages": 20,
+   "moved_rows": 16,
    "unmatched_rows": 1,
    "pdf_pages": 90,
    "md_markers": 84,
@@ -2017,15 +2286,20 @@
     "near": 799,
     "all_lines": 1292,
     "all_exact": 1053,
-    "all_near": 1185
+    "all_near": 1185,
+    "nogap_lines": 716,
+    "nogap_exact": 701,
+    "nogap_near": 712
    },
    "match_stats": {
     "overflow": 2,
     "ambiguous": 2,
     "partial": 0
    },
+   "hybrid_lines": 62,
+   "emptied_marker_pages": 0,
    "page_g": {
-    "1": 18,
+    "1": 19,
     "2": 1,
     "3": 0
    }
@@ -2047,6 +2321,8 @@
     "ambiguous": 3,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 16,
     "2": 0,
@@ -2070,13 +2346,18 @@
     "near": 1722,
     "all_lines": 2713,
     "all_exact": 1504,
-    "all_near": 2551
+    "all_near": 2551,
+    "nogap_lines": 1771,
+    "nogap_exact": 1033,
+    "nogap_near": 1721
    },
    "match_stats": {
     "overflow": 23,
     "ambiguous": 91,
     "partial": 19
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 43,
     "2": 51,
@@ -2100,6 +2381,8 @@
     "ambiguous": 9,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 13,
     "2": 0,
@@ -2123,6 +2406,8 @@
     "ambiguous": 1,
     "partial": 3
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 19,
     "2": 13,
@@ -2146,6 +2431,8 @@
     "ambiguous": 1,
     "partial": 1
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 20,
     "2": 1,
@@ -2169,6 +2456,8 @@
     "ambiguous": 1,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 12,
     "2": 8,
@@ -2192,13 +2481,18 @@
     "near": 1030,
     "all_lines": 1566,
     "all_exact": 1309,
-    "all_near": 1501
+    "all_near": 1501,
+    "nogap_lines": 1023,
+    "nogap_exact": 910,
+    "nogap_near": 1019
    },
    "match_stats": {
     "overflow": 20,
     "ambiguous": 61,
     "partial": 10
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 25,
     "2": 20,
@@ -2222,6 +2516,8 @@
     "ambiguous": 3,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 4,
     "2": 0,
@@ -2245,6 +2541,8 @@
     "ambiguous": 14,
     "partial": 1
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 5,
     "2": 1,
@@ -2256,8 +2554,8 @@
    "method": "markers",
    "rows": 111,
    "old_pages": 23,
-   "new_pages": 39,
-   "moved_rows": 92,
+   "new_pages": 42,
+   "moved_rows": 90,
    "unmatched_rows": 0,
    "pdf_pages": 125,
    "md_markers": 104,
@@ -2268,16 +2566,21 @@
     "near": 1374,
     "all_lines": 1962,
     "all_exact": 1461,
-    "all_near": 1629
+    "all_near": 1629,
+    "nogap_lines": 1295,
+    "nogap_exact": 1168,
+    "nogap_near": 1267
    },
    "match_stats": {
     "overflow": 10,
     "ambiguous": 22,
     "partial": 1
    },
+   "hybrid_lines": 254,
+   "emptied_marker_pages": 0,
    "page_g": {
-    "1": 31,
-    "2": 8,
+    "1": 35,
+    "2": 7,
     "3": 0
    }
   },
@@ -2298,6 +2601,8 @@
     "ambiguous": 0,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 17,
     "2": 0,
@@ -2321,6 +2626,8 @@
     "ambiguous": 4,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 3,
     "2": 0,
@@ -2344,6 +2651,8 @@
     "ambiguous": 28,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 28,
     "2": 9,
@@ -2367,6 +2676,8 @@
     "ambiguous": 23,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 29,
     "2": 3,
@@ -2390,6 +2701,8 @@
     "ambiguous": 5,
     "partial": 0
    },
+   "hybrid_lines": 0,
+   "emptied_marker_pages": 0,
    "page_g": {
     "1": 16,
     "2": 5,
@@ -2526,6 +2839,9 @@
  "meta": {
   "workbook": "ncs_keywords_in_markdown_results_20260402.xlsx",
   "workbook_sha256": "18437cd37839c72b525e7bdb067647def561e7d63f9c3af96170ceb1f2728486",
+  "md_corpus_sha256": "1ae4eb65880d54f2ec3667cda4d481a8e8ddd5652635f12fc1ba870abdc566f6",
+  "python": "3.13.7",
+  "pymupdf": "1.27.2.2",
   "pdf_root": "~/DEV/SemiconductorAcademy/data/ncs",
   "md_root": "data/markdown/ncs",
   "rows": 7769,
@@ -2533,29 +2849,36 @@
   "pdf_files": 86,
   "limit": null,
   "rule": "regrade.grade_page baseline (word_boundary=False, normalize=False)",
-  "run_at": "2026-09-06T05:56:30+00:00",
+  "run_at": "2026-09-06T09:21:36+00:00",
   "expected": {
-   "pages": 2173,
+   "pages": 2189,
    "page_g": {
-    "1": 1502,
-    "2": 524,
-    "3": 147
+    "1": 1519,
+    "2": 525,
+    "3": 145
    },
    "books": 86,
    "unresolved_pages": 51,
-   "digest": "39d00effeb0dfe6c",
+   "digest": "20855b3bc05d906b",
+   "kw_pages_digest": "4eae1c027aa25261",
+   "case_pages_digest": "7c97d3ceb40a64ff",
    "cases_pages": 13,
    "cases_books": 5,
-   "moved_rows": 4316,
+   "moved_rows": 4270,
    "unmatched_rows": 94,
-   "label_fallback_pages": 27,
+   "label_fallback_pages": 24,
+   "hybrid_lines": 1575,
+   "hybrid_emptied_marker_pages": 0,
    "alignment_overall": {
     "lines": 21711,
     "exact": 18142,
     "near": 20613,
     "all_lines": 32486,
     "all_exact": 25219,
-    "all_near": 29329
+    "all_near": 29329,
+    "nogap_lines": 19698,
+    "nogap_exact": 17456,
+    "nogap_near": 19397
    },
    "match_stats": {
     "overflow": 293,

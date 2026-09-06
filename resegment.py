@@ -12,7 +12,8 @@ resegment.py — NCS 워크북의 '페이지' 라벨(목차 블록)을 원본 PD
 마커도 89권 중 23권만 쪽 단위라 재검색으로는 풀리지 않는다.
 
 무엇을 하나. (1) PDF 쪽 텍스트(PyMuPDF)와 마크다운 줄을 문자 3-gram 포함률 + 단조 DP 로
-정렬해 줄→실제 쪽 대응을 만들고, (2) 워크북 검출 행의 매칭 문장을 마크다운 줄에 붙여 실제
+정렬해 줄→실제 쪽 대응을 만들고(쪽 단위 마커가 촘촘한 교재 — 밀도 ≥ DENSE_MARKER_RATIO — 는 마커를 쓰되
+마커가 빠진 쪽은 hybrid_pages 가 DP 배정으로 쪼갠다, Act-3), (2) 워크북 검출 행의 매칭 문장을 마크다운 줄에 붙여 실제
 쪽으로 옮기고, (3) 실제 쪽 본문에 현행 등급 규칙(`regrade.grade_page` 재현 기준선)을 다시
 적용해 (교재, 쪽) 단위로 집계한다. 검출 행 자체는 그대로다 — 쪽 배치와 등급만 바뀐다.
 
@@ -55,11 +56,14 @@ BASELINE_KW = dict(word_boundary=False, normalize=False)   # 현행 규칙 재�
 
 # 회귀 가드 — 보고서가 인용한 수치. 재실행이 여기서 어긋나면 --force 없이는 쓰지 않는다 (regrade.py 의 EXPECTED 와 같은 역할).
 # digest 는 (교재, 쪽, 등급) 전체의 지문이라 총계가 같아도 쪽→등급 재배정을 잡는다.
-EXPECTED = {'pages': 2173, 'page_g': {'1': 1502, '2': 524, '3': 147}, 'books': 86, 'unresolved_pages': 51,
-            'digest': '39d00effeb0dfe6c',                        # 2026-09-06 Act-2 실행의 (교재, 쪽, 등급) 지문
-            'cases_pages': 13, 'cases_books': 5, 'moved_rows': 4316, 'unmatched_rows': 94,   # 보고서·TODOS 가 인용하는 나머지 수치 —
-            'label_fallback_pages': 27,                          # match_rows 나 사고사례 OR 이 바뀌면 지문은 그대로여도 여기서 잡힌다
-            'alignment_overall': {'lines': 21711, 'exact': 18142, 'near': 20613, 'all_lines': 32486, 'all_exact': 25219, 'all_near': 29329},
+EXPECTED = {'pages': 2189, 'page_g': {'1': 1519, '2': 525, '3': 145}, 'books': 86, 'unresolved_pages': 51,
+            'digest': '20855b3bc05d906b',                        # 2026-09-06 Act-3(마커 결손 하이브리드, 앵커 보정) 실행의 (교재, 쪽, 등급) 지문
+            'kw_pages_digest': '4eae1c027aa25261', 'case_pages_digest': '7c97d3ceb40a64ff',   # 키워드별 검출 쪽·사고사례 쪽의 정체 (등급 지문이 못 보는 것)
+            'cases_pages': 13, 'cases_books': 5, 'moved_rows': 4270, 'unmatched_rows': 94,   # 보고서·TODOS 가 인용하는 나머지 수치 —
+            'label_fallback_pages': 24, 'hybrid_lines': 1575,   # match_rows·사고사례 OR·마커 결손 보정이 바뀌면 지문은 그대로여도 여기서 잡힌다
+            'hybrid_emptied_marker_pages': 0,                    # 보정이 마커 쪽을 지우면 0 이 아니게 된다
+            'alignment_overall': {'lines': 21711, 'exact': 18142, 'near': 20613, 'all_lines': 32486, 'all_exact': 25219, 'all_near': 29329,
+                                  'nogap_lines': 19698, 'nogap_exact': 17456, 'nogap_near': 19397},
             'match_stats': {'overflow': 293, 'ambiguous': 1118, 'partial': 118}}   # 문서가 인용하는 자기 검증·약한 배정 수치 — 정의가 바뀌면 여기서 잡힌다
 
 
@@ -160,13 +164,75 @@ def page_texts(lines, line_pages):
     return {p: '\n'.join(v) for p, v in buckets.items()}
 
 
+def marker_positions(lines):
+    """[(줄 idx, 마커 쪽)] — 마커 줄 목록. marker_pages·hybrid_pages 가 같은 스캔을 쓴다."""
+    return [(i, int(m.group(1))) for i, line in enumerate(lines) if (m := MARKER_RE.search(line))]
+
+
 def marker_pages(lines):
     """마커로 줄→쪽. 마커 줄을 정렬 결과처럼 취급해 propagate 로 채운다 (첫 마커 앞의 줄은 첫 마커의 쪽)."""
-    return propagate(len(lines), {i: int(m.group(1)) for i, line in enumerate(lines) if (m := MARKER_RE.search(line))})
+    return propagate(len(lines), dict(marker_positions(lines)))
 
 
-def check_alignment(lines, assigned):
-    """마크다운의 마커를 정답으로 정렬 결과를 대조한다. {lines, exact, near(±1)}."""
+def hybrid_pages(lines, marker_lp, dp_lp, n_pages):
+    """마커 우선 교재의 마커 결손 보정 (Act-3, 연구 책임자 결정 2026-09-06).
+
+    변환기가 마커를 빠뜨린 쪽의 줄은 marker_pages 가 앞 마커의 쪽에 붙인다. 마커 N 다음 마커가 N+2 이상이면
+    (사이에 마커 없는 쪽이 있으면) 그 사이 줄은 DP 배정이 [N, 다음 마커-1] 안에 들 때 DP 쪽을 쓰고, DP 근거가
+    없는 줄은 바로 앞 줄의 쪽을 물려받는다(구간 안 단조). 마지막 마커 뒤는 PDF 끝쪽까지 같은 규칙.
+    마커가 빠지지 않은 구간(다음 마커 = N+1)과 첫 마커 앞 줄은 그대로 — 변환기 마커가 DP 보다 정확하다.
+
+    앵커: 구간 첫 본문 줄의 DP 가 마커 쪽 N 보다 앞서 있으면(DP 드리프트 — 마커 앞 줄에서 전파된 값) 그 차이를
+    구간 전체의 DP 에서 빼고 판정한다. 그러지 않으면 마커 N 직후 줄이 N+k 로 가 마커가 찍힌 실제 쪽 N 이 본문
+    0줄로 비는데(출하 전 리뷰 F1: 실측 17쪽), 마커는 그 줄이 N 에 있다는 직접 증거다. DP 의 절대값이 아니라
+    증가분만 쓰는 셈이다.
+    반환: 줄→쪽 목록 (marker_lp 와 같은 길이).
+    """
+    out = list(marker_lp)
+    marks = marker_positions(lines)
+    if not marks:
+        return out
+    segs = [(a + 1, b, pa, pb - 1) for (a, pa), (b, pb) in zip(marks, marks[1:])]
+    segs.append((marks[-1][0] + 1, len(lines), marks[-1][1], n_pages))
+    for start, end, lo, hi in segs:
+        if hi - lo < 1:                                   # 빠진 쪽이 없는 구간
+            continue
+        first = next((dp_lp[j] for j in range(start, min(end, len(dp_lp))) if dp_lp[j] is not None and norm_text(lines[j])), None)
+        shift = max(0, first - lo) if first is not None else 0    # 구간 첫 본문 줄의 DP 드리프트
+        cur = lo
+        for j in range(start, end):
+            p = dp_lp[j] if j < len(dp_lp) else None
+            if p is not None:
+                p -= shift
+                if cur <= p <= hi:
+                    cur = p
+            out[j] = cur
+    return out
+
+
+def emptied_marker_pages(lines, line_pages):
+    """마커 쪽 N 아래에 본문 줄이 있는데 최종 줄→쪽에 N 이 하나도 없는 쪽 수 — 결손 보정(hybrid_pages)이 마커 쪽을 지웠는지 드러낸다."""
+    marks = marker_positions(lines)
+    n = 0
+    for (a, pa), (b, _) in zip(marks, marks[1:] + [(len(lines), None)]):
+        body = [j for j in range(a + 1, b) if norm_text(lines[j])]
+        if body and all(line_pages[j] != pa for j in body):
+            n += 1
+    return n
+
+
+def gap_lines(lines, n_pages):
+    """마커 결손 구간(hybrid_pages 가 손대는 줄)의 idx 집합 — 자기 검증에서 '정답이 마커 전파값이라 정의상 틀린' 줄을 빼기 위해."""
+    marks = marker_positions(lines)
+    if not marks:
+        return set()
+    segs = [(a + 1, b, pa, pb - 1) for (a, pa), (b, pb) in zip(marks, marks[1:])]
+    segs.append((marks[-1][0] + 1, len(lines), marks[-1][1], n_pages))
+    return {j for start, end, lo, hi in segs if hi - lo >= 1 for j in range(start, end)}
+
+
+def check_alignment(lines, assigned, exclude=()):
+    """마크다운의 마커를 정답으로 정렬 결과를 대조한다. {lines, exact, near(±1)}. exclude 의 줄 idx 는 분모에서 뺀다."""
     truth, cur = {}, None
     for i, line in enumerate(lines):
         m = MARKER_RE.search(line)
@@ -177,7 +243,7 @@ def check_alignment(lines, assigned):
     n = exact = near = 0
     for i, p in assigned.items():
         t = truth.get(i)
-        if t is None:
+        if t is None or i in exclude:
             continue
         n += 1
         exact += (p == t)
@@ -249,7 +315,7 @@ def match_rows(rows, lines, stats=None):
             out.append(None)
             continue
         gk = (r.get('sheet'), key)          # 짧은 정형구는 전체 키(제목 맥락 포함)로 묶여 맥락이 다르면 각각 첫 등장 줄부터 센다.
-                                            # (시트, 정형구) 로 묶는 대안은 실측 2,173→2,178쪽(등급1 +5, 등급3 불변, 3권) — 연구 책임자 결정 사항 (TODOS.md P2)
+                                            # (시트, 정형구) 로 묶는 대안은 Act-2 기준 실측 2,173→2,178쪽(등급1 +5, 등급3 불변, 3권) — 연구 책임자 결정(2026-09-06): 현행 유지 (TODOS.md P2)
         n = ptr[gk]
         ptr[gk] += 1
         i = h[n] if n < len(h) else h[-1]
@@ -287,8 +353,12 @@ def check_expected(summary, expected=None):
         bad.append('unresolved_pages: %s != %s' % ((summary.get('unresolved') or {}).get('pages'), e.get('unresolved_pages')))
     if e.get('digest') and summary.get('page_grade_digest') != e['digest']:
         bad.append('digest: %s != %s' % (summary.get('page_grade_digest'), e['digest']))
-    for k in ('cases_pages', 'cases_books', 'moved_rows', 'unmatched_rows', 'label_fallback_pages'):   # 지문이 못 잡는 수치
-        if k in e and summary.get(k) != e[k]:
+    for k in ('kw_pages_digest', 'case_pages_digest'):    # 등급 지문이 못 보는 것 — 키워드별 검출 쪽·사고사례 쪽의 정체
+        if e.get(k) and summary.get(k) != e[k]:
+            bad.append('%s: %s != %s' % (k, summary.get(k), e[k]))
+    special = ('pages', 'books', 'page_g', 'unresolved_pages', 'digest', 'alignment_overall', 'match_stats', 'kw_pages_digest', 'case_pages_digest')
+    for k in e:                                          # 나머지 키는 전부 그대로 대조 — EXPECTED 에 더한 키가 가드 밖에 남을 통로가 없다
+        if k not in special and summary.get(k) != e[k]:
             bad.append('%s: %s != %s' % (k, summary.get(k), e[k]))
     if 'alignment_overall' in e and (summary.get('alignment_check') or {}).get('overall') != e['alignment_overall']:
         bad.append('alignment_overall: %s != %s' % ((summary.get('alignment_check') or {}).get('overall'), e['alignment_overall']))
@@ -302,9 +372,11 @@ def aggregate(books):
     page_g, areas = collections.Counter(), {}
     kw_pages, cases_pages, cases_books = collections.Counter(), 0, 0
     unresolved = {'books': 0, 'pages': 0, 'rows': 0}
-    align_books, align_tot = {}, {'lines': 0, 'exact': 0, 'near': 0, 'all_lines': 0, 'all_exact': 0, 'all_near': 0}
-    n_pages, label_fallback, match_tot, fb_on_text = 0, 0, collections.Counter(), 0
+    align_books, align_tot = {}, {'lines': 0, 'exact': 0, 'near': 0, 'all_lines': 0, 'all_exact': 0, 'all_near': 0, 'nogap_lines': 0, 'nogap_exact': 0, 'nogap_near': 0}
+    n_pages, label_fallback, match_tot, fb_on_text, hybrid_tot, emptied_tot = 0, 0, collections.Counter(), 0, 0, 0
     for name, b in books.items():
+        hybrid_tot += b.get('hybrid_lines', 0)
+        emptied_tot += b.get('emptied_marker_pages', 0)
         a = areas.setdefault(b['area'], {'books': 0, 'pages': 0, 'page_g': collections.Counter()})
         a['books'] += 1
         had_case = False
@@ -343,8 +415,12 @@ def aggregate(books):
         'unmatched_rows': sum(b.get('unmatched_rows', 0) for b in books.values()),
         'label_fallback_pages': label_fallback,       # 해결 교재 안에서 구 라벨로만 존재하는 쪽 (출처 label + text-fallback)
         'match_stats': {k: match_tot.get(k, 0) for k in ('overflow', 'ambiguous', 'partial')},   # match_rows 의 약한 배정 (해결 교재 합)
+        'hybrid_lines': hybrid_tot,                        # 마커 교재에서 마커 결손 보정으로 쪽이 바뀐 본문 줄 수 (교재별 hybrid_lines 합)
+        'hybrid_emptied_marker_pages': emptied_tot,        # 마커가 찍힌 쪽인데 본문 줄이 하나도 남지 않은 쪽 — 0 이어야 정상
         'fallback_rows_on_text_pages': fb_on_text,
         'page_grade_digest': page_grade_digest(books),
+        'kw_pages_digest': hashlib.sha256('\n'.join('%s\t%d' % kv for kv in sorted(kw_pages.items())).encode('utf-8')).hexdigest()[:16],
+        'case_pages_digest': hashlib.sha256('\n'.join(sorted('%s\t%s' % (name, pg) for name, b in books.items() for pg, rec in b['pages'].items() if rec.get('case'))).encode('utf-8')).hexdigest()[:16],
         'kw_pages': dict(kw_pages),
         'alignment_check': {'books': len(align_books), 'overall': align_tot, 'per_book': align_books},
     }
@@ -434,9 +510,10 @@ def unresolved_pages(rows):
 def resegment_book(rows, lines, pages_text, prefer_markers=False, stats=None):
     """한 교재: (정렬 또는 마커) → 행 배치 → 쪽별 등급.
 
-    prefer_markers 면 마크다운의 마커로 줄→쪽을 만들고 정렬은 검증용으로만 계산한다 — 쪽 단위
-    마커를 이미 가진 교재(변환기가 쪽마다 찍은 것)는 정렬보다 정확하다. 호출부가 마커 밀도로 정한다.
-    stats 는 match_rows 의 약한 배정 집계를 받을 dict (선택).
+    prefer_markers 면 마크다운의 마커로 줄→쪽을 만들고(마커가 빠진 쪽은 hybrid_pages 가 DP 로 쪼갠다) 정렬은
+    검증용으로만 계산한다 — 쪽 단위 마커를 이미 가진 교재(변환기가 쪽마다 찍은 것)는 정렬보다 정확하다. 호출부가 마커 밀도로 정한다.
+    stats 는 match_rows 의 약한 배정 집계를 받을 dict (선택) — 마커 교재에서는 hybrid_lines(마커 결손 보정으로 쪽이 바뀐 줄 수)도 여기 실린다;
+    호출부(main)가 그것을 per_book.hybrid_lines 로 옮기고 match_stats 는 overflow·ambiguous·partial 셋만 남긴다.
     쪽 레코드의 source: text(매칭 행이 있는 쪽) / text-fallback(매칭 행은 없고 미매칭 행의 구 라벨로만 왔지만 본문이 있어
     본문으로 채점) / label(본문도 없어 행 등급의 최저). md_chars·pdf_chars 는 쪽에 붙은 마크다운·PDF 본문의 정규화
     길이(norm_text) — 마커가 빠져 여러 쪽이 한 쪽에 뭉친 곳(md_chars ≫ pdf_chars)이 산출물에서 보이게 한다.
@@ -447,6 +524,11 @@ def resegment_book(rows, lines, pages_text, prefer_markers=False, stats=None):
     assigned = align_lines(lines, pages_text)
     if prefer_markers and any(MARKER_RE.search(x) for x in lines):
         line_pages = marker_pages(lines)
+        if assigned:                                     # 마커 결손 쪽은 DP 로 쪼갠다 (hybrid_pages)
+            fixed = hybrid_pages(lines, line_pages, propagate(len(lines), assigned), len(pages_text))
+            if stats is not None:                        # 쪽이 바뀐 본문 줄 수 (빈 줄·공백 줄 제외)
+                stats['hybrid_lines'] = sum(1 for a, b, ln in zip(line_pages, fixed, lines) if a != b and norm_text(ln))
+            line_pages = fixed
     elif assigned:
         line_pages = propagate(len(lines), assigned)
     else:
@@ -576,7 +658,7 @@ def main():
     md_index, pdf_index = index_files(args.md_root, '*.md'), index_files(args.pdf_root, '*.pdf')
     print('워크북 %d행, 교재 %d권, 마크다운 %d코드, PDF %d코드' % (len(rows), len(by_book), len(md_index), len(pdf_index)))
 
-    books, per_book, row_map, paged_out = {}, {}, [], {}          # 대응표는 EXPECTED 검사를 지난 뒤에 쓴다 — 거부된 실행이 추적본과 어긋난 대응표를 남기지 않게
+    books, per_book, row_map, paged_out, md_paths = {}, {}, [], {}, []   # 대응표는 EXPECTED 검사를 지난 뒤에 쓴다 — 거부된 실행이 추적본과 어긋난 대응표를 남기지 않게
 
     def mark_unresolved(n, name, brows, area, old_labels, why, label):
         """마크다운·PDF 가 없거나 정렬이 실패한 교재: 구 라벨·구 등급을 그대로 싣고 unresolved 로 센다."""
@@ -599,6 +681,7 @@ def main():
             why = 'no md' if not md else 'no pdf'
             mark_unresolved(n, name, brows, area, old_labels, why, why)
             continue
+        md_paths.append(md)
         with open(md, encoding='utf-8') as f:
             lines = f.read().split('\n')
         doc = fitz.open(pdfs[0])
@@ -614,18 +697,24 @@ def main():
             mark_unresolved(n, name, brows, area, old_labels, 'alignment failed', '정렬 실패')
             continue
         pages, moved, unmatched, line_pages, assigned, idx = res
+        hybrid = match.pop('hybrid_lines', 0)                 # 줄→쪽 보정 수치는 행 매칭 통계와 따로 싣는다
+        emptied = emptied_marker_pages(lines, line_pages) if dense else 0   # 마커가 찍힌 쪽인데 본문 줄이 하나도 안 남은 쪽 (보정이 마커를 지웠는지 드러낸다)
         for r, li in zip(brows, idx):
             row_map.append([name, r['sheet'], r['label'], line_pages[li] if li is not None else '', r['grade'], '예' if r['case'] else '아니오'])
         align = None
         if dense:                                         # 마커 교재: 정렬을 마커와 대조 — 후보 줄 기준(lines)과 전체 본문 줄 기준(all_lines) 둘 다
             align = check_alignment(lines, assigned)
             align.update(check_alignment_all(lines, propagate(len(lines), assigned)))
+            gaps = gap_lines(lines, len(pages_text))       # 결손 구간은 정답(마커 전파값)이 정의상 틀리므로 따로 뺀 값도 기록
+            ng = check_alignment(lines, assigned, exclude=gaps)
+            align.update({'nogap_lines': ng['lines'], 'nogap_exact': ng['exact'], 'nogap_near': ng['near']})
         books[name] = {'area': area, 'status': 'resolved', 'rows': len(brows), 'moved_rows': moved,
-                       'unmatched_rows': unmatched, 'old_labels': old_labels, 'align': align, 'pages': pages, 'match': match}
+                       'unmatched_rows': unmatched, 'old_labels': old_labels, 'align': align, 'pages': pages, 'match': match, 'hybrid_lines': hybrid,
+                       'emptied_marker_pages': emptied}
         per_book[name] = {'status': 'resolved', 'method': 'markers' if dense else 'alignment', 'rows': len(brows), 'old_pages': len(old_labels),
                           'new_pages': len(pages), 'moved_rows': moved, 'unmatched_rows': unmatched,
                           'pdf_pages': len(pages_text), 'md_markers': n_markers, 'aligned_lines': len(assigned),
-                          'align': align, 'match_stats': match}
+                          'align': align, 'match_stats': match, 'hybrid_lines': hybrid, 'emptied_marker_pages': emptied}
         paged_out[code] = {'md': os.path.basename(md), 'pdf': os.path.basename(pdfs[0]), 'line_pages': line_pages}
         print('  [%2d/%d] %-52s 행 %4d  라벨 %3d → 쪽 %3d  이동 %4d  미매칭 %3d  %s%s' % (
             n + 1, len(by_book), name[:52], len(brows), len(old_labels), len(pages), moved, unmatched,
@@ -638,7 +727,10 @@ def main():
     summary['method_books'] = dict(collections.Counter(v.get('method', v['status']) for v in per_book.values()))
     summary['case_pages'] = [{'book': name, 'page': pg, 'old_labels': sorted(rec['old_labels']), 'grade': rec['grade']}
                              for name, b in books.items() for pg, rec in b['pages'].items() if rec['case']]
+    md_used = sorted((os.path.basename(m), sha256_file(m)) for m in md_paths)
     summary['meta'] = {'workbook': os.path.basename(args.workbook), 'workbook_sha256': sha256_file(args.workbook),
+                       'md_corpus_sha256': hashlib.sha256('\n'.join('%s\t%s' % x for x in md_used).encode('utf-8')).hexdigest(),   # 쓴 마크다운 84개의 (이름, sha256)
+                       'python': sys.version.split()[0], 'pymupdf': getattr(fitz, '__version__', None) or getattr(fitz, 'VersionBind', None),
                        'pdf_root': public_path(args.pdf_root), 'md_root': public_path(args.md_root), 'rows': len(rows),
                        'md_files': sum(len(v) for v in md_index.values()), 'pdf_files': sum(len(v) for v in pdf_index.values()),
                        'limit': args.limit,          # limit 이 있으면 부분 실행 — 전체 실행과 구분한다
