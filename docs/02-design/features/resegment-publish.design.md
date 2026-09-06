@@ -14,7 +14,7 @@
 
 | 함수 | 입력 | 출력 | 규칙 |
 |---|---|---|---|
-| `hybrid_pages(lines, marker_lp, dp_lp, n_pages)` | 줄, 마커 줄→쪽, DP 줄→쪽(전파 완료), PDF 쪽수 | 줄→쪽 | 마커 N(줄 a) 다음 마커 M(줄 b) 이 M ≥ N+2 이면 줄 a+1..b-1 을 순서대로 보며 `cur`(초기 N) 를 DP 쪽 p 가 `cur ≤ p ≤ M-1` 일 때 p 로 올린다 — 근거 없는 줄은 `cur` 를 잇는다(구간 단조). 마지막 마커 뒤는 hi = n_pages. M = N+1 인 구간과 첫 마커 앞 줄은 마커 그대로 |
+| `hybrid_pages(lines, marker_lp, dp_lp, n_pages)` | 줄, 마커 줄→쪽, DP 줄→쪽(전파 완료), PDF 쪽수 | 줄→쪽 | 마커 N(줄 a) 다음 마커 M(줄 b) 이 M ≥ N+2 이면 줄 a+1..b-1 을 순서대로 보며 `cur`(초기 N) 를 DP 쪽 p 가 `cur ≤ p ≤ M-1` 일 때 p 로 올린다 — 근거 없는 줄은 `cur` 를 잇는다(구간 단조). 앵커: 구간 첫 본문 줄의 DP 가 N 보다 앞서면 그 차이를 구간의 모든 p 에서 뺀다(출하 전 리뷰 F1 — 마커 쪽이 비지 않게; `hybrid_emptied_marker_pages` 로 감시). 마지막 마커 뒤는 hi = n_pages. M = N+1 인 구간과 첫 마커 앞 줄은 마커 그대로 |
 | `resegment_book(..., stats)` | | | `prefer_markers` 이고 `assigned` 가 있으면 `hybrid_pages` 적용, `stats['hybrid_lines']` = 쪽이 바뀐 줄 수 |
 | `aggregate` | | `hybrid_lines` | 교재 합 (summary 최상위 키) |
 
