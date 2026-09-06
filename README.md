@@ -67,6 +67,14 @@ python3 truncation_audit.py      # 엑셀 셀 한도에서 잘린 본문을 전�
 
 규칙의 정밀도·재현율을 AI 코더로 잰 **재코딩 파이프라인**(`make_coding_sheet.py` → `code_pages.py` → `score_coding.py`)도 원본이 있어야 돕니다. 코더 API 키가 필요하고 비용이 들며, 실행 순서와 결과는 [재코딩 결과 분석](docs/03-analysis/recoding-results.analysis.md) §9 에 있습니다. 채점 수치(`docs/03-analysis/data/recoding_scores*.json`)와 라벨(`coding_key.json`, `coding_A/B/C.json`)은 커밋돼 있고, 이것도 발표 수치를 바꾸지 않습니다.
 
+원본 PDF 까지 있으면 **재세그먼트**(`resegment.py`)도 돌릴 수 있습니다. 2026-04 검색 당시 워크북의 '페이지' 라벨은 목차 단위라 여러 쪽을 한 라벨로 묶은 경우가 많았는데, 이 스크립트는 마크다운 줄을 PDF 쪽 텍스트에 정렬해 검출 행 7,769건을 실제 쪽에 다시 놓고 (교재, 쪽) 단위 등급을 다시 셉니다. 결과는 검출 1,847→2,173쪽, 등급3 108쪽(5.8%)→147쪽(6.8%)이며 `docs/03-analysis/data/ncs_pages_reseg.csv`·`reseg_summary.json` 으로 커밋돼 있습니다. **이것도 대시보드 수치를 바꾸지 않습니다** — 교체 여부는 [재세그먼트 결과](docs/03-analysis/resegment-results.analysis.md) §6 에 열려 있습니다.
+
+```bash
+pip install pymupdf openpyxl
+export NCS_PDF_ROOT=/path/to/ncs/pdfs   # 원본 PDF (비공개)
+python3 resegment.py                    # 약 30초. 내장 EXPECTED 회귀 검사가 어긋나면 산출물을 쓰지 않는다
+```
+
 ### 등급이 뜻하는 것
 
 | 등급 | 뜻 |
@@ -86,7 +94,7 @@ python3 truncation_audit.py      # 엑셀 셀 한도에서 잘린 본문을 전�
 ```bash
 node    outputs/test-search-equivalence.js   # 24 — 검색 동치성 + 청크 렌더 + 지연 캐시
 node    outputs/test-dashboard-data.js       # 122 — 대시보드 데이터·표 렌더·정렬
-python3 outputs/test-recount-grades.py       # 364 — 재집계·재채점·페이지 마커·절단 판정·재코딩(코더 호출·채점)
+python3 outputs/test-recount-grades.py       # 364 — 재집계·재채점·페이지 마커·절단 판정·재코딩(코더 호출·채점)·재세그먼트
 node    outputs/run-core-logic-tests.js       # 32 — 제목 판정·정규화 (헤드리스)
 node    outputs/test-sri.js                  # 38 — 외부 스크립트 SRI (--online 이면 CDN 대조)
 ```
@@ -102,12 +110,13 @@ outputs/markdown-search-app.html   검색 앱 (HTML+CSS+JS 단일 파일, ~2,040
 outputs/server.py                  개발 서버 (표준 라이브러리만, LM Studio 프록시 포함)
 recount_grades.py                  원본 엑셀 → 등급 재집계 → CSV/JSON
 regrade.py                         페이지 본문에서 등급 재채점 (검증용, 미발표)
+resegment.py                       워크북 페이지 라벨을 원본 PDF 실제 쪽으로 재배치해 등급 재집계 (검증용, 미발표)
 make_coding_sheet.py, code_pages.py, score_coding.py  코딩 표본 생성 · AI 코더 항목별 호출 · 교차 판정 채점
 truncation_audit.py                엑셀 셀 한도 절단 전수 실측 (pip 불필요)
 *_downloader.py                    OSHA·KOSHA·NIOSH·EU-OSHA·SafeWork AU 발간물 수집기
 page_utils.py 외                   PDF→마크다운→Excel 페이지 매핑 유틸
 docs/                              대시보드 3종 + 분석 문서 (GitHub Pages)
-docs/03-analysis/data/             재집계 산출물 (CSV, summary.json) + 재채점·재코딩 수치 (regrade_impact.json, recoding_scores*.json)
+docs/03-analysis/data/             재집계 산출물 (CSV, summary.json) + 재채점·재코딩·재세그먼트 수치 (regrade_impact.json, recoding_scores*.json, ncs_pages_reseg.csv, reseg_summary.json)
 ```
 
 다운로더는 저장 위치를 환경변수로 받습니다:
@@ -129,6 +138,7 @@ python3 osha_downloader.py
 | [등급 재집계 분석](docs/03-analysis/grade-recount.analysis.md) | 설명 | 등급 체계를 왜 이렇게 통일했는지, 페이지 단위 집계가 왜 필요한지 |
 | [재코딩 결과 분석](docs/03-analysis/recoding-results.analysis.md) | 설명 | 538쪽 AI 재코딩으로 잰 현행 규칙의 정밀도·재현율, 어느 변형도 채택하지 않은 이유 |
 | [어휘 누락 탐색](docs/03-analysis/vocab-search.analysis.md) | 설명 | 규칙 사전에 빠진 안전어·조치어 21종과 그것이 등급3 비율에 미치는 영향 |
+| [재세그먼트 결과](docs/03-analysis/resegment-results.analysis.md) | 설명 | 워크북 페이지 라벨을 원본 PDF 실제 쪽으로 풀면 검출 쪽수·등급3 비율이 어떻게 바뀌는지(1,847→2,173쪽, 5.8→6.8%), 대시보드가 아직 라벨 기준인 이유 |
 | [`CLAUDE.md`](CLAUDE.md) | 레퍼런스 | 아키텍처, 페이지 매핑 알고리즘, 제목 판정 규칙, 디자인 토큰 |
 | `키워드기반_문서분류분석_방법론.hwpx` | 설명 | 방법론 원본 — 6단계 파이프라인과 위치 정합 알고리즘 |
 
@@ -137,8 +147,8 @@ python3 osha_downloader.py
 - 부분 문자열 일치라 동의어·표기 변형을 놓칩니다. 반도체 문맥의 동음이의(장비 진동, 파티클 먼지)도 걸러지지 않습니다. `regrade.py` 에 단어 경계 보정이 들어 있지만 발표 수치에는 적용하지 않았습니다.
 - 원본 채점 규칙에 확인된 결함이 둘 있습니다 — 단어 경계 없는 부분 문자열 매칭, 그리고 페이지 길이와 무관한 고정 임계. 결함별 영향도는 `docs/03-analysis/data/regrade_impact.json` 에 있고, `recount_grades.py` 는 보수적 규칙으로 우회할 뿐 원본을 고치지 않습니다. 이전 판에 적혀 있던 "총계/내역 불일치 버그" 는 **철회합니다** — 불일치 171건 중 168건은 등급사유 문자열이 상위 5개만 보여주는 표시 절단이었고, 실제로 어긋난 것은 3쪽(0.16%)뿐입니다.
 - 사람 코딩 검증이 아직 없습니다. 69쪽 이중코딩은 코딩 시트가 판정 규칙의 가정을 두 코더 모두에게 흘려 **라벨을 무효 처리**했고, 2026-09-04 에 538쪽을 새로 뽑아 AI 코더 세 명(Claude `claude-opus-5`, OpenAI `gpt-5.6-sol` ×2)이 다시 코딩했습니다. 그 결과 현행 규칙은 **정밀도 80~84%, 재현율 13~21%** 이고, 코더 기준 진짜 등급3은 22~37% 입니다([재코딩 결과 분석](docs/03-analysis/recoding-results.analysis.md)). AI 두 계열의 일치는 사람 이중코딩이 아니며, 어느 변형도 채택하지 않았습니다.
-- NCS 16쪽은 원본 엑셀의 셀 한도(32,767자)에서 본문이 잘려 있고, 원본이 그 엑셀뿐이라 **복구할 수 없습니다.** 등급별로 고르지 않습니다 — 등급1 은 1,270쪽 중 0쪽, 등급3 은 108쪽 중 12쪽(11.1%)입니다. 텍스트가 지워지면 등급은 내려가는 방향으로만 움직이므로 등급3 은 108~112쪽(5.8~6.1%) 구간에 있습니다. 교과서 쪽은 0쪽입니다.
-- 일부 교재에 마크다운 변환·페이지 매핑 결손이 있습니다. `반도체 장비 안전관리` 는 검출 페이지가 p.46 과 p.136~154 20쪽뿐이고 p.47~135 가 통째로 비어 있습니다. 등급3 108쪽과 사고사례 판정의 신뢰도에 영향을 줍니다.
+- **NCS 의 '페이지'는 실제 쪽이 아니라 목차 단위 블록인 경우가 많습니다.** 2026-04 검색 당시 마크다운의 페이지 마커가 목차에서 유도된 것이라, 워크북 페이지 라벨 하나가 실제 10~58쪽을 묶기도 합니다. 엑셀 셀 한도(32,767자)에 닿은 라벨 16개는 그 증상이며, 이전 판의 "16쪽이 잘려 있어 등급3 은 108~112쪽 구간" 이라는 해석은 **철회합니다**(외부감사 C1, 2026-09-04). `resegment.py` 로 검출 행을 원본 PDF 실제 쪽에 다시 놓으면 검출 1,847→2,173쪽, 등급3 108쪽(5.8%)→147쪽(6.8%)이고, 정렬 오차는 ±1쪽 수준입니다([재세그먼트 결과](docs/03-analysis/resegment-results.analysis.md)). 대시보드와 위의 수치는 아직 라벨 기준입니다.
+- 라벨 블록의 극단 사례가 `반도체 장비 안전관리` 입니다. 라벨 기준으로는 검출 페이지가 p.46 과 p.136~154 의 20쪽뿐이라 p.47~135 가 통째로 빈 것처럼 보이지만, 실제로는 그 20개 라벨이 136쪽을 묶은 블록이었습니다(라벨 p.154 한 칸의 273행이 실제 58쪽에 흩어집니다). 재세그먼트 후 등급3 147쪽 중 42쪽이 이 한 권에서 나옵니다. 라벨 기준 등급3 108쪽과 사고사례 쪽 번호의 신뢰도에 그대로 영향을 줍니다.
 
 그래서 5.8% 는 이렇게까지만 읽어야 합니다 — **결함이 확인된 현행 규칙의 출력값이며, 두 계열의 AI 코더 기준 재현율이 13~21%(진짜 등급3 22~37%)라 참값의 상한으로 해석할 수 없습니다. 사람 코딩은 아직 없습니다.**
 
