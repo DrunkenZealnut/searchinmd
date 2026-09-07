@@ -2,7 +2,7 @@
 
 > 분석일: 2026-09-06 · 실행: `python3.13 resegment.py --pdf-root $NCS_PDF_ROOT` (약 30초)
 > 산출물: `docs/03-analysis/data/ncs_pages_reseg.csv`, `reseg_summary.json` · 줄→쪽 대응·행 대응표는 `data/markdown/ncs_paged/` (gitignore)
-> 선행: 외부감사(2026-09-04) C1, `docs/01-plan/features/resegment.plan.md`, `docs/02-design/features/resegment.design.md`
+> 선행: 외부감사(2026-09-04) C1, `docs/archive/2026-09/resegment/resegment.plan.md`, `docs/archive/2026-09/resegment/resegment.design.md`
 > **발표 수치는 2026-09-06 부터 이 문서의 실제 쪽 기준(Act-3: 2,189쪽 · 등급 3 145쪽 6.6%)이다.** `docs/index.html`·`textbook.html` 비교표·`osha.html`·README 가 `reseg_summary.json` 을 정본으로 발표하고, 라벨 기준(1,847쪽·108쪽)은 `summary.json.ncs`·`ncs_pages.csv` 에 계보로만 남는다(연구 책임자 결정 ①, §6).
 
 ## 요약

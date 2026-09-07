@@ -5,8 +5,8 @@
 # resegment-publish — Gap 분석 (PDCA Check)
 
 > **Feature**: resegment-publish · **분석일**: 2026-09-06 · **대상**: 작업트리 미커밋 변경분 (`git diff origin/main` + 미추적 계획·설계 문서 2개)
-> **계획**: `docs/01-plan/features/resegment-publish.plan.md` · **설계**: `docs/02-design/features/resegment-publish.design.md`
-> **선행**: `resegment` (Check-2 99%, `docs/03-analysis/resegment.analysis.md`)
+> **계획**: `docs/archive/2026-09/resegment-publish/resegment-publish.plan.md` · **설계**: `docs/archive/2026-09/resegment-publish/resegment-publish.design.md`
+> **선행**: `resegment` (Check-2 99%, `docs/archive/2026-09/resegment/resegment.analysis.md`)
 
 ## Check-2 (Act-1 이후 재검사)
 

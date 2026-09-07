@@ -138,8 +138,8 @@
 | `6e7feee` | Act-3 — 마커 결손 하이브리드 배정, 앵커 보정, EXPECTED 재고정 | `resegment.py`, `reseg_summary.json` |
 | `8f02fb9` | 대시보드 3종·OSHA·README 수치 교체, 하니스 D13·D14 추가 | `docs/index.html`, `textbook.html`, `osha.html`, `README.md`, `test-dashboard-data.js` |
 | `6a0d937` | PDCA 문서: 계획·설계·분석(Gap 93%), 결과 §3.6·§6 기록 | `docs/01-plan/`, `docs/02-design/`, `docs/03-analysis/` |
-| `4c882b9` | 문서 동기화 — 정본 규칙 모순 제거, EXPECTED 16키 기록, 출하 전 리뷰 반영 | `docs/03-analysis/resegment-publish.analysis.md`, 설계, TODOS |
-| `dfca46b` | 설계 §1 앵커 보정 규칙 기재 (문서 동기화 부채) | `docs/02-design/resegment-publish.design.md` |
+| `4c882b9` | 문서 동기화 — 정본 규칙 모순 제거, EXPECTED 16키 기록, 출하 전 리뷰 반영 | `docs/archive/2026-09/resegment-publish/resegment-publish.analysis.md`, 설계, TODOS |
+| `dfca46b` | 설계 §1 앵커 보정 규칙 기재 (문서 동기화 부채) | `docs/archive/2026-09/resegment-publish/resegment-publish.design.md` |
 
 ### 대시보드 수치 교체 대상 (4개 경로)
 

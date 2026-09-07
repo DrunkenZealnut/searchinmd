@@ -2,9 +2,9 @@
 
 > **Summary**: `resegment.py` — PDF 쪽 텍스트에 마크다운 줄을 단조 DP 로 정렬하고(쪽 단위 마커가 있는 교재는 마커를 그대로 씀), 워크북 검출 행을 실제 쪽으로 옮겨 페이지 단위 등급을 재집계한다.
 >
-> **Plan**: `docs/01-plan/features/resegment.plan.md`
+> **Plan**: `docs/archive/2026-09/resegment/resegment.plan.md`
 > **Date**: 2026-09-06 (Act-1 동기화: Gap 분석 G3·G4·G6·G8~G11 반영)
-> **Status**: Implemented — 결과 `docs/03-analysis/resegment-results.analysis.md`, Gap 분석 `docs/03-analysis/resegment.analysis.md`
+> **Status**: Implemented — 결과 `docs/03-analysis/resegment-results.analysis.md`, Gap 분석 `docs/archive/2026-09/resegment/resegment.analysis.md`
 
 ---
 

@@ -1,6 +1,6 @@
 # resegment-publish — 설계
 
-> **Feature**: resegment-publish · **Date**: 2026-09-06 · **Plan**: `docs/01-plan/features/resegment-publish.plan.md`
+> **Feature**: resegment-publish · **Date**: 2026-09-06 · **Plan**: `docs/archive/2026-09/resegment-publish/resegment-publish.plan.md`
 > **Status**: Implemented — 결과는 `docs/03-analysis/resegment-results.analysis.md` §3.6
 
 ## 1. 하이브리드 배정 (`resegment.py`)

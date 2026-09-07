@@ -1,11 +1,13 @@
 # Archive Index — 2026-09
 
-보관 산출물 목록. `coding-v1` 은 **폐기된 라벨의 기록**, `recoding` 은 완료된 PDCA 기능 문서다.
+보관 산출물 목록. `coding-v1` 은 **폐기된 라벨의 기록**, `recoding`·`resegment`·`resegment-publish` 는 완료된 PDCA 기능 문서다.
 
 | Item | 종류 | 보관일 | 보관 파일 |
 |------|------|--------|-----------|
 | [coding-v1](coding-v1/) | 1차 수기 코딩 라벨 (무효) | 2026-09-04 | coding_key.json · coding_A.json · coding_B.json |
 | [recoding](recoding/) | PDCA 기능 (완료, Match Rate 99.1%) | 2026-09-04 | plan · design · analysis(갭) · report |
+| [resegment](resegment/) | PDCA 기능 (완료, Match Rate 99%) | 2026-09-07 | plan · design · analysis(갭 Check-1/2) · report |
+| [resegment-publish](resegment-publish/) | PDCA 기능 (완료, Match Rate 93%) | 2026-09-07 | plan · design · analysis(갭 Check-1/2) · report |
 
 ## coding-v1
 
@@ -34,3 +36,21 @@
 - [Design](recoding/recoding.design.md)
 - [Analysis (갭)](recoding/recoding.analysis.md)
 - [Report](recoding/recoding.report.md)
+
+## resegment
+
+워크북 페이지 라벨을 원본 PDF 실제 쪽으로 재배치해 등급 재집계 — 2026-09-06, Plan → Design → Do → Check-1(79%) → Act-1 → Check-2(99%) → Act-2 → 출하 전 리뷰 57건 반영 → PR #13(2026-09-06 머지, `07a91a6`).
+
+- **Problem**: 외부감사(2026-09-04) C1 — 워크북 '페이지' 라벨은 2026-04 검색 당시 목차 유도 마커가 묶은 여러 쪽짜리 블록(32,767자 라벨 16개)이라 페이지 단위 등급 집계가 흔들렸다.
+- **Solution**: `resegment.py` — 마크다운 줄을 PyMuPDF 쪽 텍스트에 문자 3-gram 포함률 + 단조 DP 로 정렬해 검출 행 7,769건을 실제 쪽에 재배치하고 `regrade.grade_page` 기준선으로 쪽 등급을 재계산; 마커 보유 23권으로 자기 검증(83.6% / ±1쪽 94.9%); `EXPECTED` 회귀 가드.
+- **결과(Act-2, PR #13)**: 1,847 → 2,173쪽, 등급 1/2/3 = 1,502/524/147 (6.8%), 사고사례 8라벨 → 13쪽/5권, 1:1 쪽 등급 일치 98.7%. 발표 정본은 후속 `resegment-publish`(Act-3 하이브리드, 2,189쪽 · 145쪽 6.6%)가 이어받았다.
+- **관련 자산**: 연구 결과 `docs/03-analysis/resegment-results.analysis.md`, 산출물 `docs/03-analysis/data/reseg_summary.json`·`ncs_pages_reseg.csv`(계보 `docs/03-analysis/data/README.md`), 회귀 `outputs/test-recount-grades.py` R16.
+
+## resegment-publish
+
+재세그먼트 수치 발표 + 마커 결손 하이브리드 배정 — 2026-09-06, Plan → Design → Do → Check-1(87%) → Act-1 → Check-2(93%) → Act-2 → 출하 전 리뷰 반영 → PR #14(2026-09-07 머지, `7fd6264`).
+
+- **Problem**: PR #13 의 재세그먼트(실제 쪽 기준)가 있는데 공개 대시보드·README 는 라벨 기준(1,847쪽·등급3 108쪽 5.8%)을 발표했고, 마커 교재에서 마커가 빠진 쪽의 줄이 앞 쪽에 뭉쳤다.
+- **Solution**: 연구 책임자 결정 ①②③ — `hybrid_pages()`(마커 사이가 2쪽 이상 비면 DP 배정, 앵커 보정)로 재실행하고 대시보드 3종·README·보고서를 `reseg_summary.json` 정본으로 교체, 하니스가 그 정본과 대조(D13·D14·R17).
+- **결과**: 2,189쪽 · 등급 1/2/3 = 1,519/525/145 (69.4/24.0/6.6%) · 사고사례 13쪽/5권 · 지문 `20855b3bc05d906b`. 출하 전 리뷰가 잡은 결함(마커 쪽 17개 비움)은 앵커 보정으로 수정. 후속 판단: 마커 ±1쪽 보정 여부(TODOS ④).
+- **관련 자산**: 결과 `docs/03-analysis/resegment-results.analysis.md` §3.6·§6, 계보 `docs/03-analysis/data/README.md`, 산출물 `reseg_summary.json`·`ncs_pages_reseg.csv`, 회귀 `outputs/test-recount-grades.py` R16z15~z21·R17, `outputs/test-dashboard-data.js` D13·D14.
