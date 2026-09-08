@@ -1,6 +1,6 @@
 # Archive Index — 2026-09
 
-보관 산출물 목록. `coding-v1` 은 **폐기된 라벨의 기록**, `recoding`·`resegment`·`resegment-publish` 는 완료된 PDCA 기능 문서다.
+보관 산출물 목록. `coding-v1` 은 **폐기된 라벨의 기록**, `recoding`·`resegment`·`resegment-publish`·`marker-offset` 은 완료된 PDCA 기능 문서다.
 
 | Item | 종류 | 보관일 | 보관 파일 |
 |------|------|--------|-----------|
@@ -8,6 +8,7 @@
 | [recoding](recoding/) | PDCA 기능 (완료, Match Rate 99.1%) | 2026-09-04 | plan · design · analysis(갭) · report |
 | [resegment](resegment/) | PDCA 기능 (완료, Match Rate 99%) | 2026-09-07 | plan · design · analysis(갭 Check-1/2) · report |
 | [resegment-publish](resegment-publish/) | PDCA 기능 (완료, Match Rate 93%) | 2026-09-07 | plan · design · analysis(갭 Check-1/2) · report |
+| [marker-offset](marker-offset/) | PDCA 기능 (완료, Match Rate 100%; 채택 여부는 결정 대기) | 2026-09-08 | plan · design · analysis(갭 + Act-1) · report |
 
 ## coding-v1
 
@@ -54,3 +55,18 @@
 - **Solution**: 연구 책임자 결정 ①②③ — `hybrid_pages()`(마커 사이가 2쪽 이상 비면 DP 배정, 앵커 보정)로 재실행하고 대시보드 3종·README·보고서를 `reseg_summary.json` 정본으로 교체, 하니스가 그 정본과 대조(D13·D14·R17).
 - **결과**: 2,189쪽 · 등급 1/2/3 = 1,519/525/145 (69.4/24.0/6.6%) · 사고사례 13쪽/5권 · 지문 `20855b3bc05d906b`. 출하 전 리뷰가 잡은 결함(마커 쪽 17개 비움)은 앵커 보정으로 수정. 후속 판단: 마커 ±1쪽 보정 여부(TODOS ④).
 - **관련 자산**: 결과 `docs/03-analysis/resegment-results.analysis.md` §3.6·§6, 계보 `docs/03-analysis/data/README.md`, 산출물 `reseg_summary.json`·`ncs_pages_reseg.csv`, 회귀 `outputs/test-recount-grades.py` R16z15~z21·R17, `outputs/test-dashboard-data.js` D13·D14.
+
+## marker-offset
+
+마커 교재의 마커 ±1쪽 오차 측정과 보정 판단 — 2026-09-07, Plan → Design → Do → Check(93.8%) → Act-1(갭 4건 즉시 수정, 재검증 100%) → Report(2026-09-08). 미커밋 상태로 보관(커밋은 연구 책임자 요청 시).
+
+- **Problem**: `resegment-publish` 출하 전 리뷰 F2 — 마커 교재 23권은 변환기 마커를 쪽 번호로 쓰는데 마커 자체가 ±1쪽 밀린 경우가 있었고(『반도체 장비 안전관리』 한 권만 실측), 자기 검증은 그 오차를 DP 오류로 계상했다.
+- **Solution**: `resegment.py` 에 DP 와 독립인 진단 `marker_offsets`(마커 쪽 본문 vs PDF P±3 3-gram 포함률) + 6분류 `classify_offset`(±1 은 포함률 ≥ 0.5, 마진 ≥ 0.10) 을 넣어 산출물(JSON `marker_offset`, CSV `마커오프셋` 13열, `EXPECTED` 17키)에 실었고, 보정은 변형 `--marker-correct MARGIN`(`corrected_markers` 비감소 규칙 + 마커 줄 교체, 추적 경로 거부)으로만 두었다.
+- **결과**: 23권 2,035 마커 쪽 중 같은 쪽 1,772(87.1%), 뚜렷한 ±1 93(4.6%, 장비 안전관리 33). 보정 변형(마진 0.05/0.10/0.20, 둔감): 2,189→2,181쪽, 등급 3 145→147, 사고사례 112→113(수기 표 일치 4/7→5/7), 자기 검증 nogap 88.6→90.5%. 발표 수치 불변(지문 `20855b3bc05d906b`). 채택 여부(a/b, 권고 마진 0.10)는 연구 책임자 결정 대기 — `TODOS.md` ④, 결과 문서 §6 6.
+- **관련 자산**: 결과 `docs/03-analysis/resegment-results.analysis.md` §3.7, 계보 `docs/03-analysis/data/README.md`, 회귀 `outputs/test-recount-grades.py` R16z22~z28·R17, `outputs/test-dashboard-data.js` D13i·D13q·D14.
+
+보관 문서:
+- [Plan](marker-offset/marker-offset.plan.md)
+- [Design](marker-offset/marker-offset.design.md)
+- [Analysis (갭 + Act-1)](marker-offset/marker-offset.analysis.md)
+- [Report](marker-offset/marker-offset.report.md)
