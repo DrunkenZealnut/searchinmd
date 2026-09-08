@@ -61,6 +61,20 @@
  },
  "hybrid_lines": 1575,
  "hybrid_emptied_marker_pages": 0,
+ "marker_offset": {
+  "books": 23,
+  "pages": 2035,
+  "dist": {
+   "0": 1772,
+   "1": 63,
+   "-1": 30,
+   "amb": 59,
+   "other": 99,
+   "short": 12
+  },
+  "moved": 0,
+  "blocked": 0
+ },
  "fallback_rows_on_text_pages": 68,
  "page_grade_digest": "20855b3bc05d906b",
  "kw_pages_digest": "4eae1c027aa25261",
@@ -77,16 +91,16 @@
   "보건": 180,
   "사망": 18,
   "화재": 169,
-  "방사선": 45,
   "화학물질": 139,
+  "방사선": 45,
   "폭발": 216,
   "부상": 23,
   "안전보건": 90,
   "인화": 121,
   "중독": 24,
   "보호구": 94,
-  "물질안전보건자료": 31,
   "산업안전보건법": 25,
+  "물질안전보건자료": 31,
   "분진": 38,
   "작업환경": 32,
   "질병": 6,
@@ -421,6 +435,30 @@
    },
    "hybrid_lines": 153,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 79,
+    "dist": {
+     "0": 70,
+     "1": 2,
+     "-1": 1,
+     "amb": 1,
+     "other": 5,
+     "short": 0
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "11": "1",
+     "12": "other",
+     "28": "other",
+     "82": "1",
+     "94": "-1"
+    }
+   },
    "page_g": {
     "1": 22,
     "2": 9,
@@ -456,6 +494,32 @@
    },
    "hybrid_lines": 23,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 92,
+    "dist": {
+     "0": 81,
+     "1": 4,
+     "-1": 1,
+     "amb": 2,
+     "other": 4,
+     "short": 0
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "11": "1",
+     "12": "other",
+     "13": "1",
+     "18": "1",
+     "22": "1",
+     "83": "amb",
+     "97": "-1"
+    }
+   },
    "page_g": {
     "1": 22,
     "2": 2,
@@ -491,6 +555,30 @@
    },
    "hybrid_lines": 66,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 100,
+    "dist": {
+     "0": 91,
+     "1": 2,
+     "-1": 1,
+     "amb": 3,
+     "other": 3,
+     "short": 0
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "36": "amb",
+     "53": "amb",
+     "68": "1",
+     "80": "1",
+     "107": "-1"
+    }
+   },
    "page_g": {
     "1": 30,
     "2": 7,
@@ -576,6 +664,28 @@
    },
    "hybrid_lines": 69,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 98,
+    "dist": {
+     "0": 91,
+     "1": 1,
+     "-1": 1,
+     "amb": 1,
+     "other": 3,
+     "short": 1
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "41": "-1",
+     "91": "1",
+     "105": "short"
+    }
+   },
    "page_g": {
     "1": 22,
     "2": 10,
@@ -611,6 +721,30 @@
    },
    "hybrid_lines": 6,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 63,
+    "dist": {
+     "0": 54,
+     "1": 2,
+     "-1": 1,
+     "amb": 3,
+     "other": 3,
+     "short": 0
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "11": "amb",
+     "12": "1",
+     "49": "1",
+     "65": "amb",
+     "68": "-1"
+    }
+   },
    "page_g": {
     "1": 13,
     "2": 4,
@@ -646,6 +780,27 @@
    },
    "hybrid_lines": 14,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 96,
+    "dist": {
+     "0": 90,
+     "1": 1,
+     "-1": 1,
+     "amb": 1,
+     "other": 3,
+     "short": 0
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "31": "1",
+     "101": "-1"
+    }
+   },
    "page_g": {
     "1": 16,
     "2": 0,
@@ -681,6 +836,30 @@
    },
    "hybrid_lines": 0,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 73,
+    "dist": {
+     "0": 64,
+     "1": 1,
+     "-1": 1,
+     "amb": 1,
+     "other": 4,
+     "short": 2
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "11": "1",
+     "13": "short",
+     "39": "other",
+     "67": "short",
+     "79": "-1"
+    }
+   },
    "page_g": {
     "1": 12,
     "2": 1,
@@ -716,6 +895,28 @@
    },
    "hybrid_lines": 1,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 67,
+    "dist": {
+     "0": 60,
+     "1": 2,
+     "-1": 1,
+     "amb": 1,
+     "other": 3,
+     "short": 0
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "11": "1",
+     "12": "1",
+     "71": "-1"
+    }
+   },
    "page_g": {
     "1": 11,
     "2": 0,
@@ -751,6 +952,32 @@
    },
    "hybrid_lines": 19,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 68,
+    "dist": {
+     "0": 57,
+     "1": 1,
+     "-1": 1,
+     "amb": 3,
+     "other": 6,
+     "short": 0
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "17": "other",
+     "18": "other",
+     "30": "1",
+     "42": "amb",
+     "43": "other",
+     "75": "amb",
+     "79": "-1"
+    }
+   },
    "page_g": {
     "1": 14,
     "2": 1,
@@ -861,6 +1088,29 @@
    },
    "hybrid_lines": 0,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 69,
+    "dist": {
+     "0": 61,
+     "1": 1,
+     "-1": 1,
+     "amb": 2,
+     "other": 3,
+     "short": 1
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "51": "amb",
+     "58": "1",
+     "59": "short",
+     "73": "-1"
+    }
+   },
    "page_g": {
     "1": 9,
     "2": 1,
@@ -921,6 +1171,34 @@
    },
    "hybrid_lines": 280,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 80,
+    "dist": {
+     "0": 67,
+     "1": 4,
+     "-1": 1,
+     "amb": 3,
+     "other": 5,
+     "short": 0
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "33": "amb",
+     "40": "1",
+     "42": "amb",
+     "43": "other",
+     "49": "other",
+     "56": "1",
+     "57": "1",
+     "78": "1",
+     "100": "-1"
+    }
+   },
    "page_g": {
     "1": 32,
     "2": 11,
@@ -1006,6 +1284,32 @@
    },
    "hybrid_lines": 157,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 74,
+    "dist": {
+     "0": 63,
+     "1": 1,
+     "-1": 2,
+     "amb": 2,
+     "other": 5,
+     "short": 1
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "27": "other",
+     "43": "other",
+     "46": "amb",
+     "73": "1",
+     "79": "short",
+     "80": "-1",
+     "88": "-1"
+    }
+   },
    "page_g": {
     "1": 8,
     "2": 0,
@@ -1041,6 +1345,36 @@
    },
    "hybrid_lines": 104,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 72,
+    "dist": {
+     "0": 57,
+     "1": 5,
+     "-1": 1,
+     "amb": 2,
+     "other": 7,
+     "short": 0
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "10": "other",
+     "11": "other",
+     "14": "other",
+     "17": "other",
+     "28": "amb",
+     "29": "1",
+     "48": "1",
+     "64": "1",
+     "73": "1",
+     "74": "1",
+     "87": "-1"
+    }
+   },
    "page_g": {
     "1": 15,
     "2": 0,
@@ -1201,6 +1535,28 @@
    },
    "hybrid_lines": 15,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 69,
+    "dist": {
+     "0": 62,
+     "1": 0,
+     "-1": 1,
+     "amb": 2,
+     "other": 4,
+     "short": 0
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "11": "other",
+     "61": "amb",
+     "75": "-1"
+    }
+   },
    "page_g": {
     "1": 7,
     "2": 5,
@@ -1236,6 +1592,31 @@
    },
    "hybrid_lines": 75,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 110,
+    "dist": {
+     "0": 100,
+     "1": 1,
+     "-1": 1,
+     "amb": 5,
+     "other": 3,
+     "short": 0
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "39": "amb",
+     "59": "1",
+     "63": "amb",
+     "78": "amb",
+     "109": "amb",
+     "117": "-1"
+    }
+   },
    "page_g": {
     "1": 19,
     "2": 5,
@@ -1321,6 +1702,26 @@
    },
    "hybrid_lines": 0,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 71,
+    "dist": {
+     "0": 66,
+     "1": 0,
+     "-1": 1,
+     "amb": 1,
+     "other": 3,
+     "short": 0
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "74": "-1"
+    }
+   },
    "page_g": {
     "1": 10,
     "2": 4,
@@ -1643,6 +2044,31 @@
    },
    "hybrid_lines": 156,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 100,
+    "dist": {
+     "0": 90,
+     "1": 0,
+     "-1": 1,
+     "amb": 1,
+     "other": 7,
+     "short": 1
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "13": "short",
+     "14": "other",
+     "24": "other",
+     "31": "other",
+     "49": "other",
+     "114": "-1"
+    }
+   },
    "page_g": {
     "1": 34,
     "2": 12,
@@ -1928,6 +2354,34 @@
    },
    "hybrid_lines": 121,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 141,
+    "dist": {
+     "0": 128,
+     "1": 3,
+     "-1": 1,
+     "amb": 4,
+     "other": 4,
+     "short": 1
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "19": "amb",
+     "23": "1",
+     "59": "1",
+     "63": "short",
+     "64": "amb",
+     "74": "1",
+     "93": "other",
+     "128": "amb",
+     "158": "-1"
+    }
+   },
    "page_g": {
     "1": 25,
     "2": 0,
@@ -2013,6 +2467,28 @@
    },
    "hybrid_lines": 0,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 75,
+    "dist": {
+     "0": 68,
+     "1": 0,
+     "-1": 1,
+     "amb": 2,
+     "other": 4,
+     "short": 0
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "12": "other",
+     "14": "amb",
+     "78": "-1"
+    }
+   },
    "page_g": {
     "1": 17,
     "2": 1,
@@ -2298,6 +2774,26 @@
    },
    "hybrid_lines": 62,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 84,
+    "dist": {
+     "0": 79,
+     "1": 0,
+     "-1": 0,
+     "amb": 1,
+     "other": 3,
+     "short": 1
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "90": "short"
+    }
+   },
    "page_g": {
     "1": 19,
     "2": 1,
@@ -2358,6 +2854,77 @@
    },
    "hybrid_lines": 0,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 154,
+    "dist": {
+     "0": 98,
+     "1": 26,
+     "-1": 7,
+     "amb": 12,
+     "other": 8,
+     "short": 3
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "short",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "8": "short",
+     "9": "1",
+     "11": "1",
+     "12": "1",
+     "21": "1",
+     "26": "amb",
+     "27": "1",
+     "28": "1",
+     "31": "1",
+     "32": "1",
+     "48": "1",
+     "55": "-1",
+     "56": "-1",
+     "57": "-1",
+     "58": "-1",
+     "59": "-1",
+     "60": "-1",
+     "61": "-1",
+     "68": "amb",
+     "69": "1",
+     "70": "1",
+     "76": "1",
+     "92": "amb",
+     "93": "amb",
+     "111": "amb",
+     "112": "1",
+     "113": "1",
+     "114": "1",
+     "115": "1",
+     "116": "1",
+     "117": "1",
+     "118": "1",
+     "119": "1",
+     "121": "amb",
+     "122": "1",
+     "124": "1",
+     "127": "1",
+     "128": "amb",
+     "135": "amb",
+     "142": "amb",
+     "143": "amb",
+     "144": "1",
+     "145": "1",
+     "146": "amb",
+     "147": "amb",
+     "148": "other",
+     "149": "other",
+     "150": "other",
+     "151": "other",
+     "152": "other",
+     "153": "1",
+     "155": "short"
+    }
+   },
    "page_g": {
     "1": 43,
     "2": 51,
@@ -2493,6 +3060,35 @@
    },
    "hybrid_lines": 0,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 96,
+    "dist": {
+     "0": 82,
+     "1": 4,
+     "-1": 2,
+     "amb": 4,
+     "other": 3,
+     "short": 1
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "11": "1",
+     "24": "1",
+     "51": "-1",
+     "52": "amb",
+     "56": "amb",
+     "68": "short",
+     "69": "amb",
+     "76": "1",
+     "94": "1",
+     "101": "-1"
+    }
+   },
    "page_g": {
     "1": 25,
     "2": 20,
@@ -2578,6 +3174,32 @@
    },
    "hybrid_lines": 254,
    "emptied_marker_pages": 0,
+   "marker_offset": {
+    "pages": 104,
+    "dist": {
+     "0": 93,
+     "1": 2,
+     "-1": 1,
+     "amb": 2,
+     "other": 6,
+     "short": 0
+    },
+    "moved": 0,
+    "blocked": 0,
+    "flagged": {
+     "2": "amb",
+     "3": "other",
+     "4": "other",
+     "7": "other",
+     "10": "amb",
+     "11": "other",
+     "12": "other",
+     "23": "other",
+     "41": "1",
+     "117": "1",
+     "125": "-1"
+    }
+   },
    "page_g": {
     "1": 35,
     "2": 7,
@@ -2848,8 +3470,9 @@
   "md_files": 85,
   "pdf_files": 86,
   "limit": null,
+  "marker_correct": null,
   "rule": "regrade.grade_page baseline (word_boundary=False, normalize=False)",
-  "run_at": "2026-09-06T09:21:36+00:00",
+  "run_at": "2026-09-07T08:48:51+00:00",
   "expected": {
    "pages": 2189,
    "page_g": {
@@ -2884,6 +3507,20 @@
     "overflow": 293,
     "ambiguous": 1118,
     "partial": 118
+   },
+   "marker_offset": {
+    "books": 23,
+    "pages": 2035,
+    "dist": {
+     "0": 1772,
+     "1": 63,
+     "-1": 30,
+     "amb": 59,
+     "other": 99,
+     "short": 12
+    },
+    "moved": 0,
+    "blocked": 0
    }
   },
   "expected_mismatch": null

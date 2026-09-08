@@ -512,10 +512,21 @@ const g3zero = Object.values(reseg.per_book).filter(b => b.page_g['3'] === 0).le
 ].forEach(([row, cell]) => check('D13h textbook.html 비교표 NCS 열 "' + row + '" == reseg', tb2.includes('<td><strong>' + row + '</strong></td><td>' + cell + '</td>'), cell));
 const rsCsv = readCsv('docs/03-analysis/data/ncs_pages_reseg.csv');
 const rg = gradeCol(rsCsv, 3);
-check('D13i ncs_pages_reseg.csv 행수·등급 분포·사고사례 == reseg (12열, 구라벨 마지막)',
+check('D13i ncs_pages_reseg.csv 행수·등급 분포·사고사례 == reseg (13열, 마커오프셋 12번째, 구라벨 마지막)',
   rsCsv.length - 1 === reseg.pages && +rg['1'] === reseg.page_g['1'] && +rg['2'] === reseg.page_g['2'] && +rg['3'] === reseg.page_g['3']
-  && rsCsv.slice(1).filter(r => r[5] === '예').length === reseg.cases_pages && rsCsv[0].length === 12 && rsCsv[0][11] === '구라벨',
+  && rsCsv.slice(1).filter(r => r[5] === '예').length === reseg.cases_pages && rsCsv[0].length === 13 && rsCsv[0][11] === '마커오프셋' && rsCsv[0][12] === '구라벨',
   JSON.stringify([rsCsv.length - 1, rg, rsCsv[0].length]));
+// D13q — 마커 오프셋 진단(marker-offset): 발표 수치는 보정 없는 실행이어야 하고(moved·blocked 0, meta.marker_correct null), 분포 합 = 마커 쪽 수,
+// CSV 마커오프셋 열은 정해진 분류값만(마커가 없는 쪽은 빈 칸) 쓰며 마커 교재의 per_book.marker_offset 합 == 최상위 합
+const moCls = new Set(['', '0', '1', '-1', 'amb', 'other', 'short']);
+const moBooks = Object.values(reseg.per_book).filter(b => b.marker_offset);
+const moSum = k => moBooks.reduce((a, b) => a + b.marker_offset[k], 0);
+check('D13q reseg.marker_offset — 진단만(moved 0·blocked 0·meta.marker_correct null), dist 합 == pages, per_book 합 == 최상위, CSV 마커오프셋 값은 분류값뿐',
+  reseg.marker_offset && reseg.marker_offset.moved === 0 && reseg.marker_offset.blocked === 0 && reseg.meta.marker_correct === null
+  && Object.values(reseg.marker_offset.dist).reduce((a, b) => a + b, 0) === reseg.marker_offset.pages
+  && moBooks.length === reseg.marker_offset.books && moSum('pages') === reseg.marker_offset.pages && moSum('moved') === 0
+  && rsCsv.slice(1).every(r => r[11].split(';').every(c => moCls.has(c))),
+  JSON.stringify([reseg.marker_offset, moBooks.length]));
 const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
 check('D13j README 핵심 수치 == reseg (등급3 비율·분모, 화살표 문구 2곳)', readme.includes('NCS ' + pct(reseg.page_g['3'], reseg.pages) + '%, 교과서 2.2%') && readme.includes(reseg.page_g['3'] + '/' + fmt(reseg.pages)) && readme.includes('1,847→' + fmt(reseg.pages) + '쪽') && readme.includes('108쪽(5.8%)→' + reseg.page_g['3'] + '쪽(' + pct(reseg.page_g['3'], reseg.pages) + '%)'));
 

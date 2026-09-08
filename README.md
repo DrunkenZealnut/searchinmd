@@ -93,8 +93,8 @@ python3 resegment.py                    # 약 30초. 내장 EXPECTED 회귀 검�
 
 ```bash
 node    outputs/test-search-equivalence.js   # 24 — 검색 동치성 + 청크 렌더 + 지연 캐시
-node    outputs/test-dashboard-data.js       # 152 — 대시보드 데이터·표 렌더·정렬
-python3 outputs/test-recount-grades.py       # 372 — 재집계·재채점·페이지 마커·절단 판정·재코딩(코더 호출·채점)·재세그먼트
+node    outputs/test-dashboard-data.js       # 153 — 대시보드 데이터·표 렌더·정렬
+python3 outputs/test-recount-grades.py       # 379 — 재집계·재채점·페이지 마커·절단 판정·재코딩(코더 호출·채점)·재세그먼트
 node    outputs/run-core-logic-tests.js       # 32 — 제목 판정·정규화 (헤드리스)
 node    outputs/test-sri.js                  # 38 — 외부 스크립트 SRI (--online 이면 CDN 대조)
 ```

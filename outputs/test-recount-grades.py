@@ -2497,8 +2497,8 @@ with tempfile.TemporaryDirectory() as _td:
     _wo = _call(lambda: RS.write_outputs(_books, {'pages': 3}, os.path.join(_td, 'out')))
     _csv_rows = list(csv.reader(open(os.path.join(_td, 'out', 'ncs_pages_reseg.csv'), encoding='utf-8-sig'))) if isinstance(_wo, tuple) else None
     _js = json.load(open(os.path.join(_td, 'out', 'reseg_summary.json'), encoding='utf-8')) if isinstance(_wo, tuple) else None
-check('R16j write_outputs 는 CSV 12열(영역·교재·페이지·등급·등급명·사고사례·등급사유·상태·출처·md자수·pdf자수·구라벨)을 교재·쪽 순으로 쓰고 JSON 을 남긴다; 자수가 없는 레코드는 빈 칸',
-      isinstance(_csv_rows, list) and _csv_rows[0] == ['영역', '교재', '페이지', '등급', '등급명', '사고사례', '등급사유', '상태', '출처', 'md자수', 'pdf자수', '구라벨'] and _csv_rows[1][9:11] == ['', '']
+check('R16j write_outputs 는 CSV 13열(영역·교재·페이지·등급·등급명·사고사례·등급사유·상태·출처·md자수·pdf자수·마커오프셋·구라벨)을 교재·쪽 순으로 쓰고 JSON 을 남긴다; 자수·마커 분류가 없는 레코드는 빈 칸',
+      isinstance(_csv_rows, list) and _csv_rows[0] == ['영역', '교재', '페이지', '등급', '등급명', '사고사례', '등급사유', '상태', '출처', 'md자수', 'pdf자수', '마커오프셋', '구라벨'] and _csv_rows[1][9:12] == ['', '', '']
       and [r[1:3] for r in _csv_rows[1:]] == [['A책', '5'], ['A책', '6'], ['B책', '3']]
       and _csv_rows[1][3:6] == ['3', '구체적 대책', '예'] and _csv_rows[1][7] == 'resolved' and _csv_rows[3][7] == 'unresolved'
       and _csv_rows[1][8] == 'text' and _js == {'pages': 3}, _csv_rows)
@@ -2651,17 +2651,17 @@ with tempfile.TemporaryDirectory() as _td:
 check('R16u aggregate 는 해결 교재의 label 출처 쪽만 label_fallback_pages 로 세고(미해결 교재는 제외), write_outputs 는 등급 None 을 빈 칸으로, 구라벨을 숫자순(9;10)으로, 출처를 그대로 쓴다',
       isinstance(_sm_lf, dict) and _sm_lf['label_fallback_pages'] == 1 and _sm_lf['pages'] == 3
       and isinstance(_csv_lf, list) and [r[1:3] for r in _csv_lf[1:]] == [['A책', '5'], ['A책', '9'], ['B책', '3']]
-      and _csv_lf[2][3:5] == ['', ''] and _csv_lf[2][8] == 'label' and _csv_lf[2][11] == '9;10' and _csv_lf[1][8] == 'text' and _csv_lf[3][8] == 'label',
+      and _csv_lf[2][3:5] == ['', ''] and _csv_lf[2][8] == 'label' and _csv_lf[2][12] == '9;10' and _csv_lf[1][8] == 'text' and _csv_lf[3][8] == 'label',
       (_sm_lf['label_fallback_pages'] if isinstance(_sm_lf, dict) else _sm_lf, _csv_lf))
 _e_ok = {'pages': 3, 'books': 2, 'page_g': {'1': 1, '2': 1, '3': 1}, 'unresolved_pages': 1, 'digest': 'abc'}
 _ce_all = _call(lambda: RS.check_expected({'pages': 4, 'books': 1, 'page_g': {'1': 2, '2': 1, '3': 1}, 'unresolved': None, 'page_grade_digest': 'zzz'}, expected=_e_ok)) if _ok_rs else None
 _ce_nodg = _call(lambda: RS.check_expected({'pages': 3, 'books': 2, 'page_g': {'1': 1, '2': 1, '3': 1}, 'unresolved': {'pages': 1}, 'page_grade_digest': 'whatever'},
                                           expected=dict(_e_ok, digest=None))) if _ok_rs else None
 _ce_dflt = _call(lambda: RS.check_expected({})) if _ok_rs else None
-check('R16v check_expected 는 어긋난 항목마다 한 줄씩(pages·books·page_g·unresolved_pages·digest, 그리고 EXPECTED 가 가진 사고사례·이동·미매칭·폴백 수치) 짚고, unresolved 가 없어도 죽지 않으며, 기대 digest 가 None 이면 지문을 비교하지 않고, expected 생략 시 모듈 EXPECTED(16키: 지문 3종·자기 검증·약한 배정·hybrid_lines·hybrid_emptied_marker_pages 까지) 를 쓴다',
+check('R16v check_expected 는 어긋난 항목마다 한 줄씩(pages·books·page_g·unresolved_pages·digest, 그리고 EXPECTED 가 가진 사고사례·이동·미매칭·폴백 수치) 짚고, unresolved 가 없어도 죽지 않으며, 기대 digest 가 None 이면 지문을 비교하지 않고, expected 생략 시 모듈 EXPECTED(17키: 지문 3종·자기 검증·약한 배정·hybrid_lines·hybrid_emptied_marker_pages·marker_offset 까지) 를 쓴다',
       isinstance(_ce_all, list) and [l.split(':')[0] for l in _ce_all] == ['pages', 'books', 'page_g', 'unresolved_pages', 'digest']
-      and _ce_nodg == [] and isinstance(_ce_dflt, list) and len(_ce_dflt) == 16 and str(RS.EXPECTED['pages']) in _ce_dflt[0]
-      and [l.split(':')[0] for l in _ce_dflt[5:]] == ['kw_pages_digest', 'case_pages_digest', 'cases_pages', 'cases_books', 'moved_rows', 'unmatched_rows', 'label_fallback_pages', 'hybrid_lines', 'hybrid_emptied_marker_pages', 'alignment_overall', 'match_stats'], (_ce_all, _ce_nodg, _ce_dflt))
+      and _ce_nodg == [] and isinstance(_ce_dflt, list) and len(_ce_dflt) == 17 and str(RS.EXPECTED['pages']) in _ce_dflt[0]
+      and [l.split(':')[0] for l in _ce_dflt[5:]] == ['kw_pages_digest', 'case_pages_digest', 'cases_pages', 'cases_books', 'moved_rows', 'unmatched_rows', 'label_fallback_pages', 'hybrid_lines', 'hybrid_emptied_marker_pages', 'marker_offset', 'alignment_overall', 'match_stats'], (_ce_all, _ce_nodg, _ce_dflt))
 _wbk2 = FakeWB({'s': [None, (), (1, 'a', 'LM1903060001_x', 'c', '1', 't', 'a', '2'),
                        (1, 'a', None, 'c', '1', 't', 'a', '2', 'r'),
                        (1, 'a', 'LM1903060001_x', None, None, 't', None, None, None)]})
@@ -2786,8 +2786,8 @@ check('R16z4 커밋된 reseg_summary.json 이 resegment.EXPECTED 와 일치한�
       and sum(_rs_sum['method_books'].values()) == _rs_sum['books'] and '/Users/' not in json.dumps(_rs_sum['meta']),
       RS.check_expected(_rs_sum) if _ok_rs else RS)
 _rs_digest = hashlib.sha256('\n'.join(sorted('%s\t%s\t%s' % (r[1], r[2], r[3]) for r in _rs_body)).encode('utf-8')).hexdigest()[:16]
-check('R16z5 커밋된 ncs_pages_reseg.csv 가 summary·EXPECTED 와 맞물린다 — 행 수 = 쪽 수, (교재, 쪽) 유일, 등급 분포·미해결 쪽·라벨 폴백 쪽(label + text-fallback) 일치, 행에서 재계산한 지문 = EXPECTED.digest, 등급명 = GRADE_LABEL, 출처 9열·자수 10~11열(해결 쪽은 정수)·구라벨 마지막 열',
-      _ok_rs and _rs_csv[0][-1] == '구라벨' and _rs_csv[0][8] == '출처' and _rs_csv[0][9:11] == ['md자수', 'pdf자수'] and len(_rs_csv[0]) == 12 and len(_rs_body) == RS.EXPECTED['pages']
+check('R16z5 커밋된 ncs_pages_reseg.csv 가 summary·EXPECTED 와 맞물린다 — 행 수 = 쪽 수, (교재, 쪽) 유일, 등급 분포·미해결 쪽·라벨 폴백 쪽(label + text-fallback) 일치, 행에서 재계산한 지문 = EXPECTED.digest, 등급명 = GRADE_LABEL, 출처 9열·자수 10~11열(해결 쪽은 정수)·마커오프셋 12열·구라벨 마지막 열',
+      _ok_rs and _rs_csv[0][-1] == '구라벨' and _rs_csv[0][8] == '출처' and _rs_csv[0][9:11] == ['md자수', 'pdf자수'] and _rs_csv[0][11] == '마커오프셋' and len(_rs_csv[0]) == 13 and len(_rs_body) == RS.EXPECTED['pages']
       and all(r[9].isdigit() and r[10].isdigit() for r in _rs_body if r[7] == 'resolved' and r[8] != 'label')
       and len({(r[1], r[2]) for r in _rs_body}) == len(_rs_body)
       and {g: sum(1 for r in _rs_body if r[3] == g) for g in ('1', '2', '3')} == RS.EXPECTED['page_g']
@@ -3070,6 +3070,183 @@ check('R16z20 커밋된 reseg_summary.json 의 per_book 레이아웃이 코드�
       and sum(v['hybrid_lines'] for v in _pb_res) == _rs_sum['hybrid_lines'],
       (_rs_sum['meta'].get('run_at'), sum(1 for v in _rs_sum['per_book'].values() if 'hybrid_lines' in (v.get('match_stats') or {})),
        sum(1 for v in _pb_res if isinstance(v.get('hybrid_lines'), int))))
+
+# marker-offset (설계 2026-09-07 §2·§6): 마커 쪽 본문 vs PDF P±k 3-gram 포함률 → 오프셋 진단, 변형(--marker-correct)에서만 ±1 보정
+_T1 = '첫째 쪽 본문입니다. 안전 교육을 정기적으로 실시하고 보호구를 반드시 착용해야 합니다.'
+_T2 = '둘째 쪽 본문입니다. 위험 요인을 사전에 확인하고 안전 점검 절차를 빠짐없이 따릅니다.'
+_T3 = '셋째 쪽 본문입니다. 사고 발생 시 즉시 보고하고 현장을 보존하며 원인을 조사합니다.'
+_T4 = '넷째 쪽 본문입니다. 화학물질 누출 시 즉시 대피하고 환기 설비를 가동해야 합니다.'
+_mo_pg = [_T1, _T2, _T3, _T4]
+_mo_lines = ['<!-- page: 1 -->', _T1, '<!-- page: 2 -->', _T3, '<!-- page: 3 -->', _T2, '<!-- page: 4 -->', '짧다']
+_mo = _call(lambda: RS.marker_offsets(_mo_lines, _mo_pg)) if _ok_rs else None
+_mo_b = _call(lambda: RS.marker_bodies(_mo_lines, RS.marker_positions(_mo_lines))) if _ok_rs else None
+_mo_tie = _call(lambda: RS.marker_offsets(['<!-- page: 2 -->', _T2, '<!-- page: 3 -->', _T2], [_T1, _T2, _T2])) if _ok_rs else None
+_mo_k0 = _call(lambda: RS.marker_offsets(_mo_lines, _mo_pg, k=0)) if _ok_rs else None
+_mo_out = _call(lambda: RS.marker_offsets(['<!-- page: 9 -->', _T1], _mo_pg)) if _ok_rs else None
+_mo_far = _call(lambda: RS.marker_offsets(['<!-- page: 1 -->', _T4], _mo_pg)) if _ok_rs else None
+_mo_min = _call(lambda: RS.marker_offsets(['<!-- page: 1 -->', '짧은 본문'], _mo_pg, min_chars=3)) if _ok_rs else None
+_mo_min0 = _call(lambda: RS.marker_offsets(['<!-- page: 1 -->', '짧은 본문'], _mo_pg)) if _ok_rs else None
+_mo_dup = _call(lambda: RS.marker_offsets(['<!-- page: 1 -->', _T1, '<!-- page: 1 -->', _T3], _mo_pg)) if _ok_rs else None
+_mo_none = _call(lambda: RS.marker_offsets(['a', 'b'], _mo_pg)) if _ok_rs else None
+check('R16z22 marker_offsets — 마커 쪽 본문(다음 마커 전까지, 마지막은 파일 끝까지; marker_bodies)을 PDF P−k..P+k 와 3-gram 포함률로 대조해 {쪽: (best, same, best_c)} 를 낸다: 같은 쪽 0, 한 쪽 뒤 +1, 한 쪽 앞 −1, 30자 미만은 None(min_chars 로 조정); 동점은 |offset| 작은 쪽; k=0 이면 전부 0; PDF 범위 밖 오프셋은 후보에서 빠지고 후보가 없으면 None; 같은 쪽 번호 마커가 둘이면 첫 것; 마커 없으면 {}',
+      isinstance(_mo, dict) and sorted(_mo) == [1, 2, 3, 4]
+      and _mo[1][0] == 0 and _mo[1][1] == 1.0 and _mo[1][2] == 1.0
+      and _mo[2][0] == 1 and _mo[2][2] == 1.0 and _mo[2][1] < 0.4
+      and _mo[3][0] == -1 and _mo[3][2] == 1.0 and _mo[3][1] < 0.4
+      and _mo[4] is None
+      and isinstance(_mo_b, dict) and _mo_b == {1: RS.norm_text(_T1), 2: RS.norm_text(_T3), 3: RS.norm_text(_T2), 4: '짧다'}
+      and _mo_tie == {2: (0, 1.0, 1.0), 3: (0, 1.0, 1.0)}
+      and isinstance(_mo_k0, dict) and all(_mo_k0[p][0] == 0 and _mo_k0[p][1] == _mo_k0[p][2] for p in (1, 2, 3)) and _mo_k0[4] is None
+      and _mo_out == {9: None} and isinstance(_mo_far, dict) and _mo_far[1][0] == 3 and _mo_far[1][2] == 1.0
+      and isinstance(_mo_min, dict) and _mo_min[1] is not None and _mo_min0 == {1: None}
+      and isinstance(_mo_dup, dict) and _mo_dup[1][0] == 0 and _mo_none == {},
+      (_mo, _mo_b, _mo_tie, _mo_k0, _mo_out, _mo_far, _mo_min, _mo_min0, _mo_dup, _mo_none))
+_co = getattr(RS, 'classify_offset', None) if _ok_rs else None
+_co = _co or (lambda *a, **k: None)
+_co_v = _call(lambda: [_co(None), _co((0, 0.9, 0.9)), _co((1, 0.5, 0.6)), _co((1, 0.5, 0.59)), _co((-1, 0.2, 0.9)), _co((2, 0.1, 0.9)), _co((-3, 0.0, 0.7)),
+                       _co((1, 0.1, 0.45)), _co((1, 0.0, 0.5)), _co((1, 0.5, 0.6), margin=0.2), _co((1, 0.5, 0.56), margin=0.05), _co((0, 0.0, 0.0))]) if _ok_rs else None
+check('R16z23 classify_offset — None 은 short; best 0 은 "0"; |best| 1 은 best_c ≥ OFFSET_MIN_CONTAIN(0.5) 이고 best_c−same ≥ margin(경계 포함, 부동소수 반올림)일 때만 그 부호, 아니면 amb; |best| ≥ 2 는 other(옮기지 않음); margin 인자로 임계를 바꾼다; 상수 OFFSET_WINDOW 3·OFFSET_MIN_CHARS 30·OFFSET_MARGIN 0.10·OFFSET_MIN_CONTAIN 0.5',
+      _co_v == ['short', '0', '1', 'amb', '-1', 'other', 'other', 'amb', '1', 'amb', '1', '0']
+      and _ok_rs and (RS.OFFSET_WINDOW, RS.OFFSET_MIN_CHARS, RS.OFFSET_MARGIN, RS.OFFSET_MIN_CONTAIN) == (3, 30, 0.10, 0.5), _co_v)
+_cm = getattr(RS, 'corrected_markers', None) if _ok_rs else None
+_cm = _cm or (lambda *a, **k: None)
+_cm_in_m, _cm_in_c = [(0, 1), (2, 2), (4, 3), (6, 4)], {1: '0', 2: '1', 3: '1', 4: '0'}
+_cm_run = _call(lambda: _cm(_cm_in_m, _cm_in_c)) if _ok_rs else None                                        # +1 연속 구간 뒤에 0 — 끝 마커는 다음 마커와 같은 쪽(중복 허용)
+_cm_swap = _call(lambda: _cm([(0, 1), (2, 2), (4, 3)], {1: '1', 2: '-1', 3: '0'})) if _ok_rs else None      # 서로 자리를 바꾸려는 두 마커 — 둘 다 막힘(동시 판정, 순서 무관)
+_cm_tail = _call(lambda: _cm([(0, 5), (2, 6)], {5: '0', 6: '-1'})) if _ok_rs else None                      # 꼬리 −1 은 앞 마커와 같은 쪽으로
+_cm_keep = _call(lambda: _cm([(0, 1), (2, 2), (4, 3)], {1: 'amb', 2: 'other', 3: 'short'})) if _ok_rs else None
+_cm_first = _call(lambda: _cm([(0, 2), (2, 3)], {2: '-1', 3: '0'})) if _ok_rs else None                     # 첫 마커는 앞 제약이 없다
+_cm_casc = _call(lambda: _cm([(0, 1), (2, 2), (4, 3), (6, 4)], {1: '0', 2: '1', 3: '1', 4: '-1'})) if _ok_rs else None   # 3→4 와 4→3 충돌: 둘만 막히고 2→3 은 산다
+_cm_empty = _call(lambda: _cm([], {})) if _ok_rs else None
+_am_in = list(_mo_lines)
+_am = _call(lambda: RS.apply_marker_correction(_am_in, [(0, 1), (2, 3), (4, 3), (6, 4)])) if _ok_rs else None
+_am_mid = _call(lambda: RS.apply_marker_correction(['텍스트 <!-- page: 12 --> 꼬리'], [(0, 13)])) if _ok_rs else None
+check('R16z24 corrected_markers(marks, cls) — "1"/"-1" 마커만 P±1 로 옮기되 옮긴 쪽이 이웃 마커의 최종 쪽 사이(같은 쪽 허용, 비감소)에 들어야 하고 어긋나면 옮기지 않고 amb 로 재분류(동시 판정이라 순서 무관); amb·other·short 는 그대로; 입력은 바꾸지 않는다; apply_marker_correction 은 마커 줄의 숫자만 바꾼다',
+      _cm_run == ([(0, 1), (2, 3), (4, 4), (6, 4)], {1: '0', 2: '1', 3: '1', 4: '0'}) and _cm_in_m == [(0, 1), (2, 2), (4, 3), (6, 4)] and _cm_in_c == {1: '0', 2: '1', 3: '1', 4: '0'}
+      and _cm_swap == ([(0, 1), (2, 2), (4, 3)], {1: 'amb', 2: 'amb', 3: '0'})
+      and _cm_tail == ([(0, 5), (2, 5)], {5: '0', 6: '-1'})
+      and _cm_keep == ([(0, 1), (2, 2), (4, 3)], {1: 'amb', 2: 'other', 3: 'short'})
+      and _cm_first == ([(0, 1), (2, 3)], {2: '-1', 3: '0'})
+      and _cm_casc == ([(0, 1), (2, 3), (4, 3), (6, 4)], {1: '0', 2: '1', 3: 'amb', 4: 'amb'})
+      and _cm_empty == ([], {})
+      and isinstance(_am, list) and _am[0::2] == ['<!-- page: 1 -->', '<!-- page: 3 -->', '<!-- page: 3 -->', '<!-- page: 4 -->'] and _am[1::2] == _mo_lines[1::2]
+      and _am_in == _mo_lines and _am_mid == ['텍스트 <!-- page: 13 --> 꼬리'],
+      (_cm_run, _cm_swap, _cm_tail, _cm_keep, _cm_first, _cm_casc, _cm_empty, _am, _am_mid))
+# correct_markers(lines, pages_text, margin) — 진단(margin None) 과 변형(margin) 을 한 함수로: 5쪽 PDF, 마크다운은 2쪽을 잃고 3·4쪽 블록에 마커 2·3 을 찍었다(+1 연속 구간), 5쪽은 맞다
+_A5 = ['첫째 쪽 본문 문장이 여기 있습니다.', '안전 교육을 정기적으로 실시한다.', '보호구를 반드시 착용해야 한다.']
+_B5 = ['둘째 쪽 본문 문장이 여기 있습니다.', '위험 요인을 사전에 확인한다.', '안전 점검 절차를 따른다.']
+_C5 = ['셋째 쪽 본문 문장이 여기 있습니다.', '사고 발생 시 즉시 보고한다.', '현장을 보존하고 원인을 조사한다.']
+_D5 = ['넷째 쪽 본문 문장이 여기 있습니다.', '화학물질 누출 시 즉시 대피한다.', '환기 설비를 즉시 가동한다.']
+_E5 = ['다섯째 쪽 본문 문장이 여기 있습니다.', '작업 전 안전 점검을 실시한다.', '작업 허가서를 확인한다.']
+_pg_mc = [' '.join(x) for x in (_A5, _B5, _C5, _D5, _E5)]
+_md_mc = ['<!-- page: 1 -->'] + _A5 + ['<!-- page: 2 -->'] + _C5 + ['<!-- page: 3 -->'] + _D5 + ['<!-- page: 5 -->'] + _E5
+_rows_mc = [{'sheet': '안전', 'area': '반도체재료', 'filename': 'LM1903060001_시험_교재', 'contents': '사고 발생 시 즉시 보고한다.', 'label': 2, 'case': True, 'grade': 2, 'reason': 'r1'},
+            {'sheet': '누출', 'area': '반도체재료', 'filename': 'LM1903060001_시험_교재', 'contents': '화학물질 누출 시 즉시 대피한다.', 'label': 3, 'case': False, 'grade': 2, 'reason': 'r2'},
+            {'sheet': '안전', 'area': '반도체재료', 'filename': 'LM1903060001_시험_교재', 'contents': '작업 전 안전 점검을 실시한다.', 'label': 5, 'case': False, 'grade': 1, 'reason': 'r3'}]
+_dist0 = {'0': 2, '1': 2, '-1': 0, 'amb': 0, 'other': 0, 'short': 0}
+_mc_d = _call(lambda: RS.correct_markers(_md_mc, _pg_mc)) if _ok_rs else None
+_mc_c = _call(lambda: RS.correct_markers(_md_mc, _pg_mc, margin=0.10)) if _ok_rs else None
+_mc_hi = _call(lambda: RS.correct_markers(_md_mc, _pg_mc, margin=0.9)) if _ok_rs else None
+_mc_ln = _mc_c[0] if isinstance(_mc_c, tuple) else None
+_mc_st, _mc_st0 = {}, {}
+_mc_rb = _call(lambda: RS.resegment_book(_rows_mc, _mc_ln, _pg_mc, prefer_markers=True, stats=_mc_st)) if isinstance(_mc_ln, list) else None
+_mc_rb0 = _call(lambda: RS.resegment_book(_rows_mc, _md_mc, _pg_mc, prefer_markers=True, stats=_mc_st0)) if _ok_rs else None
+_mc_al = _call(lambda: RS.check_alignment(_mc_ln, _mc_rb[4])) if isinstance(_mc_rb, tuple) else None
+_mc_al0 = _call(lambda: RS.check_alignment(_md_mc, _mc_rb0[4])) if isinstance(_mc_rb0, tuple) else None
+check('R16z25 correct_markers — margin None 이면 줄은 그대로 두고 진단만(pages·dist·flagged(0 이 아닌 마커)·final_cls·moved 0); margin 을 주면 "1"/"-1" 마커를 옮긴 줄 목록과 moved_markers[[idx, 구, 신]]·final_cls(최종 쪽→분류) 를 내고, 임계가 너무 높으면 전부 amb 로 아무것도 안 옮긴다; 보정 줄로 resegment_book 을 돌리면 행이 3·4쪽에 놓이고(진단 줄이면 2·3쪽) 마커 결손(2쪽)은 hybrid 가 채우며(보정 줄 0줄) 마커 쪽이 비지 않고 정렬 자기 검증은 보정 마커 기준 전부 정확(원 마커 기준이면 아님)',
+      isinstance(_mc_d, tuple) and _mc_d[0] == _md_mc and _mc_d[1] == {'pages': 4, 'dist': _dist0, 'moved': 0, 'blocked': 0, 'flagged': {2: '1', 3: '1'},
+                                                                         'final_cls': {1: '0', 2: '1', 3: '1', 5: '0'}, 'moved_markers': []}
+      and isinstance(_mc_c, tuple) and RS.marker_positions(_mc_c[0]) == [(0, 1), (4, 3), (8, 4), (12, 5)] and _mc_c[0][1:4] == _A5 and _mc_c[0][5:8] == _C5
+      and _mc_c[1] == {'pages': 4, 'dist': _dist0, 'moved': 2, 'blocked': 0, 'flagged': {2: '1', 3: '1'}, 'final_cls': {1: '0', 3: '1', 4: '1', 5: '0'}, 'moved_markers': [[4, 2, 3], [8, 3, 4]]}
+      and _md_mc[4] == '<!-- page: 2 -->'
+      and isinstance(_mc_hi, tuple) and _mc_hi[0] == _md_mc and _mc_hi[1]['dist'] == {'0': 2, '1': 0, '-1': 0, 'amb': 2, 'other': 0, 'short': 0} and _mc_hi[1]['moved'] == 0 and _mc_hi[1]['moved_markers'] == []
+      and isinstance(_mc_rb, tuple) and sorted(_mc_rb[0]) == [3, 4, 5] and _mc_rb[1] == 2 and _mc_rb[3][5:8] == [3, 3, 3] and _mc_rb[3][9:12] == [4, 4, 4] and _mc_rb[3][1:4] == [1, 1, 1]
+      and _mc_st.get('hybrid_lines') == 0 and RS.emptied_marker_pages(_mc_ln, _mc_rb[3]) == 0 and _mc_rb[0][3]['case'] is True
+      and isinstance(_mc_rb0, tuple) and sorted(_mc_rb0[0]) == [2, 3, 5] and _mc_rb0[1] == 0
+      and isinstance(_mc_al, dict) and _mc_al['lines'] > 0 and _mc_al['exact'] == _mc_al['lines'] and isinstance(_mc_al0, dict) and _mc_al0['exact'] < _mc_al0['lines'],
+      (_mc_d[1] if isinstance(_mc_d, tuple) else _mc_d, _mc_c[1] if isinstance(_mc_c, tuple) else _mc_c, _mc_hi[1] if isinstance(_mc_hi, tuple) else _mc_hi,
+       (sorted(_mc_rb[0]), _mc_rb[1], _mc_rb[3]) if isinstance(_mc_rb, tuple) else _mc_rb, _mc_st, _mc_rb0[3] if isinstance(_mc_rb0, tuple) else _mc_rb0, _mc_al, _mc_al0))
+_mo_A = {'pages': 4, 'dist': _dist0, 'moved': 2, 'blocked': 0}
+_mo_C = {'pages': 3, 'dist': {'0': 1, '1': 0, '-1': 1, 'amb': 0, 'other': 0, 'short': 1}, 'moved': 0, 'blocked': 1}
+_bk_mo = {'A': dict(_books['A책'], marker_offset=_mo_A), 'B': dict(_books['B책']), 'C': dict(_books['A책'], marker_offset=_mo_C)}
+_ag_mo = _call(lambda: RS.aggregate(_bk_mo)) if _ok_rs else None
+_ag_mo0 = _call(lambda: RS.aggregate(_books)) if _ok_rs else None
+_zero_mo = {'books': 0, 'pages': 0, 'dist': {'0': 0, '1': 0, '-1': 0, 'amb': 0, 'other': 0, 'short': 0}, 'moved': 0, 'blocked': 0}
+_ce_mo = _call(lambda: RS.check_expected(dict(_sm_ok, marker_offset=dict(_E['marker_offset'], moved=_E['marker_offset']['moved'] + 1)))) if _ok_rs and 'marker_offset' in _E else None
+_bk_csv = {'A책': dict(_books['A책'], pages={5: dict(_books['A책']['pages'][5], marker_cls='1'), 6: dict(_books['A책']['pages'][6])})}
+with tempfile.TemporaryDirectory() as _td:
+    _wo = _call(lambda: RS.write_outputs(_bk_csv, {'x': 1}, _td)) if _ok_rs else None
+    _csv_mo = list(csv.reader(open(os.path.join(_td, 'ncs_pages_reseg.csv'), encoding='utf-8-sig'))) if os.path.exists(os.path.join(_td, 'ncs_pages_reseg.csv')) else None
+check('R16z26 aggregate 는 교재별 marker_offset 을 합쳐(books·pages·dist·moved·blocked; 키 없는 정렬·미해결 교재는 세지 않음) summary.marker_offset 으로 내고, EXPECTED.marker_offset(진단 실행: moved 0·blocked 0) 을 check_expected 가 대조하며, CSV 는 13열로 "마커오프셋" 이 12번째·"구라벨" 이 마지막이고 마커 분류가 없는 쪽은 빈 칸이다',
+      isinstance(_ag_mo, dict) and _ag_mo.get('marker_offset') == {'books': 2, 'pages': 7, 'dist': {'0': 3, '1': 2, '-1': 1, 'amb': 0, 'other': 0, 'short': 1}, 'moved': 2, 'blocked': 1}
+      and isinstance(_ag_mo0, dict) and _ag_mo0.get('marker_offset') == _zero_mo
+      and _ok_rs and isinstance(_E.get('marker_offset'), dict) and _E['marker_offset']['moved'] == 0 and _E['marker_offset']['blocked'] == 0 and _E['marker_offset']['books'] == 23
+      and _ce_mo is not None and len(_ce_mo) == 1 and _ce_mo[0].startswith('marker_offset: ')
+      and isinstance(_csv_mo, list) and len(_csv_mo[0]) == 13 and _csv_mo[0][11] == '마커오프셋' and _csv_mo[0][12] == '구라벨'
+      and [r[11] for r in _csv_mo[1:]] == ['1', ''] and [r[12] for r in _csv_mo[1:]] == ['10', '10'],
+      (_ag_mo and _ag_mo.get('marker_offset'), _ag_mo0 and _ag_mo0.get('marker_offset'), _E.get('marker_offset'), _ce_mo, _csv_mo))
+# main 완주: 진단(기본) 과 변형(--marker-correct) — 변형은 추적 산출물·기본 대응표 디렉터리를 거부하고, 다른 경로면 EXPECTED 검사와 무관하게 쓴다(meta.expected None, 불일치는 참고로 기록)
+_fitz_mc = types.ModuleType('fitz'); _fitz_mc.open = lambda path: _FakeDoc(_pg_mc)
+_o_lr4 = RS.load_rows if _ok_rs else None
+with tempfile.TemporaryDirectory() as _td:
+    _mdr, _pdr, _out0, _pgd0, _out1, _pgd1, _out2 = [os.path.join(_td, x) for x in ('md', 'pdf', 'out0', 'paged0', 'out1', 'paged1', 'out2')]
+    os.makedirs(_mdr); os.makedirs(_pdr)
+    open(os.path.join(_mdr, 'LM1903060001_시험_교재.md'), 'w', encoding='utf-8').write('\n'.join(_md_mc))
+    open(os.path.join(_pdr, 'LM1903060001.pdf'), 'w').close()
+    _wbp = os.path.join(_td, 'w.xlsx'); open(_wbp, 'w').close()
+    _o_fitz4 = sys.modules.get('fitz')
+    _base = ['resegment.py', '--pdf-root', _pdr, '--md-root', _mdr, '--workbook', _wbp]
+    try:
+        sys.modules['fitz'] = _fitz_mc
+        if _ok_rs: RS.load_rows = lambda path, loader=None: list(_rows_mc)
+        _v0c, _v0o = _run_main(RS.main, _base + ['--out', _out0, '--paged-dir', _pgd0, '--force']) if _ok_rs else ('', '')
+        _v1c, _v1o = _run_main(RS.main, _base + ['--out', _out1, '--paged-dir', _pgd1, '--marker-correct', '0.1']) if _ok_rs else ('', '')
+        _vgc, _vgo = _run_main(RS.main, _base + ['--marker-correct', '0.1']) if _ok_rs else ('', '')
+        _vg2c, _ = _run_main(RS.main, _base + ['--marker-correct', '0.1', '--out', _out2]) if _ok_rs else ('', '')
+        _vg3c, _ = _run_main(RS.main, _base + ['--marker-correct', '0.1', '--paged-dir', _pgd1]) if _ok_rs else ('', '')
+        _rd = lambda d, n: (json.load(open(os.path.join(d, n), encoding='utf-8')) if n.endswith('.json') else list(csv.reader(open(os.path.join(d, n), encoding='utf-8-sig')))) if os.path.exists(os.path.join(d, n)) else None
+        _s0, _c0, _p0 = _rd(_out0, 'reseg_summary.json'), _rd(_out0, 'ncs_pages_reseg.csv'), _rd(_pgd0, 'LM1903060001.pages.json')
+        _s1, _c1, _p1 = _rd(_out1, 'reseg_summary.json'), _rd(_out1, 'ncs_pages_reseg.csv'), _rd(_pgd1, 'LM1903060001.pages.json')
+        _out2_exists = os.path.exists(_out2)
+    finally:
+        if _o_fitz4 is None: sys.modules.pop('fitz', None)
+        else: sys.modules['fitz'] = _o_fitz4
+        if _ok_rs: RS.load_rows = _o_lr4
+_b0 = ((_s0 or {}).get('per_book') or {}).get('LM1903060001_시험_교재', {})
+_b1 = ((_s1 or {}).get('per_book') or {}).get('LM1903060001_시험_교재', {})
+_mo_one = {'books': 1, 'pages': 4, 'dist': _dist0, 'moved': 0, 'blocked': 0}
+check('R16z27 main — 진단 실행은 summary.marker_offset·per_book.marker_offset(flagged 는 0 이 아닌 마커만)·CSV 마커오프셋 열(2·3쪽 "1", 5쪽 "0")·pages.json(marker_correct None, moved_markers []) 을 싣고 meta.marker_correct 는 None; --marker-correct 0.1 은 마커 2·3 을 3·4 로 옮겨 행이 3·4·5쪽에 놓이고(사고사례 쪽 3, moved_rows 2) CSV 마커오프셋은 최종 쪽 기준, pages.json 에 marker_correct·moved_markers, per_book.align 은 보정 마커 기준 전부 정확, meta.marker_correct 0.1·expected None; 기본 --out 또는 기본 --paged-dir 이면 거부한다',
+      _v0c == 0 and isinstance(_s0, dict) and _s0.get('marker_offset') == _mo_one and _s0['meta'].get('marker_correct') is None
+      and _b0.get('marker_offset') == {'pages': 4, 'dist': _dist0, 'moved': 0, 'blocked': 0, 'flagged': {'2': '1', '3': '1'}}
+      and isinstance(_c0, list) and _c0[0][11] == '마커오프셋' and sorted((int(r[2]), r[11]) for r in _c0[1:]) == [(2, '1'), (3, '1'), (5, '0')]
+      and isinstance(_p0, dict) and _p0.get('marker_correct') is None and _p0.get('moved_markers') == [] and _p0['line_pages'][5:8] == [2, 2, 2]
+      and _v1c == 0 and isinstance(_s1, dict) and _s1.get('marker_offset') == dict(_mo_one, moved=2) and _s1['meta'].get('marker_correct') == 0.1 and _s1['meta']['expected'] is None
+      and _s1['pages'] == 3 and _b1.get('moved_rows') == 2 and [(c['page'], c['old_labels']) for c in _s1['case_pages']] == [(3, ['2'])]
+      and isinstance(_c1, list) and sorted((int(r[2]), r[11]) for r in _c1[1:]) == [(3, '1'), (4, '1'), (5, '0')]
+      and isinstance(_p1, dict) and _p1.get('marker_correct') == 0.1 and _p1.get('moved_markers') == [[4, 2, 3], [8, 3, 4]] and _p1['line_pages'][5:8] == [3, 3, 3] and _p1['line_pages'][9:12] == [4, 4, 4]
+      and _b1.get('marker_offset') == {'pages': 4, 'dist': _dist0, 'moved': 2, 'blocked': 0, 'flagged': {'2': '1', '3': '1'}}
+      and (_b1.get('align') or {}).get('lines', 0) > 0 and _b1['align']['exact'] == _b1['align']['lines'] and _b0['align']['exact'] < _b0['align']['lines']
+      and _vgc not in (0, '') and _vg2c not in (0, '') and _vg3c not in (0, '') and not _out2_exists
+      and '변형 실행이라 기록만 함' in _v1o and '--force 로 씀' not in _v1o and '--force 로 씀' in _v0o,
+      (_v0c, _v0o[-200:], _s0 and _s0.get('marker_offset'), _b0.get('marker_offset'), _c0, _p0 and (_p0.get('marker_correct'), _p0.get('moved_markers')),
+       _v1c, _v1o[-200:], _s1 and (_s1.get('marker_offset'), _s1['meta'].get('marker_correct'), _s1.get('case_pages')), _b1.get('marker_offset'), _b1.get('align'), _c1,
+       _p1 and (_p1.get('marker_correct'), _p1.get('moved_markers'), _p1['line_pages']), _vgc, _vg2c, _vg3c, _out2_exists))
+
+# 갭 분석 G3 (2026-09-07): correct_markers 의 blocked 집계와 final_cls 의 ';' 결합은 실제 픽스처로 지나가야 한다
+_mc_sw = _call(lambda: RS.correct_markers(['<!-- page: 1 -->', _T2, '<!-- page: 2 -->', _T1, '<!-- page: 3 -->', _T3], [_T1, _T2, _T3], margin=0.10)) if _ok_rs else None   # 1↔2 자리 맞바꿈 → 둘 다 막힘
+_mc_sh = _call(lambda: RS.correct_markers(['<!-- page: 1 -->', _T2, '<!-- page: 2 -->', _T2, '<!-- page: 3 -->', _T3], [_T1, _T2, _T3], margin=0.10)) if _ok_rs else None   # 마커 1(+1) 이 마커 2(0) 와 같은 쪽으로
+_bk_sh = {'A책': dict(_books['A책'], pages={5: dict(_books['A책']['pages'][5], marker_cls='1;0')})}
+with tempfile.TemporaryDirectory() as _td:
+    _wo_sh = _call(lambda: RS.write_outputs(_bk_sh, {}, _td)) if _ok_rs else None
+    _csv_sh = list(csv.reader(open(os.path.join(_td, 'ncs_pages_reseg.csv'), encoding='utf-8-sig'))) if os.path.exists(os.path.join(_td, 'ncs_pages_reseg.csv')) else None
+check('R16z28 correct_markers — 서로 자리를 바꾸려는 두 마커(1 은 +1, 2 는 −1)는 둘 다 막혀 blocked 2·moved 0·amb 로 재분류되고 줄은 그대로; 분류가 다른 두 마커가 같은 최종 쪽에 놓이면 final_cls 는 ";" 로 잇고(마커 1 이 +1 로 2쪽에 합류 → "1;0") 그 값이 CSV 마커오프셋 열에 그대로 실린다',
+      isinstance(_mc_sw, tuple) and _mc_sw[1]['blocked'] == 2 and _mc_sw[1]['moved'] == 0 and _mc_sw[1]['moved_markers'] == []
+      and _mc_sw[1]['dist'] == {'0': 1, '1': 0, '-1': 0, 'amb': 2, 'other': 0, 'short': 0} and _mc_sw[1]['flagged'] == {1: 'amb', 2: 'amb'}
+      and _mc_sw[1]['final_cls'] == {1: 'amb', 2: 'amb', 3: '0'} and RS.marker_positions(_mc_sw[0]) == [(0, 1), (2, 2), (4, 3)]
+      and isinstance(_mc_sh, tuple) and _mc_sh[1]['moved'] == 1 and _mc_sh[1]['blocked'] == 0 and _mc_sh[1]['moved_markers'] == [[0, 1, 2]]
+      and _mc_sh[1]['final_cls'] == {2: '1;0', 3: '0'} and RS.marker_positions(_mc_sh[0]) == [(0, 2), (2, 2), (4, 3)]
+      and isinstance(_csv_sh, list) and _csv_sh[1][11] == '1;0',
+      (_mc_sw[1] if isinstance(_mc_sw, tuple) else _mc_sw, _mc_sh[1] if isinstance(_mc_sh, tuple) else _mc_sh, _csv_sh))
 
 # R17 — README·CLAUDE.md 가 적은 이 하니스의 단언 수 == 실제 (손으로 옮기는 수치라 썩기 쉽다; 이 단언 자신을 포함)
 _md = open(os.path.join(ROOT, 'README.md'), encoding='utf-8').read() + open(os.path.join(ROOT, 'CLAUDE.md'), encoding='utf-8').read()

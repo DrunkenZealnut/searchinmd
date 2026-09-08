@@ -53,6 +53,12 @@ COL_NUMBER, COL_AREA, COL_CONTENTS, COL_CASE, COL_REASON = 0, 1, 3, 6, 8        
 COL_FILENAME, COL_PAGE, COL_GRADE = RG.COL_FILENAME, RG.COL_PAGE, RG.COL_GRADE
 MIN_KEY_CHARS = 10              # 행→줄 매칭 키의 최소 길이 — 이보다 짧은 마지막 줄은 전체 본문 키로 대신한다
 BASELINE_KW = dict(word_boundary=False, normalize=False)   # 현행 규칙 재현 기준선 (D1·D2 끄기) — regrade_page 와 meta.rule 이 같이 쓴다
+# 마커 오프셋 (설계 marker-offset 2026-09-07 §0·§2 — 마커 교재 23권 2,035 마커 쪽 실측으로 정한 값; 결과 문서 §3.7)
+OFFSET_WINDOW = 3               # 마커 쪽 P 의 본문을 PDF P−3..P+3 과 대조한다 — ±2·±3 은 99쪽(그림·정형구 쪽, 최적 포함률 중앙값 0.10)이고 옮기지 않는다(other)
+OFFSET_MIN_CHARS = 30           # 정규화 본문이 이보다 짧은 마커 쪽은 재지 않는다(short) — 그림·표 쪽의 포함률은 불안정하다
+OFFSET_MARGIN = 0.10            # 최적 쪽 포함률이 같은 쪽보다 이만큼 이상 높아야 ±1 로 본다 (마진 중앙값: 장비 안전관리 0.36, 나머지 22권 0.03~0.20)
+OFFSET_MIN_CONTAIN = 0.5        # 최적 쪽 포함률의 하한 — 본문의 절반도 못 찾은 쪽으로는 옮기지 않는다 (other 의 중앙값 0.10 = 머리글 수준의 겹침; ±1 중 11/104 가 여기 걸린다)
+OFFSET_CLASSES = ('0', '1', '-1', 'amb', 'other', 'short')   # classify_offset 의 값 — dist 의 키 순서
 
 # 회귀 가드 — 보고서가 인용한 수치. 재실행이 여기서 어긋나면 --force 없이는 쓰지 않는다 (regrade.py 의 EXPECTED 와 같은 역할).
 # digest 는 (교재, 쪽, 등급) 전체의 지문이라 총계가 같아도 쪽→등급 재배정을 잡는다.
@@ -64,7 +70,8 @@ EXPECTED = {'pages': 2189, 'page_g': {'1': 1519, '2': 525, '3': 145}, 'books': 8
             'hybrid_emptied_marker_pages': 0,                    # 보정이 마커 쪽을 지우면 0 이 아니게 된다
             'alignment_overall': {'lines': 21711, 'exact': 18142, 'near': 20613, 'all_lines': 32486, 'all_exact': 25219, 'all_near': 29329,
                                   'nogap_lines': 19698, 'nogap_exact': 17456, 'nogap_near': 19397},
-            'match_stats': {'overflow': 293, 'ambiguous': 1118, 'partial': 118}}   # 문서가 인용하는 자기 검증·약한 배정 수치 — 정의가 바뀌면 여기서 잡힌다
+            'match_stats': {'overflow': 293, 'ambiguous': 1118, 'partial': 118},   # 문서가 인용하는 자기 검증·약한 배정 수치 — 정의가 바뀌면 여기서 잡힌다
+            'marker_offset': {'books': 23, 'pages': 2035, 'dist': {'0': 1772, '1': 63, '-1': 30, 'amb': 59, 'other': 99, 'short': 12}, 'moved': 0, 'blocked': 0}}   # 마커 오프셋 진단 합 (2026-09-07; 보정 미채택이라 moved·blocked 0 — 채택 시 재고정)
 
 
 # ---------------------------------------------------------------- 텍스트 정규화·정렬
@@ -172,6 +179,111 @@ def marker_positions(lines):
 def marker_pages(lines):
     """마커로 줄→쪽. 마커 줄을 정렬 결과처럼 취급해 propagate 로 채운다 (첫 마커 앞의 줄은 첫 마커의 쪽)."""
     return propagate(len(lines), dict(marker_positions(lines)))
+
+
+# ---------------------------------------------------------------- 마커 오프셋 (marker-offset)
+def marker_bodies(lines, marks):
+    """{마커 쪽: 정규화 본문} — 마커 줄 다음부터 다음 마커 전까지, 마지막 마커는 파일 끝까지. 같은 쪽 번호 마커가 둘이면 첫 것."""
+    out = {}
+    for (a, p), (b, _) in zip(marks, marks[1:] + [(len(lines), None)]):
+        out.setdefault(p, norm_text('\n'.join(lines[a + 1:b])))
+    return out
+
+
+def marker_offsets(lines, pages_text, k=OFFSET_WINDOW, min_chars=OFFSET_MIN_CHARS):
+    """마커 쪽 P 의 본문이 PDF 어느 쪽에 있는지 — 정렬(DP)과 독립인 측정.
+
+    {P: (best, same, best_c) | None}. best = P−k..P+k 중 본문 3-gram 포함률이 가장 높은 오프셋(동점이면 |offset| 작은 쪽),
+    same = 오프셋 0 의 포함률, best_c = 최적 포함률. 본문이 min_chars 미만이거나 PDF 범위 안의 후보 쪽이 없으면 None.
+    """
+    pg, out = {}, {}
+    for p, body in marker_bodies(lines, marker_positions(lines)).items():
+        g = grams(body) if len(body) >= min_chars else set()
+        cont = {}
+        for off in range(-k, k + 1):
+            q = p + off
+            if g and 1 <= q <= len(pages_text):
+                if q not in pg:
+                    pg[q] = grams(norm_text(pages_text[q - 1]))
+                cont[off] = len(g & pg[q]) / len(g)
+        if not cont:
+            out[p] = None
+            continue
+        best = max(cont, key=lambda o: (cont[o], -abs(o)))
+        out[p] = (best, cont.get(0, 0.0), cont[best])
+    return out
+
+
+def classify_offset(m, margin=OFFSET_MARGIN, min_contain=OFFSET_MIN_CONTAIN):
+    """marker_offsets 의 값 하나 → OFFSET_CLASSES. 옮기는 것은 '1'/'-1' 뿐: 최적 쪽이 ±1 이고 그 포함률이 min_contain 이상이며
+    같은 쪽보다 margin 이상 높을 때(경계 포함 — 부동소수 반올림). 그 밖의 ±1 은 amb, ±2 이상은 other, 못 잰 것은 short."""
+    if m is None:
+        return 'short'
+    best, same, best_c = m
+    if best == 0:
+        return '0'
+    if abs(best) >= 2:
+        return 'other'
+    return str(best) if best_c >= min_contain and round(best_c - same, 6) >= margin else 'amb'
+
+
+def corrected_markers(marks, cls):
+    """'1'/'-1' 마커를 P±1 로 옮긴 (marks2, cls2). 옮긴 쪽은 이웃 마커의 최종 쪽 사이(비감소 — 같은 쪽은 허용: 연속 구간의 끝 마커가
+    다음 마커와 한 쪽을 나눠 갖는 것이 실측의 모양이다)에 들어야 하고, 어긋나면 옮기지 않고 amb 로 재분류한다. 한 회전에서 어긋난
+    마커를 모두 되돌린 뒤 다시 보므로 순서와 무관하다. 입력은 바꾸지 않는다."""
+    final = [p + (1 if cls.get(p) == '1' else -1 if cls.get(p) == '-1' else 0) for _, p in marks]
+    cls2 = dict(cls)
+    while True:
+        bad = [i for i, (_, p) in enumerate(marks) if final[i] != p
+               and ((i > 0 and final[i] < final[i - 1]) or (i + 1 < len(marks) and final[i] > final[i + 1]))]
+        if not bad:
+            break
+        for i in bad:
+            final[i] = marks[i][1]
+            cls2[marks[i][1]] = 'amb'
+    return [(idx, q) for (idx, _), q in zip(marks, final)], cls2
+
+
+def apply_marker_correction(lines, marks):
+    """마커 줄의 쪽 번호를 marks 의 값으로 바꾼 새 줄 목록 — 숫자만 바꾼다. 입력은 그대로."""
+    out = list(lines)
+    for idx, q in marks:
+        m = MARKER_RE.search(out[idx])
+        if m and int(m.group(1)) != q:
+            out[idx] = out[idx][:m.start(1)] + str(q) + out[idx][m.end(1):]
+    return out
+
+
+def correct_markers(lines, pages_text, margin=None, k=OFFSET_WINDOW, min_chars=OFFSET_MIN_CHARS):
+    """마커 교재의 오프셋 진단과 (margin 을 주면) ±1 보정. (lines2, info).
+
+    margin None 이면 진단만 — lines2 는 lines 그대로고 분류는 OFFSET_MARGIN 기준. margin 을 주면 그 임계로 분류해 corrected_markers 로
+    옮기고 apply_marker_correction 으로 마커 줄을 고쳐 돌려준다 — 이후 marker_pages·hybrid_pages·자기 검증이 전부 보정 마커를 본다.
+    info: pages(마커 쪽 수), dist(OFFSET_CLASSES 별 수), moved, blocked(이웃과 어긋나 못 옮긴 ±1), flagged{원 마커 쪽: 분류, 0 제외},
+    final_cls{최종 쪽: 분류 — 한 쪽에 마커 둘이면 ';' 로 잇는다}, moved_markers[[줄 idx, 구, 신]].
+    """
+    marks = marker_positions(lines)
+    cls = {p: classify_offset(m, margin=OFFSET_MARGIN if margin is None else margin) for p, m in marker_offsets(lines, pages_text, k=k, min_chars=min_chars).items()}
+    marks2, moved, blocked = marks, [], 0
+    if margin is not None:
+        marks2, cls2 = corrected_markers(marks, cls)
+        blocked = sum(1 for p, c in cls.items() if c in ('1', '-1') and cls2[p] == 'amb')
+        cls = cls2
+        moved = [[idx, p, q] for (idx, p), (_, q) in zip(marks, marks2) if p != q]
+        if moved:
+            lines = apply_marker_correction(lines, marks2)
+    final_cls = {}
+    for (_, p), (_, q) in zip(marks, marks2):
+        c = cls.get(p, 'short')
+        if q not in final_cls:
+            final_cls[q] = c
+        elif c not in final_cls[q].split(';'):
+            final_cls[q] += ';' + c
+    dist = {c: 0 for c in OFFSET_CLASSES}
+    for c in cls.values():
+        dist[c] += 1
+    return lines, {'pages': len(cls), 'dist': dist, 'moved': len(moved), 'blocked': blocked, 'flagged': {p: c for p, c in cls.items() if c != '0'},
+                   'final_cls': final_cls, 'moved_markers': moved}
 
 
 def hybrid_pages(lines, marker_lp, dp_lp, n_pages):
@@ -374,9 +486,17 @@ def aggregate(books):
     unresolved = {'books': 0, 'pages': 0, 'rows': 0}
     align_books, align_tot = {}, {'lines': 0, 'exact': 0, 'near': 0, 'all_lines': 0, 'all_exact': 0, 'all_near': 0, 'nogap_lines': 0, 'nogap_exact': 0, 'nogap_near': 0}
     n_pages, label_fallback, match_tot, fb_on_text, hybrid_tot, emptied_tot = 0, 0, collections.Counter(), 0, 0, 0
+    mo_tot = {'books': 0, 'pages': 0, 'dist': {c: 0 for c in OFFSET_CLASSES}, 'moved': 0, 'blocked': 0}
     for name, b in books.items():
         hybrid_tot += b.get('hybrid_lines', 0)
         emptied_tot += b.get('emptied_marker_pages', 0)
+        mo = b.get('marker_offset')                        # 마커 교재만 (정렬·미해결 교재는 키가 없거나 None)
+        if mo:
+            mo_tot['books'] += 1
+            for k in ('pages', 'moved', 'blocked'):
+                mo_tot[k] += mo.get(k, 0)
+            for c in OFFSET_CLASSES:
+                mo_tot['dist'][c] += (mo.get('dist') or {}).get(c, 0)
         a = areas.setdefault(b['area'], {'books': 0, 'pages': 0, 'page_g': collections.Counter()})
         a['books'] += 1
         had_case = False
@@ -417,6 +537,7 @@ def aggregate(books):
         'match_stats': {k: match_tot.get(k, 0) for k in ('overflow', 'ambiguous', 'partial')},   # match_rows 의 약한 배정 (해결 교재 합)
         'hybrid_lines': hybrid_tot,                        # 마커 교재에서 마커 결손 보정으로 쪽이 바뀐 본문 줄 수 (교재별 hybrid_lines 합)
         'hybrid_emptied_marker_pages': emptied_tot,        # 마커가 찍힌 쪽인데 본문 줄이 하나도 남지 않은 쪽 — 0 이어야 정상
+        'marker_offset': mo_tot,                           # 마커 쪽 본문 vs PDF 인접 쪽 오프셋 진단 합 (correct_markers) — 진단 실행은 moved·blocked 0
         'fallback_rows_on_text_pages': fb_on_text,
         'page_grade_digest': page_grade_digest(books),
         'kw_pages_digest': hashlib.sha256('\n'.join('%s\t%d' % kv for kv in sorted(kw_pages.items())).encode('utf-8')).hexdigest()[:16],
@@ -613,7 +734,7 @@ def write_outputs(books, summary, out_dir):
 
     def write_csv(f):
         w = csv.writer(f)
-        w.writerow(['영역', '교재', '페이지', '등급', '등급명', '사고사례', '등급사유', '상태', '출처', 'md자수', 'pdf자수', '구라벨'])
+        w.writerow(['영역', '교재', '페이지', '등급', '등급명', '사고사례', '등급사유', '상태', '출처', 'md자수', 'pdf자수', '마커오프셋', '구라벨'])   # 구라벨은 마지막 열로 둔다
         for name in sorted(books):
             b = books[name]
             for pg in sorted(b['pages']):
@@ -621,6 +742,7 @@ def write_outputs(books, summary, out_dir):
                 w.writerow([b['area'], name, pg, rec['grade'], GRADE_LABEL.get(rec['grade'], ''),
                             '예' if rec['case'] else '아니오', rec['reason'], b['status'], rec.get('source', 'text'),
                             '' if rec.get('md_chars') is None else rec['md_chars'], '' if rec.get('pdf_chars') is None else rec['pdf_chars'],
+                            rec.get('marker_cls', ''),           # 마커 교재의 마커 쪽만 (OFFSET_CLASSES; 보정 실행은 최종 쪽 기준), 그 밖은 빈 칸
                             ';'.join(sorted(rec['old_labels'], key=lambda x: int(x) if x.isdigit() else 0))])
     write_atomic(csv_path, write_csv, newline='', encoding='utf-8-sig')        # 파일마다 원자적 교체 (CSV·JSON 쌍 전체가 원자적이지는 않다)
     json_path = os.path.join(out_dir, 'reseg_summary.json')
@@ -637,9 +759,13 @@ def main():
     ap.add_argument('--paged-dir', default=DEFAULT_PAGED, help='줄→쪽 대응 JSON 을 남길 곳 (gitignore)')
     ap.add_argument('--limit', type=int, default=None, help='앞 N권만 (디버그)')
     ap.add_argument('--force', action='store_true', help='EXPECTED 회귀 검사가 어긋나도 쓴다 (입력이 정당하게 바뀌었을 때만)')
+    ap.add_argument('--marker-correct', type=float, default=None, metavar='MARGIN',
+                    help='변형: 마커 교재에서 본문이 인접 쪽과 더 잘 맞는(마진 ≥ MARGIN, 포함률 ≥ %.1f) 마커를 ±1쪽 옮긴다 — 기본 끔(진단만); 채택 전에는 추적 산출물에 쓸 수 없다' % OFFSET_MIN_CONTAIN)
     args = ap.parse_args()
-    if args.limit and (os.path.realpath(args.out) == os.path.realpath(DEFAULT_OUT) or os.path.realpath(args.paged_dir) == os.path.realpath(DEFAULT_PAGED)):
-        sys.exit('--limit 는 부분 실행이라 추적 산출물(%s)과 기본 대응표 디렉터리(%s)를 덮어쓰지 않습니다 — --out 과 --paged-dir 로 다른 경로를 주십시오' % (DEFAULT_OUT, DEFAULT_PAGED))
+    variant = args.marker_correct is not None
+    if (args.limit or variant) and (os.path.realpath(args.out) == os.path.realpath(DEFAULT_OUT) or os.path.realpath(args.paged_dir) == os.path.realpath(DEFAULT_PAGED)):
+        sys.exit('%s 는 %s 실행이라 추적 산출물(%s)과 기본 대응표 디렉터리(%s)를 덮어쓰지 않습니다 — --out 과 --paged-dir 로 다른 경로를 주십시오'
+                 % ('--limit' if args.limit else '--marker-correct', '부분' if args.limit else '변형', DEFAULT_OUT, DEFAULT_PAGED))
     if not os.path.exists(args.workbook):
         sys.exit('워크북이 없습니다: %s' % args.workbook)
     if not args.pdf_root or not os.path.isdir(args.pdf_root):
@@ -691,12 +817,18 @@ def main():
             doc.close()
         n_markers = sum(1 for l in lines if MARKER_RE.search(l))
         dense = n_markers >= DENSE_MARKER_RATIO * len(pages_text)
+        mo = None
+        if dense:                                         # 마커 오프셋 진단 — --marker-correct 면 여기서 마커 줄을 고쳐 이후 전부(marker_pages·hybrid·자기 검증)가 보정 마커를 본다
+            lines, mo = correct_markers(lines, pages_text, margin=args.marker_correct)
         match = {}
         res = resegment_book(brows, lines, pages_text, prefer_markers=dense, stats=match)
         if res is None:
             mark_unresolved(n, name, brows, area, old_labels, 'alignment failed', '정렬 실패')
             continue
         pages, moved, unmatched, line_pages, assigned, idx = res
+        if mo:
+            for pg, rec in pages.items():
+                rec['marker_cls'] = mo['final_cls'].get(pg, '')   # CSV 마커오프셋 열 — 마커가 (최종적으로) 놓인 쪽만
         hybrid = match.pop('hybrid_lines', 0)                 # 줄→쪽 보정 수치는 행 매칭 통계와 따로 싣는다
         emptied = emptied_marker_pages(lines, line_pages) if dense else 0   # 마커가 찍힌 쪽인데 본문 줄이 하나도 안 남은 쪽 (보정이 마커를 지웠는지 드러낸다)
         for r, li in zip(brows, idx):
@@ -710,15 +842,19 @@ def main():
             align.update({'nogap_lines': ng['lines'], 'nogap_exact': ng['exact'], 'nogap_near': ng['near']})
         books[name] = {'area': area, 'status': 'resolved', 'rows': len(brows), 'moved_rows': moved,
                        'unmatched_rows': unmatched, 'old_labels': old_labels, 'align': align, 'pages': pages, 'match': match, 'hybrid_lines': hybrid,
-                       'emptied_marker_pages': emptied}
+                       'emptied_marker_pages': emptied, 'marker_offset': {k: mo[k] for k in ('pages', 'dist', 'moved', 'blocked')} if mo else None}
         per_book[name] = {'status': 'resolved', 'method': 'markers' if dense else 'alignment', 'rows': len(brows), 'old_pages': len(old_labels),
                           'new_pages': len(pages), 'moved_rows': moved, 'unmatched_rows': unmatched,
                           'pdf_pages': len(pages_text), 'md_markers': n_markers, 'aligned_lines': len(assigned),
                           'align': align, 'match_stats': match, 'hybrid_lines': hybrid, 'emptied_marker_pages': emptied}
-        paged_out[code] = {'md': os.path.basename(md), 'pdf': os.path.basename(pdfs[0]), 'line_pages': line_pages}
+        if mo:
+            per_book[name]['marker_offset'] = {k: mo[k] for k in ('pages', 'dist', 'moved', 'blocked', 'flagged')}   # flagged: 0 이 아닌 마커만 {원 쪽: 분류}
+        paged_out[code] = {'md': os.path.basename(md), 'pdf': os.path.basename(pdfs[0]), 'line_pages': line_pages,
+                           'marker_correct': args.marker_correct, 'moved_markers': mo['moved_markers'] if mo else []}
         print('  [%2d/%d] %-52s 행 %4d  라벨 %3d → 쪽 %3d  이동 %4d  미매칭 %3d  %s%s' % (
             n + 1, len(by_book), name[:52], len(brows), len(old_labels), len(pages), moved, unmatched,
-            '마커' if dense else '정렬', ('  정렬검증 %d/%d' % (align['exact'], align['lines'])) if align else ''))
+            '마커' if dense else '정렬', ('  정렬검증 %d/%d' % (align['exact'], align['lines'])) if align else '')
+              + ('  오프셋 0:%d +1:%d -1:%d amb:%d%s' % (mo['dist']['0'], mo['dist']['1'], mo['dist']['-1'], mo['dist']['amb'], ('  이동 %d' % mo['moved']) if variant else '') if mo else ''))
 
     summary = aggregate(books)
     for name, b in books.items():                     # 교재별 등급 분포 (설계 §3)
@@ -734,15 +870,16 @@ def main():
                        'pdf_root': public_path(args.pdf_root), 'md_root': public_path(args.md_root), 'rows': len(rows),
                        'md_files': sum(len(v) for v in md_index.values()), 'pdf_files': sum(len(v) for v in pdf_index.values()),
                        'limit': args.limit,          # limit 이 있으면 부분 실행 — 전체 실행과 구분한다
+                       'marker_correct': args.marker_correct,   # None = 진단만(기본); 값이 있으면 변형 실행 (마커 ±1 보정 마진)
                        'rule': 'regrade.grade_page baseline (%s)' % ', '.join('%s=%s' % kv for kv in BASELINE_KW.items()),
                        'run_at': datetime.datetime.now(datetime.timezone.utc).isoformat(timespec='seconds')}
     bad = check_expected(summary) if not args.limit else []
-    summary['meta']['expected'] = EXPECTED if not bad and not args.limit else None   # 어긋난 채(--force) 쓰거나 부분 실행이면 기대값을 싣지 않는다
-    summary['meta']['expected_mismatch'] = bad or None
-    if bad and not args.force:
+    summary['meta']['expected'] = EXPECTED if not bad and not args.limit and not variant else None   # 어긋난 채(--force) 쓰거나 부분·변형 실행이면 기대값을 싣지 않는다
+    summary['meta']['expected_mismatch'] = bad or None                                                # 변형 실행의 불일치 목록은 영향표의 참고 자료다
+    if bad and not args.force and not variant:
         sys.exit('EXPECTED 회귀 검사 불일치 — 산출물을 쓰지 않습니다. 입력이 정당하게 바뀌었으면 --force 로 쓰고 EXPECTED 를 갱신하십시오:\n  ' + '\n  '.join(bad))
     if bad:
-        print('주의: EXPECTED 와 어긋남 (--force 로 씀): ' + '; '.join(bad))
+        print('주의: EXPECTED 와 어긋남 (%s): ' % ('--force 로 씀' if args.force else '변형 실행이라 기록만 함') + '; '.join(bad))
     os.makedirs(args.paged_dir, exist_ok=True)
     for code, pj in paged_out.items():
         write_atomic(os.path.join(args.paged_dir, code + '.pages.json'), lambda f, pj=pj: json.dump(pj, f))
@@ -761,6 +898,11 @@ def main():
         print('정렬 검증 (쪽 단위 마커 보유 %d권): 후보 줄 정확 %.1f%%, ±1쪽 %.1f%% (%d줄); 전체 본문 줄 정확 %.1f%%, ±1쪽 %.1f%% (%d줄)' % (
             summary['alignment_check']['books'], 100.0 * ac['exact'] / ac['lines'], 100.0 * ac['near'] / ac['lines'], ac['lines'],
             100.0 * ac['all_exact'] / max(ac['all_lines'], 1), 100.0 * ac['all_near'] / max(ac['all_lines'], 1), ac['all_lines']))
+    mo = summary['marker_offset']
+    if mo['books']:
+        print('마커 오프셋 (마커 교재 %d권, 마커 쪽 %d): 같은 쪽 %d, +1 %d, -1 %d, 모호 %d, ±2 이상 %d, 못 잼 %d%s' % (
+            mo['books'], mo['pages'], mo['dist']['0'], mo['dist']['1'], mo['dist']['-1'], mo['dist']['amb'], mo['dist']['other'], mo['dist']['short'],
+            (' | 보정(마진 %s): 옮긴 마커 %d, 막힌 마커 %d' % (args.marker_correct, mo['moved'], mo['blocked'])) if variant else ''))
     print('→ %s\n→ %s' % (csv_path, json_path))
 
 
