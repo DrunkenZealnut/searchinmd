@@ -10,17 +10,26 @@ from semantic_keyword_recount import (
     Document,
     EXPECTED_KEYWORDS,
     ExpressionRule,
+    GradeAssignment,
+    InputArtifact,
     KeywordSource,
     aggregate_matches,
+    assign_match_grades,
     build_default_rules,
+    dashboard_payload,
+    grade_alias_key,
+    grade_lookup_key,
     default_candidate_decisions,
     load_documents,
+    load_existing_grades,
     read_keyword_workbook,
+    run_census,
     scan_document,
     split_pages,
     artifact_manifest,
     validate_rules,
     write_report,
+    write_dashboard_data,
     write_workbook,
 )
 
@@ -219,6 +228,173 @@ class RegistryAndAggregationTests(unittest.TestCase):
         self.assertEqual(1, row.page_count)
 
 
+class GradeAssignmentTests(unittest.TestCase):
+    def test_existing_page_grade_is_inherited_and_new_page_is_regraded(self):
+        sources = [KeywordSource("안전", 1, True)]
+        documents = [
+            Document(
+                "NCS",
+                Path("source.md"),
+                "source.md",
+                "머리말 안전\n"
+                "<!-- page: 1 -->\n안전 안내\n"
+                "<!-- page: 2 -->\n" + "안전 " * 6 + "방지 예방 착용 환기 차단\n",
+            )
+        ]
+        rules = [ExpressionRule("안전", "안전", "exact", "기존 키워드")]
+        result = aggregate_matches(sources, documents, rules, [])
+        existing = {
+            grade_lookup_key("NCS", "source.md", 1): GradeAssignment(
+                grade=2,
+                label="형식적 언급",
+                reason="기존 판정 사유",
+                source="existing",
+            )
+        }
+
+        graded = assign_match_grades(result, existing)
+        by_page = {}
+        for record in graded.matches:
+            by_page.setdefault(record.page, record)
+
+        self.assertIsNone(by_page[None].grade)
+        self.assertEqual("unpaged", by_page[None].grade_source)
+        self.assertEqual(2, by_page[1].grade)
+        self.assertEqual("기존 판정 사유", by_page[1].grade_reason)
+        self.assertEqual("existing", by_page[1].grade_source)
+        self.assertEqual(3, by_page[2].grade)
+        self.assertEqual("new", by_page[2].grade_source)
+        summary = next(row for row in graded.summary if row.corpus == "NCS")
+        self.assertEqual(1, summary.grade_2)
+        self.assertEqual(6, summary.grade_3)
+        self.assertEqual(1, summary.grade_unpaged)
+        self.assertEqual(summary.semantic_total, summary.grade_1 + summary.grade_2 + summary.grade_3 + summary.grade_unpaged)
+
+    def test_legacy_workbooks_are_normalized_to_one_grade_scale(self):
+        with tempfile.TemporaryDirectory() as td:
+            ncs_path = Path(td) / "ncs.xlsx"
+            school_path = Path(td) / "school.xlsx"
+            for path, filename, raw_grade in (
+                (ncs_path, "LM1903060101_안전", 3),
+                (school_path, "20260413_171220_반도체기초기술1_크리아트_.md", 1),
+            ):
+                workbook = Workbook()
+                worksheet = workbook.active
+                worksheet.title = "안전"
+                worksheet.append(["number", "영역", "filename", "contents", "page", "페이지전체내용", "사고사례여부", "등급", "등급사유"])
+                worksheet.append([1, "반도체개발", filename, "안전", 7, "안전 " * 7, "아니오", raw_grade, "원본 사유"])
+                workbook.save(path)
+
+            grades = load_existing_grades(ncs_path, school_path)
+
+        ncs = grades[grade_lookup_key("NCS", "반도체개발/LM1903060101_안전.md", 7)]
+        school = grades[grade_lookup_key("교과서", "20260413_171220_반도체기초기술1_크리아트_.md", 7)]
+        self.assertEqual((3, "구체적 대책", "existing"), (ncs.grade, ncs.label, ncs.source))
+        self.assertEqual((2, "형식적 언급", "existing"), (school.grade, school.label, school.source))
+
+    def test_new_page_grading_keeps_duplicate_ncs_codes_separate(self):
+        sources = [KeywordSource("안전", 1, True)]
+        documents = [
+            Document(
+                "NCS",
+                Path("a.md"),
+                "반도체제조/LM1903060205_a.md",
+                "<!-- page: 1 -->\n안전\n",
+            ),
+            Document(
+                "NCS",
+                Path("b.md"),
+                "반도체제조/LM1903060205_b.md",
+                "<!-- page: 1 -->\n" + ("안전 " * 6) + ("보호구 착용 " * 5) + "\n",
+            ),
+        ]
+        result = aggregate_matches(
+            sources,
+            documents,
+            [ExpressionRule("안전", "안전", "exact", "기존 키워드")],
+            [],
+        )
+
+        graded = assign_match_grades(result, {})
+        grades_by_path = {
+            record.relative_path: record.grade
+            for record in graded.matches
+            if record.decision == "included"
+        }
+
+        self.assertEqual(1, grades_by_path["반도체제조/LM1903060205_a.md"])
+        self.assertEqual(3, grades_by_path["반도체제조/LM1903060205_b.md"])
+
+    def test_ambiguous_ncs_code_does_not_inherit_alias_grade(self):
+        sources = [KeywordSource("안전", 1, True)]
+        documents = [
+            Document("NCS", Path("a.md"), "x/LM1903060205_a.md", "<!-- page: 1 -->\n안전\n"),
+            Document(
+                "NCS",
+                Path("b.md"),
+                "x/LM1903060205_b.md",
+                "<!-- page: 1 -->\n" + ("안전 " * 6) + ("보호구 착용 " * 5) + "\n",
+            ),
+        ]
+        result = aggregate_matches(
+            sources,
+            documents,
+            [ExpressionRule("안전", "안전", "exact", "기존 키워드")],
+            [],
+        )
+        legacy = GradeAssignment(2, "형식적 언급", "기존", "existing")
+
+        graded = assign_match_grades(
+            result,
+            {grade_alias_key("NCS", "LM1903060205_legacy", 1): legacy},
+        )
+        by_path = {
+            record.relative_path: (record.grade, record.grade_source)
+            for record in graded.matches
+            if record.decision == "included"
+        }
+
+        self.assertEqual((1, "new"), by_path["x/LM1903060205_a.md"])
+        self.assertEqual((3, "new"), by_path["x/LM1903060205_b.md"])
+
+    def test_ambiguous_normalized_stem_does_not_inherit_grade(self):
+        sources = [KeywordSource("안전", 1, True)]
+        documents = [
+            Document(
+                "NCS",
+                Path("space.md"),
+                "x/LM1903060205_14v3_MI 장비 운영.md",
+                "<!-- page: 1 -->\n안전\n",
+            ),
+            Document(
+                "NCS",
+                Path("underscore.md"),
+                "x/LM1903060205_14v3_MI_장비_운영.md",
+                "<!-- page: 1 -->\n" + ("안전 " * 6) + ("보호구 착용 " * 5) + "\n",
+            ),
+        ]
+        result = aggregate_matches(
+            sources,
+            documents,
+            [ExpressionRule("안전", "안전", "exact", "기존 키워드")],
+            [],
+        )
+        legacy = GradeAssignment(2, "형식적 언급", "기존", "existing")
+
+        graded = assign_match_grades(
+            result,
+            {grade_lookup_key("NCS", "LM1903060205_14v3_MI 장비 운영", 1): legacy},
+        )
+        by_path = {
+            record.relative_path: (record.grade, record.grade_source)
+            for record in graded.matches
+            if record.decision == "included"
+        }
+
+        self.assertEqual((1, "new"), by_path["x/LM1903060205_14v3_MI 장비 운영.md"])
+        self.assertEqual((3, "new"), by_path["x/LM1903060205_14v3_MI_장비_운영.md"])
+
+
 class OutputTests(unittest.TestCase):
     def sample_result(self):
         sources = [KeywordSource("안전", 3, True)]
@@ -265,6 +441,12 @@ class OutputTests(unittest.TestCase):
                 self.assertEqual("A2", workbook["요약"].freeze_panes)
                 self.assertGreater(workbook["요약"].column_dimensions["A"].width, 5)
                 self.assertEqual("말뭉치", workbook["요약"]["A1"].value)
+                self.assertIn("등급1 출현", [cell.value for cell in workbook["요약"][1]])
+                detail_headers = [cell.value for cell in workbook["NCS_매칭상세"][1]]
+                self.assertEqual(
+                    ["통일 등급", "등급명", "등급사유", "등급 출처"],
+                    detail_headers[-4:],
+                )
             finally:
                 workbook.close()
 
@@ -278,12 +460,121 @@ class OutputTests(unittest.TestCase):
 
         self.assertIn("키워드 독립 원칙", report)
         self.assertIn("키워드별 포함 표현", report)
+        self.assertIn("등급1 출현 | 등급2 출현 | 등급3 출현 | 등급 미확정 출현", report)
         self.assertIn("재현성 해시", report)
         self.assertEqual(
             {"source_sha256", "rule_sha256", "detail_sha256", "summary_sha256"},
             set(manifest),
         )
         self.assertTrue(all(len(value) == 64 for value in manifest.values()))
+
+    def test_manifest_source_hash_includes_grade_workbook_lineage(self):
+        base = self.sample_result()
+        first = type(base)(
+            base.sources,
+            base.documents,
+            base.rules,
+            base.candidates,
+            base.matches,
+            base.summary,
+            (InputArtifact("NCS 등급 워크북", "/tmp/ncs.xlsx", 1, "a" * 64),),
+        )
+        second = type(base)(
+            base.sources,
+            base.documents,
+            base.rules,
+            base.candidates,
+            base.matches,
+            base.summary,
+            (InputArtifact("NCS 등급 워크북", "/other/ncs.xlsx", 1, "b" * 64),),
+        )
+
+        self.assertNotEqual(
+            artifact_manifest(first)["source_sha256"],
+            artifact_manifest(second)["source_sha256"],
+        )
+
+    def test_run_census_applies_legacy_grades_before_writing_outputs(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            ncs_root = root / "ncs"
+            school_root = root / "school"
+            ncs_root.mkdir()
+            school_root.mkdir()
+            (ncs_root / "LM1903060101_안전.md").write_text("<!-- page: 1 -->\n안전 안내\n", encoding="utf-8")
+            for index in range(1, 89):
+                (ncs_root / f"book-{index}.md").write_text("", encoding="utf-8")
+            for index in range(9):
+                (school_root / f"school-{index}.md").write_text("", encoding="utf-8")
+
+            source = root / "source.xlsx"
+            workbook = Workbook()
+            workbook.remove(workbook.active)
+            for keyword in EXPECTED_KEYWORDS:
+                worksheet = workbook.create_sheet(keyword)
+                worksheet.append(["number", "영역", "filename", "contents", "page", "페이지전체내용", "사고사례여부", "등급", "등급사유"])
+                if keyword == "안전":
+                    worksheet.append([1, "반도체개발", "LM1903060101_안전", "안전", 1, "안전 안내", "아니오", 2, "기존 등급2"])
+            workbook.save(source)
+
+            school_grades = root / "school-grades.xlsx"
+            workbook = Workbook()
+            worksheet = workbook.active
+            worksheet.title = "안전"
+            worksheet.append(["number", "영역", "filename", "contents", "page", "페이지전체내용", "사고사례여부", "등급", "등급사유"])
+            workbook.save(school_grades)
+
+            result = run_census(
+                source,
+                ncs_root,
+                school_root,
+                root / "result.xlsx",
+                root / "report.md",
+                ncs_grade_workbook=source,
+                school_grade_workbook=school_grades,
+                dashboard_data_out=root / "dashboard.js",
+            )
+
+            dashboard_text = (root / "dashboard.js").read_text(encoding="utf-8")
+
+        included = [record for record in result.matches if record.decision == "included"]
+        self.assertEqual(1, len(included))
+        self.assertEqual((2, "existing"), (included[0].grade, included[0].grade_source))
+        self.assertEqual(
+            {"키워드 등록 워크북", "NCS 등급 워크북", "교과서 등급 워크북", "NCS Markdown", "교과서 Markdown"},
+            {artifact.kind for artifact in result.input_artifacts},
+        )
+        self.assertIn('"denominator":"occurrences"', dashboard_text)
+
+    def test_dashboard_data_uses_occurrences_as_the_grade_denominator(self):
+        sources = [KeywordSource("안전", 1, True)]
+        documents = [Document("NCS", Path("source.md"), "반도체개발/source.md", "<!-- page: 1 -->\n안전 안전\n")]
+        result = aggregate_matches(
+            sources,
+            documents,
+            [ExpressionRule("안전", "안전", "exact", "기존 키워드")],
+            [],
+        )
+        result = assign_match_grades(
+            result,
+            {
+                grade_lookup_key("NCS", "반도체개발/source.md", 1): GradeAssignment(
+                    2, "형식적 언급", "기존", "existing"
+                )
+            },
+        )
+
+        payload = dashboard_payload(result)
+
+        self.assertEqual(2, payload["corpora"]["NCS"]["total"])
+        self.assertEqual({"1": 0, "2": 2, "3": 0, "unpaged": 0}, payload["corpora"]["NCS"]["grades"])
+        self.assertEqual(2, payload["keywords"][0]["corpora"]["NCS"]["grades"]["2"])
+        with tempfile.TemporaryDirectory() as td:
+            output = Path(td) / "dashboard.js"
+            write_dashboard_data(result, output)
+            text = output.read_text(encoding="utf-8")
+        self.assertTrue(text.startswith("/* Generated"))
+        self.assertIn('"denominator":"occurrences"', text.replace(" ", "").replace("\n", ""))
 
 
 if __name__ == "__main__":

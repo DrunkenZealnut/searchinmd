@@ -119,6 +119,9 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 <a href="osha.html" style="padding:10px 24px;border-radius:8px;border:1px solid var(--border);color:var(--text);text-decoration:none;font-size:var(--fs-sm)">OSHA 안전교육</a>
 </nav>
 <main id="mc" role="main"><div class="ctn">
+<section class="hero"><h1>NCS 반도체 교재<br>안전보건 키워드 분석</h1><p>30개 독립 키워드의 의미 출현마다 페이지 등급을 결합한 결과</p><div class="hs-row"><div class="hs"><div class="hs-v">12,875</div><div class="hs-l">최종 의미 출현</div></div><div class="hs"><div class="hs-v">4,869</div><div class="hs-l">등급1 출현</div></div><div class="hs"><div class="hs-v">4,713</div><div class="hs-l">등급2 출현</div></div><div class="hs"><div class="hs-v">2,480</div><div class="hs-l">등급3 출현</div></div></div><p class="ts" style="margin-top:24px"><strong>분류 기준</strong> — 페이지 수가 아니라 문맥이 확인된 출현건수를 분모로 사용합니다. 페이지 마커가 없는 813건은 등급 미확정으로 분리합니다.</p></section>
+<section><h2>분석 구성</h2><div class="card"><p>전체 등급 분포 → 키워드별 상세 → NCS 영역별 현황 → 문제점과 시사점 → NCS·교과서 비교 → 개선 권고안 순으로 표시됩니다.</p></div></section>
+</div><template id="legacy-dashboard">
 
 <section class="hero"><h1>NCS 반도체 교재<br>안전보건 키워드 분석</h1><p>30개 키워드를 문맥 검토 후 의미 단위로 다시 세어, NCS와 교과서에서 실제로 해당 의미가 나타난 횟수를 비교한 대시보드</p>
 <div class="hs-row"><div class="hs"><div class="hs-v" id="hero-total">14,168</div><div class="hs-l">최종 의미 출현</div></div><div class="hs"><div class="hs-v">30</div><div class="hs-l">독립 키워드</div></div><div class="hs"><div class="hs-v">98</div><div class="hs-l">분석 문서</div></div><div class="hs"><div class="hs-v">12,875</div><div class="hs-l">NCS 의미 출현</div></div><div class="hs"><div class="hs-v">1,293</div><div class="hs-l">교과서 의미 출현</div></div></div>
@@ -199,7 +202,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 </section>
 
 <footer style="text-align:center;padding:32px 0;color:var(--text-secondary);font-size:var(--fs-sm)">NCS 반도체 교재 안전보건 분석 | 청년노동자인권센터 | 2026년 교과서 기초연구</footer>
-</div></main>
+</template></main>
 <script>
 function toggleMenu(){var d=document.getElementById('vizMenuDropdown');if(d)d.classList.toggle('open')}
 document.addEventListener('click',function(e){if(!e.target.closest('.viz-menu')){var d=document.getElementById('vizMenuDropdown');if(d)d.classList.remove('open')}});
@@ -234,7 +237,6 @@ function onThemeChange(){chartsBuilt=false;buildCharts()}
 
 document.addEventListener('DOMContentLoaded',function(){
   applyTheme(currentTheme);
-  buildCharts();updSortIndicators();rKT();
 });
 
 
@@ -247,6 +249,7 @@ function sK(c){if(kS===c)kD*=-1;else{kS=c;kD=-1}updSortIndicators();rKT()}
 <script>
 /* The shell and visual frame above are retained; this renderer supplies the latest semantic recount. */
 (function(){
+  if(!window.SEMANTIC_RECOUNT || window.SEMANTIC_RECOUNT.meta)return;
   var D=window.SEMANTIC_RECOUNT, K=D.keywords, A=D.areas;
   function n(v){return Number(v||0).toLocaleString('ko-KR')}
   function pct(v,d){return d?(v/d*100).toFixed(1):'0.0'}
@@ -271,6 +274,7 @@ function sK(c){if(kS===c)kD*=-1;else{kS=c;kD=-1}updSortIndicators();rKT()}
   document.addEventListener('DOMContentLoaded',function(){charts()});
 })();
 </script>
-<script src="ncs_semantic_dashboard.js"></script>
+<script>window.SEMANTIC_DASHBOARD_CORPUS='NCS';</script>
+<script src="semantic_grade_dashboard.js"></script>
 </body>
 </html>
