@@ -2,7 +2,7 @@
 """Meaning-aware recount of 30 independent safety keywords in Markdown corpora."""
 
 import argparse
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from collections import defaultdict
 from collections import Counter
 from datetime import date
@@ -15,6 +15,8 @@ import unicodedata
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
+
+from page_utils import GRADE_LABEL
 
 
 PAGE_MARKER_RE = re.compile(r"^\s*<!--\s*page:\s*(\d+)\s*-->\s*$", re.IGNORECASE)
@@ -113,6 +115,18 @@ class MatchRecord:
     context: str
     decision: str
     reason: str
+    grade: int | None = None
+    grade_label: str = "등급 미확정"
+    grade_reason: str = "페이지 마커 없음"
+    grade_source: str = "unpaged"
+
+
+@dataclass(frozen=True)
+class GradeAssignment:
+    grade: int | None
+    label: str
+    reason: str
+    source: str
 
 
 @dataclass(frozen=True)
@@ -140,6 +154,10 @@ class SummaryRow:
     file_count: int
     page_count: int
     unpaged_file_count: int
+    grade_1: int = 0
+    grade_2: int = 0
+    grade_3: int = 0
+    grade_unpaged: int = 0
 
 
 @dataclass(frozen=True)
@@ -252,6 +270,162 @@ def split_pages(document: Document) -> list[PageBlock]:
         current_lines.append(line)
     flush()
     return blocks
+
+
+_TIMESTAMP_PREFIX_RE = re.compile(r"^\d{8}_\d{6}_")
+_NCS_CODE_RE = re.compile(r"LM\d{10}", re.IGNORECASE)
+
+
+def _canonical_document(corpus: str, value: str) -> str:
+    normalized = unicodedata.normalize("NFC", str(value or "").strip())
+    name = normalized.replace("\\", "/").rsplit("/", 1)[-1]
+    if name.casefold().endswith(".md"):
+        name = name[:-3]
+    name = _TIMESTAMP_PREFIX_RE.sub("", name)
+    return re.sub(r"[^0-9A-Za-z가-힣]", "", name).casefold()
+
+
+def grade_lookup_key(corpus: str, relative_path: str, page: int | str) -> tuple[str, str, int]:
+    return (corpus, _canonical_document(corpus, relative_path), int(page))
+
+
+def grade_alias_key(
+    corpus: str,
+    relative_path: str,
+    page: int | str,
+) -> tuple[str, str, int] | None:
+    if corpus != "NCS":
+        return None
+    code = _NCS_CODE_RE.search(unicodedata.normalize("NFC", str(relative_path or "")))
+    if code is None:
+        return None
+    return (corpus, f"@lm:{code.group(0).casefold()}", int(page))
+
+
+def load_existing_grades(
+    ncs_workbook: Path,
+    school_workbook: Path,
+) -> dict[tuple[str, str, int], GradeAssignment]:
+    """Load legacy page grades and normalize both corpora to the public 1→3 scale."""
+    from recount_grades import NCS_MAP, TXT_MAP, scan
+
+    grouped: dict[tuple[str, str, int], list[dict[str, object]]] = defaultdict(list)
+    alias_grouped: dict[tuple[str, str, int], list[dict[str, object]]] = defaultdict(list)
+    alias_documents: dict[str, set[str]] = defaultdict(set)
+    for corpus, path, grade_map, drop_residue in (
+        ("NCS", ncs_workbook, NCS_MAP, False),
+        ("교과서", school_workbook, TXT_MAP, True),
+    ):
+        for row in scan(str(path), grade_map, drop_ncs_residue=drop_residue):
+            if row["fn"] is None or row["page"] is None:
+                continue
+            filename = str(row["fn"])
+            grouped[grade_lookup_key(corpus, filename, int(row["page"]))].append(row)
+            alias_key = grade_alias_key(corpus, filename, int(row["page"]))
+            if alias_key is not None:
+                alias_grouped[alias_key].append(row)
+                alias_documents[alias_key[1]].add(_canonical_document(corpus, filename))
+
+    assignments = {}
+    unambiguous_aliases = {
+        key: rows
+        for key, rows in alias_grouped.items()
+        if len(alias_documents[key[1]]) == 1
+    }
+    for key, rows in list(grouped.items()) + list(unambiguous_aliases.items()):
+        grade = min(int(row["g"]) for row in rows)
+        representative = next(row for row in rows if int(row["g"]) == grade)
+        assignments[key] = GradeAssignment(
+            grade=grade,
+            label=GRADE_LABEL[grade],
+            reason=str(representative.get("reason") or "기존 페이지 판정"),
+            source="existing",
+        )
+    return assignments
+
+
+def assign_match_grades(
+    result: AnalysisResult,
+    existing_grades: dict[tuple[str, str, int], GradeAssignment],
+) -> AnalysisResult:
+    """Attach a page grade to every semantic occurrence without grading unpaged records."""
+    from regrade import grade_page
+
+    page_lines: dict[tuple[str, str, int], list[str]] = defaultdict(list)
+    paged_canonical_documents: dict[tuple[str, str], set[str]] = defaultdict(set)
+    paged_alias_documents: dict[str, set[str]] = defaultdict(set)
+    for document in result.documents:
+        for block in split_pages(document):
+            if block.page is None:
+                continue
+            page_lines[(document.corpus, document.relative_path, block.page)].extend(block.lines)
+            paged_canonical_documents[
+                (document.corpus, _canonical_document(document.corpus, document.relative_path))
+            ].add(document.relative_path)
+            alias_key = grade_alias_key(document.corpus, document.relative_path, block.page)
+            if alias_key is not None:
+                paged_alias_documents[alias_key[1]].add(document.relative_path)
+
+    newly_graded: dict[tuple[str, str, int], GradeAssignment] = {}
+    graded_matches = []
+    for record in result.matches:
+        if record.page is None:
+            assignment = GradeAssignment(None, "등급 미확정", "페이지 마커 없음", "unpaged")
+        else:
+            legacy_key = grade_lookup_key(record.corpus, record.relative_path, record.page)
+            page_key = (record.corpus, record.relative_path, record.page)
+            assignment = newly_graded.get(page_key)
+            if (
+                assignment is None
+                and len(paged_canonical_documents[(record.corpus, legacy_key[1])]) == 1
+            ):
+                assignment = existing_grades.get(legacy_key)
+            alias_key = grade_alias_key(record.corpus, record.relative_path, record.page)
+            if (
+                assignment is None
+                and alias_key is not None
+                and len(paged_alias_documents[alias_key[1]]) == 1
+            ):
+                assignment = existing_grades.get(alias_key)
+            if assignment is None:
+                text = "\n".join(page_lines.get(page_key, ()))
+                if text:
+                    grade, _, _, reason = grade_page(text, word_boundary=False, normalize=False)
+                    assignment = GradeAssignment(grade, GRADE_LABEL[grade], reason, "new")
+                else:
+                    assignment = GradeAssignment(None, "등급 미확정", "페이지 본문을 찾지 못함", "unpaged")
+                newly_graded[page_key] = assignment
+        graded_matches.append(
+            replace(
+                record,
+                grade=assignment.grade,
+                grade_label=assignment.label,
+                grade_reason=assignment.reason,
+                grade_source=assignment.source,
+            )
+        )
+
+    included = [record for record in graded_matches if record.decision == "included"]
+    graded_summary = []
+    for row in result.summary:
+        records = [
+            record
+            for record in included
+            if (row.corpus == "전체" or record.corpus == row.corpus)
+            and record.keyword == row.keyword
+        ]
+        counts = Counter(record.grade for record in records)
+        graded_summary.append(
+            replace(
+                row,
+                grade_1=counts[1],
+                grade_2=counts[2],
+                grade_3=counts[3],
+                grade_unpaged=counts[None],
+            )
+        )
+
+    return replace(result, matches=tuple(graded_matches), summary=tuple(graded_summary))
 
 
 def validate_rules(keywords: list[str], rules: list[ExpressionRule]) -> None:
@@ -769,6 +943,14 @@ def _canonical_hash(value: object) -> str:
 def artifact_manifest(result: AnalysisResult) -> dict[str, str]:
     source_payload = {
         "keywords": [asdict(source) for source in result.sources],
+        "input_artifacts": [
+            {
+                "kind": artifact.kind,
+                "file_count": artifact.file_count,
+                "sha256": artifact.sha256,
+            }
+            for artifact in result.input_artifacts
+        ],
         "documents": [
             {
                 "corpus": document.corpus,
@@ -843,6 +1025,130 @@ def _first_evidence(result: AnalysisResult, keyword: str, expression: str):
     )
 
 
+_TEXTBOOK_DISPLAY_NAMES = (
+    ("반도체기초기술1크리아트", "반도체 기초기술 1"),
+    ("반도체기초기술2크리아트", "반도체 기초기술 2"),
+    ("반도체기초렛유인", "반도체 기초"),
+    ("반도체공정기초렛유인", "반도체 공정기초"),
+    ("반도체장비유지보수충남반도체고", "반도체 장비 유지보수"),
+    ("반도체인프라일반서울시교육청", "반도체 인프라 일반"),
+    ("반도체포토에칭에이치앤지", "반도체 포토에칭"),
+    ("반도체조립검사에이치앤지", "반도체 조립검사"),
+    ("반도체박막확산에이치앤지", "반도체 박막확산"),
+)
+
+
+def _dashboard_group(corpus: str, relative_path: str) -> str:
+    normalized = unicodedata.normalize("NFC", relative_path)
+    if corpus == "NCS":
+        return normalized.split("/", 1)[0]
+    compact = re.sub(r"[^0-9A-Za-z가-힣]", "", normalized).casefold()
+    for fragment, title in _TEXTBOOK_DISPLAY_NAMES:
+        if fragment.casefold() in compact:
+            return title
+    return _TIMESTAMP_PREFIX_RE.sub("", Path(normalized).stem).replace("_", " ").strip()
+
+
+def dashboard_payload(result: AnalysisResult) -> dict[str, object]:
+    included = [record for record in result.matches if record.decision == "included"]
+    summary = {(row.corpus, row.keyword): row for row in result.summary}
+    expressions = defaultdict(list)
+    detected_rules = {(record.keyword, record.expression) for record in included}
+    for rule in result.rules:
+        if rule.tier != "exact" and (rule.keyword, rule.expression) in detected_rules:
+            expressions[rule.keyword].append(rule.expression)
+
+    keywords = []
+    for source in result.sources:
+        item = {"name": source.keyword, "expressions": expressions[source.keyword], "corpora": {}}
+        for corpus in ("NCS", "교과서"):
+            row = summary.get((corpus, source.keyword))
+            excluded = sum(
+                1
+                for record in result.matches
+                if record.corpus == corpus
+                and record.keyword == source.keyword
+                and record.decision == "excluded"
+                and record.tier == "exact"
+            )
+            item["corpora"][corpus] = {
+                "total": row.semantic_total if row else 0,
+                "exact": row.valid_exact if row else 0,
+                "equivalent": row.equivalent_added if row else 0,
+                "specific": row.specific_added if row else 0,
+                "excluded": excluded,
+                "grades": {
+                    "1": row.grade_1 if row else 0,
+                    "2": row.grade_2 if row else 0,
+                    "3": row.grade_3 if row else 0,
+                    "unpaged": row.grade_unpaged if row else 0,
+                },
+            }
+        keywords.append(item)
+
+    corpora = {}
+    for corpus in ("NCS", "교과서"):
+        corpus_rows = [
+            summary[(corpus, source.keyword)]
+            for source in result.sources
+            if (corpus, source.keyword) in summary
+        ]
+        group_records = defaultdict(list)
+        for record in included:
+            if record.corpus == corpus:
+                group_records[_dashboard_group(corpus, record.relative_path)].append(record)
+        documents_by_group = defaultdict(set)
+        for document in result.documents:
+            if document.corpus == corpus:
+                documents_by_group[_dashboard_group(corpus, document.relative_path)].add(document.relative_path)
+        groups = []
+        for name in sorted(group_records):
+            records = group_records[name]
+            counts = Counter(record.grade for record in records)
+            groups.append(
+                {
+                    "name": name,
+                    "documents": len(documents_by_group[name]),
+                    "total": len(records),
+                    "grades": {"1": counts[1], "2": counts[2], "3": counts[3], "unpaged": counts[None]},
+                }
+            )
+        corpora[corpus] = {
+            "documents": sum(1 for document in result.documents if document.corpus == corpus),
+            "total": sum(row.semantic_total for row in corpus_rows),
+            "graded": sum(row.grade_1 + row.grade_2 + row.grade_3 for row in corpus_rows),
+            "grades": {
+                "1": sum(row.grade_1 for row in corpus_rows),
+                "2": sum(row.grade_2 for row in corpus_rows),
+                "3": sum(row.grade_3 for row in corpus_rows),
+                "unpaged": sum(row.grade_unpaged for row in corpus_rows),
+            },
+            "groups": groups,
+        }
+
+    return {
+        "meta": {
+            "generated": date.today().isoformat(),
+            "denominator": "occurrences",
+            "gradeLabels": {str(key): value for key, value in GRADE_LABEL.items()},
+        },
+        "corpora": corpora,
+        "keywords": keywords,
+        "status": dict(Counter(candidate.decision for candidate in result.candidates)),
+    }
+
+
+def write_dashboard_data(result: AnalysisResult, path: Path) -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = json.dumps(dashboard_payload(result), ensure_ascii=False, separators=(",", ":"))
+    path.write_text(
+        "/* Generated from data/semantic_keyword_recount_20260909.xlsx. Grade denominator: occurrences. */\n"
+        f"window.SEMANTIC_RECOUNT={payload};\n",
+        encoding="utf-8",
+    )
+
+
 def _file_rows(result: AnalysisResult, corpus: str):
     keywords = [source.keyword for source in result.sources]
     included = [
@@ -861,6 +1167,7 @@ def _file_rows(result: AnalysisResult, corpus: str):
         for keyword in keywords:
             records = grouped[(document.relative_path, keyword)]
             counts = Counter(record.tier for record in records)
+            grades = Counter(record.grade for record in records)
             yield (
                 document.relative_path,
                 keyword,
@@ -870,6 +1177,10 @@ def _file_rows(result: AnalysisResult, corpus: str):
                 len(records),
                 len({record.page for record in records if record.page is not None}),
                 int(any(record.page is None for record in records)),
+                grades[1],
+                grades[2],
+                grades[3],
+                grades[None],
             )
 
 
@@ -892,6 +1203,9 @@ def write_workbook(result: AnalysisResult, path: Path) -> None:
         ("중복 처리", "같은 키워드 안에서만 왼쪽부터 긴 표현을 우선하며 겹친 구간은 한 번 계수"),
         ("원본 비교", "원본 검색행 수와 새 출현 횟수는 단위가 달라 증감률을 계산하지 않음"),
         ("페이지", "페이지 마커가 없는 파일의 매칭은 페이지 미확정 파일 수로 별도 표시"),
+        ("등급 단위", "각 의미 출현에 해당 페이지의 통일 등급을 결합하며 등급 비율은 출현건수를 분모로 계산"),
+        ("등급 계보", "기존 페이지는 원본 등급을 상속하고 새 검출 페이지는 기존 기준선 규칙으로 판정"),
+        ("등급 미확정", "페이지 마커가 없는 출현은 총 출현에 포함하되 등급1~3 비율에서는 제외"),
     ]
     for key, value in manifest.items():
         readme_rows.append((key, value))
@@ -914,6 +1228,7 @@ def write_workbook(result: AnalysisResult, path: Path) -> None:
             "말뭉치", "키워드", "원본 검색행 수", "원문 정확 문자열", "동음이의 제외",
             "유효 정확 표현", "동등 표현 추가", "구체 표현 추가", "최종 의미 출현 수",
             "검출 파일 수", "검출 페이지 수", "페이지 미확정 파일 수",
+            "등급1 출현", "등급2 출현", "등급3 출현", "등급 미확정 출현",
         ),
     )
     for row in result.summary:
@@ -972,7 +1287,10 @@ def write_workbook(result: AnalysisResult, path: Path) -> None:
         )
     _style_table(excluded_sheet)
 
-    file_headers = ("파일", "키워드", "유효 정확", "동등 표현", "구체 표현", "최종 의미 출현 수", "검출 페이지 수", "페이지 미확정")
+    file_headers = (
+        "파일", "키워드", "유효 정확", "동등 표현", "구체 표현", "최종 의미 출현 수",
+        "검출 페이지 수", "페이지 미확정", "등급1 출현", "등급2 출현", "등급3 출현", "등급 미확정 출현",
+    )
     for corpus, sheet_name in (("NCS", "NCS_파일별"), ("교과서", "교과서_파일별")):
         worksheet = workbook.create_sheet(sheet_name)
         _append_row(worksheet, file_headers)
@@ -980,7 +1298,10 @@ def write_workbook(result: AnalysisResult, path: Path) -> None:
             _append_row(worksheet, row)
         _style_table(worksheet)
 
-    detail_headers = ("파일", "키워드", "등록 표현", "실제 매칭", "계층", "줄", "페이지", "판정 근거", "문맥")
+    detail_headers = (
+        "파일", "키워드", "등록 표현", "실제 매칭", "계층", "줄", "페이지", "판정 근거", "문맥",
+        "통일 등급", "등급명", "등급사유", "등급 출처",
+    )
     for corpus, sheet_name in (("NCS", "NCS_매칭상세"), ("교과서", "교과서_매칭상세")):
         worksheet = workbook.create_sheet(sheet_name)
         _append_row(worksheet, detail_headers)
@@ -989,7 +1310,12 @@ def write_workbook(result: AnalysisResult, path: Path) -> None:
                 continue
             _append_row(
                 worksheet,
-                (record.relative_path, record.keyword, record.expression, record.matched_text, record.tier, record.line, record.page, record.reason, record.context),
+                (
+                    record.relative_path, record.keyword, record.expression, record.matched_text,
+                    record.tier, record.line, record.page, record.reason, record.context,
+                    record.grade, record.grade_label, record.grade_reason,
+                    {"existing": "기존 판정", "new": "신규 판정", "unpaged": "등급 미확정"}.get(record.grade_source, record.grade_source),
+                ),
             )
         _style_table(worksheet)
 
@@ -1037,6 +1363,7 @@ def write_report(result: AnalysisResult, path: Path) -> None:
         "## 조사 범위와 방법",
         "",
         "Markdown 본문을 NFC로 정규화해 전수 검색하고, 영문은 대소문자를 구분하지 않았다. 페이지 주석과 이미지 URL만 있는 줄은 계수하지 않았다. 각 매칭에는 파일·줄·페이지·실제 표현·문맥을 남겼다.",
+        "기존에 판정된 페이지는 통일 등급 1~3을 승계하고, 새로 검출된 페이지만 같은 기준선 규칙으로 판정했다. 등급별 수치는 페이지 수가 아니라 의미 출현건수다.",
         "",
         "## 키워드 독립 원칙",
         "",
@@ -1051,8 +1378,8 @@ def write_report(result: AnalysisResult, path: Path) -> None:
         "",
         "## 키워드별 집계",
         "",
-        "| 말뭉치 | 키워드 | 원본 검색행 | 원문 정확 | 제외 | 유효 정확 | 동등 추가 | 구체 추가 | 최종 의미 출현 | 파일 | 페이지 | 페이지 미확정 |",
-        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "| 말뭉치 | 키워드 | 원본 검색행 | 원문 정확 | 제외 | 유효 정확 | 동등 추가 | 구체 추가 | 최종 의미 출현 | 파일 | 페이지 | 페이지 미확정 | 등급1 출현 | 등급2 출현 | 등급3 출현 | 등급 미확정 출현 |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for row in result.summary:
         lines.append(
@@ -1062,7 +1389,8 @@ def write_report(result: AnalysisResult, path: Path) -> None:
                     row.corpus, row.keyword, row.original_search_rows, row.raw_exact,
                     row.excluded_exact, row.valid_exact, row.equivalent_added,
                     row.specific_added, row.semantic_total, row.file_count,
-                    row.page_count, row.unpaged_file_count,
+                    row.page_count, row.unpaged_file_count, row.grade_1,
+                    row.grade_2, row.grade_3, row.grade_unpaged,
                 )
             ) + " |"
         )
@@ -1158,7 +1486,17 @@ def run_census(
     school_root: Path,
     xlsx_out: Path,
     report_out: Path,
+    ncs_grade_workbook: Path | None = None,
+    school_grade_workbook: Path | None = None,
+    dashboard_data_out: Path | None = None,
 ) -> AnalysisResult:
+    ncs_grade_workbook = Path(ncs_grade_workbook or source_workbook)
+    school_grade_workbook = Path(
+        school_grade_workbook
+        or Path(source_workbook).parent / "ncs_keywords_in_markdown_results_교과서_results_20260415.xlsx"
+    )
+    if not school_grade_workbook.is_file():
+        raise FileNotFoundError(f"교과서 등급 워크북을 찾을 수 없습니다: {school_grade_workbook}")
     sources = read_keyword_workbook(source_workbook)
     keywords = [source.keyword for source in sources]
     if tuple(keywords) != EXPECTED_KEYWORDS:
@@ -1173,13 +1511,21 @@ def run_census(
     rules = build_default_rules(keywords)
     candidates = default_candidate_decisions()
     artifacts = [
-        InputArtifact("원본 워크북", str(source_workbook.resolve()), 1, _file_sha256(source_workbook)),
+        InputArtifact("키워드 등록 워크북", str(source_workbook.resolve()), 1, _file_sha256(source_workbook)),
+        InputArtifact("NCS 등급 워크북", str(ncs_grade_workbook.resolve()), 1, _file_sha256(ncs_grade_workbook)),
+        InputArtifact("교과서 등급 워크북", str(school_grade_workbook.resolve()), 1, _file_sha256(school_grade_workbook)),
         InputArtifact("NCS Markdown", str(ncs_root.resolve()), len(ncs_documents), _document_set_sha256(ncs_documents)),
         InputArtifact("교과서 Markdown", str(school_root.resolve()), len(school_documents), _document_set_sha256(school_documents)),
     ]
     result = aggregate_matches(sources, documents, rules, candidates, artifacts)
+    result = assign_match_grades(
+        result,
+        load_existing_grades(ncs_grade_workbook, school_grade_workbook),
+    )
     write_workbook(result, xlsx_out)
     write_report(result, report_out)
+    if dashboard_data_out is not None:
+        write_dashboard_data(result, dashboard_data_out)
     return result
 
 
@@ -1190,8 +1536,20 @@ def main() -> None:
     parser.add_argument("--school-root", type=Path, required=True)
     parser.add_argument("--xlsx-out", type=Path, required=True)
     parser.add_argument("--report-out", type=Path, required=True)
+    parser.add_argument("--ncs-grade-workbook", type=Path, help="기존 NCS 등급 워크북 (기본: --source-workbook)")
+    parser.add_argument("--school-grade-workbook", type=Path, help="기존 교과서 등급 워크북")
+    parser.add_argument("--dashboard-data-out", type=Path, help="정적 대시보드 JavaScript 데이터 출력")
     args = parser.parse_args()
-    result = run_census(args.source_workbook, args.ncs_root, args.school_root, args.xlsx_out, args.report_out)
+    result = run_census(
+        args.source_workbook,
+        args.ncs_root,
+        args.school_root,
+        args.xlsx_out,
+        args.report_out,
+        ncs_grade_workbook=args.ncs_grade_workbook,
+        school_grade_workbook=args.school_grade_workbook,
+        dashboard_data_out=args.dashboard_data_out,
+    )
     manifest = artifact_manifest(result)
     print(f"완료: 키워드 {len(result.sources)}개, 문서 {len(result.documents)}개, 상세 {len(result.matches)}건")
     print(json.dumps(manifest, ensure_ascii=False, indent=2))

@@ -95,6 +95,9 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 </nav>
 <div class="viz-menu"><button class="viz-menu-toggle" onclick="toggleMenu()" aria-label="Menu"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="5" x2="17" y2="5"/><line x1="3" y1="10" x2="17" y2="10"/><line x1="3" y1="15" x2="17" y2="15"/></svg></button><div class="viz-menu-dropdown" id="vizMenuDropdown"><button onclick="cycleTheme()"><span id="themeIcon">☀️</span><span id="themeLabel">Light</span></button><button onclick="downloadImage()"><span>📥</span><span>Download PNG</span></button><button onclick="window.print()"><span>🖨️</span><span>Print / PDF</span></button></div></div>
 <main id="mc" role="main"><div class="ctn">
+<section class="hero"><h1>반도체고 교과서<br>안전보건 키워드 분석</h1><p>30개 독립 키워드의 의미 출현마다 페이지 등급을 결합한 결과</p><div class="hs-row"><div class="hs"><div class="hs-v">1,293</div><div class="hs-l">최종 의미 출현</div></div><div class="hs"><div class="hs-v">705</div><div class="hs-l">등급1 출현</div></div><div class="hs"><div class="hs-v">468</div><div class="hs-l">등급2 출현</div></div><div class="hs"><div class="hs-v">120</div><div class="hs-l">등급3 출현</div></div></div><p class="ts" style="margin-top:24px"><strong>분류 기준</strong> — 페이지 수가 아니라 문맥이 확인된 출현건수를 분모로 사용합니다. 모든 교과서 출현의 등급이 확정됐습니다.</p></section>
+<section><h2>분석 구성</h2><div class="card"><p>전체 등급 분포 → 키워드별 상세 → 교과서별 현황 → 문제점과 시사점 → NCS·교과서 비교 → 개선 권고안 순으로 표시됩니다.</p></div></section>
+</div><template id="legacy-dashboard">
 
 <section class="hero"><h1>반도체고 교과서<br>안전보건 키워드 분석</h1><p>30개 안전보건 키워드로 반도체 특성화고 교과서 9권(총 2,055쪽)을 검색해, 키워드가 검출된 362쪽을 3등급으로 분류한 대시보드</p>
 <div class="hs-row"><div class="hs"><div class="hs-v">2,055</div><div class="hs-l">전체 페이지</div></div><div class="hs"><div class="hs-v">362</div><div class="hs-l">키워드 검출 페이지</div></div><div class="hs"><div class="hs-v">981</div><div class="hs-l">검출 항목(키워드×쪽)</div></div><div class="hs"><div class="hs-v">22</div><div class="hs-l">검출 키워드 (30개 중)</div></div><div class="hs"><div class="hs-v" style="color:var(--danger)">0</div><div class="hs-l" style="color:var(--danger);font-weight:600">사고사례 발견</div></div></div>
@@ -167,7 +170,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;word
 </section>
 
 <footer style="text-align:center;padding:32px 0;color:var(--text-secondary);font-size:var(--fs-sm)">반도체고 교과서 안전보건 분석 | 청년노동자인권센터 | 2026년 교과서 기초연구</footer>
-</div></main>
+</template></main>
 <script>
 function toggleMenu(){var d=document.getElementById('vizMenuDropdown');if(d)d.classList.toggle('open')}
 document.addEventListener('click',function(e){if(!e.target.closest('.viz-menu')){var d=document.getElementById('vizMenuDropdown');if(d)d.classList.remove('open')}});
@@ -195,7 +198,7 @@ var x2=RC('c2');if(x2)new Chart(x2,{type:'bar',data:{labels:t10.map(function(d){
 }
 function onThemeChange(){buildCharts()}
 
-document.addEventListener('DOMContentLoaded',function(){applyTheme(currentTheme);buildCharts();updSortIndicators();rKT()});
+document.addEventListener('DOMContentLoaded',function(){applyTheme(currentTheme)});
 
 var kF='all',kS='t',kD=-1;
 function rKT(){var TP=2055;var d=KW.slice();if(kF==='detected')d=d.filter(function(x){return x.t>0});d.sort(function(a,b){if(kS==='k')return kD*(a.k<b.k?-1:a.k>b.k?1:0);if(kS==='tp')return kD*(a.pg-b.pg);return kD*((a[kS]||0)-(b[kS]||0))});var h='';d.forEach(function(r){var tp=(r.pg/TP*100).toFixed(1);h+='<tr><td><strong>'+r.k+'</strong></td><td>'+r.t.toLocaleString()+'</td><td>'+r.pg.toLocaleString()+'</td><td><span class="pb" style="width:'+Math.min(tp*4,100)+'px;max-width:80px;background:var(--accent)"></span>'+tp+'%</td><td>'+r.g1+'</td><td>'+r.g2+'</td><td>'+r.g3+'</td><td style="color:'+(r.cs>0?'var(--danger)':'var(--text-secondary)')+'">'+r.cs+'</td></tr>'});document.getElementById('kb').innerHTML=h}
@@ -203,5 +206,8 @@ function fK(f,el){kF=f;document.querySelectorAll('.fb .fbtn').forEach(function(b
 function updSortIndicators(){document.querySelectorAll('.tbl.sortable th[data-k]').forEach(function(th){th.setAttribute('aria-sort',th.dataset.k===kS?(kD===1?'ascending':'descending'):'none')})}
 function sK(c){if(kS===c)kD*=-1;else{kS=c;kD=-1}updSortIndicators();rKT()}
 </script>
+<script src="semantic_recount_data.js"></script>
+<script>window.SEMANTIC_DASHBOARD_CORPUS='교과서';</script>
+<script src="semantic_grade_dashboard.js"></script>
 </body>
 </html>

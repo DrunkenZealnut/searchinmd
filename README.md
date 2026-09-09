@@ -83,7 +83,7 @@ python3 resegment.py                    # 약 30초. 내장 EXPECTED 회귀 검�
 | 등급2 | 형식적 언급 — 키워드는 많지만 구체적 조치 없음 |
 | 등급3 | 구체적 대책 — 안전 조치·대책을 실제로 제시 |
 
-두 가지가 함정입니다. **등급은 페이지 속성이지 키워드 히트 속성이 아닙니다** — 행으로 세면 키워드가 여럿 걸린 페이지가 중복 계수돼 상위 등급이 부풀려집니다(NCS 등급3은 검출 2,228건이지만 실제 쪽으로는 145쪽). 그리고 **한 페이지의 행끼리 등급이 갈리면 가장 낮은 등급을 택합니다** — 다수결은 원본 채점 버그가 같은 오판을 여러 행에 남긴 경우 그 중복 수가 표가 돼 버립니다.
+등급 판정 자체는 **페이지 속성**입니다. 페이지 품질을 비교할 때는 고유 페이지로 세어야 하며, 의미 출현 빈도를 비교하는 현재 NCS·교과서 대시보드는 각 출현에 해당 페이지 등급을 붙인 뒤 **출현건수**로 분포를 세어야 합니다. 두 분모를 혼용하면 안 됩니다. 또한 **한 페이지의 행끼리 등급이 갈리면 가장 낮은 등급을 택합니다**. 다수결은 같은 오판이 여러 행에 복제된 경우를 방어하지 못합니다.
 
 판정 근거와 데이터 계보는 `docs/03-analysis/grade-recount.analysis.md`에 정리돼 있습니다.
 
@@ -93,15 +93,15 @@ python3 resegment.py                    # 약 30초. 내장 EXPECTED 회귀 검�
 
 ```bash
 node    outputs/test-search-equivalence.js   # 24 — 검색 동치성 + 청크 렌더 + 지연 캐시
-node    outputs/test-dashboard-data.js       # 153 — 대시보드 데이터·표 렌더·정렬
+node    outputs/test-dashboard-data.js       # 18 — 출현건수 등급 데이터·공통 흐름·페이지 연결
 python3 outputs/test-recount-grades.py       # 379 — 재집계·재채점·페이지 마커·절단 판정·재코딩(코더 호출·채점)·재세그먼트
 node    outputs/run-core-logic-tests.js       # 32 — 제목 판정·정규화 (헤드리스)
 node    outputs/test-sri.js                  # 38 — 외부 스크립트 SRI (--online 이면 CDN 대조)
 ```
 
-Node 기반 하니스 세 개는 HTML 안의 실제 `<script>` 블록을 `vm` + DOM mock으로 불러옵니다. 복사해 붙인 사본을 테스트하지 않습니다. `test-core-logic.html` 은 브라우저에서 열어 탭 제목으로 봐도 됩니다 — `run-core-logic-tests.js` 는 같은 HTML 을 헤드리스로 돌릴 뿐입니다. `test-recount-grades.py`는 `openpyxl`을 스텁으로 주입해 pip 패키지 없이도, 원본 엑셀 없이도 돕니다.
+Node 기반 하니스는 HTML과 실제 공통 렌더러를 `vm` + DOM mock으로 불러옵니다. 복사해 붙인 사본을 테스트하지 않습니다. `test-core-logic.html` 은 브라우저에서 열어 탭 제목으로 봐도 됩니다 — `run-core-logic-tests.js` 는 같은 HTML 을 헤드리스로 돌릴 뿐입니다. `test-recount-grades.py`는 `openpyxl`을 스텁으로 주입해 pip 패키지 없이도, 원본 엑셀 없이도 돕니다.
 
-대시보드의 하드코딩 데이터 배열은 **자기 자신이 아니라 산출물에 대조**합니다 — NCS 쪽 단위 수치는 `reseg_summary.json`, 행 단위 수치와 교과서는 `summary.json`. 위 블록의 단언 수 가운데 152·372 는 하니스가 README·`CLAUDE.md` 의 인용값과 직접 대조하므로(D14·R17), 손으로 고치지 말고 하니스가 찍는 수를 두 파일에 옮기세요.
+대시보드 데이터는 `semantic_keyword_recount.py`가 `semantic_keyword_recount_20260909.xlsx`와 같은 집계 결과에서 `docs/semantic_recount_data.js`를 생성합니다. 위 블록의 단언 수 가운데 379는 하니스가 README·`CLAUDE.md`의 인용값과 직접 대조하므로(R17), 손으로 고치지 말고 하니스가 찍는 수를 두 파일에 옮기세요.
 
 ## 저장소 구성
 
