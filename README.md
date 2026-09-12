@@ -6,6 +6,8 @@
 
 ## 대시보드 (GitHub Pages)
 
+최신 키워드 검색·등급분류 결과는 [분리 분석 페이지](https://drunkenzealnut.github.io/searchinmd/keyword-analysis.html)에서 확인할 수 있습니다. NCS 결과는 report 자료 4개를 제외한 85개 자료 기준입니다.
+
 | 페이지 | 내용 |
 |---|---|
 | [NCS 교재 86권](https://drunkenzealnut.github.io/searchinmd/) | 검출 2,189쪽(원본 PDF 실제 쪽 기준)의 등급 분포, 영역별 현황, 사고사례 원문 대조 |
