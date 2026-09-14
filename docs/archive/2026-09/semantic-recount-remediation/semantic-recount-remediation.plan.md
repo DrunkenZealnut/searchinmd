@@ -166,7 +166,7 @@
 | 단계 | 산출물 | 상태 |
 |---|---|---|
 | Plan | 이 문서 | 작성 (승인 대기) |
-| Design | `docs/02-design/features/semantic-recount-remediation.design.md` — 교재 판별 규칙, `EXPECTED` 키 목록, manifest 스키마, `semantic_summary.json` 스키마, 하니스 D13/D14 대응표, 브리지 표 서식 | 대기 |
+| Design | `docs/archive/2026-09/semantic-recount-remediation/semantic-recount-remediation.design.md` — 교재 판별 규칙, `EXPECTED` 키 목록, manifest 스키마, `semantic_summary.json` 스키마, 하니스 D13/D14 대응표, 브리지 표 서식 | 대기 |
 | Do | 코드(FR-01~05) → 정본 재실행 → 발표면·문서(FR-06~08, 10, 11) → 하니스(FR-09) 순 | 대기 |
 | Check | gap-detector 갭 분석 + 성공 기준 10항 실측 | 대기 |
 | Report | 감사 발견별 종결 표(C1~C3·M3·M5·m1·m2·m4·m5 종결, M1·M2 이월) | 대기 |

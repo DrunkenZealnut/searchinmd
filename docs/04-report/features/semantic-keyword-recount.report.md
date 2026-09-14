@@ -1,6 +1,6 @@
 # 의미 단위 키워드 재검산 완료 보고
 
-> **2026-09-14 정본 갱신 (semantic-recount-remediation).** 아래 2026-09-09 수치는 코퍼스가 오염된 실행(NCS 89파일 = 교재 84 + 변환기 요약본 4 + 중복 1)의 값이라 **폐기**됐다. 정본은 NCS 86권(2026-09-13 추가 2권 포함)·교과서 9권을 `data_source/markdown` 에서 읽은 2026-09-14 실행이며, 수치는 `docs/03-analysis/data/semantic_summary.json` 이 원본이다. 갱신된 표에는 "정본" 표기가 있다. 외부감사(2026-09-13, 등급 F)와 연구책임자 결정 8건은 `docs/01-plan/features/semantic-recount-remediation.plan.md` §1.2.
+> **2026-09-14 정본 갱신 (semantic-recount-remediation).** 아래 2026-09-09 수치는 코퍼스가 오염된 실행(NCS 89파일 = 교재 84 + 변환기 요약본 4 + 중복 1)의 값이라 **폐기**됐다. 정본은 NCS 86권(2026-09-13 추가 2권 포함)·교과서 9권을 `data_source/markdown` 에서 읽은 2026-09-14 실행이며, 수치는 `docs/03-analysis/data/semantic_summary.json` 이 원본이다. 갱신된 표에는 "정본" 표기가 있다. 외부감사(2026-09-13, 등급 F)와 연구책임자 결정 8건은 `docs/archive/2026-09/semantic-recount-remediation/semantic-recount-remediation.plan.md` §1.2.
 
 > **Feature**: semantic-keyword-recount
 > **Completed**: 2026-09-09

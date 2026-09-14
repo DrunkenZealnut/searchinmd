@@ -1,7 +1,7 @@
 # 의미 재검산 감사 시정 설계
 
 > **Feature**: semantic-recount-remediation
-> **Plan**: [semantic-recount-remediation.plan.md](../../01-plan/features/semantic-recount-remediation.plan.md) (Approved 2026-09-13)
+> **Plan**: [semantic-recount-remediation.plan.md](semantic-recount-remediation.plan.md) (Approved 2026-09-13)
 > **Author**: Claude (Opus 5)
 > **Date**: 2026-09-13
 > **Status**: Draft
