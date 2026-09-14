@@ -1,0 +1,925 @@
+{
+ "source": {
+  "hwpx": "반도체 기초보고서_20260911.hwpx",
+  "hwpx_sha256": "ad5167ea1434a6b7195765ecfacb9669b87dcb16a82245442fa96d0b4bc51ff5",
+  "summary_run": {
+   "generated_at": "2026-09-14T17:22:01+09:00",
+   "git_commit": "ff56366",
+   "dictionary": "v2",
+   "expected": true
+  }
+ },
+ "output": "반도체 기초보고서_20260914_정본.hwpx",
+ "paragraphs": [
+  {
+   "section": "textbook",
+   "locator": "본 연구에서는 반도체고등학교의 전공교과서를 대상으로",
+   "old_numbers": [
+    "9",
+    "2,055",
+    "30"
+   ],
+   "new_numbers": [
+    "9",
+    "2,055",
+    "30",
+    "2026",
+    "09",
+    "14",
+    "2"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "키워드 분석 결과",
+   "old_numbers": [
+    "26",
+    "4",
+    "380",
+    "130",
+    "101",
+    "82",
+    "67",
+    "55"
+   ],
+   "new_numbers": [
+    "26",
+    "4",
+    "363",
+    "103",
+    "101",
+    "67",
+    "65",
+    "61"
+   ],
+   "format_collapsed": true
+  },
+  {
+   "section": "textbook",
+   "locator": "‘화학물질’은",
+   "old_numbers": [
+    "82"
+   ],
+   "new_numbers": [
+    "61"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "특히 질병 관련 내용의 부족이 두드러졌다",
+   "old_numbers": [
+    "11",
+    "0",
+    "20",
+    "10"
+   ],
+   "new_numbers": [
+    "11",
+    "0",
+    "28",
+    "20"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "또한 ‘끼임’",
+   "old_numbers": [
+    "3",
+    "0",
+    "0",
+    "2"
+   ],
+   "new_numbers": [
+    "3",
+    "0",
+    "0",
+    "2"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "종합하면, 현행 반도체고등학교의 반도체 교과서에는",
+   "old_numbers": [
+    "0",
+    "4"
+   ],
+   "new_numbers": [
+    "0",
+    "4"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "9권의 교과서에서 구체적인 사고",
+   "old_numbers": [
+    "9"
+   ],
+   "new_numbers": [
+    "9"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "본 연구에서는 9권의 반도체 교과서를",
+   "old_numbers": [
+    "9",
+    "4"
+   ],
+   "new_numbers": [
+    "9",
+    "4"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "반도체 개발 분야는",
+   "old_numbers": [
+    "3",
+    "639",
+    "31.1%"
+   ],
+   "new_numbers": [
+    "3",
+    "639",
+    "31.1%"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "반도체 제조 분야는",
+   "old_numbers": [
+    "4",
+    "1,002",
+    "48.8%"
+   ],
+   "new_numbers": [
+    "4",
+    "1,002",
+    "48.8%"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "따라서 제조 분야는 안전보건교육이 가장 적극적으로",
+   "old_numbers": [],
+   "new_numbers": [
+    "2",
+    "28"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "반도체 장비 분야는",
+   "old_numbers": [
+    "1",
+    "217",
+    "10.6%"
+   ],
+   "new_numbers": [
+    "1",
+    "217",
+    "10.6%"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "따라서 장비 분야에서는 전기, 기계, 압력",
+   "old_numbers": [
+    "0"
+   ],
+   "new_numbers": [
+    "3",
+    "0"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "반도체 재료·인프라 분야는",
+   "old_numbers": [
+    "1",
+    "197",
+    "9.6%"
+   ],
+   "new_numbers": [
+    "1",
+    "197",
+    "9.6%"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "특히 반도체산업의 대형 사고는",
+   "old_numbers": [
+    "0"
+   ],
+   "new_numbers": [
+    "0",
+    "2",
+    "28",
+    "20"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "첫째, 등급 1은",
+   "old_numbers": [
+    "1",
+    "705",
+    "54.5%"
+   ],
+   "new_numbers": [
+    "1",
+    "633",
+    "52.4%"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "둘째, 등급2는",
+   "old_numbers": [
+    "2",
+    "468",
+    "36.2%"
+   ],
+   "new_numbers": [
+    "2",
+    "459",
+    "38.0%"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "셋째, 가장 중요한 등급 3",
+   "old_numbers": [
+    "3",
+    "120",
+    "1,293",
+    "9.3%",
+    "3"
+   ],
+   "new_numbers": [
+    "3",
+    "115",
+    "1,207",
+    "9.5%",
+    "3"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "반도체고등학교에서 사용하는 반도체 교과서",
+   "old_numbers": [
+    "9",
+    "2,055",
+    "30",
+    "26",
+    "1,293",
+    "3",
+    "120",
+    "9.3%"
+   ],
+   "new_numbers": [
+    "9",
+    "2,055",
+    "30",
+    "26",
+    "1,207",
+    "3",
+    "115",
+    "9.5%"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "또한 공정안전관리, 직업병, 물질안전보건자료",
+   "old_numbers": [
+    "4",
+    "9"
+   ],
+   "new_numbers": [
+    "4",
+    "9"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "NCS 기반 반도체 자료를 대상으로",
+   "old_numbers": [
+    "85",
+    "7,769",
+    "30"
+   ],
+   "new_numbers": [
+    "86",
+    "8,914",
+    "30",
+    "2026",
+    "09",
+    "14",
+    "2",
+    "11,517"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "교과서의 전체 키워드 중 ‘안전’이",
+   "old_numbers": [
+    "4,259",
+    "1",
+    "2,084",
+    "48.9%",
+    "2",
+    "1,423",
+    "33.4%",
+    "3",
+    "752",
+    "17.6%"
+   ],
+   "new_numbers": [
+    "3,929",
+    "1",
+    "1,761",
+    "44.8%",
+    "2",
+    "1,409",
+    "35.9%",
+    "3",
+    "759",
+    "19.3%"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "사고 관련 주요 키워드 검출 건수는",
+   "old_numbers": [
+    "1,522",
+    "1,393",
+    "1,230",
+    "639",
+    "582",
+    "479",
+    "393",
+    "385",
+    "323"
+   ],
+   "new_numbers": [
+    "1,272",
+    "1,080",
+    "965",
+    "646",
+    "587",
+    "453",
+    "393",
+    "360",
+    "320"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "화학물질 관련 키워드는",
+   "old_numbers": [
+    "1,522",
+    "479",
+    "164",
+    "643",
+    "348",
+    "55",
+    "40",
+    "36",
+    "649",
+    "546",
+    "227",
+    "100"
+   ],
+   "new_numbers": [
+    "1,080",
+    "453",
+    "155",
+    "330",
+    "55",
+    "36",
+    "32",
+    "676",
+    "163",
+    "156",
+    "85"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "건강 영향 관련 키워드는",
+   "old_numbers": [
+    "5",
+    "19",
+    "53",
+    "214",
+    "94",
+    "385"
+   ],
+   "new_numbers": [
+    "5",
+    "19",
+    "53",
+    "113",
+    "91",
+    "360"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "‘보호구’는",
+   "old_numbers": [
+    "1,230",
+    "2",
+    "336",
+    "27.3%",
+    "3",
+    "437",
+    "35.5%",
+    "60%"
+   ],
+   "new_numbers": [
+    "965",
+    "2",
+    "296",
+    "30.7%",
+    "3",
+    "433",
+    "44.9%",
+    "60%"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "‘작업환경’은",
+   "old_numbers": [
+    "191",
+    "54",
+    "3",
+    "39",
+    "20.4%",
+    "3",
+    "13",
+    "24.0%"
+   ],
+   "new_numbers": [
+    "185",
+    "54",
+    "3",
+    "40",
+    "21.6%",
+    "3",
+    "13",
+    "24.1%",
+    "3",
+    "21.9%"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "한편 ‘공정안전관리’는",
+   "old_numbers": [
+    "7",
+    "8",
+    "47",
+    "5",
+    "3"
+   ],
+   "new_numbers": [
+    "7",
+    "2",
+    "36",
+    "5",
+    "3"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "반도체 개발 분야는 총",
+   "old_numbers": [
+    "30",
+    "794",
+    "409",
+    "4,259",
+    "12.0%"
+   ],
+   "new_numbers": [
+    "30",
+    "3,314",
+    "420",
+    "3,929",
+    "10.7%"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "반도체 제조 분야는 총",
+   "old_numbers": [
+    "13",
+    "988",
+    "402",
+    "11.8%",
+    "12.7%"
+   ],
+   "new_numbers": [
+    "13",
+    "1,363",
+    "421",
+    "3,929",
+    "10.7%",
+    "15.3%"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "그러나 등급별 분석에서는 등급 2(형식적 언급)의 비중이 높아",
+   "old_numbers": [
+    "2",
+    "14"
+   ],
+   "new_numbers": [
+    "2",
+    "0"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "반도체 장비 분야는 총",
+   "old_numbers": [
+    "19",
+    "2,202",
+    "964",
+    "28.3%",
+    "740",
+    "584",
+    "78.9%"
+   ],
+   "new_numbers": [
+    "19",
+    "1,780",
+    "1,257",
+    "3,929",
+    "32.0%",
+    "13",
+    "8",
+    "61.5%",
+    "1",
+    "7",
+    "3"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "반도체 재료 분야는 총",
+   "old_numbers": [
+    "24",
+    "3,784",
+    "1,630",
+    "47.9%"
+   ],
+   "new_numbers": [
+    "24",
+    "2,457",
+    "1,831",
+    "3,929",
+    "46.6%"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "실제로 전체적으로 가장 많이 검출된 키워드인 ‘안전’의 경우에도",
+   "old_numbers": [
+    "3,405",
+    "1,094",
+    "32.1%",
+    "1"
+   ],
+   "new_numbers": [
+    "3,929",
+    "1,761",
+    "44.8%",
+    "1"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "등급 2는 안전보건 관련 키워드가 확인되지만",
+   "old_numbers": [
+    "2",
+    "2",
+    "1",
+    "2,077",
+    "2",
+    "3,464",
+    "3",
+    "2,228",
+    "740",
+    "2",
+    "44.6%",
+    "3,405",
+    "1,442",
+    "42.3%"
+   ],
+   "new_numbers": [
+    "2",
+    "2",
+    "1",
+    "4,378",
+    "2",
+    "4,614",
+    "3",
+    "2,525",
+    "2",
+    "40.1%",
+    "3,929",
+    "1,409",
+    "35.9%",
+    "2"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "등급 3은 위험 요인, 사고 유형, 건강 영향",
+   "old_numbers": [
+    "3",
+    "3",
+    "2,228",
+    "28.7%",
+    "2",
+    "3",
+    "144",
+    "78",
+    "54.2%",
+    "3"
+   ],
+   "new_numbers": [
+    "3",
+    "3",
+    "2,525",
+    "21.9%",
+    "2",
+    "3",
+    "965",
+    "433",
+    "44.9%",
+    "3"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "또한 ‘작업환경’은 총",
+   "old_numbers": [
+    "49",
+    "53.1%",
+    "51",
+    "51.0%",
+    "3"
+   ],
+   "new_numbers": [
+    "185",
+    "21.6%",
+    "54",
+    "24.1%",
+    "3",
+    "21.9%"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "한편 ‘공정안전관리’는 총",
+   "old_numbers": [
+    "4",
+    "7",
+    "3"
+   ],
+   "new_numbers": [
+    "7",
+    "2",
+    "5",
+    "71.4%",
+    "3"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "주: 단위: 건.",
+   "old_numbers": [
+    "12,875"
+   ],
+   "new_numbers": [
+    "11,517",
+    "2026",
+    "09",
+    "14",
+    "2",
+    "0"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "cases",
+   "locator": "본 연구에서는 NCS 반도체 교과서에 수록된 사고, 부상, 질병 관련 사례를",
+   "old_numbers": [
+    "2",
+    "9",
+    "13"
+   ],
+   "new_numbers": [
+    "5",
+    "13",
+    "3",
+    "1",
+    "2",
+    "1",
+    "2014",
+    "13"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "cases",
+   "locator": "사례의 분포를 보면",
+   "old_numbers": [
+    "9",
+    "8"
+   ],
+   "new_numbers": [
+    "13",
+    "8"
+   ],
+   "format_collapsed": false
+  },
+  {
+   "section": "cases",
+   "locator": "사고 유형 측면에서는",
+   "old_numbers": [],
+   "new_numbers": [
+    "3",
+    "10",
+    "6",
+    "1",
+    "3",
+    "1"
+   ],
+   "format_collapsed": true
+  },
+  {
+   "section": "cases",
+   "locator": "사례의 서술 방식 또한 중요한 특징이다",
+   "old_numbers": [
+    "30",
+    "45"
+   ],
+   "new_numbers": [],
+   "format_collapsed": false
+  },
+  {
+   "section": "cases",
+   "locator": "또한 사고 사례는 대부분 위험 상황을 단순히 언급하는 수준에",
+   "old_numbers": [],
+   "new_numbers": [],
+   "format_collapsed": false
+  },
+  {
+   "section": "cases",
+   "locator": "이러한 분석 결과를 종합하면, NCS 반도체 교과서에 수록된 사고 사례는",
+   "old_numbers": [],
+   "new_numbers": [
+    "3",
+    "1",
+    "13",
+    "10"
+   ],
+   "format_collapsed": false
+  }
+ ],
+ "tables": [
+  {
+   "section": "textbook",
+   "caption": "표 7.",
+   "rows": 32,
+   "cols": 6,
+   "changed_cells": 94
+  },
+  {
+   "section": "textbook",
+   "caption": "표 8.",
+   "rows": 6,
+   "cols": 7,
+   "changed_cells": 21
+  },
+  {
+   "section": "textbook",
+   "caption": "표 9.",
+   "rows": 5,
+   "cols": 4,
+   "changed_cells": 7
+  },
+  {
+   "section": "ncs",
+   "caption": "표 10.",
+   "rows": 32,
+   "cols": 6,
+   "changed_cells": 134
+  },
+  {
+   "section": "ncs",
+   "caption": "표 11.",
+   "rows": 6,
+   "cols": 8,
+   "changed_cells": 32
+  },
+  {
+   "section": "ncs",
+   "caption": "표 12.",
+   "rows": 5,
+   "cols": 4,
+   "changed_cells": 7
+  },
+  {
+   "section": "cases",
+   "caption": "표 13.",
+   "rows": 15,
+   "cols": 2,
+   "changed_cells": 53
+  }
+ ],
+ "figures": [
+  {
+   "label": "그림 2",
+   "caption": null,
+   "item": "image1",
+   "entry": "BinData/image1.PNG",
+   "format": "PNG",
+   "width": 702,
+   "height": 391,
+   "svg_sha256": "14055b266c30db8f08fb3c8a227212c6219f14655a29a8a87a47eb4d600eef9d",
+   "sha256": "1563c947fcd403cc4038f078c40feb07b7cd2ddfc666b2676d16c00440decbed"
+  },
+  {
+   "label": "그림 3",
+   "caption": "그림 3.",
+   "item": "image2",
+   "entry": "BinData/image2.BMP",
+   "format": "BMP",
+   "width": 1160,
+   "height": 750,
+   "svg_sha256": "8c4c1b2828119b20b0f3817e8ce4db0ce4b3cc66928cfd8266be569ef7e9e89b",
+   "sha256": "a8c61378d571a8ddf48e2f56747b3a1bbb82df469ac0d0a5bb21a32eca02971e"
+  },
+  {
+   "label": "그림 4",
+   "caption": "그림 4.",
+   "item": "image3",
+   "entry": "BinData/image3.BMP",
+   "format": "BMP",
+   "width": 1160,
+   "height": 724,
+   "svg_sha256": "bc57560731f0808869891775bc81b81ce14d701ee8d99401c9d368b7f281eb56",
+   "sha256": "3c6b79e5a5ddb1fb351ad48b57b9e578ea390bab2d0a9219de966ea47947fb94"
+  }
+ ],
+ "audit": {
+  "tokens": 715,
+  "unmatched": [],
+  "status": "ok"
+ },
+ "output_sha256": "6c3098e9a2082922253b0fcb53253ef201db03fa8df790eee10741b1f7762ea2"
+}
