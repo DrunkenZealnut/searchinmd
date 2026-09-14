@@ -176,6 +176,49 @@ class SectionTests(unittest.TestCase):
             HR.find_paragraph(sections["ncs"], "없는 문단")
 
 
+class ErrorPathTests(unittest.TestCase):
+    """ship 커버리지 감사(2026-09-14) — 조용히 지나가면 안 되는 오류 경로: 모르는 그룹, 제목 없는 문서, 없는 표·그림, 그림 중복, magick 부재, 다중 문단 셀."""
+
+    def test_load_facts_refuses_unknown_group(self):
+        summary = json.loads(HR.DEFAULT_SUMMARY.read_text(encoding="utf-8"))
+        summary["corpora"]["NCS"]["groups"].append({"name": "반도체신규", "documents": 1, "pages": 3, "total": 1, "grades": {"1": 1, "2": 0, "3": 0, "unpaged": 0}})
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "summary.json"; path.write_text(json.dumps(summary, ensure_ascii=False), encoding="utf-8")
+            with self.assertRaises(ValueError) as ctx:
+                HR.load_facts(path, HR.DEFAULT_CASES, HR.DEFAULT_RECOUNT)
+            self.assertIn("반도체신규", str(ctx.exception))
+
+    def test_locate_sections_refuses_document_without_body_chapter_heading(self):
+        root = ET.fromstring(f'<hs:sec {NS}>' + para("제3장 연구 결과") + para("본문") + "</hs:sec>")      # 목차 1회뿐
+        with self.assertRaises(ValueError):
+            HR.locate_sections(root)
+
+    def test_missing_table_and_picture_are_errors_and_duplicate_item_is_ambiguous(self):
+        root = ET.fromstring(f'<hs:sec {NS}>' + para("표 99. 없는 표") + para("그냥 문단") + pic("image9") + pic("image9") + "</hs:sec>")
+        section = HR.Section("x", 0, 4, HR.top_paragraphs(root))
+        with self.assertRaises(ValueError):
+            HR.find_table_after_caption(section, "표 99.")
+        with self.assertRaises(ValueError):
+            HR.find_table_by_first_cell(section, "표 99.")
+        with self.assertRaises(ValueError):
+            HR.find_picture(section, "그림 9.", None)
+        with self.assertRaises(ValueError) as ctx:
+            HR.find_picture(section, None, "image9")
+        self.assertIn("2개", str(ctx.exception))
+
+    def test_render_refuses_without_magick(self):
+        from unittest import mock
+        with mock.patch.object(HR.shutil, "which", lambda name: None), self.assertRaises(RuntimeError) as ctx:
+            HR.render_svg("<svg/>", "PNG", 10, 10)
+        self.assertIn("magick", str(ctx.exception))
+
+    def test_set_cell_collapses_multi_paragraph_cell(self):
+        cell = ET.fromstring(f'<hp:tc {NS}><hp:subList>{para("첫 줄")}{para("둘째 줄")}</hp:subList><hp:cellAddr colAddr="0" rowAddr="0"/></hp:tc>')
+        HR.set_cell(cell, "하나")
+        self.assertEqual(1, len(HR.cell_paragraphs(cell))); self.assertEqual("하나", HR.cell_text(cell))
+        self.assertIsNotNone(cell.find(HP + "cellAddr"))
+
+
 class AuditTests(unittest.TestCase):
     def test_audit_flags_stale_numbers_and_accepts_canonical_ones(self):
         f = fixture_facts()
