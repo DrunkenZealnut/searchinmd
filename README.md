@@ -83,6 +83,8 @@ python3 semantic_keyword_recount.py \
 
 교과서 등급 워크북(`ncs_keywords_in_markdown_results_교과서_results_20260415.xlsx`)은 `--source-workbook` 과 같은 폴더에서 자동으로 찾고, 없으면 멈춥니다(`--school-grade-workbook` 으로 따로 지정). 실행 명령·입력 파일별 sha256·git commit 은 `semantic_summary.json` 의 `meta.run` 에 남으므로, 수치가 어긋나면 어느 입력이 달라졌는지 거기서 추적합니다.
 
+정본이 아닌 사전(`--dictionary v1` 또는 `v1fix`)은 **변형 실행**이라 `docs/` 아래와 정본 기본 이름으로는 쓰지 못하고, `EXPECTED` 불일치를 `meta.run` 에 기록만 합니다. 사전을 v2 로 고른 근거인 **표현 점검**(`expression_review.py sample` → `code_pages.py` 코더 2계열 → `score` → `impact`)은 실행 순서와 결과가 [표현 점검 결과](docs/03-analysis/expression-review.analysis.md) §8 에 있고, 대시보드 수치를 바꾸지 않습니다. 기초보고서 **HWPX 재작성**(`python3 hwpx_results_refresh.py`, 원본 `data/반도체 기초보고서_20260911.hwpx` → 새 파일 `…_20260914_정본.hwpx`)은 숫자를 추적된 `semantic_summary.json`·`accident_case_pages.json`·`summary.json` 에서만 가져와 제3장 1~3절의 문단·표·그림을 다시 쓰며, 그림에 ImageMagick(`magick`)이 필요하고 `--no-render` 면 그림 없이 점검만 합니다. 다시 쓴 절의 숫자가 하나라도 정본 값이 아니면 아무것도 쓰지 않습니다.
+
 원본 PDF 까지 있으면 **재세그먼트**(`resegment.py`)도 돌릴 수 있습니다 — 이전 기준(페이지 단위)의 정본이며, 2026-09-13 부터 대시보드 KPI 는 위 출현건수 기준이고 이 값은 병기됩니다. 2026-04 검색 당시 워크북의 '페이지' 라벨은 목차 단위라 여러 쪽을 한 라벨로 묶은 경우가 많았는데, 이 스크립트는 마크다운 줄을 PDF 쪽 텍스트에 정렬해 검출 행 7,769건을 실제 쪽에 다시 놓고 (교재, 쪽) 단위 등급을 다시 셉니다. 결과는 검출 1,847→2,189쪽, 등급3 108쪽(5.8%)→145쪽(6.6%)(2026-09-06 마커 결손 보정 후)이며 `docs/03-analysis/data/ncs_pages_reseg.csv`·`reseg_summary.json` 으로 커밋돼 있습니다. 2026-09-06~09-12 의 대시보드 KPI 는 이 산출물이었고, 지금은 "이전 기준"으로 병기됩니다([재세그먼트 결과](docs/03-analysis/resegment-results.analysis.md) §6).
 
 ```bash
@@ -162,6 +164,7 @@ python3 osha_downloader.py
 | [등급 재집계 분석](docs/03-analysis/grade-recount.analysis.md) | 설명 | 등급 체계를 왜 이렇게 통일했는지, 페이지 단위 집계가 왜 필요한지 |
 | [재코딩 결과 분석](docs/03-analysis/recoding-results.analysis.md) | 설명 | 538쪽 AI 재코딩으로 잰 현행 규칙의 정밀도·재현율, 어느 변형도 채택하지 않은 이유 |
 | [어휘 누락 탐색](docs/03-analysis/vocab-search.analysis.md) | 설명 | 규칙 사전에 빠진 안전어·조치어 21종과 그것이 등급3 비율에 미치는 영향 |
+| [표현 점검 결과](docs/03-analysis/expression-review.analysis.md) | 설명 | 의미 재검산 사전의 확장 표현 22개를 AI 코더 2계열로 점검한 정밀도(CP 95% 구간)·κ 0.965, 사전 v2 를 고른 근거와 v1/v1fix/v2 영향표; §8 이 재현 순서 |
 | [재세그먼트 결과](docs/03-analysis/resegment-results.analysis.md) | 설명 | 워크북 페이지 라벨을 원본 PDF 실제 쪽으로 풀면 검출 쪽수·등급3 비율이 어떻게 바뀌는지(1,847→2,189쪽, 5.8→6.6%); 대시보드는 2026-09-06~09-12 이 수치를 발표했고 지금은 이전 기준으로 병기 |
 | [`CLAUDE.md`](CLAUDE.md) | 레퍼런스 | 아키텍처, 페이지 매핑 알고리즘, 제목 판정 규칙, 디자인 토큰 |
 | `키워드기반_문서분류분석_방법론.hwpx` | 설명 | 방법론 원본 — 6단계 파이프라인과 위치 정합 알고리즘 |

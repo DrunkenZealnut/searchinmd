@@ -9,7 +9,7 @@
 | `regrade_impact.json` | `regrade.py` | 채점 규칙 변형별 영향 (라벨 기준) | 연구용 |
 | `recoding_scores*.json` | `score_coding.py` | AI 코더 재코딩 채점 | 연구용, 미발표 |
 | `accident_case_pages.json` | 손으로 옮김 (`resegment-results.analysis.md` §3.4) | 사고사례 자동 판정 13쪽·5권의 원문 확인 판정 — 실제 사고 서술 3쪽(반도체 산업재해 구미 불산 1건·2권 중복, 산업재해 아님 1), 오탐 10(지침 6·정의 1·물성 3). `ncs_pages_reseg.csv` 사고사례=예 13쪽과 일치(테스트) | 연구용 — 기초보고서 3절·대시보드 사고사례 절의 근거 |
-| `hwpx_results_refresh_20260914.json` | `hwpx_results_refresh.py` | 기초보고서 HWPX 제3장 1~3절 재작성의 변경 대조 — 문단 45(구/신 숫자 목록·정본 키 경로 `keys`·서술 조건 결과 `conditions`)·표 7(바뀐 셀 수)·그림 3(형식·크기·비트·sha256)·숫자 감사(토큰 715, 미일치 0, 2장 5절 범위 밖 stale 0). 새 HWPX 는 `data/`(비추적) | 연구용 — 보고서 문장은 담지 않음 |
+| `hwpx_results_refresh_20260914.json` | `hwpx_results_refresh.py` | 기초보고서 HWPX 제3장 1~3절 재작성의 변경 대조 — 문단 45(구/신 숫자 목록·정본 키 경로 `keys`·서술 조건 결과 `conditions`)·표 7(바뀐 셀 수)·그림 3(형식·크기·비트·sha256)·숫자 감사(토큰 723, 미일치 0, 2장 5절 범위 밖 stale 0). 새 HWPX 는 `data/`(비추적) | 연구용 — 보고서 문장은 담지 않음 |
 | `expression_review_key.json`, `expression_review_{A,B,adj}.json`, `expression_review_scores.json`, `expression_review_impact.json` | `expression_review.py` (+ `code_pages.py`) | 의미 재검산 사전의 도메인 점검 — 표본 키(618건, 본문 없음), 코더 2계열 라벨(A `claude-opus-5`·B `gpt-5.6-sol`)과 연구책임자 재정, 표현별 정밀도·CP 95% 구간·κ(하한 < 0.8 후보), 사전 v1/v1fix/v2 영향표. 시트(본문)는 `data/` 비추적 | 연구용, 미발표 — 정본은 `semantic_summary.json`(사전 `v2`, 결정 3); 영향표의 `v2` 열이 정본과 같음(`test_impact_canonical_column_equals_canonical_summary`) |
 
 대시보드 하니스(`outputs/test-dashboard-data.js`)가 발표면(대시보드·분리 분석 페이지·README·CLAUDE.md)의 수치를 `semantic_summary.json` 과, 이전 기준(페이지 단위)을 `reseg_summary.json` 과 대조한다(S2~S8).
