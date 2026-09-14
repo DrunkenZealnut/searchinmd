@@ -8,6 +8,7 @@
 | `txt_pages.csv`, `summary.json` `textbook` | `recount_grades.py` | 반도체고 교과서 9권 | 발표 정본 |
 | `regrade_impact.json` | `regrade.py` | 채점 규칙 변형별 영향 (라벨 기준) | 연구용 |
 | `recoding_scores*.json` | `score_coding.py` | AI 코더 재코딩 채점 | 연구용, 미발표 |
+| `expression_review_key.json`, `expression_review_{A,B,adj}.json`, `expression_review_scores.json`, `expression_review_impact.json` | `expression_review.py` (+ `code_pages.py`) | 의미 재검산 사전의 도메인 점검 — 표본 키(618건, 본문 없음), 코더 2계열 라벨(A `claude-opus-5`·B `gpt-5.6-sol`)과 연구책임자 재정, 표현별 정밀도·CP 95% 구간·κ(하한 < 0.8 후보), 사전 v1/v1fix/v2 영향표. 시트(본문)는 `data/` 비추적 | 연구용, 미발표 — 정본은 `semantic_summary.json`(사전 `v1fix`) |
 
 대시보드 하니스(`outputs/test-dashboard-data.js`)가 발표면(대시보드·분리 분석 페이지·README·CLAUDE.md)의 수치를 `semantic_summary.json` 과, 이전 기준(페이지 단위)을 `reseg_summary.json` 과 대조한다(S2~S8).
 
