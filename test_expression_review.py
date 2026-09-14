@@ -118,6 +118,33 @@ class ScoreTests(unittest.TestCase):
         self.assertEqual(0.8, scores["meta"]["floor"])
         self.assertIn("kappa", scores["overall"])
 
+    def test_score_carries_tier_and_family_warning(self):
+        key = {"sample_digest": "d", "items": [{"id": "E1", "keyword": "보호구", "expression": "방진복"}, {"id": "E2", "keyword": "인화", "expression": "가연성"}, {"id": "E3", "keyword": "PSM", "expression": "PSM"}]}
+        a = {"grades": {"E1": 1, "E2": 1, "E3": 2}, "meta": {"model": "claude-opus-5", "base_url": "claude-cli://anthropic"}}
+        b = {"grades": {"E1": 1, "E2": 1, "E3": 2}, "meta": {"model": "gpt-5.6-sol", "base_url": "https://api.openai.com/v1"}}
+        scores = ER.score(key, a, b)
+        self.assertEqual({"방진복": "specific", "가연성": "equivalent", "PSM": "exact"}, {r["expression"]: r["tier"] for r in scores["expressions"]})
+        self.assertIsNone(scores["meta"]["family_warning"])
+        same = ER.score(key, a, {"grades": b["grades"], "meta": a["meta"]})
+        self.assertIn("FR-1", same["meta"]["family_warning"])
+
+    def test_companion_stats_count_contexts_and_conditional_precision(self):
+        key = {"sample_digest": "d", "items": [{"id": f"E{i}", "keyword": "보호구", "expression": "방진복"} for i in range(4)]
+                                             + [{"id": "F0", "keyword": "인화", "expression": "가연성"}]}
+        texts = {"E0": "방진복을 착용한다", "E1": "방진복 규격은 보호 등급별", "E2": "방진복 세탁 주기", "E3": "방진복 재고", "F0": "가연성 가스 위험"}
+        labels = {"E0": 1, "E1": 1, "E2": 2, "E3": "?", "F0": 1}
+        stats = ER.companion_stats(key, texts, labels, companions=("착용", "보호", "위험"))
+        self.assertEqual({"o": 1, "x": 0}, stats["companions"]["착용"])            # E0 만 (라벨 1)
+        self.assertEqual({"o": 1, "x": 0}, stats["companions"]["보호"])
+        self.assertEqual({"o": 1, "x": 0}, stats["companions"]["위험"])
+        cond = {r["expression"]: r for r in stats["expressions"]}
+        self.assertEqual({"n": 2, "k": 2, "precision": 1.0, "kept_of_1": 1.0}, {k: cond["방진복"][k] for k in ("n", "k", "precision", "kept_of_1")})   # 동반어 창: E0·E1 / 라벨 1 두 건 모두 유지
+        self.assertEqual(1, cond["방진복"]["dropped_x"])                                                                                            # 동반어 없는 X 문맥 1건(E2) 은 떨어진다
+        self.assertNotIn("방진복을", json.dumps(stats, ensure_ascii=False))                                                                          # 본문 없음
+        scores = ER.score(key, {"grades": labels, "meta": {}}, {"grades": labels, "meta": {}}, texts=texts)
+        self.assertEqual(2, next(r for r in scores["expressions"] if r["expression"] == "방진복")["conditional"]["n"])
+        self.assertIn("companions", scores["meta"])
+
     def test_adj_file_is_validated(self):
         key = {"sample_digest": "d", "items": [{"id": "E1", "keyword": "k", "expression": "e"}]}
         with self.assertRaises(ValueError):

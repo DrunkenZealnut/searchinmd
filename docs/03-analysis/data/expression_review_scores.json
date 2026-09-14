@@ -1,0 +1,573 @@
+{
+ "meta": {
+  "sample_digest": "9713a337b4d94bac",
+  "coders": {
+   "A": "claude-opus-5",
+   "B": "gpt-5.6-sol"
+  },
+  "family_warning": null,
+  "alpha": 0.05,
+  "floor": 0.8,
+  "adopted": null,
+  "companions": {
+   "patterns": [
+    "착용",
+    "보호",
+    "노출",
+    "피폭",
+    "화상",
+    "부상",
+    "위험",
+    "유해",
+    "안전",
+    "보건",
+    "재해",
+    "사고"
+   ],
+   "counts": {
+    "착용": {
+     "o": 104,
+     "x": 8
+    },
+    "보호": {
+     "o": 149,
+     "x": 2
+    },
+    "노출": {
+     "o": 47,
+     "x": 5
+    },
+    "피폭": {
+     "o": 0,
+     "x": 0
+    },
+    "화상": {
+     "o": 34,
+     "x": 0
+    },
+    "부상": {
+     "o": 0,
+     "x": 0
+    },
+    "위험": {
+     "o": 60,
+     "x": 2
+    },
+    "유해": {
+     "o": 64,
+     "x": 0
+    },
+    "안전": {
+     "o": 211,
+     "x": 9
+    },
+    "보건": {
+     "o": 58,
+     "x": 1
+    },
+    "재해": {
+     "o": 0,
+     "x": 0
+    },
+    "사고": {
+     "o": 21,
+     "x": 0
+    }
+   }
+  }
+ },
+ "expressions": [
+  {
+   "keyword": "보호구",
+   "expression": "방진화",
+   "tier": "specific",
+   "n": 30,
+   "k": 0,
+   "precision": 0.0,
+   "lower": 0.0,
+   "upper": 0.1157,
+   "kappa": null,
+   "candidate": "hold_or_conditional",
+   "disagreements": 0,
+   "adjudicated": 0,
+   "unknown": 0,
+   "conditional": {
+    "n": 2,
+    "k": 0,
+    "precision": 0.0,
+    "kept_of_1": null,
+    "dropped_x": 28
+   }
+  },
+  {
+   "keyword": "방사선",
+   "expression": "자외선",
+   "tier": "specific",
+   "n": 30,
+   "k": 0,
+   "precision": 0.0,
+   "lower": 0.0,
+   "upper": 0.1157,
+   "kappa": null,
+   "candidate": "hold_or_conditional",
+   "disagreements": 1,
+   "adjudicated": 1,
+   "unknown": 0,
+   "conditional": {
+    "n": 3,
+    "k": 0,
+    "precision": 0.0,
+    "kept_of_1": null,
+    "dropped_x": 27
+   }
+  },
+  {
+   "keyword": "화학물질",
+   "expression": "케미컬",
+   "tier": "equivalent",
+   "n": 30,
+   "k": 1,
+   "precision": 0.0333,
+   "lower": 0.0008,
+   "upper": 0.1722,
+   "kappa": 0.6512,
+   "candidate": "hold_or_conditional",
+   "disagreements": 1,
+   "adjudicated": 1,
+   "unknown": 0,
+   "conditional": {
+    "n": 7,
+    "k": 1,
+    "precision": 0.1429,
+    "kept_of_1": 1.0,
+    "dropped_x": 23
+   }
+  },
+  {
+   "keyword": "PSM",
+   "expression": "PSM",
+   "tier": "exact",
+   "n": 16,
+   "k": 1,
+   "precision": 0.0625,
+   "lower": 0.0016,
+   "upper": 0.3023,
+   "kappa": 1.0,
+   "candidate": "hold_or_conditional",
+   "disagreements": 0,
+   "adjudicated": 0,
+   "unknown": 0,
+   "conditional": {
+    "n": 2,
+    "k": 1,
+    "precision": 0.5,
+    "kept_of_1": 1.0,
+    "dropped_x": 14
+   }
+  },
+  {
+   "keyword": "방사선",
+   "expression": "X선",
+   "tier": "specific",
+   "n": 30,
+   "k": 5,
+   "precision": 0.1667,
+   "lower": 0.0564,
+   "upper": 0.3472,
+   "kappa": 0.76,
+   "candidate": "hold_or_conditional",
+   "disagreements": 2,
+   "adjudicated": 2,
+   "unknown": 0,
+   "conditional": {
+    "n": 5,
+    "k": 4,
+    "precision": 0.8,
+    "kept_of_1": 0.8,
+    "dropped_x": 24
+   }
+  },
+  {
+   "keyword": "보호구",
+   "expression": "방진복",
+   "tier": "specific",
+   "n": 30,
+   "k": 5,
+   "precision": 0.1667,
+   "lower": 0.0564,
+   "upper": 0.3472,
+   "kappa": 1.0,
+   "candidate": "hold_or_conditional",
+   "disagreements": 0,
+   "adjudicated": 0,
+   "unknown": 0,
+   "conditional": {
+    "n": 10,
+    "k": 5,
+    "precision": 0.5,
+    "kept_of_1": 1.0,
+    "dropped_x": 20
+   }
+  },
+  {
+   "keyword": "화학물질",
+   "expression": "화학약품",
+   "tier": "equivalent",
+   "n": 30,
+   "k": 5,
+   "precision": 0.1667,
+   "lower": 0.0564,
+   "upper": 0.3472,
+   "kappa": 1.0,
+   "candidate": "hold_or_conditional",
+   "disagreements": 2,
+   "adjudicated": 2,
+   "unknown": 0,
+   "conditional": {
+    "n": 7,
+    "k": 5,
+    "precision": 0.7143,
+    "kept_of_1": 1.0,
+    "dropped_x": 23
+   }
+  },
+  {
+   "keyword": "누출",
+   "expression": "누설",
+   "tier": "equivalent",
+   "n": 30,
+   "k": 7,
+   "precision": 0.2333,
+   "lower": 0.0993,
+   "upper": 0.4228,
+   "kappa": 0.7337,
+   "candidate": "hold_or_conditional",
+   "disagreements": 3,
+   "adjudicated": 3,
+   "unknown": 0,
+   "conditional": {
+    "n": 4,
+    "k": 4,
+    "precision": 1.0,
+    "kept_of_1": 0.5714,
+    "dropped_x": 23
+   }
+  },
+  {
+   "keyword": "인화",
+   "expression": "combustible",
+   "tier": "equivalent",
+   "n": 2,
+   "k": 2,
+   "precision": 1.0,
+   "lower": 0.1581,
+   "upper": 1.0,
+   "kappa": null,
+   "candidate": "hold_or_conditional",
+   "disagreements": 0,
+   "adjudicated": 0,
+   "unknown": 0,
+   "conditional": {
+    "n": 1,
+    "k": 1,
+    "precision": 1.0,
+    "kept_of_1": 0.5,
+    "dropped_x": 0
+   }
+  },
+  {
+   "keyword": "화학물질",
+   "expression": "화학 물질",
+   "tier": "equivalent",
+   "n": 30,
+   "k": 19,
+   "precision": 0.6333,
+   "lower": 0.4386,
+   "upper": 0.8007,
+   "kappa": 0.8585,
+   "candidate": "hold_or_conditional",
+   "disagreements": 3,
+   "adjudicated": 3,
+   "unknown": 0,
+   "conditional": {
+    "n": 15,
+    "k": 15,
+    "precision": 1.0,
+    "kept_of_1": 0.7895,
+    "dropped_x": 11
+   }
+  },
+  {
+   "keyword": "보호구",
+   "expression": "장갑",
+   "tier": "specific",
+   "n": 30,
+   "k": 22,
+   "precision": 0.7333,
+   "lower": 0.5411,
+   "upper": 0.8772,
+   "kappa": 1.0,
+   "candidate": "hold_or_conditional",
+   "disagreements": 0,
+   "adjudicated": 0,
+   "unknown": 0,
+   "conditional": {
+    "n": 23,
+    "k": 22,
+    "precision": 0.9565,
+    "kept_of_1": 1.0,
+    "dropped_x": 7
+   }
+  },
+  {
+   "keyword": "작업환경",
+   "expression": "작업 환경",
+   "tier": "equivalent",
+   "n": 25,
+   "k": 19,
+   "precision": 0.76,
+   "lower": 0.5487,
+   "upper": 0.9064,
+   "kappa": 0.8947,
+   "candidate": "hold_or_conditional",
+   "disagreements": 4,
+   "adjudicated": 4,
+   "unknown": 5,
+   "conditional": {
+    "n": 20,
+    "k": 18,
+    "precision": 0.9,
+    "kept_of_1": 0.9474,
+    "dropped_x": 4
+   }
+  },
+  {
+   "keyword": "인화",
+   "expression": "가연성",
+   "tier": "equivalent",
+   "n": 30,
+   "k": 28,
+   "precision": 0.9333,
+   "lower": 0.7793,
+   "upper": 0.9918,
+   "kappa": 0.7826,
+   "candidate": "hold_or_conditional",
+   "disagreements": 1,
+   "adjudicated": 1,
+   "unknown": 0,
+   "conditional": {
+    "n": 11,
+    "k": 11,
+    "precision": 1.0,
+    "kept_of_1": 0.3929,
+    "dropped_x": 2
+   }
+  },
+  {
+   "keyword": "부상",
+   "expression": "화상",
+   "tier": "specific",
+   "n": 29,
+   "k": 29,
+   "precision": 1.0,
+   "lower": 0.8806,
+   "upper": 1.0,
+   "kappa": null,
+   "candidate": "keep",
+   "disagreements": 0,
+   "adjudicated": 0,
+   "unknown": 1,
+   "conditional": {
+    "n": 29,
+    "k": 29,
+    "precision": 1.0,
+    "kept_of_1": 1.0,
+    "dropped_x": 0
+   }
+  },
+  {
+   "keyword": "보호구",
+   "expression": "개인 보호 장비",
+   "tier": "specific",
+   "n": 30,
+   "k": 30,
+   "precision": 1.0,
+   "lower": 0.8843,
+   "upper": 1.0,
+   "kappa": null,
+   "candidate": "keep",
+   "disagreements": 0,
+   "adjudicated": 0,
+   "unknown": 0,
+   "conditional": {
+    "n": 30,
+    "k": 30,
+    "precision": 1.0,
+    "kept_of_1": 1.0,
+    "dropped_x": 0
+   }
+  },
+  {
+   "keyword": "보건",
+   "expression": "건강",
+   "tier": "specific",
+   "n": 30,
+   "k": 30,
+   "precision": 1.0,
+   "lower": 0.8843,
+   "upper": 1.0,
+   "kappa": null,
+   "candidate": "keep",
+   "disagreements": 0,
+   "adjudicated": 0,
+   "unknown": 0,
+   "conditional": {
+    "n": 17,
+    "k": 17,
+    "precision": 1.0,
+    "kept_of_1": 0.5667,
+    "dropped_x": 0
+   }
+  },
+  {
+   "keyword": "물질안전보건자료",
+   "expression": "물질 안전 보건 자료",
+   "tier": "equivalent",
+   "n": 30,
+   "k": 30,
+   "precision": 1.0,
+   "lower": 0.8843,
+   "upper": 1.0,
+   "kappa": null,
+   "candidate": "keep",
+   "disagreements": 0,
+   "adjudicated": 0,
+   "unknown": 0,
+   "conditional": {
+    "n": 30,
+    "k": 30,
+    "precision": 1.0,
+    "kept_of_1": 1.0,
+    "dropped_x": 0
+   }
+  },
+  {
+   "keyword": "인화",
+   "expression": "발화성",
+   "tier": "equivalent",
+   "n": 30,
+   "k": 30,
+   "precision": 1.0,
+   "lower": 0.8843,
+   "upper": 1.0,
+   "kappa": null,
+   "candidate": "keep",
+   "disagreements": 0,
+   "adjudicated": 0,
+   "unknown": 0,
+   "conditional": {
+    "n": 17,
+    "k": 17,
+    "precision": 1.0,
+    "kept_of_1": 0.5667,
+    "dropped_x": 0
+   }
+  },
+  {
+   "keyword": "보호구",
+   "expression": "보호안경",
+   "tier": "specific",
+   "n": 30,
+   "k": 30,
+   "precision": 1.0,
+   "lower": 0.8843,
+   "upper": 1.0,
+   "kappa": null,
+   "candidate": "keep",
+   "disagreements": 0,
+   "adjudicated": 0,
+   "unknown": 0,
+   "conditional": {
+    "n": 30,
+    "k": 30,
+    "precision": 1.0,
+    "kept_of_1": 1.0,
+    "dropped_x": 0
+   }
+  },
+  {
+   "keyword": "보호구",
+   "expression": "보호장구",
+   "tier": "specific",
+   "n": 30,
+   "k": 30,
+   "precision": 1.0,
+   "lower": 0.8843,
+   "upper": 1.0,
+   "kappa": null,
+   "candidate": "keep",
+   "disagreements": 0,
+   "adjudicated": 0,
+   "unknown": 0,
+   "conditional": {
+    "n": 30,
+    "k": 30,
+    "precision": 1.0,
+    "kept_of_1": 1.0,
+    "dropped_x": 0
+   }
+  },
+  {
+   "keyword": "보호구",
+   "expression": "안전화",
+   "tier": "specific",
+   "n": 30,
+   "k": 30,
+   "precision": 1.0,
+   "lower": 0.8843,
+   "upper": 1.0,
+   "kappa": null,
+   "candidate": "keep",
+   "disagreements": 0,
+   "adjudicated": 0,
+   "unknown": 0,
+   "conditional": {
+    "n": 30,
+    "k": 30,
+    "precision": 1.0,
+    "kept_of_1": 1.0,
+    "dropped_x": 0
+   }
+  },
+  {
+   "keyword": "유해인자",
+   "expression": "유해요인",
+   "tier": "equivalent",
+   "n": 30,
+   "k": 30,
+   "precision": 1.0,
+   "lower": 0.8843,
+   "upper": 1.0,
+   "kappa": null,
+   "candidate": "keep",
+   "disagreements": 0,
+   "adjudicated": 0,
+   "unknown": 0,
+   "conditional": {
+    "n": 30,
+    "k": 30,
+    "precision": 1.0,
+    "kept_of_1": 1.0,
+    "dropped_x": 0
+   }
+  }
+ ],
+ "overall": {
+  "n": 612,
+  "k": 383,
+  "precision": 0.6258,
+  "kappa": 0.9648,
+  "disagreements": 17,
+  "adjudicated": 17
+ }
+}

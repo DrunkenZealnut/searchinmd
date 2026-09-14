@@ -22,11 +22,13 @@ import json
 import math
 import os
 import random
+import re
 import sys
 from collections import Counter, defaultdict
 from dataclasses import dataclass, replace
 from pathlib import Path
 
+import score_coding
 import semantic_keyword_recount as SKR
 from semantic_keyword_recount import (
     Document, ExpressionRule, MatchRecord, aggregate_matches, assign_match_grades, build_default_rules,
@@ -272,8 +274,39 @@ def validate_adj(adj: dict, key: dict) -> None:
         _norm(label)
 
 
-def score(key: dict, a: dict, b: dict, adj: dict | None = None, floor: float = PRECISION_FLOOR, alpha: float = ALPHA) -> dict:
-    """표현별 정밀도·구간·κ·후보 표시. NaN 없음."""
+def companion_stats(key: dict, texts: dict, labels: dict, companions=SKR.SAFETY_COMPANIONS) -> dict:
+    """조건부 규칙(동반어)의 근거 — 동반어별 O/X 문맥 출현 수와, 표현별로 "동반어가 있는 창만 계수했을 때" 의 정밀도·유지율.
+    시트 본문(texts) 은 계수에만 쓰이고 출력에는 숫자만 남는다. 창은 시트 문맥(앞줄·해당 줄·뒷줄) = 조건부 판정 창."""
+    pats = {c: re.compile(c) for c in companions}
+    per_comp = {c: {"o": 0, "x": 0} for c in companions}
+    by_expr: dict[tuple[str, str], dict] = {}
+    for item in key["items"]:
+        text = texts.get(item["id"], "")
+        label = _norm(labels.get(item["id"], "?"))
+        hit = any(p.search(text) for p in pats.values())
+        for c, p in pats.items():
+            if label in (1, 2) and p.search(text):
+                per_comp[c]["o" if label == 1 else "x"] += 1
+        row = by_expr.setdefault((item["keyword"], item["expression"]), {"keyword": item["keyword"], "expression": item["expression"], "n": 0, "k": 0, "total_1": 0, "dropped_x": 0})
+        if label == "?":
+            continue
+        row["total_1"] += label == 1
+        if hit:
+            row["n"] += 1
+            row["k"] += label == 1
+        elif label == 2:
+            row["dropped_x"] += 1
+    rows = []
+    for row in by_expr.values():
+        row["precision"] = round(row["k"] / row["n"], 4) if row["n"] else None
+        row["kept_of_1"] = round(row["k"] / row["total_1"], 4) if row["total_1"] else None
+        rows.append(row)
+    return {"companions": per_comp, "expressions": rows}
+
+
+def score(key: dict, a: dict, b: dict, adj: dict | None = None, floor: float = PRECISION_FLOOR, alpha: float = ALPHA, texts: dict | None = None) -> dict:
+    """표현별 정밀도·구간·κ·후보 표시. NaN 없음. texts(시트 id→본문) 가 있으면 조건부 규칙 근거(meta.companions, expressions[].conditional) 를 붙인다."""
+    tiers = {(c.keyword, c.expression): c.tier for c in SKR.default_candidate_decisions()}
     if adj:
         validate_adj(adj, key)
     adj_labels = (adj or {}).get("labels") or {}
@@ -300,7 +333,7 @@ def score(key: dict, a: dict, b: dict, adj: dict | None = None, floor: float = P
         else:
             lower = upper = precision = None
         candidate = None if n == 0 else ("keep" if lower >= floor else "hold_or_conditional")
-        rows.append({"keyword": keyword, "expression": expression, "n": n, "k": k, "precision": precision, "lower": lower, "upper": upper,
+        rows.append({"keyword": keyword, "expression": expression, "tier": tiers.get((keyword, expression), "exact" if keyword == expression else None), "n": n, "k": k, "precision": precision, "lower": lower, "upper": upper,
                      "kappa": kappa([x for x, _ in both], [y for _, y in both]), "candidate": candidate,
                      "disagreements": disagreements, "adjudicated": adjudicated, "unknown": len(labels) - n})
     rows.sort(key=lambda r: (r["candidate"] != "hold_or_conditional", r["lower"] if r["lower"] is not None else 2, r["expression"]))
@@ -309,9 +342,16 @@ def score(key: dict, a: dict, b: dict, adj: dict | None = None, floor: float = P
                "precision": round(sum(1 for l in valid_all if l == 1) / len(valid_all), 4) if valid_all else None,
                "kappa": kappa([x for x, _ in pairs_all], [y for _, y in pairs_all]),
                "disagreements": sum(r["disagreements"] for r in rows), "adjudicated": len(adj_labels)}
-    return {"meta": {"sample_digest": key.get("sample_digest"), "coders": {"A": (a.get("meta") or {}).get("model"), "B": (b.get("meta") or {}).get("model")},
-                     "alpha": alpha, "floor": floor, "adopted": None},
-            "expressions": rows, "overall": overall}
+    meta = {"sample_digest": key.get("sample_digest"), "coders": {"A": (a.get("meta") or {}).get("model"), "B": (b.get("meta") or {}).get("model")},
+            "family_warning": score_coding.family_guard(a.get("meta"), b.get("meta")), "alpha": alpha, "floor": floor, "adopted": None}
+    if texts is not None:
+        stats = companion_stats(key, texts, final)
+        meta["companions"] = {"patterns": list(SKR.SAFETY_COMPANIONS), "counts": stats["companions"]}
+        cond = {(r["keyword"], r["expression"]): r for r in stats["expressions"]}
+        for row in rows:
+            c = cond[(row["keyword"], row["expression"])]
+            row["conditional"] = {k: c[k] for k in ("n", "k", "precision", "kept_of_1", "dropped_x")}
+    return {"meta": meta, "expressions": rows, "overall": overall}
 
 
 # ---------------------------------------------------------------- 영향표
@@ -364,6 +404,7 @@ def main() -> None:
     c.add_argument("--key", type=Path, default=DEFAULT_KEY); c.add_argument("--a", type=Path, default=DEFAULT_A); c.add_argument("--b", type=Path, default=DEFAULT_B)
     c.add_argument("--adj", type=Path, default=DEFAULT_ADJ); c.add_argument("--out", type=Path, default=DEFAULT_SCORES)
     c.add_argument("--floor", type=float, default=PRECISION_FLOOR); c.add_argument("--list-disagreements", action="store_true")
+    c.add_argument("--sheet", type=Path, default=DEFAULT_SHEET, help="시트(본문) — 있으면 조건부 규칙 근거(동반어 O/X 계수) 를 붙인다. 출력에 본문은 남지 않는다")
     i = sub.add_parser("impact", help="사전 v1/v1fix/v2 영향표")
     i.add_argument("--ncs-root", type=Path, required=True); i.add_argument("--school-root", type=Path, required=True)
     i.add_argument("--source-workbook", type=Path, required=True); i.add_argument("--school-grade-workbook", type=Path)
@@ -392,12 +433,24 @@ def main() -> None:
                 if str(la) != str(lb):
                     print(f"{it['id']}\t{it['keyword']}\t{it['expression']}\t{la}\t{lb}\t{adj_labels.get(it['id'], '')}")
             return
-        out = score(key, a, b, adj, floor=args.floor)
+        texts = None
+        if args.sheet.exists():
+            sheet = json.loads(args.sheet.read_text(encoding="utf-8"))
+            if sheet.get("sample_digest") != key.get("sample_digest"):
+                sys.exit(f"시트 digest {sheet.get('sample_digest')} 가 키 {key.get('sample_digest')} 와 다릅니다 — 동반어 계수를 붙일 수 없습니다")
+            texts = {it["id"]: it["text"] for it in sheet["items"]}
+        out = score(key, a, b, adj, floor=args.floor, texts=texts)
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(json.dumps(out, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
         print(f"전체 정밀도 {out['overall']['precision']} (n={out['overall']['n']}), κ {out['overall']['kappa']}, 불일치 {out['overall']['disagreements']}")
+        if out["meta"].get("family_warning"):
+            print(out["meta"]["family_warning"])
         for r in out["expressions"]:
-            print(f"  {r['candidate'] or '-':20} {r['keyword']}:{r['expression']} {r['k']}/{r['n']} [{r['lower']}, {r['upper']}] κ={r['kappa']}")
+            cond = r.get("conditional")
+            extra = f"  조건부 {cond['k']}/{cond['n']} (O 유지 {cond['kept_of_1']}, X 탈락 {cond['dropped_x']})" if cond else ""
+            print(f"  {r['candidate'] or '-':20} {r['keyword']}:{r['expression']} {r['k']}/{r['n']} [{r['lower']}, {r['upper']}] κ={r['kappa']}{extra}")
+        if texts is None:
+            print("(시트가 없어 조건부 규칙 근거는 붙이지 않았습니다)")
     elif args.cmd == "impact":
         docs = _load_corpus(args)
         keywords = list(SKR.EXPECTED_KEYWORDS)
