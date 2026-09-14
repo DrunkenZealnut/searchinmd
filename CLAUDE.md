@@ -178,7 +178,7 @@ There is no test framework (no `package.json` / `pyproject.toml`). The project s
 
 ```bash
 node   outputs/test-search-equivalence.js   # 24 assertions — search equivalence, chunked render, lazy parse cache
-node   outputs/test-dashboard-data.js       # 65 assertions — semantic_summary.json ↔ data.js ↔ dashboards / analysis pages / README / CLAUDE.md, previous-basis lineage (reseg)
+node   outputs/test-dashboard-data.js       # 67 assertions — semantic_summary.json ↔ data.js ↔ dashboards / analysis pages / README / CLAUDE.md, previous-basis lineage (reseg)
 python3 outputs/test-recount-grades.py      # 390 assertions — recount_grades / regrade / coding-sheet / code_pages / scoring / truncation / resegment logic
 
 python3 truncation_audit.py                 # not a test — re-measures truncation and checks it against EXPECTED (needs data/)

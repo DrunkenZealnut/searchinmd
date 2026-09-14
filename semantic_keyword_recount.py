@@ -1538,6 +1538,7 @@ def dashboard_payload(result: AnalysisResult) -> dict[str, object]:
         keywords.append(item)
 
     corpora = {}
+    group_records_all = included
     for corpus in ("NCS", "교과서"):
         corpus_rows = [
             summary[(corpus, source.keyword)]
@@ -1549,9 +1550,12 @@ def dashboard_payload(result: AnalysisResult) -> dict[str, object]:
             if record.corpus == corpus:
                 group_records[_dashboard_group(corpus, record.relative_path)].append(record)
         documents_by_group = defaultdict(set)
+        pages_by_group: dict[str, int] = defaultdict(int)          # 교재 실제 쪽수 = 문서별 마커 최대값의 합 (hwpx-ncs-section-refresh D2)
         for document in result.documents:
             if document.corpus == corpus:
-                documents_by_group[_dashboard_group(corpus, document.relative_path)].add(document.relative_path)
+                group = _dashboard_group(corpus, document.relative_path)
+                documents_by_group[group].add(document.relative_path)
+                pages_by_group[group] += max((block.page or 0) for block in split_pages(document)) if document.text.strip() else 0
         groups = []
         for name in sorted(group_records):
             records = group_records[name]
@@ -1560,10 +1564,24 @@ def dashboard_payload(result: AnalysisResult) -> dict[str, object]:
                 {
                     "name": name,
                     "documents": len(documents_by_group[name]),
+                    "pages": pages_by_group[name],
                     "total": len(records),
                     "grades": {"1": counts[1], "2": counts[2], "3": counts[3], "unpaged": counts[None]},
                 }
             )
+        # 키워드 × 그룹 (D1) — 그룹 순서는 위와 같다
+        group_names = [group["name"] for group in groups]
+        for item in keywords:
+            per_group = defaultdict(list)
+            for record in group_records_all:
+                if record.corpus == corpus and record.keyword == item["name"]:
+                    per_group[_dashboard_group(corpus, record.relative_path)].append(record)
+            item["corpora"][corpus]["groups"] = [
+                {"name": name, "total": len(per_group[name]),
+                 "grades": {"1": sum(1 for r in per_group[name] if r.grade == 1), "2": sum(1 for r in per_group[name] if r.grade == 2),
+                            "3": sum(1 for r in per_group[name] if r.grade == 3), "unpaged": sum(1 for r in per_group[name] if r.grade is None)}}
+                for name in group_names
+            ]
         source_counts = Counter(record.grade_source for record in included if record.corpus == corpus)
         corpora[corpus] = {
             "documents": sum(1 for document in result.documents if document.corpus == corpus),

@@ -1063,6 +1063,26 @@ class RemediationTests(unittest.TestCase):
         kept, dedup = select_ncs_documents([_doc("NCS", "x/lm1903060101_a/a.md", "<!-- page: 1 -->\n"), _doc("NCS", "x/LM1903060101_b/b.md", "")])
         self.assertEqual(1, len(kept)); self.assertEqual("LM1903060101", dedup[0].code)
 
+    def test_summary_payload_has_keyword_groups_and_group_pages(self):
+        """hwpx-ncs-section-refresh D1·D2 — 키워드×그룹 총계·등급, 그룹의 교재 실제 쪽수(마커 최대값 합)."""
+        docs = [_doc("NCS", "반도체개발/LM1903060101_a/a.md", "<!-- page: 1 -->\n안전 위험\n<!-- page: 3 -->\n안전\n"),
+                _doc("NCS", "반도체장비/LM1903060301_b/b.md", "<!-- page: 1 -->\n위험\n<!-- page: 2 -->\n\n"),
+                _doc("NCS", "반도체장비/LM1903060302_c/c.md", "안전\n")]          # 마커 없음 → 0쪽, 미확정 출현
+        result = assign_match_grades(aggregate_matches([KeywordSource("안전", 1, True), KeywordSource("위험", 1, True)], docs,
+                                                       [ExpressionRule("안전", "안전", "exact", "기존"), ExpressionRule("위험", "위험", "exact", "기존")], []), {})
+        payload = summary_payload(result)
+        groups = {g["name"]: g for g in payload["corpora"]["NCS"]["groups"]}
+        self.assertEqual({"반도체개발": 3, "반도체장비": 2}, {n: g["pages"] for n, g in groups.items()})          # max marker 3 / 2 + 0
+        kw = {k["name"]: k["corpora"]["NCS"] for k in payload["keywords"]}
+        self.assertEqual([("반도체개발", 2), ("반도체장비", 1)], [(g["name"], g["total"]) for g in kw["안전"]["groups"]])
+        self.assertEqual([("반도체개발", 1), ("반도체장비", 1)], [(g["name"], g["total"]) for g in kw["위험"]["groups"]])
+        for name, c in kw.items():
+            self.assertEqual(c["total"], sum(g["total"] for g in c["groups"]), name)
+            for grade in ("1", "2", "3", "unpaged"):
+                self.assertEqual(c["grades"][grade], sum(g["grades"][grade] for g in c["groups"]), (name, grade))
+        self.assertEqual(1, kw["안전"]["groups"][1]["grades"]["unpaged"] + kw["안전"]["groups"][1]["grades"]["1"])   # c.md 의 안전 1건 (unpaged-context 또는 등급1)
+        self.assertEqual([g["name"] for g in payload["corpora"]["NCS"]["groups"]], [g["name"] for g in kw["안전"]["groups"]])   # 그룹 순서 동일
+
     def test_analysis_pages_escape_document_text_and_have_scroll_regions(self):
         result = self._graded_result(text="<!-- page: 1 -->\n안전 <script>&\"x\"\n")
         payload = summary_payload(result)

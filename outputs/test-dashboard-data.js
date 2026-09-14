@@ -106,6 +106,17 @@ for (const [name, c] of [['NCS', N], ['교과서', T]]) {
 check('S3e 문서 수 NCS 86 / 교과서 9', N.documents === 86 && T.documents === 9, N.documents + '/' + T.documents);
 check('S3f 후보 판정 합 100, 포함 73 / 보류 21 (사전 v2: 방진화·케미컬 보류 전환)', Object.values(S.status).reduce((a, b) => a + b, 0) === 100 && S.status.included === 73 && S.status.held === 21, JSON.stringify(S.status));
 check('S3g 등급 출처(existing/new/unpaged-*) 합 == total, 강제 배정 ≤ 5건', [N, T].every((c) => Object.values(c.grade_sources).reduce((a, b) => a + b, 0) === c.total && (c.grade_sources['unpaged-context'] + c.grade_sources['unpaged-fallback']) <= 5), JSON.stringify([N.grade_sources, T.grade_sources]));
+// hwpx-ncs-section-refresh D1·D2 — 키워드×그룹 합 == 키워드 총계·등급, 그룹 pages(마커 최대값 합): 교과서 9권 합 == recount summary.json 의 total_pages
+const RC = JSON.parse(read('docs/03-analysis/data/summary.json'));
+const kwGroupErrors = [];
+for (const k of S.keywords) for (const corpus of ['NCS', '교과서']) {
+  const c = k.corpora[corpus]; const names = S.corpora[corpus].groups.map(g => g.name);
+  if (!c.groups || c.groups.map(g => g.name).join('|') !== names.join('|')) { kwGroupErrors.push(k.name + ' ' + corpus + ' groups'); continue; }
+  if (c.groups.reduce((a, g) => a + g.total, 0) !== c.total) kwGroupErrors.push(k.name + ' ' + corpus + ' total');
+  for (const g of ['1', '2', '3', 'unpaged']) if (c.groups.reduce((a, x) => a + x.grades[g], 0) !== c.grades[g]) kwGroupErrors.push(k.name + ' ' + corpus + ' g' + g);
+}
+check('S3j 키워드×그룹 합 == 키워드 총계·등급 (NCS 4그룹 · 교과서 9그룹)', kwGroupErrors.length === 0, kwGroupErrors.slice(0, 3).join('; '));
+check('S3k 그룹 pages: NCS 4그룹 > 0, 교과서 9그룹 합 == recount total_pages (2,055)', N.groups.every(g => g.pages > 0) && T.groups.reduce((a, g) => a + g.pages, 0) === RC.textbook.total_pages, T.groups.reduce((a, g) => a + g.pages, 0) + ' vs ' + RC.textbook.total_pages);
 check('S3h 중복 제거 1건 기록 (LM1903060205)', S.meta.run.dedup.length === 1 && S.meta.run.dedup[0].code === 'LM1903060205' && S.meta.run.dedup[0].dropped.length === 1);
 check('S3i 절대 경로·홈·본문 필드 없음', !/\/Users\/|\/home\/|relative_path|"context"/.test(JSON.stringify(S)));
 check('S3j manifest 4종 해시 + 입력 6종(워크북 3·마크다운 2·이전 기준) sha256, 비단조 마커 경고는 레거시 1권뿐', ['source_sha256', 'rule_sha256', 'detail_sha256', 'summary_sha256'].every((k) => /^[0-9a-f]{64}$/.test(S.meta.manifest[k])) && S.meta.run.inputs.length === 6 && S.meta.run.inputs.some((i) => i.kind === '이전 기준') && S.meta.run.inputs.every((i) => /^[0-9a-f]{64}$/.test(i.sha256)) && S.meta.run.marker_nonmonotone.length === 1 && S.meta.run.marker_nonmonotone[0].includes('LM1903060113'), JSON.stringify(S.meta.run.marker_nonmonotone));
