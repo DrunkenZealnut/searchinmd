@@ -172,6 +172,23 @@ class ScoreTests(unittest.TestCase):
             ER.score(key, {**a, "meta": {"prompt_sha256": "old"}}, {"grades": {"E1": 1}, "meta": {"prompt_sha256": "old"}, "sample_digest": "d"})   # 지금 질문과 다름
         ER.score(key, a, {"grades": {"E1": 1}, "meta": {"prompt_sha256": p1}, "sample_digest": "d"})
 
+    def test_score_recomputes_key_digest_and_checks_sheet_text_hashes(self):
+        records = ER.collect_records(FIXTURE_DOCS, TARGETS)
+        items = ER.build_sample(records, TARGETS, seed=1, per_expression=3)
+        sheet, key = ER.sheet_and_key(items, FIXTURE_DOCS)
+        ids = [i["id"] for i in key["items"]]
+        a = {"grades": {i: 1 for i in ids}, "meta": {}}; b = {"grades": {i: 1 for i in ids}, "meta": {}}
+        texts = {i["id"]: i["text"] for i in sheet["items"]}
+        ER.score(key, a, b, texts=texts)
+        tampered = json.loads(json.dumps(key)); tampered["items"][0]["keyword"] = "건강"                    # digest 는 그대로 두고 항목만 바꿈
+        with self.assertRaises(ValueError):
+            ER.score(tampered, a, b)
+        with self.assertRaises(ValueError):
+            ER.score(key, a, b, texts={**texts, ids[0]: texts[ids[0]] + " 변조"})                              # 시트 본문이 키 해시와 다름
+        dup = json.loads(json.dumps(key)); dup["items"].append(dict(dup["items"][0]))
+        with self.assertRaises(ValueError):
+            ER.score(dup, a, b)
+
     def test_adj_file_is_validated(self):
         key = {"sample_digest": "d", "items": [{"id": "E1", "keyword": "k", "expression": "e"}]}
         with self.assertRaises(ValueError):

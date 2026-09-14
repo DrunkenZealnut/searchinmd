@@ -61,6 +61,7 @@ class CommittedDiffTests(unittest.TestCase):
 import contextlib
 import copy
 import io
+import re
 import shutil
 import struct
 import tempfile
@@ -247,6 +248,52 @@ class ErrorPathTests(unittest.TestCase):
                 HR.load_facts(HR.DEFAULT_SUMMARY, cpath, HR.DEFAULT_RECOUNT)                     # 모르는 오탐 유형
             with self.assertRaises(FileNotFoundError):
                 HR.load_facts(HR.DEFAULT_SUMMARY, HR.DEFAULT_CASES, Path(td) / "none.json")     # recount summary 없음 → 0 으로 침묵하지 않는다
+
+    def test_docs_directory_itself_is_refused(self):
+        self.assertTrue(HR._under_tracked_docs(HR.HERE / "docs")); self.assertTrue(HR._under_tracked_docs(HR.HERE / "docs" / "x.html"))
+        self.assertFalse(HR._under_tracked_docs(HR.HERE / "data")); self.assertFalse(HR._under_tracked_docs(HR.HERE / "docs2"))
+        with tempfile.TemporaryDirectory() as td:
+            src = build_fixture_hwpx(Path(td) / "s.hwpx", {})
+            with self.assertRaises(SystemExit), contextlib.redirect_stdout(io.StringIO()):
+                HR.main(["--hwpx", str(src), "--no-render", "--text-review-dir", str(HR.HERE / "docs")])
+
+    def test_serialize_keeps_namespaces_declared_on_descendants(self):
+        xml = (f'{HR.XML_DECL}<hs:sec {NS}>' + para("본문") + '<hp:p><hp:run charPrIDRef="1"><x:extra xmlns:x="urn:x"/></hp:run></hp:p></hs:sec>')
+        root_tag = re.search(r"<hs:sec\b[^>]*>", xml).group(0)
+        root = ET.fromstring(xml.encode("utf-8"))
+        data = HR.serialize_section(root, root_tag)
+        reparsed = ET.fromstring(data)                                                    # unbound prefix 면 여기서 죽는다
+        self.assertIsNotNone(reparsed.find(".//{urn:x}extra"))
+        self.assertTrue(data.decode("utf-8").startswith(HR.XML_DECL + "<hs:sec "))
+
+    def test_set_text_resets_line_segments(self):
+        p = ET.fromstring(f'<hp:p {NS}><hp:run charPrIDRef="13"><hp:t>옛 글</hp:t></hp:run><hp:linesegarray><hp:lineseg textpos="0" vertpos="1"/><hp:lineseg textpos="617" vertpos="2"/></hp:linesegarray></hp:p>')
+        HR.set_text(p, "새")
+        segs = p.findall(f"{HP}linesegarray/{HP}lineseg")
+        self.assertEqual(1, len(segs)); self.assertEqual("0", segs[0].get("textpos")); self.assertEqual("1", segs[0].get("vertpos"))
+
+    def test_write_hwpx_uses_exclusive_temp_and_cleans_up(self):
+        with tempfile.TemporaryDirectory() as td:
+            src = build_fixture_hwpx(Path(td) / "s.hwpx", {})
+            out = Path(td) / "o.hwpx"
+            HR.write_hwpx(src, out, HR.read_section(src)[0], {})
+            self.assertEqual([out.name, src.name], sorted(p.name for p in Path(td).iterdir()))          # .tmp 잔재 없음
+            (Path(td) / "not.hwpx").write_bytes(b"junk")
+            with self.assertRaises(zipfile.BadZipFile):
+                HR.write_hwpx(Path(td) / "not.hwpx", Path(td) / "o2.hwpx", b"", {})
+            self.assertFalse((Path(td) / "o2.hwpx").exists()); self.assertEqual([], [p.name for p in Path(td).glob("*.tmp")])   # 실패해도 임시 파일이 남지 않는다
+
+    def test_load_facts_refuses_unguarded_summary_and_missing_keyword_groups(self):
+        summary = json.loads(HR.DEFAULT_SUMMARY.read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory() as td:
+            forced = copy.deepcopy(summary); forced["meta"]["run"]["expected"] = None
+            (Path(td) / "forced.json").write_text(json.dumps(forced, ensure_ascii=False), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                HR.load_facts(Path(td) / "forced.json", HR.DEFAULT_CASES, HR.DEFAULT_RECOUNT)              # --force 실행·변형 실행은 보고서에 못 쓴다
+            old = copy.deepcopy(summary); old["keywords"][0]["corpora"]["NCS"].pop("groups")
+            (Path(td) / "old.json").write_text(json.dumps(old, ensure_ascii=False), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                HR.load_facts(Path(td) / "old.json", HR.DEFAULT_CASES, HR.DEFAULT_RECOUNT)                 # 키워드×그룹이 없는 옛 정본은 0 으로 채우지 않는다
 
     def test_set_cell_collapses_multi_paragraph_cell(self):
         cell = ET.fromstring(f'<hp:tc {NS}><hp:subList>{para("첫 줄")}{para("둘째 줄")}</hp:subList><hp:cellAddr colAddr="0" rowAddr="0"/></hp:tc>')

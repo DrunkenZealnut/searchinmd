@@ -1574,10 +1574,11 @@ def dashboard_payload(result: AnalysisResult) -> dict[str, object]:
             if document.corpus == corpus:
                 group = _dashboard_group(corpus, document.relative_path)
                 documents_by_group[group].add(document.relative_path)
-                pages_by_group[group] += max((block.page or 0) for block in split_pages(document)) if document.text.strip() else 0
+                markers = [int(m.group(1)) for m in (PAGE_MARKER_RE.match(line) for line in document.text.splitlines()) if m]
+                pages_by_group[group] += max(markers) if markers else 0             # 마커 줄의 최댓값 — 빈 마지막 쪽 블록도 센다
         groups = []
-        for name in sorted(group_records):
-            records = group_records[name]
+        for name in sorted(set(group_records) | set(documents_by_group)):          # 매칭이 하나도 없는 그룹도 문서·쪽수 분모에 남는다
+            records = group_records.get(name, [])
             groups.append(
                 {
                     "name": name,
@@ -2059,7 +2060,8 @@ def run_census(
             if out is None:
                 continue
             rp = os.path.realpath(str(out))
-            under_docs = rp.startswith(os.path.realpath(str(HERE / "docs")) + os.sep)
+            docs_root = os.path.realpath(str(HERE / "docs"))
+            under_docs = rp == docs_root or rp.startswith(docs_root + os.sep)          # docs 자체도 거부 (--analysis-dir docs)
             default_name = re.fullmatch(r"semantic_keyword_recount_\d{8}(?:_report)?\.(?:xlsx|md)", os.path.basename(rp)) is not None
             if under_docs or default_name:
                 raise ValueError(f"사전 변형({dictionary})은 추적 산출물·정본 기본 이름 경로에 쓸 수 없습니다: {label}={public_path(out)}")

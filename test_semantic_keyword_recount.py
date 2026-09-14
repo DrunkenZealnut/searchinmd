@@ -1235,7 +1235,13 @@ class DictionaryVersionAuditTests(unittest.TestCase):
         groups = {g["name"]: g for g in payload["corpora"]["NCS"]["groups"]}
         self.assertEqual(5, groups["반도체재료"]["pages"])
         self.assertEqual(2, groups["반도체재료"]["documents"])
-        self.assertNotIn("반도체제조", groups)                                  # 출현이 없는 그룹은 groups 에 없다 (group_records 기준)
+        self.assertEqual({"documents": 1, "pages": 0, "total": 0}, {k: groups["반도체제조"][k] for k in ("documents", "pages", "total")})   # 출현이 없는 그룹도 문서·쪽수 분모에 남는다 (Codex 적대적 리뷰)
+        trailing = _doc("NCS", "반도체개발/LM1903060101_d/d.md", "<!-- page: 1 -->\n안전\n<!-- page: 100 -->\n")
+        payload = summary_payload(assign_match_grades(aggregate_matches([KeywordSource("안전", 1, True)], [trailing], [ExpressionRule("안전", "안전", "exact", "기존")], []), {}))
+        self.assertEqual(100, payload["corpora"]["NCS"]["groups"][0]["pages"])   # 본문 없는 마지막 마커도 쪽수에 든다
+        marker_only = _doc("NCS", "반도체개발/LM1903060102_e/e.md", "<!-- page: 3 -->\n")
+        payload = summary_payload(assign_match_grades(aggregate_matches([KeywordSource("안전", 1, True)], [marker_only], [ExpressionRule("안전", "안전", "exact", "기존")], []), {}))
+        self.assertEqual(3, payload["corpora"]["NCS"]["groups"][0]["pages"])     # 마커만 있는 문서도 죽지 않는다
 
 
 if __name__ == "__main__":

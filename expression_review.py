@@ -166,8 +166,9 @@ def window_text(document: Document, record, mark: str = "«{}»") -> str:
 
 
 def _under_tracked_docs(path: Path) -> bool:
-    """docs/ 아래(추적) 인가 — 본문을 담는 파일의 경로 거부에 쓴다 (run_census 의 변형 경로 거부와 같은 규칙)."""
-    return os.path.realpath(str(path)).startswith(os.path.realpath(str(HERE / "docs")) + os.sep)
+    """docs/ 자체 또는 그 아래(추적) 인가 — 본문을 담는 파일의 경로 거부에 쓴다 (run_census 의 변형 경로 거부와 같은 규칙)."""
+    rp, docs = os.path.realpath(str(path)), os.path.realpath(str(HERE / "docs"))
+    return rp == docs or rp.startswith(docs + os.sep)
 
 
 def sample_digest(key_items: list[dict]) -> str:
@@ -332,6 +333,15 @@ def score(key: dict, a: dict, b: dict, adj: dict | None = None, floor: float = P
         validate_adj(adj, key)
     adj_labels = (adj or {}).get("labels") or {}
     ids = [i["id"] for i in key["items"]]
+    if len(set(ids)) != len(ids):
+        raise ValueError("키의 항목 id 가 중복됩니다")
+    full_key = all("text_sha256" in i for i in key["items"])           # 실제 키(본문 해시 포함)일 때만 — 단위 테스트의 최소 키는 건너뛴다
+    if full_key and sample_digest(key["items"]) != key.get("sample_digest"):
+        raise ValueError(f"키의 sample_digest {key.get('sample_digest')} 가 항목에서 다시 계산한 값 {sample_digest(key['items'])} 과 다릅니다 — 키가 손으로 바뀌었습니다")
+    if texts is not None and full_key:
+        bad = [i["id"] for i in key["items"] if hashlib.sha256(texts.get(i["id"], "").encode("utf-8")).hexdigest() != i["text_sha256"]]
+        if bad:
+            raise ValueError(f"시트 본문이 키의 text_sha256 과 다른 항목 {len(bad)}개: {', '.join(bad[:5])}")
     for name, coder in (("A", a), ("B", b)):
         if coder.get("sample_digest") is not None and coder.get("sample_digest") != key.get("sample_digest"):
             raise ValueError(f"코더 {name} 라벨의 sample_digest {coder.get('sample_digest')} 가 키 {key.get('sample_digest')} 와 다릅니다 — 다른 표본의 라벨")

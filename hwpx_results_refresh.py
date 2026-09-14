@@ -184,6 +184,9 @@ def pct(part: int, whole: int) -> str:
 
 def load_facts(summary_path: Path = DEFAULT_SUMMARY, cases_path: Path = DEFAULT_CASES, recount_path: Path | None = DEFAULT_RECOUNT) -> Facts:
     summary = json.loads(Path(summary_path).read_text(encoding="utf-8"))
+    run = summary.get("meta", {}).get("run") or {}
+    if run.get("expected") is not True:
+        raise ValueError(f"semantic_summary.json 이 가드 통과 정본이 아닙니다 (meta.run.expected={run.get('expected')!r}, force={run.get('force')!r}) — 보고서에 쓸 수 없습니다")
     cases = json.loads(Path(cases_path).read_text(encoding="utf-8"))
     if not recount_path or not Path(recount_path).exists():
         raise FileNotFoundError(f"recount summary.json 이 없습니다 (교과서 사고사례 쪽 수의 출처): {recount_path}")
@@ -206,7 +209,9 @@ def load_facts(summary_path: Path = DEFAULT_SUMMARY, cases_path: Path = DEFAULT_
         for k in summary["keywords"]:
             kc = k["corpora"][corpus]
             kw_areas = {a: {"total": 0, "grades": {1: 0, 2: 0, 3: 0}} for a in AREA_ORDER}
-            for g in kc.get("groups", []):
+            if "groups" not in kc:
+                raise ValueError(f"semantic_summary.json 에 키워드×그룹({k['name']}/{corpus})이 없습니다 — 2026-09-14 이후 정본이 필요합니다")
+            for g in kc["groups"]:
                 area = group_to_area(g["name"])
                 kw_areas[area]["total"] += g["total"]
                 for grade in (1, 2, 3):
@@ -256,6 +261,13 @@ def set_text(p: ET.Element, text: str) -> dict:
         p.remove(r)
     if direct_text(p) != text:
         raise ValueError("문단 글 교체가 닫히지 않았습니다 — 글 아닌 자식(hp:ctrl 등)과 섞인 run 이 있습니다")
+    lsa = p.find(HP + "linesegarray")
+    if lsa is not None:                                        # 옛 글의 줄 배치 캐시(textpos 가 새 글 길이를 넘을 수 있다) → 첫 줄 하나만 남기고 0 부터 다시 배치하게
+        segs = lsa.findall(HP + "lineseg")
+        for seg in segs[1:]:
+            lsa.remove(seg)
+        if segs:
+            segs[0].set("textpos", "0")
     return {"format_collapsed": collapsed}
 
 
@@ -824,9 +836,19 @@ def read_section(hwpx: Path) -> tuple[bytes, ET.Element, str]:
 
 
 def serialize_section(root: ET.Element, root_tag: str) -> bytes:
+    """원본 루트 시작 태그(선언 순서·미사용 네임스페이스 보존)로 되돌리되, ElementTree 가 루트로 끌어올린 선언 중 원본 태그에 없는 것은 덧붙인다
+    (후손에 선언돼 있던 네임스페이스가 사라져 unbound prefix 가 되던 경우 — Codex 적대적 리뷰). 결과는 다시 파싱해 검증한다."""
     body = ET.tostring(root, encoding="unicode")
-    body = re.sub(r"^<hs:sec\b[^>]*>", lambda _: root_tag, body, count=1)
-    return (XML_DECL + body).encode("utf-8")
+    generated = re.match(r"<hs:sec\b[^>]*>", body)
+    if not generated:
+        raise ValueError("직렬화 결과에 hs:sec 루트가 없습니다")
+    original_prefixes = set(re.findall(r'xmlns:([A-Za-z0-9]+)=', root_tag))
+    missing = [(pfx, uri) for pfx, uri in re.findall(r'xmlns:([A-Za-z0-9]+)="([^"]+)"', generated.group(0)) if pfx not in original_prefixes]
+    tag = root_tag[:-1] + "".join(f' xmlns:{pfx}="{uri}"' for pfx, uri in missing) + ">"
+    body = tag + body[generated.end():]
+    data = (XML_DECL + body).encode("utf-8")
+    ET.fromstring(data)                                       # 잘 만들어지지 않으면 여기서 멈춘다 — 깨진 XML 을 ZIP 에 넣지 않는다
+    return data
 
 
 def write_hwpx(src: Path, out: Path, section_xml: bytes, bindata: dict[str, bytes], force: bool = False) -> None:
@@ -836,19 +858,27 @@ def write_hwpx(src: Path, out: Path, section_xml: bytes, bindata: dict[str, byte
     if out.exists() and not force:
         raise FileExistsError(f"{out.name} 이 이미 있습니다 (--force 로 덮어쓰기)")
     out.parent.mkdir(parents=True, exist_ok=True)
-    tmp = out.with_name(out.name + ".tmp")
-    with zipfile.ZipFile(src) as zin, zipfile.ZipFile(tmp, "w") as zout:
-        for info in zin.infolist():
-            data = zin.read(info.filename)
-            if info.filename == SECTION_ENTRY:
-                data = section_xml
-            elif info.filename in bindata:
-                data = bindata[info.filename]
-            new_info = zipfile.ZipInfo(info.filename, date_time=info.date_time)
-            new_info.compress_type = info.compress_type
-            new_info.external_attr = info.external_attr
-            zout.writestr(new_info, data)
-    os.replace(tmp, out)
+    fd, tmp_name = tempfile.mkstemp(dir=out.parent, prefix=out.name + ".", suffix=".tmp")    # 배타적 생성 — 고정 이름·심볼릭 링크·동시 실행 충돌 없음
+    os.close(fd)
+    tmp = Path(tmp_name)
+    try:
+        if tmp.resolve() == src.resolve():
+            raise ValueError("임시 파일이 입력과 같습니다")
+        with zipfile.ZipFile(src) as zin, zipfile.ZipFile(tmp, "w") as zout:
+            for info in zin.infolist():
+                data = zin.read(info.filename)
+                if info.filename == SECTION_ENTRY:
+                    data = section_xml
+                elif info.filename in bindata:
+                    data = bindata[info.filename]
+                new_info = zipfile.ZipInfo(info.filename, date_time=info.date_time)
+                new_info.compress_type = info.compress_type
+                new_info.external_attr = info.external_attr
+                zout.writestr(new_info, data)
+        os.replace(tmp, out)
+    finally:
+        if tmp.exists():
+            tmp.unlink()
 
 
 # ---------------------------------------------------------------- 감사·대조
@@ -888,7 +918,9 @@ def sha256(data: bytes) -> str:
 
 
 def _under_tracked_docs(path: Path) -> bool:
-    return os.path.realpath(str(path)).startswith(os.path.realpath(str(HERE / "docs")) + os.sep)
+    """docs/ 자체 또는 그 아래 — `--text-review-dir docs` 처럼 디렉터리 자체를 주는 경우도 막는다 (Codex 적대적 리뷰)."""
+    rp, docs = os.path.realpath(str(path)), os.path.realpath(str(HERE / "docs"))
+    return rp == docs or rp.startswith(docs + os.sep)
 
 
 def public(path: Path) -> str:
