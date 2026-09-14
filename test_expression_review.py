@@ -225,5 +225,135 @@ class CommittedArtifactsTests(unittest.TestCase):
         self.assertFalse(any(isinstance(v, float) and math.isnan(v) for r in scores["expressions"] for v in r.values() if not isinstance(v, dict)))
 
 
+class CliAndEdgeTests(unittest.TestCase):
+    """ship 커버리지 감사(2026-09-14) — CLI 세 하위 명령(sample / score / impact)이 연구책임자가 치는 그대로 돌고,
+    표본·점수 도우미의 가장자리(라벨 전부 ?, 표현이 줄에 없음, 문서 끝, documents 없는 시트, κ 정의 불가)가 조용히 틀리지 않는다."""
+
+    def _corpus_roots(self, td):
+        ncs_root, school_root = Path(td) / "ncs", Path(td) / "school"
+        (ncs_root / "반도체제조" / "LM1903060101_a").mkdir(parents=True)
+        (ncs_root / "반도체제조" / "LM1903060101_a" / "a.md").write_text(NCS_TEXT, encoding="utf-8")
+        school_root.mkdir()
+        (school_root / "s.md").write_text(SCHOOL_TEXT, encoding="utf-8")
+        return ncs_root, school_root
+
+    def _main(self, argv):
+        import contextlib, io, sys
+        from unittest import mock
+        buf = io.StringIO()
+        with mock.patch.object(sys, "argv", ["expression_review.py"] + argv), contextlib.redirect_stdout(buf):
+            ER.main()
+        return buf.getvalue()
+
+    def test_cli_sample_writes_sheet_and_key_and_refuses_overwrite_without_force(self):
+        """sample: 시트 json/md(비추적 경로) + 키를 쓰고 표본 요약을 찍는다; 키가 있으면 --force 없이는 FileExistsError 로 멈춘다."""
+        with tempfile.TemporaryDirectory() as td:
+            ncs_root, school_root = self._corpus_roots(td)
+            sheet, key = Path(td) / "sheet.json", Path(td) / "key.json"
+            base = ["sample", "--ncs-root", str(ncs_root), "--school-root", str(school_root), "--sheet", str(sheet), "--key", str(key), "--per-expression", "5", "--seed", "3"]
+            out = self._main(base)
+            self.assertRegex(out, r"표본 \d+건, 표현 \d+개, digest [0-9a-f]{16}")
+            self.assertIn("보호구:방진복 5", out)                                   # 43건 중 5건
+            self.assertIn("방사선:자외선 2", out)                                   # 보류 표현은 probe 로 2건 전수
+            self.assertTrue(sheet.exists() and sheet.with_suffix(".md").exists() and key.exists())
+            key_doc = json.loads(key.read_text(encoding="utf-8"))
+            self.assertEqual((3, 5), (key_doc["seed"], key_doc["per_expression"]))            # 키는 실제 사용한 seed/표본 수를 적는다 (ship 커버리지 감사가 잡은 결함)
+            self.assertTrue(all(not Path(i["path"]).is_absolute() for i in key_doc["items"]))
+            with self.assertRaises(FileExistsError):
+                self._main(base)
+            digest_before = key_doc["sample_digest"]
+            self._main(base + ["--force"])
+            self.assertEqual(digest_before, json.loads(key.read_text(encoding="utf-8"))["sample_digest"])   # 같은 seed → 같은 표본
+
+    def _score_fixture(self, td):
+        records = ER.collect_records(FIXTURE_DOCS, TARGETS)
+        items = ER.build_sample(records, TARGETS, seed=1, per_expression=3)
+        sheet, key = ER.sheet_and_key(items, FIXTURE_DOCS)
+        ids = [i["id"] for i in key["items"]]
+        a = {"grades": {i: 1 for i in ids}, "meta": {"model": "claude-opus-5", "base_url": "claude-cli://anthropic"}}
+        b = {"grades": {**{i: 1 for i in ids}, ids[0]: 2, ids[1]: "?"}, "meta": {"model": "gpt-5.6-sol", "base_url": "https://api.openai.com/v1"}}
+        adj = {"sample_digest": key["sample_digest"], "labels": {ids[0]: 2}}
+        paths = {}
+        for name, doc in (("key", key), ("sheet", sheet), ("a", a), ("b", b), ("adj", adj)):
+            paths[name] = Path(td) / f"{name}.json"
+            paths[name].write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
+        return paths, ids, key
+
+    def test_cli_score_lists_disagreements_then_writes_scores_with_companions(self):
+        """score --list-disagreements 는 불일치 행만 찍고 파일을 쓰지 않는다; 본 실행은 시트가 있으면 동반어 근거를 붙이고 --adopted 를 meta 에 적는다."""
+        with tempfile.TemporaryDirectory() as td:
+            paths, ids, key = self._score_fixture(td)
+            out_path = Path(td) / "scores.json"
+            common = ["score", "--key", str(paths["key"]), "--a", str(paths["a"]), "--b", str(paths["b"]), "--adj", str(paths["adj"]), "--sheet", str(paths["sheet"]), "--out", str(out_path)]
+            listed = self._main(common + ["--list-disagreements"])
+            rows = [l.split("\t") for l in listed.strip().splitlines()[1:]]
+            self.assertEqual({ids[0], ids[1]}, {r[0] for r in rows})                  # A≠B 인 두 항목만
+            self.assertEqual("2", next(r for r in rows if r[0] == ids[0])[5])         # 재정 라벨 열
+            self.assertFalse(out_path.exists())
+            printed = self._main(common + ["--adopted", "v2"])
+            self.assertIn("전체 정밀도", printed); self.assertIn("조건부", printed)
+            scores = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertEqual("v2", scores["meta"]["adopted"])
+            self.assertEqual(list(SKR.SAFETY_COMPANIONS), scores["meta"]["companions"]["patterns"])
+            self.assertTrue(all("conditional" in r for r in scores["expressions"]))
+            self.assertEqual(1, scores["overall"]["adjudicated"])
+            self.assertNotIn("«", out_path.read_text(encoding="utf-8"))                # 본문은 남지 않는다
+            # 시트 digest 가 키와 다르면 동반어 계수를 붙일 수 없어 멈춘다
+            wrong = Path(td) / "wrong.json"
+            wrong.write_text(json.dumps({"sample_digest": "0" * 16, "items": []}), encoding="utf-8")
+            with self.assertRaises(SystemExit) as ctx:
+                self._main(common[:-4] + ["--sheet", str(wrong), "--out", str(out_path)])
+            self.assertIn("digest", str(ctx.exception))
+            # 시트가 없으면 근거 없이 쓰고 그 사실을 찍는다
+            printed = self._main(common[:-4] + ["--sheet", str(Path(td) / "none.json"), "--out", str(out_path)])
+            self.assertIn("시트가 없어", printed)
+            self.assertNotIn("companions", json.loads(out_path.read_text(encoding="utf-8"))["meta"])
+
+    def test_cli_impact_writes_three_version_report(self):
+        """impact: 말뭉치를 읽어 v1/v1fix/v2 영향표를 쓰고 버전별 한 줄씩 찍는다 (기존 등급은 fixture 로 대체)."""
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as td, mock.patch.object(ER.SKR, "load_existing_grades", lambda *a, **k: {}):
+            ncs_root, school_root = self._corpus_roots(td)
+            out_path = Path(td) / "impact.json"
+            printed = self._main(["impact", "--ncs-root", str(ncs_root), "--school-root", str(school_root), "--source-workbook", str(Path(td) / "src.xlsx"), "--out", str(out_path)])
+            report = json.loads(out_path.read_text(encoding="utf-8"))
+            self.assertEqual(["v1", "v1fix", "v2"], report["meta"]["versions"])
+            self.assertEqual(len(SKR.EXPECTED_KEYWORDS), report["meta"]["keywords"])
+            self.assertEqual(2, report["meta"]["documents"])
+            self.assertGreaterEqual(report["totals"]["v1fix"]["NCS"], report["totals"]["v2"]["NCS"])   # v2 는 걷어내기만 한다
+            self.assertEqual(sum(report["excluded_by_v2"]["NCS"].values()), report["totals"]["v1fix"]["NCS"] - report["totals"]["v2"]["NCS"])
+            for v in ("v1", "v1fix", "v2"):
+                self.assertRegex(printed, rf"{v}\s+NCS ")
+            self.assertIn("결함 수정이 걷어낸 것", printed)
+
+    def test_score_expression_with_only_unknown_labels_has_no_candidate_and_sorts_last(self):
+        """라벨이 전부 ? 인 표현: n=0, 정밀도·구간 None, candidate None, unknown=항목 수 — 0 으로 나누지 않고 맨 뒤로 간다."""
+        key = {"sample_digest": "d", "items": [{"id": "E1", "keyword": "보호구", "expression": "방진복"}, {"id": "E2", "keyword": "보호구", "expression": "방진복"},
+                                             {"id": "F1", "keyword": "인화", "expression": "가연성"}]}
+        a = {"grades": {"E1": "?", "E2": 1, "F1": 1}, "meta": {}}
+        b = {"grades": {"E1": 2, "E2": "?", "F1": 1}, "meta": {}}
+        scores = ER.score(key, a, b)
+        rows = {r["expression"]: r for r in scores["expressions"]}
+        self.assertEqual((0, 0, None, None, None, None, 2), tuple(rows["방진복"][k] for k in ("n", "k", "precision", "lower", "upper", "candidate", "unknown")))
+        self.assertIsNone(rows["방진복"]["kappa"])                                       # 양쪽 다 판정한 쌍이 없다
+        self.assertEqual(["가연성", "방진복"], [r["expression"] for r in scores["expressions"]])
+        self.assertEqual((1, 1, 1.0), (scores["overall"]["n"], scores["overall"]["k"], scores["overall"]["precision"]))
+
+    def test_window_text_write_sample_and_kappa_edges(self):
+        """표현이 줄에 없으면 표시 없이 그대로, 마지막 줄은 뒷줄 없이; documents 없는 시트는 거부; κ 는 빈 목록·단일 범주에서 None; 라벨 정규화."""
+        doc = _doc("반도체제조/LM1903060101_a/a.md", "<!-- page: 1 -->\n첫 줄\n마지막 방진복 줄\n")
+        self.assertEqual("첫 줄\n마지막 «방진복» 줄", ER.window_text(doc, {"line": 3, "matched_text": "방진복"}))
+        self.assertEqual("첫 줄\n마지막 방진복 줄", ER.window_text(doc, {"line": 3, "matched_text": "없는표현"}))
+        with tempfile.TemporaryDirectory() as td, self.assertRaises(ValueError):
+            ER.write_sample([{"id": "E001", "keyword": "k", "expression": "e", "corpus": "NCS", "path": "p", "line": 1, "matched_text": "e"}], Path(td) / "s.json", Path(td) / "k.json")
+        self.assertIsNone(ER.kappa([], []))
+        self.assertIsNone(ER.kappa([1, 1], [1, 1]))                                      # pe == 1
+        self.assertEqual(1.0, ER.kappa([1, 2], [1, 2]))
+        self.assertEqual(-1.0, ER.kappa([1, 2], [2, 1]))
+        self.assertEqual((1, 2, "?"), (ER._norm("1"), ER._norm("2"), ER._norm("?")))
+        with self.assertRaises(ValueError):
+            ER._norm(3)
+
+
 if __name__ == "__main__":
     unittest.main()

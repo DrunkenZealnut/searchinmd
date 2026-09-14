@@ -170,7 +170,7 @@ def sample_digest(key_items: list[dict]) -> str:
     return hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:16]
 
 
-def sheet_and_key(items: list[dict], documents: list[Document] | None = None) -> tuple[dict, dict]:
+def sheet_and_key(items: list[dict], documents: list[Document] | None = None, seed: int = SEED, per_expression: int = PER_EXPRESSION) -> tuple[dict, dict]:
     """시트(본문, 비추적)와 키(본문 없음, 추적). items 에 text 가 없으면 documents 에서 만든다."""
     doc_index = {(d.corpus, d.relative_path): d for d in (documents or [])}
     sheet_items, key_items = [], []
@@ -185,18 +185,19 @@ def sheet_and_key(items: list[dict], documents: list[Document] | None = None) ->
                           "path": public_path(item["path"]) if os.path.isabs(item["path"]) else item["path"], "line": item["line"], "text_sha256": sha})
     digest = sample_digest(key_items)
     sheet = {"sample_digest": digest, "coder_prompt": coder_prompt(), "items": sheet_items}
-    key = {"sample_digest": digest, "seed": SEED, "per_expression": PER_EXPRESSION, "targets": [list(t) for t in REVIEW_TARGETS], "items": key_items}
+    key = {"sample_digest": digest, "seed": seed, "per_expression": per_expression, "targets": [list(t) for t in REVIEW_TARGETS], "items": key_items}   # 실제 사용한 값 (CLI --seed/--per-expression)
     return sheet, key
 
 
-def write_sample(items: list[dict], sheet_path: Path, key_path: Path, documents: list[Document] | None = None, force: bool = False) -> dict:
+def write_sample(items: list[dict], sheet_path: Path, key_path: Path, documents: list[Document] | None = None, force: bool = False,
+                 seed: int = SEED, per_expression: int = PER_EXPRESSION) -> dict:
     """시트 json/md 와 키를 쓴다. 키는 라벨과 표본을 묶는 유일한 끈이라 --force 없이는 덮어쓰지 않는다."""
     sheet_path, key_path = Path(sheet_path), Path(key_path)
     if key_path.exists() and not force:
         raise FileExistsError(f"키가 이미 있습니다 — 표본을 다시 뽑으려면 --force: {public_path(key_path)}")
     if any("text" not in i for i in items) and documents is None:
         raise ValueError("documents 가 없으면 text 가 있는 items 만 쓸 수 있습니다")
-    sheet, key = sheet_and_key(items, documents)
+    sheet, key = sheet_and_key(items, documents, seed=seed, per_expression=per_expression)
     sheet_path.parent.mkdir(parents=True, exist_ok=True); key_path.parent.mkdir(parents=True, exist_ok=True)
     sheet_path.write_text(json.dumps(sheet, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     md = ["# 의미 표현 점검 시트", "", sheet["coder_prompt"], "", f"sample_digest: `{sheet['sample_digest']}` · 항목 {len(sheet['items'])}", ""]
@@ -441,7 +442,7 @@ def main() -> None:
         docs = _load_corpus(args)
         records = collect_records(docs, REVIEW_TARGETS)
         items = build_sample(records, REVIEW_TARGETS, seed=args.seed, per_expression=args.per_expression)
-        key = write_sample(items, args.sheet, args.key, documents=docs, force=args.force)
+        key = write_sample(items, args.sheet, args.key, documents=docs, force=args.force, seed=args.seed, per_expression=args.per_expression)
         counts = Counter((it["keyword"], it["expression"]) for it in items)
         print(f"표본 {len(items)}건, 표현 {len(counts)}개, digest {key['sample_digest']}")
         for (k, e), n in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0])):

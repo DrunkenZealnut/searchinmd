@@ -1145,5 +1145,84 @@ class RemediationTests(unittest.TestCase):
         self.assertNotIn("report", index)
 
 
+class DictionaryVersionAuditTests(unittest.TestCase):
+    """ship 커버리지 감사(2026-09-14) — 사전 버전 경로에서 아직 안 짚인 가지: main() 의 --dictionary 전달, 잘못된 버전의 조기 거부,
+    변형 거부의 나머지 두 라벨(report_out 기본 이름·analysis_dir 추적 경로), EXPECTED.dictionary 불일치, v1≡v1fix 후보 목록, 빈 문서의 그룹 쪽수."""
+
+    def _main_with(self, argv_tail):
+        import io, contextlib
+        seen = {}
+        def fake_run_census(*args, **kwargs):
+            seen.update(kwargs); return RemediationTests._graded_result(RemediationTests())
+        argv = ["semantic_keyword_recount.py", "--source-workbook", "s.xlsx", "--ncs-root", "n", "--school-root", "t",
+                "--xlsx-out", "o.xlsx", "--report-out", "r.md"] + argv_tail
+        with mock.patch.object(SKR, "run_census", fake_run_census), mock.patch.object(SKR.sys, "argv", argv), \
+                contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            SKR.main()
+        return seen["dictionary"]
+
+    def test_main_passes_dictionary_to_run_census_and_rejects_unknown_choice(self):
+        """--dictionary 는 run_census 로 그대로 간다; 생략하면 정본(v2); 목록 밖 값은 argparse 가 막는다."""
+        self.assertEqual("v1fix", self._main_with(["--dictionary", "v1fix"]))
+        self.assertEqual(SKR.DEFAULT_DICTIONARY, self._main_with([]))
+        with self.assertRaises(SystemExit):
+            self._main_with(["--dictionary", "v9"])
+
+    def test_run_census_rejects_unknown_version_before_reading_inputs(self):
+        """버전 검사가 파일 검사보다 앞이다 — 존재하지 않는 입력으로도 ValueError(버전) 가 먼저 난다."""
+        with self.assertRaises(ValueError) as ctx:
+            run_census(Path("없는.xlsx"), Path("없는-ncs"), Path("없는-school"), Path("o.xlsx"), Path("r.md"), dictionary="v9")
+        self.assertIn("v9", str(ctx.exception))
+        with self.assertRaises(ValueError):
+            default_candidate_decisions(version="v9")
+
+    def test_variant_refuses_report_default_name_and_analysis_dir_under_docs(self):
+        """변형 실행이 거부하는 나머지 두 자리 — report_out 의 정본 기본 이름, analysis_dir 의 docs/ 하위. 거부 뒤에는 아무것도 쓰지 않는다."""
+        with tempfile.TemporaryDirectory() as td, mock.patch.object(SKR, "HERE", Path(td)):
+            kw = RemediationTests._census_fixture(RemediationTests(), Path(td))
+            expected = {"documents": {"NCS": 86, "교과서": 9}}
+            with self.assertRaises(ValueError) as ctx:
+                run_census(**dict(kw, report_out=Path(td) / "semantic_keyword_recount_20260914_report.md"), dictionary="v1fix",
+                           expected=expected, git={"commit": "x", "dirty": False}, argv=["x"])
+            self.assertIn("report_out", str(ctx.exception))
+            self.assertFalse((Path(td) / "semantic_keyword_recount_20260914_report.md").exists())
+            self.assertFalse(kw["xlsx_out"].exists())
+            (Path(td) / "docs").mkdir()
+            with self.assertRaises(ValueError) as ctx:
+                run_census(**kw, dictionary="v1", analysis_dir=Path(td) / "docs" / "pages", expected=expected, git={"commit": "x", "dirty": False}, argv=["x"])
+            self.assertIn("analysis_dir", str(ctx.exception))
+            self.assertEqual([], list((Path(td) / "docs").iterdir()))
+            self.assertFalse(kw["xlsx_out"].exists())
+
+    def test_check_expected_catches_dictionary_mismatch(self):
+        """summary_metrics 의 dictionary 는 EXPECTED 와 글자 그대로 비교된다 — v1fix 실행을 v2 정본으로 굳힐 수 없다."""
+        result = RemediationTests._graded_result(RemediationTests())
+        metrics = summary_metrics(result, artifact_manifest(result), dictionary="v1fix")
+        self.assertEqual("v1fix", metrics["dictionary"])
+        self.assertIn("dictionary: v1fix != v2", check_expected(metrics, {"dictionary": "v2"}))
+        self.assertEqual([], check_expected(summary_metrics(result, artifact_manifest(result)), {"dictionary": SKR.DEFAULT_DICTIONARY}))
+
+    def test_v1_and_v1fix_share_candidate_decisions_and_v2_differs_only_in_overrides(self):
+        """결함 2건(v1fix)은 정확 규칙 쪽이라 후보 목록은 v1 과 같다; v2 는 _V2_OVERRIDES 의 키에서만 다르다."""
+        v1, fix, v2 = (default_candidate_decisions(version=v) for v in ("v1", "v1fix", "v2"))
+        self.assertEqual(v1, fix)
+        self.assertEqual(len(v1), len(v2))
+        changed = {(a.keyword, a.expression) for a, b in zip(fix, v2) if a != b}
+        self.assertEqual({(k, e) for k, e in SKR._V2_OVERRIDES if k != e}, changed)      # 키워드==표현(PSM) 은 정확 규칙 쪽에 적용된다
+        self.assertTrue(all((c.keyword, c.expression) in SKR._V2_OVERRIDES or c.require_patterns == () for c in v2))
+
+    def test_group_pages_zero_for_empty_document_and_max_marker_otherwise(self):
+        """그룹 쪽수는 문서별 마커 최댓값의 합 — 본문이 빈 문서는 0 이고 max(()) 로 죽지 않는다; 마커가 역행해도 최댓값을 쓴다."""
+        docs = [_doc("NCS", "반도체재료/LM1903060401_a/a.md", ""),
+                _doc("NCS", "반도체재료/LM1903060402_b/b.md", "<!-- page: 5 -->\n안전\n<!-- page: 2 -->\n안전\n"),
+                _doc("NCS", "반도체제조/LM1903060201_c/c.md", "   \n")]
+        result = assign_match_grades(aggregate_matches([KeywordSource("안전", 1, True)], docs, [ExpressionRule("안전", "안전", "exact", "기존")], []), {})
+        payload = summary_payload(result)
+        groups = {g["name"]: g for g in payload["corpora"]["NCS"]["groups"]}
+        self.assertEqual(5, groups["반도체재료"]["pages"])
+        self.assertEqual(2, groups["반도체재료"]["documents"])
+        self.assertNotIn("반도체제조", groups)                                  # 출현이 없는 그룹은 groups 에 없다 (group_records 기준)
+
+
 if __name__ == "__main__":
     unittest.main()
