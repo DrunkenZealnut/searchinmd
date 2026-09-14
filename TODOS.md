@@ -17,7 +17,7 @@
   2. **페이지 단위 이질성 (감사 M2).** 마커 파일 84권 중 30권은 실제 쪽, 54권은 목차 블록 단위라 등급 모집단이 섞여 있다. `resegment.py` 의 line→page 맵(`data/markdown/ncs_paged/`)을 재사용해 모든 출현을 실제 쪽에 얹는 것이 해법. 새 2권(마커 25~28행/쪽)은 실제 쪽 단위.
   3. **비단조 마커 레거시 1권 재유도 여부.** `LM1903060113 반도체 설계 검증` 의 목차 유도 마커가 132→58 로 되돌아가 그 구간 출현이 앞 쪽 번호로 집계된다(ship 적대적 리뷰). `meta.run.marker_nonmonotone` 에 기록만 하고 거부하지 않는다. `insert_page_markers.py --force` 로 재유도하거나 실제 쪽 마커로 바꾸면 수치가 바뀌므로 연구책임자 결정.
   4. **`public_path()` 사본 통합 (ship 리뷰 D3).** `semantic_keyword_recount.public_path` 는 `resegment.public_path` 의 15줄 사본. `page_utils` 로 옮기고 둘 다 거기서 import 할 것 — `resegment.py`·R16 테스트를 건드리므로 별도 정리 커밋.
-  5. **hwpx 보고서 문서의 구 수치 (갭 분석 G11).** `docs/01-plan…/hwpx-report-data-refresh.plan.md` 등 5문서와 `hwpx-refresh-audit-20260910/evidence.json` 이 12,875·813 을 사실로 서술. `hwpx-report-data-refresh` 후속에서 정본(12,506·미확정 0)으로 갱신.
+  5. **hwpx 보고서 문서의 구 수치 (갭 분석 G11).** 기초보고서 `data/반도체 기초보고서_20260911.hwpx` 제3장 1~3절은 **2026-09-14 `hwpx-ncs-section-refresh` 로 정본(v2: NCS 11,517·교과서 1,207·사고사례 13쪽/3쪽/1건)에 맞춰 재작성**(`hwpx_results_refresh.py` → `…_20260914_정본.hwpx`). 남은 것: (a) 같은 문서의 2장 5절 방법론·그 밖의 절에 남은 구 수치 점검, (b) `docs/01-plan…/hwpx-report-data-refresh.plan.md` 등 미추적 PDCA 문서 5건과 `hwpx-refresh-audit-20260910/evidence.json`(12,875·813 서술) — 다른 작업의 산출물이라 그 작업에서 갱신, (c) 한글(HWP)에서 새 파일의 표 너비·쪽 나눔·목차 쪽수 확인(자동 검증 밖).
 - **Depends on**: 1·3 은 연구책임자 결정, 2 는 `resegment.py` 재사용 설계, 4·5 는 결정 불필요.
 
 ## P2 — Rewrite the safety grading algorithm

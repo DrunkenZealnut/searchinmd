@@ -117,7 +117,7 @@ node    outputs/test-sri.js                  # 38 — 외부 스크립트 SRI (-
 
 Node 기반 하니스는 HTML과 실제 공통 렌더러를 `vm` + DOM mock으로 불러옵니다. 복사해 붙인 사본을 테스트하지 않습니다. `test-core-logic.html` 은 브라우저에서 열어 탭 제목으로 봐도 됩니다 — `run-core-logic-tests.js` 는 같은 HTML 을 헤드리스로 돌릴 뿐입니다. `test-recount-grades.py`는 `openpyxl`을 스텁으로 주입해 pip 패키지 없이도, 원본 엑셀 없이도 돕니다.
 
-의미 재검산 자체(코퍼스 규칙, `EXPECTED` 가드, manifest, 결정론, 산출물 writer)는 `test_semantic_keyword_recount.py` 가 검증합니다 — `python3 -m unittest test_semantic_keyword_recount`, 이것만은 `openpyxl` 이 깔린 Python 이 필요합니다. 표현 점검(`expression_review.py` — 표본·정밀도 구간·재정·영향표)은 `test_expression_review.py` 가 검증하며 같은 조건입니다. CI 는 위 하니스 5종 뒤에 `openpyxl` 을 설치하고 둘 다 돌립니다.
+의미 재검산 자체(코퍼스 규칙, `EXPECTED` 가드, manifest, 결정론, 산출물 writer)는 `test_semantic_keyword_recount.py` 가 검증합니다 — `python3 -m unittest test_semantic_keyword_recount`, 이것만은 `openpyxl` 이 깔린 Python 이 필요합니다. 표현 점검(`expression_review.py` — 표본·정밀도 구간·재정·영향표)은 `test_expression_review.py` 가 검증하며 같은 조건입니다. 보고서 HWPX 재작성(`hwpx_results_refresh.py`)은 `test_hwpx_results_refresh.py` 가 fixture HWPX 로 검증합니다(표준 라이브러리만; 그림 렌더는 ImageMagick 이 있을 때만). CI 는 위 하니스 5종 뒤에 `openpyxl` 을 설치하고 셋 다 돌립니다.
 
 대시보드 데이터는 `semantic_keyword_recount.py` 한 실행이 `docs/semantic_recount_data.js` 와 `docs/03-analysis/data/semantic_summary.json` 에 같은 JSON 으로 씁니다. `test-dashboard-data.js` 는 그 요약 파일을 기준으로 대시보드·분리 분석 페이지·README·`CLAUDE.md` 의 인용값을 대조하므로(S2~S8), 수치는 손으로 고치지 말고 정본 실행을 다시 돌리세요. 위 블록의 단언 수 두 개(`test-dashboard-data.js`, `test-recount-grades.py`)는 하니스가 README·`CLAUDE.md` 의 인용값과 직접 대조하므로(S9, R17), 하니스가 찍는 수를 두 파일에 옮기세요.
 
@@ -130,6 +130,8 @@ recount_grades.py                  원본 엑셀 → 등급 재집계 → CSV/JS
 regrade.py                         페이지 본문에서 등급 재채점 (검증용, 미발표)
 semantic_keyword_recount.py        30개 키워드 의미 단위 재검산 + 출현별 등급 결합 → xlsx·보고서·대시보드 데이터·semantic_summary.json·분리 분석 HTML (발표 정본, 2026-09-13 부터; EXPECTED 가드)
 shift_page_markers.py              <!-- page: N --> 마커 값 일괄 이동 (0-based 로 변환된 파일을 1-based 로)
+expression_review.py               의미 표현 사전 도메인 점검 — 표본·코더 채점(정밀도 CP 구간·κ)·사전 v1/v1fix/v2 영향표 (연구용, 미발표)
+hwpx_results_refresh.py            기초보고서 HWPX 제3장 1~3절(교과서·NCS·사고사례)의 문단·표 7개·그림 3개를 정본 수치로 재작성 (숫자 감사 통과 시에만 새 파일 출력)
 resegment.py                       워크북 페이지 라벨을 원본 PDF 실제 쪽으로 재배치해 등급 재집계 (NCS 쪽 단위 — 이전 기준의 정본, 병기용)
 make_coding_sheet.py, code_pages.py, score_coding.py  코딩 표본 생성 · AI 코더 항목별 호출 · 교차 판정 채점
 truncation_audit.py                엑셀 셀 한도 절단 전수 실측 (pip 불필요)

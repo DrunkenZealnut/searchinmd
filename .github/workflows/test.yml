@@ -66,4 +66,4 @@ jobs:
 
       # 의미 재검산 단위 테스트 — openpyxl 이 이미 깔린 자리라 여기서 돈다 (코퍼스 규칙·EXPECTED 가드·manifest·결정론·산출물 writer).
       - name: semantic_keyword_recount 단위 테스트
-        run: python3 -m unittest test_semantic_keyword_recount test_expression_review
+        run: python3 -m unittest test_semantic_keyword_recount test_expression_review test_hwpx_results_refresh
