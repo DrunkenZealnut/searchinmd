@@ -512,6 +512,38 @@ class OutputTests(unittest.TestCase):
         )
         self.assertTrue(all(len(value) == 64 for value in manifest.values()))
 
+    def test_report_has_ranked_keyword_statistics_per_corpus(self):
+        """말뭉치별 키워드 순위 통계 — 출현 내림차순, 비율·누적·등급3 비율·확장분. 교과서에 출현이 없는 키워드도 0 으로 남는다."""
+        sources = [KeywordSource("안전", 3, True), KeywordSource("위험", 1, True), KeywordSource("추락", 0, True)]
+        documents = [
+            Document("NCS", Path("a.md"), "반도체개발/LM1903060101_a/a.md", "<!-- page: 1 -->\n안전 위험 위험\n<!-- page: 2 -->\n안전 safety\n"),
+            Document("NCS", Path("b.md"), "반도체개발/LM1903060102_b/b.md", "<!-- page: 1 -->\n위험 위험\n"),
+            Document("교과서", Path("s.md"), "s.md", "<!-- page: 1 -->\n위험 위험\n"),
+        ]
+        rules = [ExpressionRule("안전", "안전", "exact", "기존 키워드"), ExpressionRule("안전", "safety", "equivalent", "영문"),
+                 ExpressionRule("위험", "위험", "exact", "기존 키워드"), ExpressionRule("추락", "추락", "exact", "기존 키워드")]
+        result = assign_match_grades(aggregate_matches(sources, documents, rules, []), {})
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "report.md"
+            write_report(result, path)
+            report = path.read_text(encoding="utf-8")
+        head, _, _ = report.partition("## 말뭉치별 확장 차이")
+        _, _, stats = head.partition("## 키워드 순위 통계")
+        self.assertTrue(stats, "키워드 순위 통계 절이 없다")
+        ncs, _, school = stats.partition("### 교과서")
+        self.assertIn("### NCS", ncs)
+        ncs_rows = [l for l in ncs.splitlines() if l.startswith("| ") and not l.startswith("| 순위")]
+        self.assertEqual(["위험", "안전", "추락"], [r.split(" | ")[1].strip("`") for r in ncs_rows[:3]])      # 4 > 3 > 0
+        self.assertIn("| 1 | `위험` | 4 | 57.1% | 57.1% |", ncs_rows[0])                                  # 4/7 누적 57.1
+        self.assertIn("| 2 | `안전` | 3 | 42.9% | 100.0% |", ncs_rows[1])
+        self.assertIn("| 3 | `추락` | 0 | 0.0% | 100.0% |", ncs_rows[2])
+        self.assertIn("| 합계 | | 7 | 100.0% |", ncs)
+        self.assertIn("2/2 (100.0%)", ncs_rows[0])                                                        # 위험: 파일 2/2
+        self.assertIn("| 1 | 33.3% |", ncs_rows[1])                                                       # 안전: 확장분 safety 1건 = 1/3
+        school_rows = [l for l in school.splitlines() if l.startswith("| ") and not l.startswith("| 순위")]
+        self.assertEqual(["위험", "안전", "추락"], [r.split(" | ")[1].strip("`") for r in school_rows[:3]])  # 동률 0 은 원본 키워드 순서
+        self.assertIn("| 합계 | | 2 | 100.0% |", school)
+
     def test_manifest_source_hash_includes_grade_workbook_lineage(self):
         base = self.sample_result()
         first = type(base)(

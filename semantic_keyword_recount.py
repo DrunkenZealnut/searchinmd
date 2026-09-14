@@ -1801,6 +1801,52 @@ def _markdown_cell(value: object, limit: int = 180) -> str:
     return str(value).replace("\n", " ").replace("|", "\\|")[:limit]
 
 
+def _pct(part: int, whole: int) -> str:
+    return f"{part / whole:.1%}" if whole else "—"
+
+
+def _ranked_keyword_statistics(result: AnalysisResult) -> list[str]:
+    """말뭉치(NCS·교과서)별 키워드 순위표 — 최종 의미 출현 내림차순(동률은 원본 키워드 순서).
+    비율은 그 말뭉치의 출현 총계(키워드-표현 매칭 레코드 합계) 대비, 파일 비율은 그 말뭉치의 조사 문서 수 대비, 등급3 비율은 그 키워드의 등급 확정 출현 대비."""
+    lines = [
+        "말뭉치별로 키워드를 최종 의미 출현 내림차순으로 세웠다. 비율의 분모는 그 말뭉치의 출현 총계(키워드-표현 매칭 레코드 합계, 고유 문장·쪽 수 아님)이고, "
+        "파일은 `검출 파일 수/조사 문서 수`, 등급3 비율은 그 키워드의 등급 확정 출현 대비, 확장분은 동등+구체 표현 출현이다. 두 말뭉치는 크기가 다르므로 절대 건수를 서로 비교하지 않는다.",
+        "",
+    ]
+    order = {source.keyword: i for i, source in enumerate(result.sources)}
+    for corpus in ("NCS", "교과서"):
+        rows = [row for row in result.summary if row.corpus == corpus]
+        rows.sort(key=lambda row: (-row.semantic_total, order.get(row.keyword, len(order))))
+        total = sum(row.semantic_total for row in rows)
+        documents = sum(1 for d in result.documents if d.corpus == corpus)
+        lines.extend([
+            f"### {corpus}",
+            "",
+            f"출현 총계 {total:,}건 · 조사 문서 {documents}개 · 키워드 {len(rows)}개 (출현 0 인 키워드 {sum(1 for row in rows if row.semantic_total == 0)}개)",
+            "",
+            "| 순위 | 키워드 | 최종 의미 출현 | 비율 | 누적 | 파일 | 페이지 | 등급1 | 등급2 | 등급3 | 등급3 비율 | 확장분 | 확장 비율 |",
+            "|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        ])
+        cumulative = 0
+        for rank, row in enumerate(rows, 1):
+            cumulative += row.semantic_total
+            graded = row.grade_1 + row.grade_2 + row.grade_3
+            expanded = row.equivalent_added + row.specific_added
+            lines.append(
+                f"| {rank} | `{row.keyword}` | {row.semantic_total} | {_pct(row.semantic_total, total)} | {_pct(cumulative, total)} "
+                f"| {row.file_count}/{documents} ({_pct(row.file_count, documents)}) | {row.page_count} "
+                f"| {row.grade_1} | {row.grade_2} | {row.grade_3} | {_pct(row.grade_3, graded)} "
+                f"| {expanded} | {_pct(expanded, row.semantic_total)} |"
+            )
+        g = [sum(getattr(row, f"grade_{i}") for row in rows) for i in (1, 2, 3)]
+        expanded_total = sum(row.equivalent_added + row.specific_added for row in rows)
+        lines.append(
+            f"| 합계 | | {total} | 100.0% | | | | {g[0]} | {g[1]} | {g[2]} | {_pct(g[2], sum(g))} | {expanded_total} | {_pct(expanded_total, total)} |"
+        )
+        lines.append("")
+    return lines
+
+
 def write_report(result: AnalysisResult, path: Path, run: dict[str, object] | None = None, audits: list[CandidateAudit] | None = None) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -1855,6 +1901,9 @@ def write_report(result: AnalysisResult, path: Path, run: dict[str, object] | No
                 )
             ) + " |"
         )
+
+    lines.extend(["", "## 키워드 순위 통계", ""])
+    lines.extend(_ranked_keyword_statistics(result))
 
     lines.extend(["", "## 말뭉치별 확장 차이", ""])
     for corpus in ("NCS", "교과서"):
