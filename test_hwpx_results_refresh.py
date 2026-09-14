@@ -43,6 +43,7 @@ class CommittedDiffTests(unittest.TestCase):
         self.assertEqual({"PNG": 1, "BMP": 2}, Counter(f["format"] for f in diff["figures"]))
         self.assertTrue(all(len(f["sha256"]) == 64 for f in diff["figures"]))
         self.assertTrue(all(f["bits"] == 24 for f in diff["figures"] if f["format"] == "BMP"))                      # G-6 24bit
+        self.assertTrue(all(f["rendered"] for f in diff["figures"]))                                              # 추적 정본은 그림을 그린 실행
         self.assertEqual("2026-09-06", diff["source"]["cases_date"])                                                # G-5
         conds = {p["locator"]: p["conditions"] for p in diff["paragraphs"] if p.get("conditions")}
         self.assertFalse(conds["한편 ‘공정안전관리’는 총"]["psm_all_grade3"])                                          # G-1 조건 기록 (5/7)
@@ -146,7 +147,7 @@ class XmlHelperTests(unittest.TestCase):
         self.assertIsNotNone(p.find(HP + "linesegarray"))                       # 글 아닌 자식은 그대로
 
     def test_resize_table_clones_first_data_row_style_keeps_spacer_and_recomputes_height(self):
-        xml = table([["h1", "h2"], ["a", "1"], ["b", "2"], ["", ""]]).replace('<hp:tbl id="1"', '<hp:tbl id="1"')
+        xml = table([["h1", "h2"], ["a", "1"], ["b", "2"], ["", ""]])
         root = ET.fromstring(f'<hs:sec {NS}>' + xml + "</hs:sec>")
         tbl = root.find(f".//{HP}tbl")
         ET.SubElement(tbl, HP + "sz", {"width": "100", "height": "40"})
@@ -445,7 +446,7 @@ class EndToEndTests(unittest.TestCase):
             diff = HR.refresh(src, f, out, Path(td) / "d.json", None, render=False, write_output=False)
             self.assertEqual("ok", diff["audit"]["status"]); self.assertIsNone(diff["output"]); self.assertFalse(out.exists())
             diff = HR.refresh(src, f, out, Path(td) / "d.json", None, render=False)                  # render=False 만으로는(magick 없는 CI) HWPX 를 쓴다
-            self.assertTrue(out.exists()); self.assertEqual("out.hwpx" if False else out.name, diff["output"])
+            self.assertTrue(out.exists()); self.assertEqual(out.name, diff["output"]); self.assertFalse(any(f["rendered"] for f in diff["figures"]))
 
     def test_text_review_dir_under_docs_is_refused(self):
         with tempfile.TemporaryDirectory() as td:

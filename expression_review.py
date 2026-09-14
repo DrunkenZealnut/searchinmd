@@ -338,6 +338,9 @@ def score(key: dict, a: dict, b: dict, adj: dict | None = None, floor: float = P
     pa, pb = (a.get("meta") or {}).get("prompt_sha256"), (b.get("meta") or {}).get("prompt_sha256")
     if pa and pb and pa != pb:
         raise ValueError("두 코더의 prompt_sha256 이 다릅니다 — 같은 질문으로 판정한 라벨만 채점합니다")
+    want = hashlib.sha256(coder_prompt().encode("utf-8")).hexdigest()
+    if (pa or pb) and (pa or pb) != want:
+        raise ValueError(f"코더 라벨의 질문(prompt_sha256 {(pa or pb)[:16]}…)이 지금의 coder_prompt()({want[:16]}…)와 다릅니다 — 질문이 바뀌었으면 다시 판정하십시오")
     check_complete(a, ids, "A"); check_complete(b, ids, "B")
     ga, gb = a.get("grades", {}), b.get("grades", {})
     final = final_labels(ids, ga, gb, adj_labels)

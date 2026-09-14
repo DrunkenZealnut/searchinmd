@@ -160,13 +160,17 @@ class ScoreTests(unittest.TestCase):
         ER.score(key, full, {"grades": {"E1": 1}, "errors": {"E2": "timeout"}, "meta": {}})            # errors 에 있으면 완료된 실행
 
     def test_score_refuses_coder_labels_from_another_sample_or_prompt(self):
+        import hashlib
+        p1 = hashlib.sha256(ER.coder_prompt().encode("utf-8")).hexdigest()
         key = {"sample_digest": "d", "items": [{"id": "E1", "keyword": "k", "expression": "e"}]}
-        a = {"grades": {"E1": 1}, "meta": {"prompt_sha256": "p1"}, "sample_digest": "d"}
+        a = {"grades": {"E1": 1}, "meta": {"prompt_sha256": p1}, "sample_digest": "d"}
         with self.assertRaises(ValueError):
-            ER.score(key, a, {"grades": {"E1": 1}, "meta": {"prompt_sha256": "p1"}, "sample_digest": "other"})     # 다른 표본의 라벨
+            ER.score(key, a, {"grades": {"E1": 1}, "meta": {"prompt_sha256": p1}, "sample_digest": "other"})     # 다른 표본의 라벨
         with self.assertRaises(ValueError):
-            ER.score(key, a, {"grades": {"E1": 1}, "meta": {"prompt_sha256": "p2"}, "sample_digest": "d"})         # 다른 질문
-        ER.score(key, a, {"grades": {"E1": 1}, "meta": {"prompt_sha256": "p1"}, "sample_digest": "d"})
+            ER.score(key, a, {"grades": {"E1": 1}, "meta": {"prompt_sha256": "p2"}, "sample_digest": "d"})         # 두 코더의 질문이 다름
+        with self.assertRaises(ValueError):
+            ER.score(key, {**a, "meta": {"prompt_sha256": "old"}}, {"grades": {"E1": 1}, "meta": {"prompt_sha256": "old"}, "sample_digest": "d"})   # 지금 질문과 다름
+        ER.score(key, a, {"grades": {"E1": 1}, "meta": {"prompt_sha256": p1}, "sample_digest": "d"})
 
     def test_adj_file_is_validated(self):
         key = {"sample_digest": "d", "items": [{"id": "E1", "keyword": "k", "expression": "e"}]}

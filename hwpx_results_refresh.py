@@ -304,6 +304,8 @@ def resize_table(tbl: ET.Element, first_data_row: int, data_rows: int) -> None:
         trailing.insert(0, trs.pop())
     if len(trs) <= first_data_row:
         raise ValueError("복제할 데이터 행이 없습니다 (빈 행뿐)")
+    if _row_is_empty(trs[first_data_row]):
+        raise ValueError("첫 데이터 행이 빈 행입니다 — 서식 원본으로 쓸 수 없습니다")
     template = copy.deepcopy(trs[first_data_row])
     for tr in tbl.findall(HP + "tr")[first_data_row:]:
         tbl.remove(tr)
@@ -546,7 +548,7 @@ def ncs_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
     workenv_g3 = k("작업환경")["grades"][3] / k("작업환경")["total"] if k("작업환경")["total"] else 0.0
     poison_g3 = k("중독")["grades"][3] / k("중독")["total"] if k("중독")["total"] else 0.0
     overall_g3 = n.grades[3] / n.total
-    workenv_vs_overall = "낮았다" if max(workenv_g3, poison_g3) < overall_g3 - SHARE_TOLERANCE_PP / 100 else "비슷하거나 그보다 높았다"
+    workenv_vs_overall = "보다 낮았다" if min(workenv_g3, poison_g3) < overall_g3 - SHARE_TOLERANCE_PP / 100 else "과 비슷하거나 그보다 높았다"   # 둘 다 성립할 때만 "높았다"
     conditions = {
         "교과서의 전체 키워드 중 ‘안전’이": {"safety_top_grade": gmax},
         "‘작업환경’은": {"g3_vs_overall": workenv_vs_overall},
@@ -579,7 +581,7 @@ def ncs_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
          + (f"{int(PPE_MAJORITY * 100)}%를 넘었다." if ppe_majority else f"{pct(ppe23, ppe['total'])}였다.")
          + " 이를 통해 보호구 관련 교육은 비교적 구체적으로 제시되고 있음을 알 수 있다. 실제로 안전화, 헬멧, 보호 장갑, 보호안경, 안전벨트 등 보호구의 종류와 착용 필요성은 상당히 자주 언급된다. 그러나 보호구를 왜 착용해야 하는지, 어떤 위험 요인에 대응하는지, 선택 기준과 한계는 무엇인지까지 확장된 설명은 부족하였다."),
         ("‘작업환경’은",
-         f"‘작업환경’은 {fmt(k('작업환경')['total'])}건, ‘중독’은 {fmt(k('중독')['total'])}건으로 검출 건수 자체는 많지 않았다. 하지만 ‘작업환경’의 등급 3 비율은 {fmt(k('작업환경')['grades'][3])}건({pct(k('작업환경')['grades'][3], k('작업환경')['total'])}), ‘중독’의 등급 3 비율은 {fmt(k('중독')['grades'][3])}건({pct(k('중독')['grades'][3], k('중독')['total'])})으로 나타나 전체 등급 3 비율({pct(n.grades[3], n.total)})과 {workenv_vs_overall}. {'이는 해당 키워드가 나올 때 단순 언급보다 구체적 상황 설명이나 예방·관리 내용까지 포함된 경우가 적지 않았다는 뜻이다.' if workenv_vs_overall != '낮았다' else '즉 이 두 키워드도 대부분 단순 언급에 머문다.'} 다만 절대 건수가 적기 때문에 교과서 전반에서 작업환경 관리와 건강위험 예방이 충분히 체계화되었다고 보기는 어렵다."),
+         f"‘작업환경’은 {fmt(k('작업환경')['total'])}건, ‘중독’은 {fmt(k('중독')['total'])}건으로 검출 건수 자체는 많지 않았다. 하지만 ‘작업환경’의 등급 3 비율은 {fmt(k('작업환경')['grades'][3])}건({pct(k('작업환경')['grades'][3], k('작업환경')['total'])}), ‘중독’의 등급 3 비율은 {fmt(k('중독')['grades'][3])}건({pct(k('중독')['grades'][3], k('중독')['total'])})으로 나타나 전체 등급 3 비율({pct(n.grades[3], n.total)}){workenv_vs_overall}. {'이는 해당 키워드가 나올 때 단순 언급보다 구체적 상황 설명이나 예방·관리 내용까지 포함된 경우가 적지 않았다는 뜻이다.' if not workenv_vs_overall.startswith('보다') else '즉 이 두 키워드도 대부분 단순 언급에 머문다.'} 다만 절대 건수가 적기 때문에 교과서 전반에서 작업환경 관리와 건강위험 예방이 충분히 체계화되었다고 보기는 어렵다."),
         ("한편 ‘공정안전관리’는",
          f"한편 ‘공정안전관리’는 {fmt(k('공정안전관리')['total'])}건, ‘PSM’은 {fmt(k('PSM')['total'])}건, ‘산업안전보건법’은 {fmt(k('산업안전보건법')['total'])}건에 그쳤다. ‘공정안전관리’는 검출 건수는 매우 적지만, "
          + ("검출된 내용이 모두 등급 3으로 분류되어, " if psm_all3 else f"{fmt(k('공정안전관리')['grades'][3])}건이 등급 3으로 분류되어, ")
@@ -780,7 +782,7 @@ def area_bars_svg(width: int, height: int, title: str, areas: dict[str, dict], n
 
 
 def render_svg(svg: str, fmt_: str, width: int, height: int) -> bytes:
-    """ImageMagick — PNG24 또는 BMP3(24bit). 폰트 경로를 고정해 결정론을 유지한다."""
+    """ImageMagick — PNG24 또는 BMP3(24bit). 폰트 경로 고정 + 메타데이터 제거(-strip)로 같은 magick·폰트면 바이트가 같다."""
     if shutil.which("magick") is None:
         raise RuntimeError("ImageMagick(magick)이 없어 그림을 그릴 수 없습니다")
     with tempfile.TemporaryDirectory() as td:
@@ -788,7 +790,7 @@ def render_svg(svg: str, fmt_: str, width: int, height: int) -> bytes:
         svg_path.write_text(svg, encoding="utf-8")
         target = "PNG24:-" if fmt_ == "PNG" else "BMP3:-"
         font_args = ["-font", FONT] if Path(FONT).exists() else []
-        out = subprocess.run(["magick", "-density", "96", "-background", "white", *font_args, str(svg_path), "-resize", f"{width}x{height}!", "-type", "TrueColor", target],
+        out = subprocess.run(["magick", "-density", "96", "-background", "white", *font_args, str(svg_path), "-resize", f"{width}x{height}!", "-type", "TrueColor", "-strip", target],   # -strip: 날짜 tEXt/tIME 청크 제거 → 같은 입력이면 같은 바이트
                              check=True, capture_output=True).stdout
     w, h, kind = image_dimensions(out)
     if (w, h, kind) != (width, height, fmt_):
@@ -958,7 +960,7 @@ def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_d
                 raise ValueError(f"BinData/{item}.* 항목이 HWPX 에 없습니다 (binaryItemIDRef={item})")
             width, height, kind = image_dimensions(z.read(entry))
             svg = spec["svg"](width, height)
-            record = {"label": spec["label"], "caption": spec["caption"], "item": item, "entry": entry, "format": kind, "width": width, "height": height, "svg_sha256": sha256(svg.encode("utf-8"))}
+            record = {"label": spec["label"], "caption": spec["caption"], "item": item, "entry": entry, "format": kind, "width": width, "height": height, "svg_sha256": sha256(svg.encode("utf-8")), "rendered": render}
             if render:
                 data = render_svg(svg, kind, width, height)
                 bindata[entry] = data

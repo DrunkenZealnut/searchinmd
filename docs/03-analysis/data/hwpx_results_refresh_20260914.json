@@ -848,7 +848,7 @@
     "keywords[화학물질].corpora.교과서.grades.2"
    ],
    "conditions": {
-    "g3_vs_overall": "비슷하거나 그보다 높았다"
+    "g3_vs_overall": "과 비슷하거나 그보다 높았다"
    },
    "format_collapsed": false
   },
@@ -1526,7 +1526,8 @@
    "width": 702,
    "height": 391,
    "svg_sha256": "06ac020c61d91f67ed77ae590fe0c99131507f50ac15ea67f49452066ca74edd",
-   "sha256": "29694d7a8e6cab272b8c6bb3ac1bdcd729272a34b822a5a92677bf2ed0dd4ea2",
+   "rendered": true,
+   "sha256": "05ecde1b445595ab197b400ef23b2f02fa898bc76155182bea05289b18889c2b",
    "bits": 24
   },
   {
@@ -1538,6 +1539,7 @@
    "width": 1160,
    "height": 750,
    "svg_sha256": "8c4c1b2828119b20b0f3817e8ce4db0ce4b3cc66928cfd8266be569ef7e9e89b",
+   "rendered": true,
    "sha256": "a8c61378d571a8ddf48e2f56747b3a1bbb82df469ac0d0a5bb21a32eca02971e",
    "bits": 24
   },
@@ -1550,6 +1552,7 @@
    "width": 1160,
    "height": 724,
    "svg_sha256": "bc57560731f0808869891775bc81b81ce14d701ee8d99401c9d368b7f281eb56",
+   "rendered": true,
    "sha256": "3c6b79e5a5ddb1fb351ad48b57b9e578ea390bab2d0a9219de966ea47947fb94",
    "bits": 24
   }
@@ -1564,5 +1567,5 @@
   },
   "status": "ok"
  },
- "output_sha256": "6c2e0bbf4adb45fb3768d5d306a09d52bc24a0d9da09a4d9c6d03a15560b11e9"
+ "output_sha256": "f962ce821f74831b48a63b616fee9c5ec41117f51de15b01e58e227aa3195a4a"
 }
