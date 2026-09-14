@@ -254,6 +254,8 @@ def set_text(p: ET.Element, text: str) -> dict:
     node.text = text
     for r in text_runs[1:]:
         p.remove(r)
+    if direct_text(p) != text:
+        raise ValueError("문단 글 교체가 닫히지 않았습니다 — 글 아닌 자식(hp:ctrl 등)과 섞인 run 이 있습니다")
     return {"format_collapsed": collapsed}
 
 
@@ -286,20 +288,35 @@ def renumber_table(tbl: ET.Element) -> None:
                 addr.set("rowAddr", str(r))
 
 
+def _row_is_empty(tr: ET.Element) -> bool:
+    return all(cell_text(tc) == "" for tc in tr.findall(HP + "tc"))
+
+
 def resize_table(tbl: ET.Element, first_data_row: int, data_rows: int) -> None:
-    """데이터 행(첫 데이터 행부터 끝까지)을 data_rows 개로 맞춘다 — 마지막 데이터 행을 복제하거나 뒤에서부터 지운다."""
+    """데이터 행을 data_rows 개로 맞춘다 — 모든 데이터 행을 첫 데이터 행의 서식(셀 크기·테두리·문단/글자 스타일)으로 통일해 다시 만들고,
+    표 끝의 빈 간격 행은 그대로 뒤에 둔다(원본 표 13 은 마지막이 빈 행이라 그 행을 복제하면 데이터가 간격 행 서식을 입는다 — ship 레드팀).
+    hp:sz@height 는 행 높이 합으로 다시 계산한다."""
     trs = tbl.findall(HP + "tr")
-    current = len(trs) - first_data_row
-    if current <= 0:
+    if len(trs) <= first_data_row:
         raise ValueError("복제할 데이터 행이 없습니다")
-    template = trs[-1]
-    while current < data_rows:
+    trailing = []
+    while len(trs) > first_data_row and _row_is_empty(trs[-1]):
+        trailing.insert(0, trs.pop())
+    if len(trs) <= first_data_row:
+        raise ValueError("복제할 데이터 행이 없습니다 (빈 행뿐)")
+    template = copy.deepcopy(trs[first_data_row])
+    for tr in tbl.findall(HP + "tr")[first_data_row:]:
+        tbl.remove(tr)
+    for _ in range(data_rows):
         tbl.append(copy.deepcopy(template))
-        current += 1
-    while current > data_rows:
-        tbl.remove(tbl.findall(HP + "tr")[-1])
-        current -= 1
+    for tr in trailing:
+        tbl.append(tr)
     renumber_table(tbl)
+    sz = tbl.find(HP + "sz")
+    if sz is not None:
+        heights = [tr.find(f"{HP}tc/{HP}cellSz") for tr in tbl.findall(HP + "tr")]
+        if all(h is not None for h in heights):
+            sz.set("height", str(sum(int(h.get("height", 0)) for h in heights)))
 
 
 def top_paragraphs(root: ET.Element) -> list[ET.Element]:
@@ -526,8 +543,13 @@ def ncs_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
     equip_narrative = [p for p in equip_pages if p["verdict"] in ("case", "case_other")]
     equip_fp_kinds = Counter(p["kind"] for p in equip_pages if p["verdict"] == "false_positive")
     kind_label = FP_KIND_LABEL
+    workenv_g3 = k("작업환경")["grades"][3] / k("작업환경")["total"] if k("작업환경")["total"] else 0.0
+    poison_g3 = k("중독")["grades"][3] / k("중독")["total"] if k("중독")["total"] else 0.0
+    overall_g3 = n.grades[3] / n.total
+    workenv_vs_overall = "낮았다" if max(workenv_g3, poison_g3) < overall_g3 - SHARE_TOLERANCE_PP / 100 else "비슷하거나 그보다 높았다"
     conditions = {
         "교과서의 전체 키워드 중 ‘안전’이": {"safety_top_grade": gmax},
+        "‘작업환경’은": {"g3_vs_overall": workenv_vs_overall},
         "사고 관련 주요 키워드 검출 건수는": {"accident_keyword_order": [n for n, _ in sorted(((x, k(x)["total"]) for x in accident_kw), key=lambda kv: (-kv[1], n.order.index(kv[0])))]},
         "‘보호구’는": {"ppe_over_60pct": ppe_majority},
         "한편 ‘공정안전관리’는": {"psm_all_grade3": psm_all3},
@@ -557,7 +579,7 @@ def ncs_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
          + (f"{int(PPE_MAJORITY * 100)}%를 넘었다." if ppe_majority else f"{pct(ppe23, ppe['total'])}였다.")
          + " 이를 통해 보호구 관련 교육은 비교적 구체적으로 제시되고 있음을 알 수 있다. 실제로 안전화, 헬멧, 보호 장갑, 보호안경, 안전벨트 등 보호구의 종류와 착용 필요성은 상당히 자주 언급된다. 그러나 보호구를 왜 착용해야 하는지, 어떤 위험 요인에 대응하는지, 선택 기준과 한계는 무엇인지까지 확장된 설명은 부족하였다."),
         ("‘작업환경’은",
-         f"‘작업환경’은 {fmt(k('작업환경')['total'])}건, ‘중독’은 {fmt(k('중독')['total'])}건으로 검출 건수 자체는 많지 않았다. 하지만 ‘작업환경’의 등급 3 비율은 {fmt(k('작업환경')['grades'][3])}건({pct(k('작업환경')['grades'][3], k('작업환경')['total'])}), ‘중독’의 등급 3 비율은 {fmt(k('중독')['grades'][3])}건({pct(k('중독')['grades'][3], k('중독')['total'])})으로 나타나 전체 등급 3 비율({pct(n.grades[3], n.total)})과 비슷하거나 그보다 높았다. 이는 해당 키워드가 나올 때 단순 언급보다 구체적 상황 설명이나 예방·관리 내용까지 포함된 경우가 적지 않았다는 뜻이다. 다만 절대 건수가 적기 때문에 교과서 전반에서 작업환경 관리와 건강위험 예방이 충분히 체계화되었다고 보기는 어렵다."),
+         f"‘작업환경’은 {fmt(k('작업환경')['total'])}건, ‘중독’은 {fmt(k('중독')['total'])}건으로 검출 건수 자체는 많지 않았다. 하지만 ‘작업환경’의 등급 3 비율은 {fmt(k('작업환경')['grades'][3])}건({pct(k('작업환경')['grades'][3], k('작업환경')['total'])}), ‘중독’의 등급 3 비율은 {fmt(k('중독')['grades'][3])}건({pct(k('중독')['grades'][3], k('중독')['total'])})으로 나타나 전체 등급 3 비율({pct(n.grades[3], n.total)})과 {workenv_vs_overall}. {'이는 해당 키워드가 나올 때 단순 언급보다 구체적 상황 설명이나 예방·관리 내용까지 포함된 경우가 적지 않았다는 뜻이다.' if workenv_vs_overall != '낮았다' else '즉 이 두 키워드도 대부분 단순 언급에 머문다.'} 다만 절대 건수가 적기 때문에 교과서 전반에서 작업환경 관리와 건강위험 예방이 충분히 체계화되었다고 보기는 어렵다."),
         ("한편 ‘공정안전관리’는",
          f"한편 ‘공정안전관리’는 {fmt(k('공정안전관리')['total'])}건, ‘PSM’은 {fmt(k('PSM')['total'])}건, ‘산업안전보건법’은 {fmt(k('산업안전보건법')['total'])}건에 그쳤다. ‘공정안전관리’는 검출 건수는 매우 적지만, "
          + ("검출된 내용이 모두 등급 3으로 분류되어, " if psm_all3 else f"{fmt(k('공정안전관리')['grades'][3])}건이 등급 3으로 분류되어, ")
@@ -595,23 +617,31 @@ def case_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
     industrial_books = [p["title"] for p in c.pages if p["verdict"] == "case"]
     other = [p for p in c.pages if p["verdict"] == "case_other"]
     kinds = c.fp_kinds
+    areas_without = [a for a in AREA_ORDER if c.by_area_flagged.get(a, 0) == 0]
+    top_area = next(p["area"] for p in c.pages if p["title"] == c.top_book)
+    top_area_label = {"장비": "장비 유지보수와 점검 작업", "재료": "재료·화학물질 취급", "제조": "제조 공정", "개발": "개발"}[top_area]
+    industrial_areas = sorted({p["area"] for p in c.pages if p["verdict"] == "case"}, key=AREA_ORDER.index)
+    fp_breakdown = ", ".join(f"{FP_KIND_LABEL[kind]}({n}쪽)" for kind, n in kinds.most_common())
     conditions = {
         "본 연구에서는 NCS 반도체 교과서에 수록된 사고, 부상, 질병 관련 사례를": {"flagged": c.flagged, "narrative": c.narrative, "industrial_events": c.industrial_events, "false_positive": c.false_positive},
-        "사례의 분포를 보면": {"areas_without_cases": [a for a in AREA_ORDER if c.by_area_flagged.get(a, 0) == 0]},
+        "사례의 분포를 보면": {"areas_without_cases": areas_without, "top_area": top_area},
+        "이러한 분석 결과를 종합하면, NCS 반도체 교과서에 수록된 사고 사례는": {"industrial_areas": industrial_areas},
     }
     return _with_conditions([
         ("본 연구에서는 NCS 반도체 교과서에 수록된 사고, 부상, 질병 관련 사례를",
-         f"본 연구에서는 NCS 반도체 교과서에 수록된 사고, 부상, 질병 관련 사례를 체계적으로 수집·정리하고, 내용 수준과 구성 특성을 분석하였다. 키워드 검색 결과의 ‘사고사례여부’ 자동 판정은 {c.books}권 {c.flagged}쪽을 사례로 잡았으나, 해당 쪽의 원문을 확인한 결과 실제로 사고를 서술한 쪽은 {c.narrative}쪽뿐이었고, 그중 반도체 산업재해는 구미 불산 가스 누출 사고 {c.industrial_events}건({' '.join(wa('『' + b + '』') if i < len(dict.fromkeys(industrial_books)) - 1 else '『' + b + '』' for i, b in enumerate(dict.fromkeys(industrial_books)))} {c.industrial_books}권에 중복 게재)이었으며, 나머지 {len(other)}쪽은 반도체 산업재해가 아닌 사고({', '.join(p['gist'].split(' (')[0] for p in other)})였다(표 13 참조). 이러한 결과는 반도체산업이 화학물질, 특수 가스, 고에너지 장비 등을 활용하는 대표적인 고위험 산업임을 감안할 때, 교과서에 수록된 사고 사례의 양적 수준이 매우 제한적임을 보여 준다."),
+         f"본 연구에서는 NCS 반도체 교과서에 수록된 사고, 부상, 질병 관련 사례를 체계적으로 수집·정리하고, 내용 수준과 구성 특성을 분석하였다. 키워드 검색 결과의 ‘사고사례여부’ 자동 판정은 {c.books}권 {c.flagged}쪽을 사례로 잡았으나, 해당 쪽의 원문을 확인한 결과 실제로 사고를 서술한 쪽은 {c.narrative}쪽뿐이었고, 그중 반도체 산업재해는 구미 불산 가스 누출 사고 {c.industrial_events}건({' '.join(wa('『' + b + '』') if i < len(dict.fromkeys(industrial_books)) - 1 else '『' + b + '』' for i, b in enumerate(dict.fromkeys(industrial_books)))} {c.industrial_books}권에 중복 게재)이었으며, 나머지 {len(other)}쪽은 반도체 산업재해가 아닌 사고({', '.join(p['gist'].split(' (')[0] for p in other)})였다(표 13 참조). 표 13 의 쪽 번호는 재세그먼트로 확인한 실제 PDF 쪽이다(1·2절의 분야별 쪽수는 마크다운 쪽 표식 최댓값). 이러한 결과는 반도체산업이 화학물질, 특수 가스, 고에너지 장비 등을 활용하는 대표적인 고위험 산업임을 감안할 때, 교과서에 수록된 사고 사례의 양적 수준이 매우 제한적임을 보여 준다."),
         ("사례의 분포를 보면",
-         f"사례의 분포를 보면, 자동 판정 {c.flagged}쪽 중 {c.top_book_pages}쪽이 『{c.top_book}』에 몰려 있어, 현재 교과서에서 사고 관련 내용이 주로 장비 유지보수와 점검 작업 중심으로 구성되어 있다. 반면 {', '.join(a for a in AREA_ORDER if c.by_area_flagged.get(a, 0) == 0)} 분야에서는 사고 사례가 전혀 제시되지 않아, 공정과 직무 전반을 반영한 균형 있는 교육 구성은 부족한 것으로 나타났다."),
+         f"사례의 분포를 보면, 자동 판정 {c.flagged}쪽 중 {c.top_book_pages}쪽이 『{c.top_book}』에 몰려 있어, 현재 교과서에서 사고 관련 내용이 주로 {top_area_label} 중심으로 구성되어 있다. "
+         + (f"반면 {', '.join(areas_without)} 분야에서는 사고 사례가 전혀 제시되지 않아, 공정과 직무 전반을 반영한 균형 있는 교육 구성은 부족한 것으로 나타났다." if areas_without
+            else "네 분야 모두에서 사례가 나오지만 분포가 한 권에 치우쳐, 공정과 직무 전반을 반영한 균형 있는 교육 구성은 부족한 것으로 나타났다.")),
         ("사고 유형 측면에서는",
-         f"사고 유형 측면에서는 실제 사고 서술 {c.narrative}쪽이 화학물질(불산) 누출 사고와 시설물(환풍구) 붕괴 사고였다. 자동 판정이 사례로 잡은 나머지 {c.false_positive}쪽은 {', '.join(f"{FP_KIND_LABEL[kind]}({n}쪽)" for kind, n in kinds.most_common())}으로, TMAH·아르신 노출이나 이온주입 장비의 방사선 노출은 사고 사례가 아니라 취급 지침과 유해성 설명의 맥락에서 언급된 것이었다. 즉, 반도체산업의 주요 위험 요인 자체는 교과서에 등장하지만, 그것이 실제 사고 사례로 제시되는 경우는 불산 누출 사고 {c.industrial_events}건에 그친다."),
+         f"사고 유형 측면에서는 실제 사고 서술 {c.narrative}쪽이 화학물질(불산) 누출 사고와 시설물(환풍구) 붕괴 사고였다. 자동 판정이 사례로 잡은 나머지 {c.false_positive}쪽은 {fp_breakdown}으로, TMAH·아르신 노출이나 이온주입 장비의 방사선 노출은 사고 사례가 아니라 취급 지침과 유해성 설명의 맥락에서 언급된 것이었다. 즉, 반도체산업의 주요 위험 요인 자체는 교과서에 등장하지만, 그것이 실제 사고 사례로 제시되는 경우는 불산 누출 사고 {c.industrial_events}건에 그친다."),
         ("사례의 서술 방식 또한 중요한 특징이다",
          "사례의 서술 방식 또한 중요한 특징이다. 실제 사고 서술은 한두 문장으로 매우 간략하게 제시되어, 사고의 발생 원인, 작업조건, 진행 경과, 피해 규모, 재발 방지 대책 등 교육적으로 중요한 정보가 거의 포함되지 않았다. 즉, 학습자가 해당 사례를 통해 위험 요인을 분석하거나 예방 행동을 학습하기에는 충분한 정보가 제공되지 않는 구조이다."),
         ("또한 사고 사례는 대부분 위험 상황을 단순히 언급하는 수준에",
          "또한 사고 사례는 위험 상황을 단순히 언급하는 수준에 머물러 있으며, 위험 요인 분석이나 예방조치와 연계성이 부족하였다. 이는 사고 사례가 교육적 학습 자료로 활용되기보다는 참고 수준의 정보로 제시되고 있음을 의미한다. 결과적으로 현재 교과서는 사고가 있음을 알리는 기능은 수행하고 있으나, 사고를 통한 위험 인식 강화나 예방 행동 유도 측면에서는 제한적인 역할에 머무르고 있다."),
         ("이러한 분석 결과를 종합하면, NCS 반도체 교과서에 수록된 사고 사례는",
-         f"이러한 분석 결과를 종합하면, NCS 반도체 교과서에 수록된 사고 사례는 양적·질적 측면에서 모두 제한적인 수준이며, 반도체산업의 실제 위험 구조를 충분히 반영하지 못한다고 판단된다. 특히 실제 사고 서술이 {c.narrative}쪽·{c.industrial_events}건에 불과하고, 그마저 장비 분야 한 권과 재료 분야 한 권에 중복 게재된 화학물질 급성 사고 위주이며, 사고 원인과 예방 대책이 충분히 제시되지 않는다는 점은 교육적 활용도를 저해하는 주요 요인이다. 아울러 자동 판정 {c.flagged}쪽 중 {c.false_positive}쪽이 오탐이었다는 점은 키워드 기반 자동 판정만으로 사고 사례를 세어서는 안 되며 원문 확인이 필요함을 보여준다."),
+         f"이러한 분석 결과를 종합하면, NCS 반도체 교과서에 수록된 사고 사례는 양적·질적 측면에서 모두 제한적인 수준이며, 반도체산업의 실제 위험 구조를 충분히 반영하지 못한다고 판단된다. 특히 실제 사고 서술이 {c.narrative}쪽·{c.industrial_events}건에 불과하고, 그마저 {'·'.join(a + ' 분야' for a in industrial_areas)}의 {c.industrial_books}권에 중복 게재된 화학물질 급성 사고 위주이며, 사고 원인과 예방 대책이 충분히 제시되지 않는다는 점은 교육적 활용도를 저해하는 주요 요인이다. 아울러 자동 판정 {c.flagged}쪽 중 {c.false_positive}쪽이 오탐이었다는 점은 키워드 기반 자동 판정만으로 사고 사례를 세어서는 안 되며 원문 확인이 필요함을 보여준다."),
     ], conditions)
 
 
@@ -661,6 +691,8 @@ def fill_table(tbl: ET.Element, rows: list[list[str]], first_data_row: int, head
     """데이터 행에 값을 채운다 — 행·열 수는 원본과 같아야 하며(표 13 은 미리 resize), 바뀐 셀 수를 돌려준다."""
     trs = table_rows(tbl)
     data = trs[first_data_row:]
+    while len(data) > len(rows) and all(cell_text(tc) == "" for tc in data[-1]):
+        data.pop()                                            # 표 끝의 빈 간격 행은 데이터 행이 아니다
     if len(data) != len(rows):
         raise ValueError(f"표 행 수 {len(data)} ≠ 값 행 수 {len(rows)}")
     changed = 0
@@ -768,7 +800,7 @@ def render_svg(svg: str, fmt_: str, width: int, height: int) -> bytes:
 
 def figure_specs(f: Facts) -> list[dict]:
     """(절, 캡션 접두, svg 함수) — 그림 2 교과서 등급별, 그림 3 NCS 분야별, 그림 4 NCS 등급별."""
-    stamp = "정본 2026-09-14 · 의미 표현 사전 v2 · 출현건수 기준"
+    stamp = f"정본 {str(f.run.get('generated_at', ''))[:10]} · 의미 표현 사전 {f.run.get('dictionary', '')} · 출현건수 기준"
     return [
         {"section": "textbook", "caption": None, "item": "image1", "label": "그림 2", "svg": lambda w, h: grade_bars_svg(w, h, "교과서 안전보건 등급별 출현건수", f"등급 판정 {fmt(f.school.total)}건 · 출현건수 기준", f.school.grades, f.school.total, f"{stamp}\n교과서 {f.school.documents}권 · 등급 미확정 0건")},
         {"section": "ncs", "caption": "그림 3.", "item": None, "label": "그림 3", "svg": lambda w, h: area_bars_svg(w, h, "NCS 분야별 등급 출현건수", f.ncs.areas, f"원자료 폴더 기준 · NCS {f.ncs.documents}권 {fmt(f.ncs.total)}건에 등급 1~3 배정\n{stamp}")},
@@ -870,7 +902,8 @@ DEFAULT_TEXT_REVIEW_DIR = HERE / "data" / "hwpx-results-refresh"
 
 
 def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_dir: Path | None, force: bool = False, render: bool = True,
-            text_review_dir: Path | None = None) -> dict:
+            text_review_dir: Path | None = None, write_output: bool = True) -> dict:
+    """render=False 는 그림을 그리지 않는다(magick 없는 환경 — 원본 그림 바이트 유지); write_output=False 는 HWPX 를 쓰지 않는다(점검 실행)."""
     raw, root, root_tag = read_section(hwpx)
     original_xml = ET.fromstring(raw)
     sections = locate_sections(root)
@@ -951,7 +984,7 @@ def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_d
     if unmatched:
         diff["audit"]["status"] = "failed"
         diff["output"] = None
-    elif render:
+    elif write_output:
         diff["audit"]["status"] = "ok"
         write_hwpx(hwpx, out, serialize_section(root, root_tag), bindata, force=force)
         diff["output_sha256"] = sha256(out.read_bytes())
@@ -1043,6 +1076,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--text-review-dir", type=Path, default=DEFAULT_TEXT_REVIEW_DIR, help="구/신 문장 병기본 (본문 포함 — data/ 아래, 비추적)")
     args = ap.parse_args(argv)
     facts = load_facts(args.summary, args.cases, args.recount_summary)
+    if _under_tracked_docs(args.out):
+        sys.exit(f"보고서 HWPX 는 본문 전체이므로 추적 경로(docs/)에 쓸 수 없습니다: {public(args.out)}")
     if _under_tracked_docs(args.text_review_dir):
         sys.exit(f"구/신 문장 병기본은 보고서 본문을 담으므로 추적 경로(docs/)에 쓸 수 없습니다: {public(args.text_review_dir)}")
     if args.no_render:
@@ -1052,7 +1087,7 @@ def main(argv: list[str] | None = None) -> int:
             sys.exit(f"--no-render 점검 실행은 추적 경로에 대조 JSON 을 쓰지 않습니다: {public(args.diff_out)}")
         else:
             diff_out = args.diff_out
-        diff = refresh(args.hwpx, facts, args.out, diff_out, None, force=True, render=False)   # render=False → HWPX 는 쓰지 않는다
+        diff = refresh(args.hwpx, facts, args.out, diff_out, None, force=True, render=False, write_output=False)   # 점검 실행 — HWPX 를 쓰지 않는다
         print(f"(점검 실행 — 대조 JSON: {diff_out})")
     else:
         diff = refresh(args.hwpx, facts, args.out, args.diff_out or DEFAULT_DIFF, args.review_dir, force=args.force, text_review_dir=args.text_review_dir)

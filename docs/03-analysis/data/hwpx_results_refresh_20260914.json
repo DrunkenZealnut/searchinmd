@@ -847,7 +847,9 @@
     "keywords[진동].corpora.교과서.grades.2",
     "keywords[화학물질].corpora.교과서.grades.2"
    ],
-   "conditions": {},
+   "conditions": {
+    "g3_vs_overall": "비슷하거나 그보다 높았다"
+   },
    "format_collapsed": false
   },
   {
@@ -1303,7 +1305,9 @@
     "1",
     "2",
     "1",
-    "2014"
+    "2014",
+    "1",
+    "2"
    ],
    "keys": [
     "cases.books",
@@ -1367,7 +1371,8 @@
     "areas_without_cases": [
      "개발",
      "제조"
-    ]
+    ],
+    "top_area": "장비"
    },
    "format_collapsed": false
   },
@@ -1433,6 +1438,7 @@
    "new_numbers": [
     "3",
     "1",
+    "2",
     "13",
     "10"
    ],
@@ -1450,7 +1456,12 @@
     "keywords[질병].corpora.교과서.groups[재료].total",
     "keywords[화학물질].corpora.교과서.grades.2"
    ],
-   "conditions": {},
+   "conditions": {
+    "industrial_areas": [
+     "장비",
+     "재료"
+    ]
+   },
    "format_collapsed": false
   }
  ],
@@ -1500,9 +1511,9 @@
   {
    "section": "cases",
    "caption": "표 13.",
-   "rows": 15,
+   "rows": 16,
    "cols": 5,
-   "changed_cells": 53
+   "changed_cells": 48
   }
  ],
  "figures": [
@@ -1515,7 +1526,7 @@
    "width": 702,
    "height": 391,
    "svg_sha256": "06ac020c61d91f67ed77ae590fe0c99131507f50ac15ea67f49452066ca74edd",
-   "sha256": "5258135fc869e506f73e021db35a2ecff808180651d82fbd691c64c5977b0a3c",
+   "sha256": "29694d7a8e6cab272b8c6bb3ac1bdcd729272a34b822a5a92677bf2ed0dd4ea2",
    "bits": 24
   },
   {
@@ -1544,7 +1555,7 @@
   }
  ],
  "audit": {
-  "tokens": 715,
+  "tokens": 719,
   "unmatched": [],
   "out_of_scope": {
    "section": "5. 키워드 기반 문서 분류·분석 방법론",
@@ -1553,5 +1564,5 @@
   },
   "status": "ok"
  },
- "output_sha256": "7e548d28763b3b4474e842b9a79f7c153a5cbba8b4ccc82a0918ced89bc6da6d"
+ "output_sha256": "6c2e0bbf4adb45fb3768d5d306a09d52bc24a0d9da09a4d9c6d03a15560b11e9"
 }

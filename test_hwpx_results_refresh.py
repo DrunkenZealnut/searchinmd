@@ -145,21 +145,29 @@ class XmlHelperTests(unittest.TestCase):
         self.assertTrue(info["format_collapsed"])
         self.assertIsNotNone(p.find(HP + "linesegarray"))                       # 글 아닌 자식은 그대로
 
-    def test_resize_table_grows_by_cloning_last_row_and_renumbers(self):
-        root = ET.fromstring(f'<hs:sec {NS}>' + table([["h1", "h2"], ["a", "1"], ["b", "2"]]) + "</hs:sec>")
+    def test_resize_table_clones_first_data_row_style_keeps_spacer_and_recomputes_height(self):
+        xml = table([["h1", "h2"], ["a", "1"], ["b", "2"], ["", ""]]).replace('<hp:tbl id="1"', '<hp:tbl id="1"')
+        root = ET.fromstring(f'<hs:sec {NS}>' + xml + "</hs:sec>")
         tbl = root.find(f".//{HP}tbl")
+        ET.SubElement(tbl, HP + "sz", {"width": "100", "height": "40"})
+        last = tbl.findall(HP + "tr")[2]
+        for tc in last.findall(HP + "tc"):
+            tc.set("borderFillIDRef", "6")                                  # 원본처럼 마지막 데이터 행만 다른 테두리
         HR.resize_table(tbl, 1, 4)
         rows = HR.table_rows(tbl)
-        self.assertEqual(5, len(rows)); self.assertEqual("5", tbl.get("rowCnt"))
-        self.assertEqual([str(i) for i in range(5)], [r[0].find(HP + "cellAddr").get("rowAddr") for r in rows])
+        self.assertEqual(6, len(rows)); self.assertEqual("6", tbl.get("rowCnt"))                         # 헤더 1 + 데이터 4 + 간격 1
+        self.assertEqual([str(i) for i in range(6)], [r[0].find(HP + "cellAddr").get("rowAddr") for r in rows])
+        self.assertEqual({"2"}, {tc.get("borderFillIDRef") for r in rows[1:5] for tc in r})              # 첫 데이터 행 서식으로 통일
+        self.assertTrue(all(HR.cell_text(tc) == "" for tc in rows[-1]))                                   # 간격 행은 끝에 그대로
+        self.assertEqual(str(10 * 6), tbl.find(HP + "sz").get("height"))                                  # 행 높이 합
         HR.resize_table(tbl, 1, 1)
-        self.assertEqual(2, len(HR.table_rows(tbl))); self.assertEqual("2", tbl.get("rowCnt"))
+        self.assertEqual(3, len(HR.table_rows(tbl))); self.assertEqual("3", tbl.get("rowCnt"))
         before = [(tc.get("borderFillIDRef"), tc.find(HP + "cellSpan").attrib, tc.find(HP + "cellSz").attrib) for r in HR.table_rows(tbl) for tc in r]
         HR.fill_table(tbl, [["z", "9"]], 1)
         after = [(tc.get("borderFillIDRef"), tc.find(HP + "cellSpan").attrib, tc.find(HP + "cellSz").attrib) for r in HR.table_rows(tbl) for tc in r]
         self.assertEqual(before, after)                                          # 셀 서식·병합·크기 불변
         with self.assertRaises(ValueError):
-            HR.fill_table(tbl, [["x", "1"], ["y", "2"]], 1)                     # 행 수 불일치는 실패
+            HR.fill_table(tbl, [["x", "1"], ["y", "2"], ["z", "3"]], 1)         # 행 수 불일치는 실패
 
 
 class SectionTests(unittest.TestCase):
@@ -378,7 +386,10 @@ class EndToEndTests(unittest.TestCase):
             texts = [t for s in sections.values() for t in HR.section_texts(s)]
             self.assertFalse(any("12,875" in t or "1,293" in t or "옛 문장" in t for t in texts))
             tbl13 = HR.find_table_by_first_cell(sections["cases"], "표 13.")
-            self.assertEqual(2 + 13, len(HR.table_rows(tbl13))); self.assertEqual("판정", HR.cell_text(HR.table_rows(tbl13)[1][4]))
+            rows13 = HR.table_rows(tbl13)
+            self.assertEqual(2 + 13 + 1, len(rows13)); self.assertEqual("판정", HR.cell_text(rows13[1][4]))                      # 데이터 13 + 원본의 빈 간격 행 유지
+            self.assertTrue(all(HR.cell_text(tc) == "" for tc in rows13[-1]))
+            self.assertEqual({rows13[2][0].get("borderFillIDRef")}, {tc.get("borderFillIDRef") for r in rows13[2:15] for tc in r})   # 데이터 행 서식 통일
             tbl10 = HR.find_table_after_caption(sections["ncs"], "표 10.")
             rows = HR.table_rows(tbl10)
             self.assertEqual(["안전", HR.fmt(f.ncs.keywords["안전"]["total"])], [HR.cell_text(rows[1][0]), HR.cell_text(rows[1][1])])
@@ -431,8 +442,10 @@ class EndToEndTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             src, f = self._fixture(td)
             out = Path(td) / "never.hwpx"
-            diff = HR.refresh(src, f, out, Path(td) / "d.json", None, render=False)
+            diff = HR.refresh(src, f, out, Path(td) / "d.json", None, render=False, write_output=False)
             self.assertEqual("ok", diff["audit"]["status"]); self.assertIsNone(diff["output"]); self.assertFalse(out.exists())
+            diff = HR.refresh(src, f, out, Path(td) / "d.json", None, render=False)                  # render=False 만으로는(magick 없는 CI) HWPX 를 쓴다
+            self.assertTrue(out.exists()); self.assertEqual("out.hwpx" if False else out.name, diff["output"])
 
     def test_text_review_dir_under_docs_is_refused(self):
         with tempfile.TemporaryDirectory() as td:

@@ -332,6 +332,12 @@ def score(key: dict, a: dict, b: dict, adj: dict | None = None, floor: float = P
         validate_adj(adj, key)
     adj_labels = (adj or {}).get("labels") or {}
     ids = [i["id"] for i in key["items"]]
+    for name, coder in (("A", a), ("B", b)):
+        if coder.get("sample_digest") is not None and coder.get("sample_digest") != key.get("sample_digest"):
+            raise ValueError(f"코더 {name} 라벨의 sample_digest {coder.get('sample_digest')} 가 키 {key.get('sample_digest')} 와 다릅니다 — 다른 표본의 라벨")
+    pa, pb = (a.get("meta") or {}).get("prompt_sha256"), (b.get("meta") or {}).get("prompt_sha256")
+    if pa and pb and pa != pb:
+        raise ValueError("두 코더의 prompt_sha256 이 다릅니다 — 같은 질문으로 판정한 라벨만 채점합니다")
     check_complete(a, ids, "A"); check_complete(b, ids, "B")
     ga, gb = a.get("grades", {}), b.get("grades", {})
     final = final_labels(ids, ga, gb, adj_labels)
