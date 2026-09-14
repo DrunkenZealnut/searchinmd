@@ -107,36 +107,64 @@ class Facts:
     school: CorpusFacts
     cases: CaseFacts
     run: dict = field(default_factory=dict)
+    cases_date: str | None = None
+
+    def value_index(self) -> dict[str, set[str]]:
+        """정본 값(콤마·소수 1자리 % 문자열) → 그 값이 나오는 정본 키 경로들. 숫자 감사의 허용 집합이자 대조 JSON 의 출처(keys) 근거."""
+        index: dict[str, set[str]] = {}
+
+        def add(value: str, key: str) -> None:
+            index.setdefault(value, set()).add(key)
+
+        for label, corpus in (("NCS", self.ncs), ("교과서", self.school)):
+            base = f"corpora.{label}"
+            pages_total = sum(a["pages"] for a in corpus.areas.values())
+            add(fmt(corpus.documents), f"{base}.documents"); add(fmt(corpus.total), f"{base}.total"); add(fmt(pages_total), f"{base}.groups[].pages(sum)")
+            for g in (1, 2, 3):
+                add(fmt(corpus.grades[g]), f"{base}.grades.{g}"); add(pct(corpus.grades[g], corpus.total), f"{base}.grades.{g}/total")
+            add(str(sum(1 for k in corpus.keywords.values() if k["total"] == 0)), f"keywords[].corpora.{label}.total==0(count)")
+            add(str(sum(1 for k in corpus.keywords.values() if k["total"] > 0)), f"keywords[].corpora.{label}.total>0(count)")
+            for name, area in corpus.areas.items():
+                ab = f"{base}.groups[{name}]"
+                add(fmt(area["documents"]), f"{ab}.documents"); add(fmt(area["pages"]), f"{ab}.pages"); add(fmt(area["total"]), f"{ab}.total")
+                add(pct(area["total"], corpus.total), f"{ab}.total/corpus"); add(pct(area["pages"], pages_total), f"{ab}.pages/corpus")
+                for g in (1, 2, 3):
+                    add(fmt(area["grades"][g]), f"{ab}.grades.{g}"); add(pct(area["grades"][g], area["total"]), f"{ab}.grades.{g}/total")
+            for name, kw in corpus.keywords.items():
+                kb = f"keywords[{name}].corpora.{label}"
+                add(fmt(kw["total"]), f"{kb}.total"); add(pct(kw["total"], corpus.total), f"{kb}.total/corpus")
+                for g in (1, 2, 3):
+                    add(fmt(kw["grades"][g]), f"{kb}.grades.{g}"); add(pct(kw["grades"][g], kw["total"]), f"{kb}.grades.{g}/total")
+                add(pct(kw["grades"][2] + kw["grades"][3], kw["total"]), f"{kb}.grades.2+3/total")
+                for aname, area in kw["areas"].items():
+                    add(fmt(area["total"]), f"{kb}.groups[{aname}].total"); add(pct(area["total"], kw["total"]), f"{kb}.groups[{aname}].total/keyword")
+        c = self.cases
+        for value, key in ((c.flagged, "cases.pages(count)"), (c.books, "cases.books"), (c.top_book_pages, "cases.top_book_pages"), (c.narrative, "cases.narrative"),
+                           (c.industrial_events, "cases.industrial_events"), (c.industrial_books, "cases.industrial_books"), (c.false_positive, "cases.false_positive"),
+                           (c.textbook_cases, "recount.textbook.cases_pages")):
+            add(str(value), key)
+        for kind, v in c.fp_kinds.items():
+            add(str(v), f"cases.false_positive[{kind}]")
+        for area, v in c.by_area_flagged.items():
+            add(str(v), f"cases.pages[area={area}](count)")
+        for p in c.pages:
+            add(str(p["page"]), f"cases.pages[{p['book']}].page")
+        add(pct(c.top_book_pages, c.flagged), "cases.top_book_pages/flagged"); add(pct(c.false_positive, c.flagged), "cases.false_positive/flagged"); add(pct(c.narrative, c.flagged), "cases.narrative/flagged")
+        return index
 
     def all_numbers(self) -> set[str]:
         """숫자 감사의 허용 집합 — 정본 값·비율·쪽 번호·권수·순위. 문자열(콤마·소수 1자리 %) 형태."""
-        out: set[str] = set()
-        for corpus in (self.ncs, self.school):
-            out |= {fmt(corpus.documents), fmt(corpus.total), fmt(sum(a["pages"] for a in corpus.areas.values()))}
-            for g in (1, 2, 3):
-                out |= {fmt(corpus.grades[g]), pct(corpus.grades[g], corpus.total)}
-            out.add(str(sum(1 for k in corpus.keywords.values() if k["total"] == 0)))
-            out.add(str(sum(1 for k in corpus.keywords.values() if k["total"] > 0)))
-            for area in corpus.areas.values():
-                out |= {fmt(area["documents"]), fmt(area["pages"]), fmt(area["total"]), pct(area["total"], corpus.total),
-                        pct(area["pages"], sum(a["pages"] for a in corpus.areas.values()))}
-                for g in (1, 2, 3):
-                    out |= {fmt(area["grades"][g]), pct(area["grades"][g], area["total"])}
-            for kw in corpus.keywords.values():
-                out.add(fmt(kw["total"]))
-                out.add(pct(kw["total"], corpus.total))
-                for g in (1, 2, 3):
-                    out |= {fmt(kw["grades"][g]), pct(kw["grades"][g], kw["total"])}
-                out.add(pct(kw["grades"][2] + kw["grades"][3], kw["total"]))
-                for area in kw["areas"].values():
-                    out |= {fmt(area["total"]), pct(area["total"], kw["total"])}
-        c = self.cases
-        out |= {str(c.flagged), str(c.books), str(c.top_book_pages), str(c.narrative), str(c.industrial_events), str(c.industrial_books),
-                str(c.false_positive), str(c.textbook_cases)}
-        out |= {str(v) for v in c.fp_kinds.values()} | {str(v) for v in c.by_area_flagged.values()}
-        out |= {str(p["page"]) for p in c.pages}
-        out |= {pct(c.top_book_pages, c.flagged), pct(c.false_positive, c.flagged), pct(c.narrative, c.flagged)}
-        return out
+        return set(self.value_index())
+
+    def keys_for(self, numbers: list[str]) -> list[str]:
+        """숫자 토큰 목록이 나온 정본 키 경로(합집합, 정렬). 작은 수는 여러 키에 걸릴 수 있다."""
+        index = self.value_index()
+        keys: set[str] = set()
+        for token in numbers:
+            if token in ALLOWED_TOKENS:                      # 등급·분야 번호 같은 작은 수는 출처를 특정하지 않는다
+                continue
+            keys |= index.get(token, set()) | index.get(token.rstrip("%"), set())
+        return sorted(keys)
 
 
 def fmt(n: int) -> str:
@@ -194,7 +222,7 @@ def load_facts(summary_path: Path = DEFAULT_SUMMARY, cases_path: Path = DEFAULT_
         fp_kinds=Counter(p["kind"] for p in pages if p["verdict"] == "false_positive"),
         by_area_flagged=Counter(p["area"] for p in pages), textbook_cases=textbook_cases,
     )
-    return Facts(ncs=ncs, school=school, cases=case_facts, run=summary.get("meta", {}).get("run", {}))
+    return Facts(ncs=ncs, school=school, cases=case_facts, run=summary.get("meta", {}).get("run", {}), cases_date=cases.get("date"))
 
 
 # ---------------------------------------------------------------- XML 도우미
@@ -391,7 +419,7 @@ def _compare_share(value: float, reference: float) -> str:
     return "보다 낮은 수준으로" if diff < 0 else "보다 높은 수준으로"
 
 
-def textbook_paragraphs(f: Facts) -> list[tuple[str, str]]:
+def textbook_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
     s = f.school
     pages_total = sum(a["pages"] for a in s.areas.values())
     detected = sum(1 for k in s.keywords.values() if k["total"] > 0)
@@ -402,7 +430,13 @@ def textbook_paragraphs(f: Facts) -> list[tuple[str, str]]:
     def area_sentence(area, lead):
         a = s.areas[area]
         return f"{lead} {a['documents']}권, 총 {fmt(a['pages'])}쪽으로 전체의 약 {pct(a['pages'], pages_total)}를 차지하였다."
-    return [
+    largest_area = _area_rank(s, lambda v: v["pages"])[0]
+    conditions = {
+        "키워드 분석 결과": {"top_keyword": top6[0][0], "zero_keywords": zero},
+        "반도체 제조 분야는": {"manufacturing_has_most_pages": largest_area == "제조"},
+        "따라서 장비 분야에서는 전기, 기계, 압력": {"textbook_accident_pages": f.cases.textbook_cases},
+    }
+    return _with_conditions([
         ("본 연구에서는 반도체고등학교의 전공교과서를 대상으로",
          f"본 연구에서는 반도체고등학교의 전공교과서를 대상으로 안전보건교육 내용의 실태를 분석하였다. 분석 대상은 교과서 {s.documents}권, 총 {fmt(pages_total)}페이지이며, ‘사망, 부상, 화학물질, 폭발, 감전, 직업병’ 등 {len(s.order)}개의 안전보건 관련 주요 키워드를 중심으로 AI 기반 텍스트 분석과 수기 검토를 병행하였다. 수치는 2026-09-14 정본 재검산(의미 표현 사전 v2, 출현건수 기준) 값이다."),
         ("키워드 분석 결과",
@@ -446,10 +480,14 @@ def textbook_paragraphs(f: Facts) -> list[tuple[str, str]]:
          f"반도체고등학교에서 사용하는 반도체 교과서 {s.documents}권, 총 {fmt(pages_total)}쪽을 대상으로 {len(s.order)}개의 안전보건 관련 키워드를 분석한 결과, {detected}개 키워드에서 총 {fmt(s.total)}건이 검출되었다. 그러나 안전보건교육의 양과 구체성은 전반적으로 부족한 것으로 나타났다. 특히 예방조치와 작업 방법을 제시하는 등급 3은 {fmt(g3)}건({pct(g3, s.total)})에 불과하여, 위험 요인을 학생의 예방 행동으로 연결하는 교육 내용이 매우 적었다."),
         ("또한 공정안전관리, 직업병, 물질안전보건자료",
          f"또한 {', '.join(zero)} 등 {len(zero)}개 키워드가 전혀 검출되지 않았으며, 구체적인 사고 사례도 {s.documents}권 전체에서 한 건도 확인되지 않았다. 이를 통해 현재 반도체 교과서가 반도체의 기술과 공정 원리를 교육하는 데 중점을 두고 있지만, 산업현장에서 발생할 수 있는 사고·부상·화학물질 노출·직업병을 예방하기 위한 교육은 충분히 통합하지 못함을 알 수 있다."),
-    ]
+    ], conditions)
 
 
-def ncs_paragraphs(f: Facts) -> list[tuple[str, str]]:
+def _with_conditions(entries: list[tuple[str, str]], conditions: dict[str, dict]) -> list[tuple[str, str, dict]]:
+    return [(prefix, text, conditions.get(prefix, {})) for prefix, text in entries]
+
+
+def ncs_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
     n = f.ncs
     c = f.cases
     k = lambda name: n.keywords[name]
@@ -472,7 +510,18 @@ def ncs_paragraphs(f: Facts) -> list[tuple[str, str]]:
     equip_narrative = [p for p in equip_pages if p["verdict"] in ("case", "case_other")]
     equip_fp_kinds = Counter(p["kind"] for p in equip_pages if p["verdict"] == "false_positive")
     kind_label = {"guideline": "보호구 착용 지침", "definition": "무재해운동 정의", "property": "물질 특성 설명"}
-    return [
+    conditions = {
+        "교과서의 전체 키워드 중 ‘안전’이": {"safety_top_grade": gmax},
+        "사고 관련 주요 키워드 검출 건수는": {"accident_keyword_order": [n for n, _ in sorted(((x, k(x)["total"]) for x in accident_kw), key=lambda kv: (-kv[1], n.order.index(kv[0])))]},
+        "‘보호구’는": {"ppe_over_60pct": ppe23 / ppe["total"] >= 0.6},
+        "한편 ‘공정안전관리’는": {"psm_all_grade3": psm_all3},
+        "한편 ‘공정안전관리’는 총": {"psm_all_grade3": psm_all3},
+        "반도체 제조 분야는 총": {"safety_share_vs_pages": _compare_share(safety["areas"]["제조"]["total"] / safety["total"], n.areas["제조"]["pages"] / pages_total).strip()},
+        "반도체 장비 분야는 총": {"equipment_safety_rank": equip_rank, "equipment_narrative_pages": len(equip_narrative)},
+        "반도체 재료 분야는 총": {"materials_is_top": safety_rank[0] == "재료", "near_half": 0.4 <= safety["areas"]["재료"]["total"] / safety["total"] < 0.6},
+        "등급 2는 안전보건 관련 키워드가 확인되지만": {"largest_grade": _grade_max(n.grades)},
+    }
+    return _with_conditions([
         ("NCS 기반 반도체 자료를 대상으로",
          f"NCS 기반 반도체 자료를 대상으로 안전보건교육 내용의 실태를 분석하였다. 분석 대상은 자료 {n.documents}권, 총 {fmt(pages_total)}쪽(교재 마크다운의 쪽 표식 최댓값 합)이며, ’사망, 부상, 화학물질, 폭발, 감전, 직업병’ 등 {len(n.order)}개의 안전보건 관련 주요 키워드를 중심으로 AI 기반 텍스트 분석과 수기 검토를 병행하였다. 수치는 2026-09-14 정본 재검산(의미 표현 사전 v2, 출현건수 기준, 총 {fmt(n.total)}건) 값이다."),
         ("교과서의 전체 키워드 중 ‘안전’이",
@@ -522,15 +571,19 @@ def ncs_paragraphs(f: Facts) -> list[tuple[str, str]]:
          + "이는 해당 개념이 교과서에 거의 포함되어 있지 않지만, 포함되는 경우에는 비교적 구체적이고 전문적인 내용으로 제시되고 있음을 의미한다. 그러나 빈도 자체가 매우 적기 때문에 이를 근거로 교과서 전반의 공정안전교육 수준이 충분하다고 평가하기는 어렵다."),
         ("주: 단위: 건.",
          f"주: 단위: 건. 등급 비율의 분모: {fmt(n.total)}건(2026-09-14 정본, 의미 표현 사전 v2, 등급 미확정 0건). 등급은 출현이 놓인 페이지의 판정값을 출현별로 연결한 값임."),
-    ]
+    ], conditions)
 
 
-def case_paragraphs(f: Facts) -> list[tuple[str, str]]:
+def case_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
     c = f.cases
     industrial_books = [p["title"] for p in c.pages if p["verdict"] == "case"]
     other = [p for p in c.pages if p["verdict"] == "case_other"]
     kinds = c.fp_kinds
-    return [
+    conditions = {
+        "본 연구에서는 NCS 반도체 교과서에 수록된 사고, 부상, 질병 관련 사례를": {"flagged": c.flagged, "narrative": c.narrative, "industrial_events": c.industrial_events, "false_positive": c.false_positive},
+        "사례의 분포를 보면": {"areas_without_cases": [a for a in AREA_ORDER if c.by_area_flagged.get(a, 0) == 0]},
+    }
+    return _with_conditions([
         ("본 연구에서는 NCS 반도체 교과서에 수록된 사고, 부상, 질병 관련 사례를",
          f"본 연구에서는 NCS 반도체 교과서에 수록된 사고, 부상, 질병 관련 사례를 체계적으로 수집·정리하고, 내용 수준과 구성 특성을 분석하였다. 키워드 검색 결과의 ‘사고사례여부’ 자동 판정은 {c.books}권 {c.flagged}쪽을 사례로 잡았으나, 해당 쪽의 원문을 확인한 결과 실제로 사고를 서술한 쪽은 {c.narrative}쪽뿐이었고, 그중 반도체 산업재해는 구미 불산 가스 누출 사고 {c.industrial_events}건({' '.join(wa('『' + b + '』') if i < len(dict.fromkeys(industrial_books)) - 1 else '『' + b + '』' for i, b in enumerate(dict.fromkeys(industrial_books)))} {c.industrial_books}권에 중복 게재)이었으며, 나머지 {len(other)}쪽은 반도체 산업재해가 아닌 사고({', '.join(p['gist'].split(' (')[0] for p in other)})였다(표 13 참조). 이러한 결과는 반도체산업이 화학물질, 특수 가스, 고에너지 장비 등을 활용하는 대표적인 고위험 산업임을 감안할 때, 교과서에 수록된 사고 사례의 양적 수준이 매우 제한적임을 보여 준다."),
         ("사례의 분포를 보면",
@@ -543,7 +596,7 @@ def case_paragraphs(f: Facts) -> list[tuple[str, str]]:
          "또한 사고 사례는 위험 상황을 단순히 언급하는 수준에 머물러 있으며, 위험 요인 분석이나 예방조치와 연계성이 부족하였다. 이는 사고 사례가 교육적 학습 자료로 활용되기보다는 참고 수준의 정보로 제시되고 있음을 의미한다. 결과적으로 현재 교과서는 사고가 있음을 알리는 기능은 수행하고 있으나, 사고를 통한 위험 인식 강화나 예방 행동 유도 측면에서는 제한적인 역할에 머무르고 있다."),
         ("이러한 분석 결과를 종합하면, NCS 반도체 교과서에 수록된 사고 사례는",
          f"이러한 분석 결과를 종합하면, NCS 반도체 교과서에 수록된 사고 사례는 양적·질적 측면에서 모두 제한적인 수준이며, 반도체산업의 실제 위험 구조를 충분히 반영하지 못한다고 판단된다. 특히 실제 사고 서술이 {c.narrative}쪽·{c.industrial_events}건에 불과하고, 그마저 장비 분야 한 권과 재료 분야 한 권에 중복 게재된 화학물질 급성 사고 위주이며, 사고 원인과 예방 대책이 충분히 제시되지 않는다는 점은 교육적 활용도를 저해하는 주요 요인이다. 아울러 자동 판정 {c.flagged}쪽 중 {c.false_positive}쪽이 오탐이었다는 점은 키워드 기반 자동 판정만으로 사고 사례를 세어서는 안 되며 원문 확인이 필요함을 보여준다."),
-    ]
+    ], conditions)
 
 
 PARAGRAPH_TEMPLATES = {"textbook": textbook_paragraphs, "ncs": ncs_paragraphs, "cases": case_paragraphs}
@@ -617,6 +670,15 @@ def image_dimensions(data: bytes) -> tuple[int, int, str]:
     raise ValueError("PNG 또는 BMP 가 아닙니다")
 
 
+def image_bits(data: bytes) -> int:
+    """비트 깊이 — BMP 는 biBitCount, PNG 는 IHDR 의 bit depth × 채널 수(색 유형 2 = RGB)."""
+    if data[:2] == b"BM":
+        return struct.unpack("<H", data[28:30])[0]
+    depth, color_type = data[24], data[25]
+    channels = {0: 1, 2: 3, 3: 1, 4: 2, 6: 4}[color_type]
+    return depth * channels
+
+
 def _svg_text(x, y, text, size=28, fill="#243244", anchor="start", weight="normal"):
     return f'<text x="{x}" y="{y}" font-family="AppleGothic, sans-serif" font-size="{size}" fill="{fill}" text-anchor="{anchor}" font-weight="{weight}">{text}</text>'
 
@@ -678,6 +740,8 @@ def render_svg(svg: str, fmt_: str, width: int, height: int) -> bytes:
     w, h, kind = image_dimensions(out)
     if (w, h, kind) != (width, height, fmt_):
         raise RuntimeError(f"렌더 결과 {kind} {w}×{h} ≠ 요청 {fmt_} {width}×{height}")
+    if kind == "BMP" and image_bits(out) != 24:
+        raise RuntimeError(f"BMP 비트 깊이 {image_bits(out)} ≠ 24")
     return out
 
 
@@ -768,24 +832,41 @@ def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def public(path: Path) -> str:
+    """저장소 상대 경로 (메시지·도움말용 — 절대 경로를 찍지 않는다)."""
+    try:
+        return str(Path(path).resolve().relative_to(HERE))
+    except ValueError:
+        return Path(path).name
+
+
 # ---------------------------------------------------------------- 실행
-def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_dir: Path | None, force: bool = False, render: bool = True) -> dict:
+DEFAULT_TEXT_REVIEW_DIR = HERE / "data" / "hwpx-results-refresh"
+
+
+def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_dir: Path | None, force: bool = False, render: bool = True,
+            text_review_dir: Path | None = None) -> dict:
     raw, root, root_tag = read_section(hwpx)
     original_xml = ET.fromstring(raw)
     sections = locate_sections(root)
-    diff: dict = {"source": {"hwpx": hwpx.name, "hwpx_sha256": sha256(hwpx.read_bytes()), "summary_run": {k: facts.run.get(k) for k in ("generated_at", "git_commit", "dictionary", "expected")}},
+    diff: dict = {"source": {"hwpx": hwpx.name, "hwpx_sha256": sha256(hwpx.read_bytes()), "summary_run": {k: facts.run.get(k) for k in ("generated_at", "git_commit", "dictionary", "expected")},
+                             "cases_date": facts.cases_date},
                   "output": out.name, "paragraphs": [], "tables": [], "figures": [], "audit": {}}
+    text_pairs: list[tuple[str, str, str]] = []
 
     # 문단
     for name, template in PARAGRAPH_TEMPLATES.items():
         section = sections[name]
         entries = template(facts)
-        prefixes = tuple(prefix for prefix, _ in entries)
-        for prefix, new_text in entries:
+        prefixes = tuple(prefix for prefix, _, _ in entries)
+        for prefix, new_text, conditions in entries:
             p = find_paragraph(section, prefix, prefixes)
             old = direct_text(p)
             info = set_text(p, new_text)
-            diff["paragraphs"].append({"section": name, "locator": prefix, "old_numbers": numbers_in(old), "new_numbers": numbers_in(new_text), **info})
+            new_numbers = numbers_in(STRIP_BEFORE_AUDIT.sub(" ", new_text))
+            diff["paragraphs"].append({"section": name, "locator": prefix, "old_numbers": numbers_in(old), "new_numbers": new_numbers,
+                                       "keys": facts.keys_for(new_numbers), "conditions": conditions, **info})
+            text_pairs.append((name, old, new_text))
 
     # 표
     table_specs = [
@@ -799,12 +880,12 @@ def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_d
     for name, caption, rows, first, header in table_specs:
         tbl = find_table_after_caption(sections[name], caption)
         changed = fill_table(tbl, rows, first, header)
-        diff["tables"].append({"section": name, "caption": caption, "rows": len(table_rows(tbl)), "cols": len(table_rows(tbl)[0]), "changed_cells": changed})
+        diff["tables"].append({"section": name, "caption": caption, "rows": len(table_rows(tbl)), "cols": len(table_rows(tbl)[first]), "changed_cells": changed})
     tbl13 = find_table_by_first_cell(sections["cases"], "표 13.")
     rows13 = case_table_rows(facts.cases)
     resize_table(tbl13, 2, len(rows13))
     changed = fill_table(tbl13, rows13, 2, ["교과서 이름", "교과서 분야", "사고/부상 등 주요 내용", "페이지", "판정"])
-    diff["tables"].append({"section": "cases", "caption": "표 13.", "rows": len(table_rows(tbl13)), "cols": len(table_rows(tbl13)[0]), "changed_cells": changed})
+    diff["tables"].append({"section": "cases", "caption": "표 13.", "rows": len(table_rows(tbl13)), "cols": len(table_rows(tbl13)[2]), "changed_cells": changed})
 
     # 그림
     bindata: dict[str, bytes] = {}
@@ -822,13 +903,15 @@ def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_d
                 data = render_svg(svg, kind, width, height)
                 bindata[entry] = data
                 record["sha256"] = sha256(data)
+                record["bits"] = image_bits(data)
                 review_images.append((spec["label"], data, kind))
             diff["figures"].append(record)
 
     # 감사 — 다시 쓴 1~3절의 숫자 토큰 전부가 정본 값이어야 한다
     texts = [t for name in sections for t in section_texts(sections[name])]
     unmatched = audit_numbers(texts, facts)
-    diff["audit"] = {"tokens": sum(len(numbers_in(t)) for t in texts), "unmatched": unmatched}
+    diff["audit"] = {"tokens": sum(len(numbers_in(t)) for t in texts), "unmatched": unmatched,
+                     "out_of_scope": out_of_scope_numbers(root, facts)}          # 2장 5절(방법론)의 정본 밖 숫자 — 기록만, 실패 아님
 
     # 1~3절 밖 불변 검사
     old_tops = top_paragraphs(original_xml); new_tops = top_paragraphs(root)
@@ -849,7 +932,47 @@ def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_d
         diff_out.write_text(json.dumps(diff, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     if review_dir and not unmatched:
         write_review(review_dir, facts, table_specs + [("cases", "표 13.", rows13, 2, None)], review_images)
+    if text_review_dir and not unmatched:
+        write_text_review(text_review_dir, text_pairs)
     return diff
+
+
+OUT_OF_SCOPE_HEADINGS = ("5. 키워드 기반 문서 분류·분석 방법론", "제3장 연구 결과")    # 2장 5절 본문 ~ 3장 시작
+
+
+def out_of_scope_numbers(root: ET.Element, facts: Facts) -> dict:
+    """계획 §2.2 — 2장 5절(방법론)에 남은 정본 밖 숫자를 기록만 한다(범위 밖, 갱신하지 않음)."""
+    tops = top_paragraphs(root)
+    texts = [direct_text(p).strip() for p in tops]
+    start_hits = [i for i, t in enumerate(texts) if t == OUT_OF_SCOPE_HEADINGS[0]]
+    end_hits = [i for i, t in enumerate(texts) if t == OUT_OF_SCOPE_HEADINGS[1]]
+    if len(start_hits) < 2 or len(end_hits) < 2:
+        return {"section": OUT_OF_SCOPE_HEADINGS[0], "found": False}
+    start, end = start_hits[1], end_hits[1]                 # 첫 번째는 목차
+    if end <= start:
+        return {"section": OUT_OF_SCOPE_HEADINGS[0], "found": False}
+    section = Section("methodology", start, end, tops[start:end])
+    stale = audit_numbers(section_texts(section), facts)
+    return {"section": OUT_OF_SCOPE_HEADINGS[0], "found": True, "stale_numbers": stale}
+
+
+def write_text_review(text_review_dir: Path, pairs: list[tuple[str, str, str]]) -> None:
+    """구/신 문장 병기본 — 보고서 본문을 담으므로 data/ 아래(비추적)에만 쓴다."""
+    import html
+    text_review_dir.mkdir(parents=True, exist_ok=True)
+    parts = ["<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><title>HWPX 제3장 문단 구/신 대조 (비추적)</title>",
+             "<style>body{font-family:-apple-system,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem;line-height:1.5}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:.4rem .6rem;vertical-align:top;font-size:.9rem;width:50%}th{background:#f3f4f6}h2{margin-top:2rem}</style></head><body>",
+             "<h1>HWPX 제3장 문단 구/신 대조</h1><p>보고서 본문을 담으므로 이 파일은 <code>data/</code> 아래(비추적)에만 둔다.</p>"]
+    current = None
+    for name, old, new in pairs:
+        if name != current:
+            if current is not None:
+                parts.append("</table>")
+            parts.append(f"<h2>{html.escape(name)}</h2><table><tr><th>구 문장</th><th>새 문장</th></tr>")
+            current = name
+        parts.append(f"<tr><td>{html.escape(old)}</td><td>{html.escape(new)}</td></tr>")
+    parts.append("</table></body></html>")
+    (text_review_dir / "review_text.html").write_text("".join(parts), encoding="utf-8")
 
 
 def write_review(review_dir: Path, facts: Facts, table_specs, images) -> None:
@@ -878,16 +1001,25 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--summary", type=Path, default=DEFAULT_SUMMARY)
     ap.add_argument("--cases", type=Path, default=DEFAULT_CASES)
     ap.add_argument("--recount-summary", type=Path, default=DEFAULT_RECOUNT)
-    ap.add_argument("--diff-out", type=Path, default=DEFAULT_DIFF)
+    ap.add_argument("--diff-out", type=Path, default=None, help=f"변경 대조 JSON (기본 {public(DEFAULT_DIFF)})")
     ap.add_argument("--review-dir", type=Path, default=DEFAULT_REVIEW_DIR)
     ap.add_argument("--force", action="store_true")
-    ap.add_argument("--no-render", action="store_true", help="그림을 그리지 않는다 (magick 없는 환경의 점검용 — 출력 HWPX 도 쓰지 않는다)")
+    ap.add_argument("--no-render", action="store_true", help="그림을 그리지 않는 점검 실행 — 출력 HWPX·추적 대조 JSON 을 쓰지 않는다 (--diff-out 은 docs/ 밖 경로만)")
+    ap.add_argument("--text-review-dir", type=Path, default=DEFAULT_TEXT_REVIEW_DIR, help="구/신 문장 병기본 (본문 포함 — data/ 아래, 비추적)")
     args = ap.parse_args(argv)
     facts = load_facts(args.summary, args.cases, args.recount_summary)
     if args.no_render:
-        diff = refresh(args.hwpx, facts, Path(tempfile.gettempdir()) / "hwpx_refresh_dry.hwpx", args.diff_out, None, force=True, render=False)
+        tracked_docs = os.path.realpath(str(HERE / "docs"))
+        if args.diff_out is None:
+            diff_out = Path(tempfile.gettempdir()) / "hwpx_results_refresh_dry.json"
+        elif os.path.realpath(str(args.diff_out)).startswith(tracked_docs + os.sep):
+            sys.exit(f"--no-render 점검 실행은 추적 경로에 대조 JSON 을 쓰지 않습니다: {public(args.diff_out)}")
+        else:
+            diff_out = args.diff_out
+        diff = refresh(args.hwpx, facts, Path(tempfile.gettempdir()) / "hwpx_refresh_dry.hwpx", diff_out, None, force=True, render=False)
+        print(f"(점검 실행 — 대조 JSON: {diff_out})")
     else:
-        diff = refresh(args.hwpx, facts, args.out, args.diff_out, args.review_dir, force=args.force)
+        diff = refresh(args.hwpx, facts, args.out, args.diff_out or DEFAULT_DIFF, args.review_dir, force=args.force, text_review_dir=args.text_review_dir)
     print(f"문단 {len(diff['paragraphs'])}개 · 표 {len(diff['tables'])}개 · 그림 {len(diff['figures'])}개 · 숫자 토큰 {diff['audit']['tokens']}개 · 미일치 {len(diff['audit']['unmatched'])}개")
     if diff["audit"]["unmatched"]:
         print("정본에 없는 숫자:", ", ".join(diff["audit"]["unmatched"]))

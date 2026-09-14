@@ -37,10 +37,19 @@ class CommittedDiffTests(unittest.TestCase):
         if not path.exists():
             self.skipTest("대조 JSON 없음")
         diff = json.loads(path.read_text(encoding="utf-8"))
-        self.assertEqual({"tokens": diff["audit"]["tokens"], "unmatched": [], "status": "ok"}, diff["audit"])
+        self.assertEqual(([], "ok"), (diff["audit"]["unmatched"], diff["audit"]["status"]))
+        self.assertTrue(diff["audit"]["out_of_scope"]["found"])                                                    # 2장 5절 기록 (계획 §2.2)
         self.assertEqual((7, 3), (len(diff["tables"]), len(diff["figures"])))
         self.assertEqual({"PNG": 1, "BMP": 2}, Counter(f["format"] for f in diff["figures"]))
         self.assertTrue(all(len(f["sha256"]) == 64 for f in diff["figures"]))
+        self.assertTrue(all(f["bits"] == 24 for f in diff["figures"] if f["format"] == "BMP"))                      # G-6 24bit
+        self.assertEqual("2026-09-06", diff["source"]["cases_date"])                                                # G-5
+        conds = {p["locator"]: p["conditions"] for p in diff["paragraphs"] if p.get("conditions")}
+        self.assertFalse(conds["한편 ‘공정안전관리’는 총"]["psm_all_grade3"])                                          # G-1 조건 기록 (5/7)
+        self.assertTrue(conds["‘보호구’는"]["ppe_over_60pct"])
+        self.assertTrue(all(p["keys"] for p in diff["paragraphs"] if set(p["new_numbers"]) - HR.ALLOWED_TOKENS))  # G-2 출처 키 (등급 번호 같은 작은 수만 있는 문단 제외)
+        self.assertEqual(5, next(t for t in diff["tables"] if t["caption"] == "표 13.")["cols"])                   # G-8
+        self.assertIn("out_of_scope", diff["audit"])                                                               # G-11
         self.assertEqual("v2", diff["source"]["summary_run"]["dictionary"])
         self.assertTrue(diff["source"]["summary_run"]["expected"])
         self.assertNotIn("/Users/", path.read_text(encoding="utf-8"))
@@ -48,6 +57,8 @@ class CommittedDiffTests(unittest.TestCase):
 
 
 # ---------------------------------------------------------------- fixture HWPX
+import contextlib
+import copy
 import io
 import shutil
 import struct
@@ -143,6 +154,10 @@ class XmlHelperTests(unittest.TestCase):
         self.assertEqual([str(i) for i in range(5)], [r[0].find(HP + "cellAddr").get("rowAddr") for r in rows])
         HR.resize_table(tbl, 1, 1)
         self.assertEqual(2, len(HR.table_rows(tbl))); self.assertEqual("2", tbl.get("rowCnt"))
+        before = [(tc.get("borderFillIDRef"), tc.find(HP + "cellSpan").attrib, tc.find(HP + "cellSz").attrib) for r in HR.table_rows(tbl) for tc in r]
+        HR.fill_table(tbl, [["z", "9"]], 1)
+        after = [(tc.get("borderFillIDRef"), tc.find(HP + "cellSpan").attrib, tc.find(HP + "cellSz").attrib) for r in HR.table_rows(tbl) for tc in r]
+        self.assertEqual(before, after)                                          # 셀 서식·병합·크기 불변
         with self.assertRaises(ValueError):
             HR.fill_table(tbl, [["x", "1"], ["y", "2"]], 1)                     # 행 수 불일치는 실패
 
@@ -179,13 +194,40 @@ class AuditTests(unittest.TestCase):
 
 
 class TemplateTests(unittest.TestCase):
+    def test_conditions_branch_both_ways(self):
+        f = fixture_facts()
+        psm = f.ncs.keywords["공정안전관리"]
+        base = {k: (v, c) for k, v, c in HR.ncs_paragraphs(f)}
+        self.assertEqual(psm["grades"][3] == psm["total"], base["한편 ‘공정안전관리’는 총"][1]["psm_all_grade3"])
+        flipped = copy.deepcopy(f)
+        g = flipped.ncs.keywords["공정안전관리"]["grades"]; g[3] = flipped.ncs.keywords["공정안전관리"]["total"]; g[1] = g[2] = 0
+        ppe = flipped.ncs.keywords["보호구"]["grades"]; ppe[1] = flipped.ncs.keywords["보호구"]["total"]; ppe[2] = ppe[3] = 0
+        alt = {k: (v, c) for k, v, c in HR.ncs_paragraphs(flipped)}
+        self.assertIn("모두 등급 3", alt["한편 ‘공정안전관리’는 총"][0]); self.assertTrue(alt["한편 ‘공정안전관리’는 총"][1]["psm_all_grade3"])
+        self.assertNotIn("모두 등급 3", base["한편 ‘공정안전관리’는 총"][0]) if psm["grades"][3] != psm["total"] else None
+        self.assertNotIn("60%를 넘었다", alt["‘보호구’는"][0]); self.assertFalse(alt["‘보호구’는"][1]["ppe_over_60pct"])
+        self.assertIn("60%를 넘었다", base["‘보호구’는"][0])
+
+    def test_svg_has_all_values(self):
+        f = fixture_facts()
+        for spec in HR.figure_specs(f):
+            svg = spec["svg"](1160, 750)
+            if spec["label"] == "그림 3":
+                for a in f.ncs.areas.values():
+                    for g in (1, 2, 3):
+                        self.assertIn(HR.fmt(a["grades"][g]) + "건", svg)
+            else:
+                corpus = f.school if spec["label"] == "그림 2" else f.ncs
+                for g in (1, 2, 3):
+                    self.assertIn(f"{HR.fmt(corpus.grades[g])}건 ({HR.pct(corpus.grades[g], corpus.total)})", svg, spec["label"])
+
     def test_korean_particles(self):
         self.assertEqual(("정의로", "지침으로", "관리와", "지침과", "PSM로"), (HR.ro("정의"), HR.ro("지침"), HR.wa("관리"), HR.wa("지침"), HR.ro("PSM")))
         self.assertEqual("『반도체 장비 안전관리』와", HR.wa("『반도체 장비 안전관리』"))
 
     def test_templates_branch_on_data(self):
         f = fixture_facts()
-        texts = {k: v for k, v in HR.ncs_paragraphs(f)}
+        texts = {k: v for k, v, _ in HR.ncs_paragraphs(f)}
         psm = f.ncs.keywords["공정안전관리"]
         all3 = psm["grades"][3] == psm["total"]
         self.assertEqual(all3, "모두 등급 3" in texts["한편 ‘공정안전관리’는 총"])
@@ -193,30 +235,30 @@ class TemplateTests(unittest.TestCase):
         self.assertEqual((ppe["grades"][2] + ppe["grades"][3]) / ppe["total"] >= 0.6, "60%를 넘었다" in texts["‘보호구’는"])
         self.assertIn(HR.fmt(f.ncs.keywords["안전"]["total"]), texts["교과서의 전체 키워드 중 ‘안전’이"])
         self.assertNotIn("643", texts["화학물질 관련 키워드는"]); self.assertIn("독립 집계", texts["화학물질 관련 키워드는"])   # D3
-        school = {k: v for k, v in HR.textbook_paragraphs(f)}
+        school = {k: v for k, v, _ in HR.textbook_paragraphs(f)}
         self.assertIn("전혀 검출되지 않았고", school["따라서 제조 분야는 안전보건교육이 가장 적극적으로"])
-        cases = {k: v for k, v in HR.case_paragraphs(f)}
+        cases = {k: v for k, v, _ in HR.case_paragraphs(f)}
         self.assertIn("13쪽", cases["본 연구에서는 NCS 반도체 교과서에 수록된 사고, 부상, 질병 관련 사례를"])
         for name, template in HR.PARAGRAPH_TEMPLATES.items():
-            for prefix, text in template(f):
+            for prefix, text, _ in template(f):
                 self.assertEqual([], HR.audit_numbers([text], f), (name, prefix))                    # 템플릿이 내는 숫자는 전부 정본 값
 
 
 class EndToEndTests(unittest.TestCase):
     def _fixture(self, td):
         f = fixture_facts()
-        body = {"textbook": [para(prefix + " 옛 문장 1,293건") for prefix, _ in HR.textbook_paragraphs(f)]
+        body = {"textbook": [para(prefix + " 옛 문장 1,293건") for prefix, _, _ in HR.textbook_paragraphs(f)]
                             + [para("표 7. 교과서"), table([["키워드", "전체", "등급 1", "등급 2", "등급 3", "등급 합계"]] + [[k, "0", "0", "0", "0", "0"] for k in f.school.order] + [["합계", "1,293", "0", "0", "0", "0"]]),
                                para("표 8. 교과서 분야별"), table([["분야", "권수", "전체", "등급 1", "등급 2", "등급 3", "출현비율"]] + [[a, "0", "0", "0", "0", "0", "0%"] for a in HR.AREA_ORDER] + [["합계", "9", "1,293", "0", "0", "0", "100.0%"]]),
                                para("표 9. 교과서 등급별"), table([["등급", "의미", "출현건수", "등급 비율"], ["등급 1", "", "0", "0%"], ["등급 2", "", "0", "0%"], ["등급 3", "", "0", "0%"], ["합계", "등급 1~3", "1,293", "100.0%"]]),
                                pic("image1"), para("그림 2. 교과서 등급")],
-                "ncs": [para(prefix + " 옛 문장 12,875건") for prefix, _ in HR.ncs_paragraphs(f)]
+                "ncs": [para(prefix + " 옛 문장 12,875건") for prefix, _, _ in HR.ncs_paragraphs(f)]
                        + [para("표 10. NCS"), table([["키워드", "전체", "등급 1", "등급 2", "등급 3", "등급 합계"]] + [[k, "0", "0", "0", "0", "0"] for k in f.ncs.order] + [["합계", "12,875", "0", "0", "0", "0"]]),
                           para("표 11. NCS 분야별"), table([["분야", "파일수", "전체", "등급 1", "등급 2", "등급 3", "등급 합계", "출현비율"]] + [[a, "0", "0", "0", "0", "0", "0", "0%"] for a in HR.AREA_ORDER] + [["합계", "85", "12,875", "0", "0", "0", "0", "100.0%"]]),
                           pic("image2"), para("그림 3. 분야별"),
                           para("표 12. NCS 등급별"), table([["등급", "의미", "출현건수", "등급 비율"], ["등급 1", "", "0", "0%"], ["등급 2", "", "0", "0%"], ["등급 3", "", "0", "0%"], ["합계", "등급 1~3", "12,875", "100.0%"]]),
                           pic("image3"), para("그림 4. 등급별")],
-                "cases": [para(prefix + " 옛 문장 9건") for prefix, _ in HR.case_paragraphs(f)]
+                "cases": [para(prefix + " 옛 문장 9건") for prefix, _, _ in HR.case_paragraphs(f)]
                          + [table([["표 13. NCS 반도체 교과서 내 사고·부상·질병 사례 분석", "", "", "", ""], ["교과서 이름", "교과서 분야", "사고/부상 등 주요 내용", "페이지", "문장 수(글자 수)"]]
                                   + [["반도체 장비 안전관리", "장비", "옛 사례", "33", "1문장"]] * 9 + [["", "", "", "", ""]])]}
         return build_fixture_hwpx(Path(td) / "src.hwpx", body), f
@@ -226,7 +268,9 @@ class EndToEndTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             src, f = self._fixture(td)
             out = Path(td) / "out.hwpx"
-            diff = HR.refresh(src, f, out, Path(td) / "diff.json", Path(td) / "review" if render else None, render=render)
+            diff = HR.refresh(src, f, out, Path(td) / "diff.json", Path(td) / "review" if render else None, render=render, text_review_dir=Path(td) / "text")
+            self.assertTrue((Path(td) / "text" / "review_text.html").exists())                                       # G-3 구/신 문장 병기본 (비추적 경로)
+            self.assertIn("옛 문장", (Path(td) / "text" / "review_text.html").read_text(encoding="utf-8"))
             self.assertEqual("ok", diff["audit"]["status"], diff["audit"])
             self.assertEqual(len(HR.textbook_paragraphs(f)) + len(HR.ncs_paragraphs(f)) + len(HR.case_paragraphs(f)), len(diff["paragraphs"]))
             self.assertEqual(7, len(diff["tables"])); self.assertEqual(3, len(diff["figures"]))
@@ -260,6 +304,18 @@ class EndToEndTests(unittest.TestCase):
                 HR.refresh(src, f, out, None, None, render=False)
             with self.assertRaises(ValueError):
                 HR.write_hwpx(src, src, b"", {})
+
+    def test_no_render_never_writes_the_tracked_diff(self):
+        with tempfile.TemporaryDirectory() as td:
+            src, f = self._fixture(td)
+            tracked = HR.DEFAULT_DIFF
+            before = tracked.read_bytes() if tracked.exists() else None
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc = HR.main(["--hwpx", str(src), "--no-render"])
+            self.assertEqual(0, rc)
+            self.assertEqual(before, tracked.read_bytes() if tracked.exists() else None)   # 기본 대조 경로는 건드리지 않는다
+            with self.assertRaises(SystemExit), contextlib.redirect_stdout(io.StringIO()):
+                HR.main(["--hwpx", str(src), "--no-render", "--diff-out", str(tracked)])  # 명시해도 추적 경로는 거부
 
     def test_refresh_refuses_when_a_paragraph_is_missing(self):
         with tempfile.TemporaryDirectory() as td:

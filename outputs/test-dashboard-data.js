@@ -115,8 +115,8 @@ for (const k of S.keywords) for (const corpus of ['NCS', '교과서']) {
   if (c.groups.reduce((a, g) => a + g.total, 0) !== c.total) kwGroupErrors.push(k.name + ' ' + corpus + ' total');
   for (const g of ['1', '2', '3', 'unpaged']) if (c.groups.reduce((a, x) => a + x.grades[g], 0) !== c.grades[g]) kwGroupErrors.push(k.name + ' ' + corpus + ' g' + g);
 }
-check('S3j 키워드×그룹 합 == 키워드 총계·등급 (NCS 4그룹 · 교과서 9그룹)', kwGroupErrors.length === 0, kwGroupErrors.slice(0, 3).join('; '));
-check('S3k 그룹 pages: NCS 4그룹 > 0, 교과서 9그룹 합 == recount total_pages (2,055)', N.groups.every(g => g.pages > 0) && T.groups.reduce((a, g) => a + g.pages, 0) === RC.textbook.total_pages, T.groups.reduce((a, g) => a + g.pages, 0) + ' vs ' + RC.textbook.total_pages);
+check('S3l 키워드×그룹 합 == 키워드 총계·등급 (NCS 4그룹 · 교과서 9그룹)', kwGroupErrors.length === 0, kwGroupErrors.slice(0, 3).join('; '));
+check('S3m 그룹 pages: NCS 4그룹 > 0, 교과서 9그룹 합 == recount total_pages (2,055)', N.groups.every(g => g.pages > 0) && T.groups.reduce((a, g) => a + g.pages, 0) === RC.textbook.total_pages, T.groups.reduce((a, g) => a + g.pages, 0) + ' vs ' + RC.textbook.total_pages);
 check('S3h 중복 제거 1건 기록 (LM1903060205)', S.meta.run.dedup.length === 1 && S.meta.run.dedup[0].code === 'LM1903060205' && S.meta.run.dedup[0].dropped.length === 1);
 check('S3i 절대 경로·홈·본문 필드 없음', !/\/Users\/|\/home\/|relative_path|"context"/.test(JSON.stringify(S)));
 check('S3j manifest 4종 해시 + 입력 6종(워크북 3·마크다운 2·이전 기준) sha256, 비단조 마커 경고는 레거시 1권뿐', ['source_sha256', 'rule_sha256', 'detail_sha256', 'summary_sha256'].every((k) => /^[0-9a-f]{64}$/.test(S.meta.manifest[k])) && S.meta.run.inputs.length === 6 && S.meta.run.inputs.some((i) => i.kind === '이전 기준') && S.meta.run.inputs.every((i) => /^[0-9a-f]{64}$/.test(i.sha256)) && S.meta.run.marker_nonmonotone.length === 1 && S.meta.run.marker_nonmonotone[0].includes('LM1903060113'), JSON.stringify(S.meta.run.marker_nonmonotone));

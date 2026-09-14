@@ -156,6 +156,14 @@ hwpx_results_refresh.py
 | D5 범위 | 1절·3절(사고사례) 포함 | 연구책임자 2026-09-14 |
 | 표 13 판정 열 | "문장 수(글자 수)" → "판정" | 본문 인용·길이 서술 회피, 판정이 핵심 정보 |
 | 출력 파일명 | `반도체 기초보고서_20260914_정본.hwpx` | 원본 보존, 날짜 = 정본 실행일 |
+| 그림 2 탐지 | 캡션이 없어 `binaryItemIDRef`(image1)로 찾는다 (`find_picture(item=)`) | 실측 — 1절 그림에는 캡션 문단이 없다 |
+| 문단 수 37 → 45 | 계획 실측표에 없던 숫자 문단 8개(1221·1225 등 2026-04 워크북 행 수치)도 재작성 | FR-09 전수 감사가 요구 |
+| `--no-render` | 그림 없이 점검만 — 출력 HWPX·추적 대조 JSON 을 쓰지 않는다(`docs/` 경로 거부, 기본은 temp) | 저장소 관례(변형·부분 실행은 추적 경로 거부) |
+| 대조 JSON `keys`·`conditions` | `keys` 는 값→키 역색인(`Facts.value_index`)으로 자동 산출(등급 번호 같은 작은 수는 제외), `conditions` 는 템플릿이 돌려주는 조건 결과 | FR-08, 갭 분석 G-1·G-2 |
+| 구/신 문장 병기본 | `data/hwpx-results-refresh/review_text.html`(비추적, `--text-review-dir`) | 갭 분석 G-3, 계획 위험표 완화책 |
+| `accident_case_pages.json` | `date` 2026-09-06(판정일), `event`(같은 사건 묶음)·`kind`(오탐 유형) 키, `gist` ≤ 30자 | 사건 수·오탐 유형 집계의 근거 |
+| 2장 5절 범위 밖 숫자 | `audit.out_of_scope` 에 기록만(실패 아님) — 정본 실행에서 stale 0 | 계획 §2.2 |
+| 렌더 결정론 | `magick` 버전·폰트에 묶이므로 sha256 기록까지 — 재현은 "같은 magick" 조건 | §3.6 |
 
 ## 버전 이력
 
