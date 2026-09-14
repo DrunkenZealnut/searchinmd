@@ -1,6 +1,6 @@
 # Archive Index — 2026-09
 
-보관 산출물 목록. `coding-v1` 은 **폐기된 라벨의 기록**, `recoding`·`resegment`·`resegment-publish`·`marker-offset` 은 완료된 PDCA 기능 문서다.
+보관 산출물 목록. `coding-v1` 은 **폐기된 라벨의 기록**, `recoding`·`resegment`·`resegment-publish`·`marker-offset`·`semantic-recount-remediation` 은 완료된 PDCA 기능 문서다.
 
 | Item | 종류 | 보관일 | 보관 파일 |
 |------|------|--------|-----------|
@@ -9,6 +9,7 @@
 | [resegment](resegment/) | PDCA 기능 (완료, Match Rate 99%) | 2026-09-07 | plan · design · analysis(갭 Check-1/2) · report |
 | [resegment-publish](resegment-publish/) | PDCA 기능 (완료, Match Rate 93%) | 2026-09-07 | plan · design · analysis(갭 Check-1/2) · report |
 | [marker-offset](marker-offset/) | PDCA 기능 (완료, Match Rate 100%; 채택 여부는 결정 대기) | 2026-09-08 | plan · design · analysis(갭 + Act-1) · report |
+| [semantic-recount-remediation](semantic-recount-remediation/) | PDCA 기능 (완료, Match Rate Act-0 96% → 100%; PR #15) | 2026-09-14 | plan · design · analysis(갭 + Act-1 + Act-2 ship 리뷰) · report |
 
 ## coding-v1
 
@@ -70,3 +71,19 @@
 - [Design](marker-offset/marker-offset.design.md)
 - [Analysis (갭 + Act-1)](marker-offset/marker-offset.analysis.md)
 - [Report](marker-offset/marker-offset.report.md)
+
+## semantic-recount-remediation
+
+2026-09-13 외부감사(등급 F)의 시정 — 2026-09-13~14, Plan → Design → Do → Check(96%) → Act-1(G1~G10, 100%) → Act-2(/ship 리뷰 8종 47건 반영) → Report → PR #15(CI·GitGuardian·CodeRabbit pass, 보관 시점 미머지).
+
+- **Problem**: 발표 중인 의미 출현 수치(NCS 12,875건·미확정 813·89파일)가 변환기 요약본 4개·중복 교재 1개로 오염돼 있었고(감사 C1), 미확정 813건을 등급1로 강제 배정한 미승인 산출물이 이미 발행(C3), 출현건수 분모가 등급3 비중을 페이지 기준 대비 약 3배로 보이게 함(C2), 교차검증 하니스가 153→18개로 축소(M3), 해시 불일치(M5).
+- **Solution**: 연구책임자 결정 8건(코퍼스 정제, 미확정 강제 배정 승인, 출현건수 분모 공식화 + 페이지 기준 병기, 하니스 복원 등) 위에 `semantic_keyword_recount.py` 정본 실행 1개 — `select_ncs_documents`(LM 코드 필수·중복 제거), `check_marker_base`, `EXPECTED` 12키 + `check_expected` + `--force`, `run_manifest`(git·명령·입력 sha256), 산출물 7종 한 실행·원자적 쓰기, `shift_page_markers.py`(새 2권 0-based 마커 +1), 렌더러 브리지 절, 하니스 S1~S9(64)·R8k~u(390)·unittest 53.
+- **결과**: NCS 86권 **12,506건**(등급 1/2/3 = 5,057/4,854/2,595 = 20.8%), 교과서 1,293건, 미확정 0(문맥 판정 1). 코덱스 09-09 대비 −369(요약본 −742·중복 −70·새 2권 +443), 등급3 비율 20.6→20.8%. 이전 기준(페이지) 2,189쪽·145(6.6%)는 브리지 표로 병기. 커밋 뒤 재실행 → 가드 통과·통계 동일.
+- **이월**(`TODOS.md` "의미 재검산 감사 시정 후속"): 표현 75개 도메인 점검(감사 M1), 페이지 단위 이질성(M2), 비단조 마커 레거시 1권 재유도, `public_path`→`page_utils`, hwpx 문서 구 수치.
+- **관련 자산**: 정본 `docs/03-analysis/data/semantic_summary.json`(≡ `docs/semantic_recount_data.js`), 분리 페이지 `docs/keyword-analysis.html`·`NCS_키워드검색결과.html`·`교과서_키워드검색결과.html`, 규칙 `CLAUDE.md` "Safety Grading Scheme" 예외 문단·"4. Semantic recount" 절, 이전 두 기능 문서(`semantic-keyword-recount`·`semantic-occurrence-grades`)의 폐기 배너.
+
+보관 문서:
+- [Plan](semantic-recount-remediation/semantic-recount-remediation.plan.md)
+- [Design](semantic-recount-remediation/semantic-recount-remediation.design.md)
+- [Analysis (갭 + Act-1 + Act-2)](semantic-recount-remediation/semantic-recount-remediation.analysis.md)
+- [Report](semantic-recount-remediation/semantic-recount-remediation.report.md)

@@ -10,6 +10,16 @@
 - **Context**: Currently the fallback is `console.warn` only. Add a visual badge or file-level indicator showing which analysis method was used.
 - **Depends on**: Nothing.
 
+## 의미 재검산 감사 시정 후속 (semantic-recount-remediation, 2026-09-14)
+- **Why**: 2026-09-13 외부감사(등급 F)의 C1~C3·M3~M5 는 `feat/semantic-recount-remediation` 에서 닫혔다(정본 86권 12,506건, `EXPECTED` 가드, manifest, 하니스 S1~S9). 닫지 않고 미룬 것과 ship 리뷰에서 결정한 이월 항목을 여기 둔다.
+- **Context**:
+  1. **포함 표현 75개 도메인 점검 (감사 M1, 연구책임자 "점검 필요").** PSM 단어 경계(교과서 13건 전부 Phase Shift Mask), `안전성`이 `안전` 정확 규칙 안에서 계수(NCS 140건), 방진복·장갑·X선의 조건부 포함, 고빈도 확장 표현의 층화 표본 정밀도. 후속 기능 `semantic-expression-review`; 사전이 바뀌면 `rule_sha256` 이 바뀌어 `EXPECTED` 재고정.
+  2. **페이지 단위 이질성 (감사 M2).** 마커 파일 84권 중 30권은 실제 쪽, 54권은 목차 블록 단위라 등급 모집단이 섞여 있다. `resegment.py` 의 line→page 맵(`data/markdown/ncs_paged/`)을 재사용해 모든 출현을 실제 쪽에 얹는 것이 해법. 새 2권(마커 25~28행/쪽)은 실제 쪽 단위.
+  3. **비단조 마커 레거시 1권 재유도 여부.** `LM1903060113 반도체 설계 검증` 의 목차 유도 마커가 132→58 로 되돌아가 그 구간 출현이 앞 쪽 번호로 집계된다(ship 적대적 리뷰). `meta.run.marker_nonmonotone` 에 기록만 하고 거부하지 않는다. `insert_page_markers.py --force` 로 재유도하거나 실제 쪽 마커로 바꾸면 수치가 바뀌므로 연구책임자 결정.
+  4. **`public_path()` 사본 통합 (ship 리뷰 D3).** `semantic_keyword_recount.public_path` 는 `resegment.public_path` 의 15줄 사본. `page_utils` 로 옮기고 둘 다 거기서 import 할 것 — `resegment.py`·R16 테스트를 건드리므로 별도 정리 커밋.
+  5. **hwpx 보고서 문서의 구 수치 (갭 분석 G11).** `docs/01-plan…/hwpx-report-data-refresh.plan.md` 등 5문서와 `hwpx-refresh-audit-20260910/evidence.json` 이 12,875·813 을 사실로 서술. `hwpx-report-data-refresh` 후속에서 정본(12,506·미확정 0)으로 갱신.
+- **Depends on**: 1·3 은 연구책임자 결정, 2 는 `resegment.py` 재사용 설계, 4·5 는 결정 불필요.
+
 ## P2 — Rewrite the safety grading algorithm
 - **Why**: The published grades come from a keyword-count rule that (a) matches substrings, so one `산업안전보건법` counts three times and semiconductor homonyms (`진동자`, `파티클 먼지`) count as safety content, and (b) applies a flat threshold regardless of page length, so long pages are promoted. Measured: 등급3 pages average 5,855 chars against 등급1's 1,220 — 4.8x — while their medians differ by only 250.
 - **Context**: The old blocker ("no access to the original grading script") turned out not to bind. The script is not needed: the source workbook carries `페이지전체내용` on 100% of rows, so the grade can be recomputed from the page text directly. The rule itself was reverse-engineered from the 4,000+ committed `등급사유` strings and agrees with the **first-seen row's** grade on 99.6% (1,839/1,847) of pages. That is **not** the same as reproducing the published grades, but the reason stated here was wrong and is corrected: `load_pages()` keeps the first row it meets while `recount_grades.py` takes the lowest grade on conflict, and 12 NCS pages are mixed — but **only 1 of those 12 has a first-row grade that differs from the minimum** (`LM1903060425…p.28`, first=2 min=1), measured 2026-09-04. The earlier text blamed all 9 pages of the gap on that divergence, overstating it 9×. The real gap is that the 1,270/469/108 baseline is recount's min-based distribution while `agree`=1,839/1,847 is measured against first-row grades — the table compares two different baselines. Rename and re-measure before citing this number as delta attribution; folding `load_pages()` with `min()` would make the two agree.

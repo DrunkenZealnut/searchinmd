@@ -144,6 +144,34 @@ python3 insert_page_markers.py --force --backup /path/to/문서폴더
 sed -i.bak '/^<!-- page: [0-9]* -->$/d' /path/to/문서폴더/sample.md
 ```
 
+## 마커가 0부터 시작할 때 — 값만 옮기기
+
+변환기가 `page_id` 에 1을 더하지 않고 그대로 심으면 마커가 `<!-- page: 0 -->` 부터 시작합니다. 2026-09-13 에 추가된 NCS 2권(`LM1903060408`, `LM1903060424`)이 그랬습니다. 이런 파일은 쪽마다 마커가 있어서 `--force` 로 목차에서 다시 유도하면 촘촘하던 마커가 절 단위로 성겨집니다. 다시 심지 말고 `shift_page_markers.py` 로 **값만** 옮기세요. pip 패키지는 필요 없습니다.
+
+```bash
+python3 shift_page_markers.py /path/to/문서.md --by 1 --dry-run   # 먼저 확인
+python3 shift_page_markers.py /path/to/문서.md --by 1 --backup    # 문서.md.bak 을 남기고 적용
+```
+
+```
+dry_run: /path/to/문서.md markers=112 first=0→1 last=111→112
+shifted: /path/to/문서.md markers=112 first=0→1 last=111→112
+```
+
+마커 줄만 바꾸고 나머지 바이트는 그대로 둡니다(CRLF 도 유지, 임시 파일에 쓴 뒤 교체). `_meta.json` 은 건드리지 않습니다. 파일을 여러 개 주면 차례로 처리합니다.
+
+**두 번 돌리면 두 번 옮겨집니다.** `insert_page_markers.py --force` 와 달리 멱등이 아니므로 반드시 `--dry-run` 의 `first=0→1` 을 확인한 뒤 적용하세요. 이미 1-based 인 파일에 돌리면 쪽수가 하나씩 밀립니다.
+
+파일을 바꾸지 않고 거부하는 경우(exit 1):
+
+| 상태 | 뜻 | 대처 |
+|---|---|---|
+| `skip_no_markers` | 마커가 없음 | `insert_page_markers.py` 로 먼저 심기 |
+| `refuse_below_one` | 옮긴 결과가 1 미만이 됨 (1-based 파일에 `--by -1` 을 준 경우) | 옮길 대상이 아님 |
+| `refuse_non_monotone` | 마커 값이 중간에 줄어듦 | 목차 유도 마커가 뒤섞인 파일 — 옮기지 말고 원인을 보기 |
+| `refuse_inline_marker` | 본문 줄 한가운데 낀 마커가 있음 | 그 줄은 고칠 수 없어 나머지만 옮기면 그 값만 어긋난 채 남음. 손으로 정리한 뒤 다시 |
+| `refuse_backup_exists` | `--backup` 인데 `.bak` 이 이미 있음 | 유일한 복구본을 덮어쓰지 않음. `.bak` 을 치우거나 `--backup` 없이 |
+
 ## 왜 마커를 쓰는가
 
 앱과 `page_utils.build_page_map()` 은 쪽수를 두 전략으로 구합니다.
@@ -166,7 +194,7 @@ sed -i.bak '/^<!-- page: [0-9]* -->$/d' /path/to/문서폴더/sample.md
 목차 제목과 문서의 제목 줄이 안 맞습니다. 제목 판정은 `#` 마크다운, `○●◆◇■□▶▷` 표식, `(가)` · `1.` 번호 패턴을 제목으로 봅니다. 문서의 제목이 이 중 어디에도 안 걸리면 매칭할 대상 자체가 없습니다.
 
 **쪽수가 하나씩 밀린다**
-`page_id` 를 1-based로 넣었습니다. 스크립트는 0-based를 가정하고 1을 더합니다.
+`page_id` 를 1-based로 넣었습니다. 스크립트는 0-based를 가정하고 1을 더합니다. 반대로 마커가 `<!-- page: 0 -->` 부터 시작하면 변환기가 0-based 로 심은 것입니다 — 다시 심지 말고 위 '마커가 0부터 시작할 때' 대로 `shift_page_markers.py --by 1` 을 쓰세요.
 
 **마커가 있는데도 검색 결과가 줄 번호로 나온다**
 앱이 검색한 폴더와 마커를 심은 폴더가 다른지 확인하세요. 앱은 브라우저에서 폴더를 다시 고를 때 파일을 새로 읽습니다.

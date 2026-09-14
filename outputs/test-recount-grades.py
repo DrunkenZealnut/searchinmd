@@ -467,6 +467,80 @@ check('R8j strip_page_markers 는 마커 줄만 지운다',
                               '본문 <!-- page: 5 --> 안']) ==
       ['본문', '본문 <!-- page: 5 --> 안'])
 
+# R8k~o shift_page_markers — 2026-09-13 에 추가된 NCS 2권은 다른 변환기가 마커를
+# 0-based 로 심었다(<!-- page: 0 --> 부터). 기존 84권은 page_id+1 규약(첫 마커 1 또는 2).
+# 마커 값만 옮기고 나머지 바이트는 손대지 않는 단일 목적 도구. data_source 는
+# 비추적이라 결과가 아니라 절차(이 도구)를 추적한다.
+import shift_page_markers as SPM                               # noqa: E402
+
+_ZERO = '<!-- page: 0 -->\n# 표지\n\n  <!-- page: 1 -->  \n본문 한 줄\n<!-- page: 2 -->\n끝'
+
+with _fixture(body=_ZERO, meta=None) as md:
+    r = SPM.shift_file(md, by=1)
+    after = _read(md)
+    check('R8k +1 시프트: 마커 줄만 N+1, 수 동일, 첫 0→1, 본문·공백·끝줄바꿈 없음 보존',
+          r['status'] == 'shifted' and r['markers'] == 3 and (r['first'], r['last']) == (0, 2)
+          and after == '<!-- page: 1 -->\n# 표지\n\n  <!-- page: 2 -->  \n본문 한 줄\n<!-- page: 3 -->\n끝',
+          (r, repr(after)))
+
+with _fixture(body=_ZERO, meta=None) as md:
+    before = _read(md)
+    r = SPM.shift_file(md, by=-1)
+    check('R8l 결과 마커가 1 미만이면 거부하고 파일을 건드리지 않는다',
+          r['status'] == 'refuse_below_one' and _read(md) == before, r)
+
+with _fixture(body='<!-- page: 3 -->\n가\n<!-- page: 2 -->\n나\n', meta=None) as md:
+    before = _read(md)
+    r = SPM.shift_file(md, by=1)
+    check('R8m 마커가 감소하는(비단조) 파일은 거부한다',
+          r['status'] == 'refuse_non_monotone' and _read(md) == before, r)
+
+with _fixture(body=_ZERO, meta=None) as md:
+    before = _read(md)
+    r = SPM.shift_file(md, by=1, dry_run=True)
+    check('R8n --dry-run 은 같은 보고를 내되 파일을 바꾸지 않는다',
+          r['status'] == 'dry_run' and r['markers'] == 3 and _read(md) == before, r)
+
+with _fixture(body='# 제목\n본문만.\n', meta=None) as md:
+    before = _read(md)
+    r = SPM.shift_file(md, by=1)
+    check('R8o 마커가 없는 파일은 건너뛴다', r['status'] == 'skip_no_markers' and _read(md) == before, r)
+
+with _fixture(body=_ZERO, meta=None) as md:
+    SPM.shift_file(md, by=1, backup=True)
+    check('R8p --backup 은 원본을 .bak 으로 남긴다', os.path.exists(md + '.bak') and _read(md + '.bak') == _ZERO)
+
+with _fixture(body='<!-- page: 0 -->\n본문 <!-- page: 9 --> 안\n<!-- page: 1 -->\n', meta=None) as md:
+    before = _read(md)
+    r = SPM.shift_file(md, by=1)
+    check('R8q 본문 줄 안에 낀 마커가 하나라도 있으면 거부한다 (insert_page_markers 와 같은 규칙 — 옮기면 그 줄 값만 어긋난 채 남는다)',
+          r['status'] == 'refuse_inline_marker' and _read(md) == before, r)
+
+with _fixture(body='<!-- page: 0 -->\r\n본문\r\n<!-- page: 1 -->\r\n', meta=None) as md:
+    with open(md, 'wb') as f:                                    # 텍스트 모드가 \r\n 을 \n 으로 바꾸지 않게 바이트로 심는다
+        f.write(b'<!-- page: 0 -->\r\n\xeb\xb3\xb8\xeb\xac\xb8\r\n<!-- page: 1 -->\r\n')
+    r = SPM.shift_file(md, by=1)
+    with open(md, 'rb') as f:
+        raw = f.read()
+    check('R8r CRLF 파일의 줄바꿈을 보존한다 (newline="" — 적대적 리뷰)',
+          r['status'] == 'shifted' and raw == b'<!-- page: 1 -->\r\n\xeb\xb3\xb8\xeb\xac\xb8\r\n<!-- page: 2 -->\r\n', raw)
+
+with _fixture(body=_ZERO, meta=None) as md:
+    with open(md + '.bak', 'w', encoding='utf-8') as f:
+        f.write('이전 백업')
+    before = _read(md)
+    r = SPM.shift_file(md, by=1, backup=True)
+    check('R8s --backup 은 기존 .bak 을 덮어쓰지 않고 거부한다 (유일한 복구본)',
+          r['status'] == 'refuse_backup_exists' and _read(md) == before and _read(md + '.bak') == '이전 백업', r)
+
+import subprocess as _sp                                        # noqa: E402
+with _fixture(body=_ZERO, meta=None) as md:
+    p1 = _sp.run([sys.executable, os.path.join(ROOT, 'shift_page_markers.py'), md, '--dry-run'], capture_output=True, text=True)
+    check('R8t CLI --dry-run 은 exit 0 과 dry_run 보고', p1.returncode == 0 and p1.stdout.startswith('dry_run:'), (p1.returncode, p1.stdout[:60], p1.stderr[-200:]))
+with _fixture(body='<!-- page: 3 -->\n가\n<!-- page: 2 -->\n', meta=None) as md:
+    p2 = _sp.run([sys.executable, os.path.join(ROOT, 'shift_page_markers.py'), md], capture_output=True, text=True)
+    check('R8u CLI 는 거부 파일이 있으면 exit 1', p2.returncode == 1 and 'refuse_non_monotone' in p2.stdout, (p2.returncode, p2.stdout[:80]))
+
 # =====================================================================
 # R9 regrade — 안전등급 재채점 (순수 로직)
 #

@@ -63,3 +63,7 @@ jobs:
           fi
           grep -q "원본 엑셀을 찾을 수 없습니다" /tmp/out.txt \
             || { echo "::error::안내 메시지 없이 실패했습니다"; cat /tmp/out.txt; exit 1; }
+
+      # 의미 재검산 단위 테스트 — openpyxl 이 이미 깔린 자리라 여기서 돈다 (코퍼스 규칙·EXPECTED 가드·manifest·결정론·산출물 writer).
+      - name: semantic_keyword_recount 단위 테스트
+        run: python3 -m unittest test_semantic_keyword_recount

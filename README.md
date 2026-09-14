@@ -6,15 +6,15 @@
 
 ## 대시보드 (GitHub Pages)
 
-최신 키워드 검색·등급분류 결과는 [분리 분석 페이지](https://drunkenzealnut.github.io/searchinmd/keyword-analysis.html)에서 확인할 수 있습니다. NCS 결과는 report 자료 4개를 제외한 85개 자료 기준입니다.
+최신 키워드 검색·등급분류 결과는 [분리 분석 페이지](https://drunkenzealnut.github.io/searchinmd/keyword-analysis.html)에서 확인할 수 있습니다. NCS 교재 86권·교과서 9권 기준이며, 정본 실행(2026-09-14, `semantic_keyword_recount_20260914.xlsx`)의 산출물 `docs/03-analysis/data/semantic_summary.json` 하나에서 대시보드·분리 분석 페이지·이 README 의 수치가 나옵니다.
 
 | 페이지 | 내용 |
 |---|---|
-| [NCS 교재 86권](https://drunkenzealnut.github.io/searchinmd/) | 검출 2,189쪽(원본 PDF 실제 쪽 기준)의 등급 분포, 영역별 현황, 사고사례 원문 대조 |
+| [NCS 교재 86권](https://drunkenzealnut.github.io/searchinmd/) | 의미 출현 12,506건(출현건수 기준)의 등급 분포, 영역별 현황, 키워드별 상세 · 이전 기준(실제 쪽 2,189쪽)과의 브리지 표 병기 |
 | [반도체고 교과서 9권](https://drunkenzealnut.github.io/searchinmd/textbook.html) | 검출 362쪽·전체 2,055쪽 두 분모를 병기, NCS 대비 비교는 검출쪽 기준 |
 | [OSHA 안전교육](https://drunkenzealnut.github.io/searchinmd/osha.html) | 미국 OSHA 반도체 화학물질 안전교육 과정과의 비교 |
 
-핵심 수치 하나만 옮기면 — **구체적 안전대책이 담긴 페이지 비율은 NCS 6.6%, 교과서 2.2%** 입니다(둘 다 키워드 검출 페이지 분모: 145/2,189 과 8/362; NCS 는 2026-09 재세그먼트로 원본 PDF 실제 쪽 기준).
+핵심 수치 하나만 옮기면 — **구체적 안전대책(등급3) 페이지에 놓인 키워드 출현 비율은 NCS 20.8%, 교과서 9.3%** 입니다(둘 다 등급 확정 출현 분모: 2,595/12,506 과 120/1,293; 의미 출현 총계 NCS 12,506건 · 교과서 1,293건, 연구책임자 결정 2026-09-13 으로 분모를 출현건수로 바꿈). **이전 기준**(페이지 단위, 2026-09-06 재세그먼트)으로는 NCS 6.6%(145/2,189)·교과서 2.2%(8/362)이며, 두 값의 차이는 가중 방식의 차이이지 교재가 나아진 것이 아닙니다 — 대시보드의 "이전 기준과의 관계" 절과 [등급 결합 보고서](docs/04-report/features/semantic-occurrence-grades.report.md)의 브리지 표를 보십시오.
 
 교과서는 전체 쪽수를 알기에 다른 각도로도 볼 수 있습니다 — **9권 2,055쪽 중 구체적 대책은 8쪽(0.39%)** 이고, 그중 6권은 0쪽입니다. NCS 는 전체 쪽수 대비 비율을 산출하지 않습니다(PDF 84권 8,861쪽을 확보했지만 검출 쪽 분모로 통일했습니다). 분모가 다른 두 값을 나란히 빼면 안 됩니다.
 
@@ -43,7 +43,7 @@ python3 outputs/server.py 9000     # 포트 지정
 
 ## 산출물 재생성 (원본 보유 시)
 
-대시보드 수치는 손으로 넣지 않았습니다. 원본 엑셀에서 스크립트로 뽑고, NCS 쪽 단위 수치는 원본 PDF 까지 써서 `resegment.py` 로 냅니다(아래).
+대시보드 수치는 손으로 넣지 않았습니다. 정본은 원본 마크다운·엑셀에서 `semantic_keyword_recount.py` 로 뽑고(아래), 이전 기준인 NCS 쪽 단위 수치는 원본 PDF 까지 써서 `resegment.py` 로 냅니다.
 
 **원본이 있어야 실행됩니다.** 없으면 커밋된 `docs/03-analysis/data/` 가 곧 산출물입니다 — 스크립트는 원본을 못 찾으면 안내 메시지를 내고 종료합니다.
 
@@ -69,7 +69,21 @@ python3 truncation_audit.py      # 엑셀 셀 한도에서 잘린 본문을 전�
 
 규칙의 정밀도·재현율을 AI 코더로 잰 **재코딩 파이프라인**(`make_coding_sheet.py` → `code_pages.py` → `score_coding.py`)도 원본이 있어야 돕니다. 코더 API 키가 필요하고 비용이 들며, 실행 순서와 결과는 [재코딩 결과 분석](docs/03-analysis/recoding-results.analysis.md) §9 에 있습니다. 채점 수치(`docs/03-analysis/data/recoding_scores*.json`)와 라벨(`coding_key.json`, `coding_A/B/C.json`)은 커밋돼 있고, 이것도 발표 수치를 바꾸지 않습니다.
 
-원본 PDF 까지 있으면 **재세그먼트**(`resegment.py`)도 돌릴 수 있습니다. 2026-04 검색 당시 워크북의 '페이지' 라벨은 목차 단위라 여러 쪽을 한 라벨로 묶은 경우가 많았는데, 이 스크립트는 마크다운 줄을 PDF 쪽 텍스트에 정렬해 검출 행 7,769건을 실제 쪽에 다시 놓고 (교재, 쪽) 단위 등급을 다시 셉니다. 결과는 검출 1,847→2,189쪽, 등급3 108쪽(5.8%)→145쪽(6.6%)(2026-09-06 마커 결손 보정 후)이며 `docs/03-analysis/data/ncs_pages_reseg.csv`·`reseg_summary.json` 으로 커밋돼 있습니다. 대시보드·이 README 의 NCS 수치는 2026-09-06 부터 이 산출물을 정본으로 씁니다([재세그먼트 결과](docs/03-analysis/resegment-results.analysis.md) §6).
+**의미 단위 재검산**(`semantic_keyword_recount.py`)이 대시보드의 정본입니다. 원본은 `data_source/markdown/` (비추적, 연구책임자 지정; `data/markdown/` 은 그 복사본)이고, 2026-09-13 에 추가된 NCS 2권은 변환기가 마커를 0-based 로 심어 `shift_page_markers.py` 로 +1 했습니다(`python3 shift_page_markers.py <file.md> --by 1 --backup`, 자세한 절차는 [페이지 마커 how-to](docs/howto-page-markers.md); `semantic_keyword_recount.py` 는 마커가 1 미만인 파일을 만나면 실행을 거부합니다). 같은 실행에서 xlsx·보고서·`docs/semantic_recount_data.js`·`docs/03-analysis/data/semantic_summary.json`·분리 분석 HTML 3건이 나오며, 내장 `EXPECTED` 가드가 어긋나면 아무것도 쓰지 않습니다(`--force` 로 쓰고 나서 `EXPECTED` 를 갱신).
+
+```bash
+pip install openpyxl
+python3 semantic_keyword_recount.py \
+  --source-workbook data/ncs_keywords_in_markdown_results_20260402_재판정_20260414.xlsx \
+  --ncs-root data_source/markdown/ncs --school-root data_source/markdown/school-text \
+  --xlsx-out data/semantic_keyword_recount_20260914.xlsx --report-out data/semantic_keyword_recount_20260914_report.md \
+  --dashboard-data-out docs/semantic_recount_data.js --summary-out docs/03-analysis/data/semantic_summary.json \
+  --analysis-dir docs --previous-basis docs/03-analysis/data/reseg_summary.json
+```
+
+교과서 등급 워크북(`ncs_keywords_in_markdown_results_교과서_results_20260415.xlsx`)은 `--source-workbook` 과 같은 폴더에서 자동으로 찾고, 없으면 멈춥니다(`--school-grade-workbook` 으로 따로 지정). 실행 명령·입력 파일별 sha256·git commit 은 `semantic_summary.json` 의 `meta.run` 에 남으므로, 수치가 어긋나면 어느 입력이 달라졌는지 거기서 추적합니다.
+
+원본 PDF 까지 있으면 **재세그먼트**(`resegment.py`)도 돌릴 수 있습니다 — 이전 기준(페이지 단위)의 정본이며, 2026-09-13 부터 대시보드 KPI 는 위 출현건수 기준이고 이 값은 병기됩니다. 2026-04 검색 당시 워크북의 '페이지' 라벨은 목차 단위라 여러 쪽을 한 라벨로 묶은 경우가 많았는데, 이 스크립트는 마크다운 줄을 PDF 쪽 텍스트에 정렬해 검출 행 7,769건을 실제 쪽에 다시 놓고 (교재, 쪽) 단위 등급을 다시 셉니다. 결과는 검출 1,847→2,189쪽, 등급3 108쪽(5.8%)→145쪽(6.6%)(2026-09-06 마커 결손 보정 후)이며 `docs/03-analysis/data/ncs_pages_reseg.csv`·`reseg_summary.json` 으로 커밋돼 있습니다. 2026-09-06~09-12 의 대시보드 KPI 는 이 산출물이었고, 지금은 "이전 기준"으로 병기됩니다([재세그먼트 결과](docs/03-analysis/resegment-results.analysis.md) §6).
 
 ```bash
 pip install pymupdf openpyxl
@@ -95,15 +109,17 @@ python3 resegment.py                    # 약 30초. 내장 EXPECTED 회귀 검�
 
 ```bash
 node    outputs/test-search-equivalence.js   # 24 — 검색 동치성 + 청크 렌더 + 지연 캐시
-node    outputs/test-dashboard-data.js       # 18 — 출현건수 등급 데이터·공통 흐름·페이지 연결
-python3 outputs/test-recount-grades.py       # 379 — 재집계·재채점·페이지 마커·절단 판정·재코딩(코더 호출·채점)·재세그먼트
+node    outputs/test-dashboard-data.js       # 64 — 정본 요약(semantic_summary.json) ↔ data.js ↔ 대시보드·분리 분석·README·CLAUDE.md 교차검증, 이전 기준(reseg) 계보
+python3 outputs/test-recount-grades.py       # 390 — 재집계·재채점·페이지 마커·절단 판정·재코딩(코더 호출·채점)·재세그먼트
 node    outputs/run-core-logic-tests.js       # 32 — 제목 판정·정규화 (헤드리스)
 node    outputs/test-sri.js                  # 38 — 외부 스크립트 SRI (--online 이면 CDN 대조)
 ```
 
 Node 기반 하니스는 HTML과 실제 공통 렌더러를 `vm` + DOM mock으로 불러옵니다. 복사해 붙인 사본을 테스트하지 않습니다. `test-core-logic.html` 은 브라우저에서 열어 탭 제목으로 봐도 됩니다 — `run-core-logic-tests.js` 는 같은 HTML 을 헤드리스로 돌릴 뿐입니다. `test-recount-grades.py`는 `openpyxl`을 스텁으로 주입해 pip 패키지 없이도, 원본 엑셀 없이도 돕니다.
 
-대시보드 데이터는 `semantic_keyword_recount.py`가 `semantic_keyword_recount_20260909.xlsx`와 같은 집계 결과에서 `docs/semantic_recount_data.js`를 생성합니다. 위 블록의 단언 수 가운데 379는 하니스가 README·`CLAUDE.md`의 인용값과 직접 대조하므로(R17), 손으로 고치지 말고 하니스가 찍는 수를 두 파일에 옮기세요.
+의미 재검산 자체(코퍼스 규칙, `EXPECTED` 가드, manifest, 결정론, 산출물 writer)는 `test_semantic_keyword_recount.py` 가 검증합니다 — `python3 -m unittest test_semantic_keyword_recount`, 이것만은 `openpyxl` 이 깔린 Python 이 필요합니다. CI 는 위 하니스 5종 뒤에 `openpyxl` 을 설치하고 이것도 돌립니다.
+
+대시보드 데이터는 `semantic_keyword_recount.py` 한 실행이 `docs/semantic_recount_data.js` 와 `docs/03-analysis/data/semantic_summary.json` 에 같은 JSON 으로 씁니다. `test-dashboard-data.js` 는 그 요약 파일을 기준으로 대시보드·분리 분석 페이지·README·`CLAUDE.md` 의 인용값을 대조하므로(S2~S8), 수치는 손으로 고치지 말고 정본 실행을 다시 돌리세요. 위 블록의 단언 수 두 개(`test-dashboard-data.js`, `test-recount-grades.py`)는 하니스가 README·`CLAUDE.md` 의 인용값과 직접 대조하므로(S9, R17), 하니스가 찍는 수를 두 파일에 옮기세요.
 
 ## 저장소 구성
 
@@ -112,13 +128,16 @@ outputs/markdown-search-app.html   검색 앱 (HTML+CSS+JS 단일 파일, ~2,040
 outputs/server.py                  개발 서버 (표준 라이브러리만, LM Studio 프록시 포함)
 recount_grades.py                  원본 엑셀 → 등급 재집계 → CSV/JSON
 regrade.py                         페이지 본문에서 등급 재채점 (검증용, 미발표)
-resegment.py                       워크북 페이지 라벨을 원본 PDF 실제 쪽으로 재배치해 등급 재집계 (NCS 쪽 단위 발표 정본, 2026-09-06 부터)
+semantic_keyword_recount.py        30개 키워드 의미 단위 재검산 + 출현별 등급 결합 → xlsx·보고서·대시보드 데이터·semantic_summary.json·분리 분석 HTML (발표 정본, 2026-09-13 부터; EXPECTED 가드)
+shift_page_markers.py              <!-- page: N --> 마커 값 일괄 이동 (0-based 로 변환된 파일을 1-based 로)
+resegment.py                       워크북 페이지 라벨을 원본 PDF 실제 쪽으로 재배치해 등급 재집계 (NCS 쪽 단위 — 이전 기준의 정본, 병기용)
 make_coding_sheet.py, code_pages.py, score_coding.py  코딩 표본 생성 · AI 코더 항목별 호출 · 교차 판정 채점
 truncation_audit.py                엑셀 셀 한도 절단 전수 실측 (pip 불필요)
 *_downloader.py                    OSHA·KOSHA·NIOSH·EU-OSHA·SafeWork AU 발간물 수집기
 page_utils.py 외                   PDF→마크다운→Excel 페이지 매핑 유틸
 docs/                              대시보드 3종 + 분석 문서 (GitHub Pages)
-docs/03-analysis/data/             재집계 산출물 (CSV, summary.json) + 재채점·재코딩·재세그먼트 수치 (regrade_impact.json, recoding_scores*.json, ncs_pages_reseg.csv, reseg_summary.json)
+docs/03-analysis/data/             정본 요약 semantic_summary.json + 재집계 산출물 (CSV, summary.json) + 재채점·재코딩·재세그먼트 수치 (regrade_impact.json, recoding_scores*.json, ncs_pages_reseg.csv, reseg_summary.json)
+data_source/ (비추적)               원본 마크다운·이미지·PDF — 연구책임자 지정 정본 소스. data/markdown/ 은 복사본
 docs/03-analysis/data/README.md    산출물 계보 — 어느 파일이 발표 정본이고 어느 것이 계보 확인용인지
 ```
 
@@ -137,11 +156,11 @@ python3 osha_downloader.py
 |---|---|---|
 | [첫 검색 튜토리얼](docs/tutorial-first-search.md) | 튜토리얼 | 샘플 문서로 검색 → 내보내기까지 처음부터 끝까지 |
 | [발간물 수집 how-to](docs/howto-download-publications.md) | How-to | OSHA·KOSHA·NIOSH·EU-OSHA·SafeWork AU 발간물 대량 수집 |
-| [페이지 마커 주입 how-to](docs/howto-page-markers.md) | How-to | 검색 결과의 줄 번호를 실제 PDF 쪽수로 바꾸기 |
+| [페이지 마커 주입 how-to](docs/howto-page-markers.md) | How-to | 검색 결과의 줄 번호를 실제 PDF 쪽수로 바꾸기 · 0-based 로 심긴 마커를 `shift_page_markers.py` 로 옮기기 |
 | [등급 재집계 분석](docs/03-analysis/grade-recount.analysis.md) | 설명 | 등급 체계를 왜 이렇게 통일했는지, 페이지 단위 집계가 왜 필요한지 |
 | [재코딩 결과 분석](docs/03-analysis/recoding-results.analysis.md) | 설명 | 538쪽 AI 재코딩으로 잰 현행 규칙의 정밀도·재현율, 어느 변형도 채택하지 않은 이유 |
 | [어휘 누락 탐색](docs/03-analysis/vocab-search.analysis.md) | 설명 | 규칙 사전에 빠진 안전어·조치어 21종과 그것이 등급3 비율에 미치는 영향 |
-| [재세그먼트 결과](docs/03-analysis/resegment-results.analysis.md) | 설명 | 워크북 페이지 라벨을 원본 PDF 실제 쪽으로 풀면 검출 쪽수·등급3 비율이 어떻게 바뀌는지(1,847→2,189쪽, 5.8→6.6%); 대시보드는 2026-09-06 부터 이 수치를 발표 |
+| [재세그먼트 결과](docs/03-analysis/resegment-results.analysis.md) | 설명 | 워크북 페이지 라벨을 원본 PDF 실제 쪽으로 풀면 검출 쪽수·등급3 비율이 어떻게 바뀌는지(1,847→2,189쪽, 5.8→6.6%); 대시보드는 2026-09-06~09-12 이 수치를 발표했고 지금은 이전 기준으로 병기 |
 | [`CLAUDE.md`](CLAUDE.md) | 레퍼런스 | 아키텍처, 페이지 매핑 알고리즘, 제목 판정 규칙, 디자인 토큰 |
 | `키워드기반_문서분류분석_방법론.hwpx` | 설명 | 방법론 원본 — 6단계 파이프라인과 위치 정합 알고리즘 |
 
@@ -150,10 +169,10 @@ python3 osha_downloader.py
 - 부분 문자열 일치라 동의어·표기 변형을 놓칩니다. 반도체 문맥의 동음이의(장비 진동, 파티클 먼지)도 걸러지지 않습니다. `regrade.py` 에 단어 경계 보정이 들어 있지만 발표 수치에는 적용하지 않았습니다.
 - 원본 채점 규칙에 확인된 결함이 둘 있습니다 — 단어 경계 없는 부분 문자열 매칭, 그리고 페이지 길이와 무관한 고정 임계. 결함별 영향도는 `docs/03-analysis/data/regrade_impact.json` 에 있고, `recount_grades.py` 는 보수적 규칙으로 우회할 뿐 원본을 고치지 않습니다. 이전 판에 적혀 있던 "총계/내역 불일치 버그" 는 **철회합니다** — 불일치 171건 중 168건은 등급사유 문자열이 상위 5개만 보여주는 표시 절단이었고, 실제로 어긋난 것은 3쪽(0.16%)뿐입니다.
 - 사람 코딩 검증이 아직 없습니다. 69쪽 이중코딩은 코딩 시트가 판정 규칙의 가정을 두 코더 모두에게 흘려 **라벨을 무효 처리**했고, 2026-09-04 에 538쪽을 새로 뽑아 AI 코더 세 명(Claude `claude-opus-5`, OpenAI `gpt-5.6-sol` ×2)이 다시 코딩했습니다. 그 결과 현행 규칙은 **정밀도 80~84%, 재현율 13~21%** 이고, 코더 기준 진짜 등급3은 22~37% 입니다([재코딩 결과 분석](docs/03-analysis/recoding-results.analysis.md)). AI 두 계열의 일치는 사람 이중코딩이 아니며, 어느 변형도 채택하지 않았습니다.
-- **NCS 의 '페이지'는 실제 쪽이 아니라 목차 단위 블록인 경우가 많습니다.** 2026-04 검색 당시 마크다운의 페이지 마커가 목차에서 유도된 것이라, 워크북 페이지 라벨 하나가 실제 10~58쪽을 묶기도 합니다. 엑셀 셀 한도(32,767자)에 닿은 라벨 16개는 그 증상이며, 이전 판의 "16쪽이 잘려 있어 등급3 은 108~112쪽 구간" 이라는 해석은 **철회합니다**(외부감사 C1, 2026-09-04). `resegment.py` 로 검출 행을 원본 PDF 실제 쪽에 다시 놓으면 검출 1,847→2,189쪽, 등급3 108쪽(5.8%)→145쪽(6.6%)이고, 정렬 오차는 ±1쪽 수준입니다. 대시보드·이 README 의 수치는 2026-09-06 부터 이 실제 쪽 기준입니다([재세그먼트 결과](docs/03-analysis/resegment-results.analysis.md)).
+- **NCS 의 '페이지'는 실제 쪽이 아니라 목차 단위 블록인 경우가 많습니다.** 2026-04 검색 당시 마크다운의 페이지 마커가 목차에서 유도된 것이라, 워크북 페이지 라벨 하나가 실제 10~58쪽을 묶기도 합니다. 엑셀 셀 한도(32,767자)에 닿은 라벨 16개는 그 증상이며, 이전 판의 "16쪽이 잘려 있어 등급3 은 108~112쪽 구간" 이라는 해석은 **철회합니다**(외부감사 C1, 2026-09-04). `resegment.py` 로 검출 행을 원본 PDF 실제 쪽에 다시 놓으면 검출 1,847→2,189쪽, 등급3 108쪽(5.8%)→145쪽(6.6%)이고, 정렬 오차는 ±1쪽 수준입니다. 이 실제 쪽 기준 값은 2026-09-13 부터 "이전 기준"으로 병기되고, 공식 KPI 는 출현건수 기준입니다([재세그먼트 결과](docs/03-analysis/resegment-results.analysis.md)).
 - 라벨 블록의 극단 사례가 `반도체 장비 안전관리` 입니다. 라벨 기준으로는 검출 페이지가 p.46 과 p.136~154 의 20쪽뿐이라 p.47~135 가 통째로 빈 것처럼 보이지만, 실제로는 그 20개 라벨이 136쪽을 묶은 블록이었습니다(라벨 p.154 한 칸의 273행이 실제 58쪽에 흩어집니다). 재세그먼트 후 등급3 145쪽 중 42쪽이 이 한 권에서 나옵니다. 라벨 기준 수치(1,847쪽·등급3 108쪽)는 이 때문에 더 이상 발표하지 않습니다.
 
-그래서 6.6% 는 이렇게까지만 읽어야 합니다 — **결함이 확인된 현행 규칙의 출력값이며, 두 계열의 AI 코더 기준 재현율이 13~21%(진짜 등급3 22~37%)라 참값의 상한으로 해석할 수 없습니다. 사람 코딩은 아직 없습니다.**
+그래서 20.8%(이전 기준 6.6%)는 이렇게까지만 읽어야 합니다 — **결함이 확인된 현행 규칙의 출력값이며(출현건수 기준도 같은 페이지 등급을 물려받습니다), 두 계열의 AI 코더 기준 재현율이 13~21%(진짜 등급3 22~37%)라 참값의 상한으로 해석할 수 없습니다. 사람 코딩은 아직 없습니다.**
 
 남은 과제는 `TODOS.md`에 있습니다.
 

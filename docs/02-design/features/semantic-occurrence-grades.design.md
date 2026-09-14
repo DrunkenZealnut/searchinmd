@@ -1,5 +1,7 @@
 # 의미 출현 등급 결합 설계
 
+> **2026-09-14 정본 갱신 (semantic-recount-remediation).** 아래 2026-09-09 수치는 코퍼스가 오염된 실행(NCS 89파일 = 교재 84 + 변환기 요약본 4 + 중복 1)의 값이라 **폐기**됐다. 정본은 NCS 86권(2026-09-13 추가 2권 포함)·교과서 9권을 `data_source/markdown` 에서 읽은 2026-09-14 실행이며, 수치는 `docs/03-analysis/data/semantic_summary.json` 이 원본이다. 갱신된 표에는 "정본" 표기가 있다. 외부감사(2026-09-13, 등급 F)와 연구책임자 결정 8건은 `docs/archive/2026-09/semantic-recount-remediation/semantic-recount-remediation.plan.md` §1.2.
+
 > Version: 1.0.0 | Date: 2026-09-09 | Status: Approved
 > Level: Starter | Plan: `docs/01-plan/features/semantic-occurrence-grades.plan.md`
 
@@ -28,10 +30,10 @@ NCS 원본 두 파일(`20260402.xlsx`, `20260402_재판정_20260414.xlsx`)은 �
 
 | 필드 | 값 | 설명 |
 |---|---|---|
-| `grade` | `1`, `2`, `3`, `None` | 통일 등급. 페이지 미확정은 `None` |
-| `grade_label` | 미흡·없음 / 형식적 언급 / 구체적 대책 / 등급 미확정 | 표시명 |
+| `grade` | `1`, `2`, `3` | 통일 등급. 마커 없는 출현은 문맥 판정(`unpaged-context`) 또는 등급1(`unpaged-fallback`) — 승인 2026-09-13; `None` 은 더 이상 나오지 않는다 |
+| `grade_label` | 미흡·없음 / 형식적 언급 / 구체적 대책 | 표시명 |
 | `grade_reason` | 문자열 | 기존 또는 신규 판정 사유 |
-| `grade_source` | `existing` / `new` / `unpaged` | 등급 계보 |
+| `grade_source` | `existing` / `new` / `unpaged-context` / `unpaged-fallback` (`GRADE_SOURCES`) | 등급 계보 |
 
 페이지 인덱스 키는 `(corpus, canonical_document, page)`다. 파일명은 NFC 정규화, 경로·확장자·타임스탬프 접두어 제거 후 비교하며, NCS 능력단위 코드(`LM`+10자리)는 보조 키로만 사용한다.
 단, 신규 페이지의 본문과 계산 결과는 `(corpus, relative_path, page)`로 저장해 같은 LM 코드를 가진 복수 Markdown의 본문이 섞이지 않게 한다.
@@ -39,12 +41,12 @@ NCS 원본 두 파일(`20260402.xlsx`, `20260402_재판정_20260414.xlsx`)은 �
 
 ## 4. 등급 결합 규칙
 
-1. 페이지가 없으면 `grade=None`, `grade_source=unpaged`로 둔다.
+1. 페이지가 없으면 규칙 6에 따라 등급을 배정한다(`unpaged-context` / `unpaged-fallback`). `grade=None` 은 남기지 않는다.
 2. 페이지가 기존 등급 인덱스에 있으면 기존 등급·사유를 그대로 상속한다.
 3. 인덱스에 없는 페이지는 같은 `PageBlock` 전체 본문을 `regrade.grade_page(word_boundary=False, normalize=False)`로 판정한다.
 4. 등급별 출현건수는 포함 레코드 수를 등급별로 센다. 페이지 수로 환산하지 않는다.
-5. 등급1+2+3 합은 `grade is not None`인 출현 수와 반드시 일치해야 한다.
-6. 페이지 미확정 출현은 의미 출현 총계에는 포함하지만 등급 비율 분모에서는 제외한다.
+5. 등급1+2+3 합은 포함 출현 수 전체와 반드시 일치해야 한다(미확정 0).
+6. 페이지 마커가 없는 출현은 그 줄의 문맥으로 `regrade.grade_page` 판정, 문맥이 비면 등급1 (연구책임자 승인 2026-09-13). `EXPECTED["grades"][*]["unpaged"]` 는 0 으로 고정.
 
 ## 5. Excel 출력
 
@@ -82,7 +84,7 @@ NCS 원본 두 파일(`20260402.xlsx`, `20260402_재판정_20260414.xlsx`)은 �
 
 - 기존 페이지 등급 상속과 사유 보존
 - 신규 페이지에서 기준선 등급 판정
-- 페이지 미확정 레코드 분리
+- 마커 없는 레코드의 문맥 판정/등급1 배정 (`unpaged-context`/`unpaged-fallback`, 2026-09-13 승인)
 - 키워드·파일·말뭉치별 등급합 정합성
 - XLSX 헤더와 상세행 등급 계보 확인
 - 두 대시보드의 동일 섹션 순서, 등급명, 출현건수 분모 확인
@@ -101,4 +103,4 @@ NCS 원본 두 파일(`20260402.xlsx`, `20260402_재판정_20260414.xlsx`)은 �
 
 - 출현 레코드와 페이지 등급은 서로 다른 단위이므로 명시적인 결합 키가 필요하다.
 - 기존 판정과 신규 판정의 출처를 남겨야 결과를 감사할 수 있다.
-- 분모가 출현건수라면 페이지 미확정 여부와 관계없이 총 출현은 유지하되, 등급 분포에는 확정값만 사용해야 한다.
+- 분모가 출현건수인 것은 CLAUDE.md "Safety Grading Scheme" 의 규칙(등급은 페이지 속성)에 대한 **승인된 예외**(2026-09-13)다. 페이지 기준 값은 "이전 기준"으로 병기하고 브리지 표로 관계를 설명한다 — `semantic-occurrence-grades.report.md` 브리지 절, 렌더러 `bridge()`.
