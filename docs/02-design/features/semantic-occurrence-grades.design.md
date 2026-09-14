@@ -31,9 +31,9 @@ NCS 원본 두 파일(`20260402.xlsx`, `20260402_재판정_20260414.xlsx`)은 �
 | 필드 | 값 | 설명 |
 |---|---|---|
 | `grade` | `1`, `2`, `3` | 통일 등급. 마커 없는 출현은 문맥 판정(`unpaged-context`) 또는 등급1(`unpaged-fallback`) — 승인 2026-09-13; `None` 은 더 이상 나오지 않는다 |
-| `grade_label` | 미흡·없음 / 형식적 언급 / 구체적 대책 / 등급 미확정 | 표시명 |
+| `grade_label` | 미흡·없음 / 형식적 언급 / 구체적 대책 | 표시명 |
 | `grade_reason` | 문자열 | 기존 또는 신규 판정 사유 |
-| `grade_source` | `existing` / `new` / `unpaged` | 등급 계보 |
+| `grade_source` | `existing` / `new` / `unpaged-context` / `unpaged-fallback` (`GRADE_SOURCES`) | 등급 계보 |
 
 페이지 인덱스 키는 `(corpus, canonical_document, page)`다. 파일명은 NFC 정규화, 경로·확장자·타임스탬프 접두어 제거 후 비교하며, NCS 능력단위 코드(`LM`+10자리)는 보조 키로만 사용한다.
 단, 신규 페이지의 본문과 계산 결과는 `(corpus, relative_path, page)`로 저장해 같은 LM 코드를 가진 복수 Markdown의 본문이 섞이지 않게 한다.
@@ -41,11 +41,11 @@ NCS 원본 두 파일(`20260402.xlsx`, `20260402_재판정_20260414.xlsx`)은 �
 
 ## 4. 등급 결합 규칙
 
-1. 페이지가 없으면 `grade=None`, `grade_source=unpaged`로 둔다.
+1. 페이지가 없으면 규칙 6에 따라 등급을 배정한다(`unpaged-context` / `unpaged-fallback`). `grade=None` 은 남기지 않는다.
 2. 페이지가 기존 등급 인덱스에 있으면 기존 등급·사유를 그대로 상속한다.
 3. 인덱스에 없는 페이지는 같은 `PageBlock` 전체 본문을 `regrade.grade_page(word_boundary=False, normalize=False)`로 판정한다.
 4. 등급별 출현건수는 포함 레코드 수를 등급별로 센다. 페이지 수로 환산하지 않는다.
-5. 등급1+2+3 합은 `grade is not None`인 출현 수와 반드시 일치해야 한다.
+5. 등급1+2+3 합은 포함 출현 수 전체와 반드시 일치해야 한다(미확정 0).
 6. 페이지 마커가 없는 출현은 그 줄의 문맥으로 `regrade.grade_page` 판정, 문맥이 비면 등급1 (연구책임자 승인 2026-09-13). `EXPECTED["grades"][*]["unpaged"]` 는 0 으로 고정.
 
 ## 5. Excel 출력

@@ -2,8 +2,8 @@
 
 > **Feature**: semantic-recount-remediation
 > **분석일**: 2026-09-14 · **분석자**: bkit gap-detector (Claude) · 설계 v1.1 · 계획 v1.1
-> **설계 항목 구현률 (Match Rate)**: **96%** (99항목 중 일치 91, 부분 7, 설계와 다름 1)
-> 하니스 실측: `python3.13 -m unittest test_semantic_keyword_recount` **39 OK** · `outputs/test-recount-grades.py` **385/385** · `outputs/test-dashboard-data.js` **62/62** · `test-search-equivalence.js` 24/24 · `run-core-logic-tests.js` 32/32 · `test-sri.js` 38/38
+> **설계 항목 구현률 (Match Rate)**: 초기 측정(Act-0) **96%** (99항목 중 일치 91, 부분 7, 설계와 다름 1) → **Act-1 후 100%** (§9), Act-2 ship 리뷰 반영 (§10)
+> 하니스 실측 (최종, Act-2 뒤 2026-09-14): `python3.13 -m unittest test_semantic_keyword_recount` **53 OK** · `outputs/test-recount-grades.py` **390/390** · `outputs/test-dashboard-data.js` **64/64** · `test-search-equivalence.js` 24/24 · `run-core-logic-tests.js` 32/32 · `test-sri.js` 38/38. (Act-0 시점 기록: unittest 39 OK · 385/385 · 62/62; Act-1 시점: 40 OK · 386/386 · 62/62)
 
 ## 1. 요약
 

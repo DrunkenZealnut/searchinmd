@@ -30,8 +30,8 @@ data_source/markdown/school-text (9)      data/ncs_keywords_in_markdown_results_
         │  aggregate_matches → assign_match_grades → artifact_manifest(+run) → check_expected
         │        ↳ 불일치 & --force 없음 → exit 1, 아무것도 쓰지 않음
         ▼
-   ┌─ data/semantic_keyword_recount_20260913.xlsx        (gitignore, 본문 포함)
-   ├─ data/semantic_keyword_recount_20260913_report.md   (gitignore)
+   ┌─ data/semantic_keyword_recount_20260914.xlsx        (gitignore, 본문 포함)
+   ├─ data/semantic_keyword_recount_20260914_report.md   (gitignore)
    ├─ docs/semantic_recount_data.js                      (추적) ─┐ 같은 JSON
    ├─ docs/03-analysis/data/semantic_summary.json         (추적) ─┘
    ├─ docs/keyword-analysis.html                          (추적, 목차)
@@ -145,8 +145,8 @@ status:  {included, held, excluded, not-found}
 python3 semantic_keyword_recount.py \
   --source-workbook data/ncs_keywords_in_markdown_results_20260402_재판정_20260414.xlsx \
   --ncs-root data_source/markdown/ncs --school-root data_source/markdown/school-text \
-  --xlsx-out data/semantic_keyword_recount_20260913.xlsx \
-  --report-out data/semantic_keyword_recount_20260913_report.md \
+  --xlsx-out data/semantic_keyword_recount_20260914.xlsx \
+  --report-out data/semantic_keyword_recount_20260914_report.md \
   --dashboard-data-out docs/semantic_recount_data.js \
   --summary-out docs/03-analysis/data/semantic_summary.json \
   --analysis-dir docs --previous-basis docs/03-analysis/data/reseg_summary.json

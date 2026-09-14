@@ -76,9 +76,9 @@
 
 ## 검증 결과
 
-- 의미 재검산 단위 테스트 39개 통과 (`python3.13 -m unittest test_semantic_keyword_recount`, 2026-09-14)
-- 대시보드 교차검증 하니스 62/62 통과 (S1~S9, 2026-09-14)
-- 기존 회귀 하니스 385/385, 32/32, 24/24, 38/38 통과
+- 의미 재검산 단위 테스트 53개 통과 (`python3.13 -m unittest test_semantic_keyword_recount`, 2026-09-14 정본; 09-09 분석 시점 21/21)
+- 대시보드 교차검증 하니스 64/64 통과 (S1~S9, 2026-09-14)
+- 기존 회귀 하니스 390/390, 32/32, 24/24, 38/38 통과
 - `semantic_recount_data.js` ≡ `semantic_summary.json` (하니스 S2), 정본 실행 2회(1차 `--force` 측정, 2차 가드) 해시 4종 동일
 - XLSX ZIP 무결성 오류 0건
 - 로컬 Chrome에서 NCS·교과서 화면 렌더링과 JavaScript 오류 0건 확인

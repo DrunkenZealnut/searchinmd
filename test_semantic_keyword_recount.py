@@ -841,7 +841,6 @@ class RemediationTests(unittest.TestCase):
                           "source_run_at": "2026-09-07T08:48:51+00:00"},
                          {k: summary["meta"]["previous_basis"][k] for k in ("source", "pages", "page_g", "books", "cases_pages", "unresolved_pages", "source_run_at")})
         self.assertTrue(any(i["kind"] == "이전 기준" and len(i["sha256"]) == 64 for i in summary["meta"]["run"]["inputs"]))
-        self.assertTrue((Path(td) / "docs" / "keyword-analysis.html").exists() if False else True)
         self.assertIn("run", summary["meta"])
         self.assertIn("manifest", summary["meta"])
         self.assertNotIn("20260909", js.split("\n")[0])
