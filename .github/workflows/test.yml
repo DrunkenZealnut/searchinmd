@@ -64,6 +64,7 @@ jobs:
           grep -q "원본 엑셀을 찾을 수 없습니다" /tmp/out.txt \
             || { echo "::error::안내 메시지 없이 실패했습니다"; cat /tmp/out.txt; exit 1; }
 
-      # 의미 재검산 단위 테스트 — openpyxl 이 이미 깔린 자리라 여기서 돈다 (코퍼스 규칙·EXPECTED 가드·manifest·결정론·산출물 writer).
-      - name: semantic_keyword_recount 단위 테스트
+      # Python unittest 3종 — openpyxl 이 이미 깔린 자리라 여기서 돈다: 의미 재검산(코퍼스 규칙·EXPECTED 가드·manifest·결정론·writer),
+      # 표현 점검(표본·정밀도 구간·재정·영향표), HWPX 재작성(fixture HWPX; 그림 렌더는 magick 이 있을 때만 — CI 에는 없어 그 분기는 로컬에서만 돈다).
+      - name: Python unittest — semantic recount · expression review · hwpx refresh
         run: python3 -m unittest test_semantic_keyword_recount test_expression_review test_hwpx_results_refresh

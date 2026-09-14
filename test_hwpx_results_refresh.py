@@ -212,6 +212,33 @@ class ErrorPathTests(unittest.TestCase):
             HR.render_svg("<svg/>", "PNG", 10, 10)
         self.assertIn("magick", str(ctx.exception))
 
+    def test_small_guards_raise_clear_errors(self):
+        with self.assertRaises(ValueError):
+            HR.set_text(ET.fromstring(f'<hp:p {NS}/>'), "x")                                     # run 없음
+        tbl = ET.fromstring(f'<hs:sec {NS}>' + table([["h1", "h2"]]) + "</hs:sec>").find(f".//{HP}tbl")
+        with self.assertRaises(ValueError):
+            HR.resize_table(tbl, 1, 2)                                                          # 데이터 행 없음
+        tbl3 = ET.fromstring(f'<hs:sec {NS}>' + table([["h1", "h2", "h3"], ["a", "1", "2"]]) + "</hs:sec>").find(f".//{HP}tbl")
+        with self.assertRaises(ValueError):
+            HR.fill_table(tbl3, [["a", "1"]], 1)                                                # 열 수 불일치
+        with self.assertRaises(ValueError):
+            HR.image_dimensions(b"GIF89a....")
+        with tempfile.TemporaryDirectory() as td:
+            bad = Path(td) / "bad.hwpx"
+            with zipfile.ZipFile(bad, "w") as z:
+                z.writestr("Contents/section0.xml", "<x/>")
+            with self.assertRaises(ValueError):
+                HR.read_section(bad)                                                            # hs:sec 루트 없음
+        self.assertEqual({"guideline", "definition", "property"}, set(HR.FP_KIND_LABEL))
+        cases = json.loads(HR.DEFAULT_CASES.read_text(encoding="utf-8"))
+        cases["pages"][-1]["kind"] = "mystery"
+        with tempfile.TemporaryDirectory() as td:
+            cpath = Path(td) / "cases.json"; cpath.write_text(json.dumps(cases, ensure_ascii=False), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                HR.load_facts(HR.DEFAULT_SUMMARY, cpath, HR.DEFAULT_RECOUNT)                     # 모르는 오탐 유형
+            with self.assertRaises(FileNotFoundError):
+                HR.load_facts(HR.DEFAULT_SUMMARY, HR.DEFAULT_CASES, Path(td) / "none.json")     # recount summary 없음 → 0 으로 침묵하지 않는다
+
     def test_set_cell_collapses_multi_paragraph_cell(self):
         cell = ET.fromstring(f'<hp:tc {NS}><hp:subList>{para("첫 줄")}{para("둘째 줄")}</hp:subList><hp:cellAddr colAddr="0" rowAddr="0"/></hp:tc>')
         HR.set_cell(cell, "하나")
@@ -251,6 +278,21 @@ class TemplateTests(unittest.TestCase):
         self.assertNotIn("60%를 넘었다", alt["‘보호구’는"][0]); self.assertFalse(alt["‘보호구’는"][1]["ppe_over_60pct"])
         self.assertIn("60%를 넘었다", base["‘보호구’는"][0])
 
+    def test_zero_claims_track_data(self):
+        f = fixture_facts()
+        base = {k: v for k, v, _ in HR.textbook_paragraphs(f)}
+        self.assertEqual(0, f.school.keywords["직업병"]["total"]); self.assertEqual(0, f.school.keywords["추락"]["total"])
+        self.assertIn("‘직업병’은 전혀 검출되지 않았고 ‘물질안전보건자료’는 전혀 검출되지 않았고", base["따라서 제조 분야는 안전보건교육이 가장 적극적으로"])
+        flipped = copy.deepcopy(f)
+        flipped.school.keywords["직업병"]["total"] = 4; flipped.school.keywords["추락"]["total"] = 2
+        flipped.cases.textbook_cases = 3
+        alt = {k: (v, c) for k, v, c in HR.textbook_paragraphs(flipped)}
+        self.assertIn("‘직업병’은 4건에 그쳤고", alt["따라서 제조 분야는 안전보건교육이 가장 적극적으로"][0])
+        self.assertEqual(["물질안전보건자료"], alt["따라서 제조 분야는 안전보건교육이 가장 적극적으로"][1]["zero_keywords_in_sentence"])
+        self.assertIn("‘추락’은 2건에 그쳤고", alt["따라서 장비 분야에서는 전기, 기계, 압력"][0])
+        self.assertIn("3쪽에서만 확인되었다", alt["또한 공정안전관리, 직업병, 물질안전보건자료"][0])
+        self.assertIn("3쪽에서만 발견되었다", alt["9권의 교과서에서 구체적인 사고"][0])
+
     def test_svg_has_all_values(self):
         f = fixture_facts()
         for spec in HR.figure_specs(f):
@@ -265,7 +307,7 @@ class TemplateTests(unittest.TestCase):
                     self.assertIn(f"{HR.fmt(corpus.grades[g])}건 ({HR.pct(corpus.grades[g], corpus.total)})", svg, spec["label"])
 
     def test_korean_particles(self):
-        self.assertEqual(("정의로", "지침으로", "관리와", "지침과", "PSM로"), (HR.ro("정의"), HR.ro("지침"), HR.wa("관리"), HR.wa("지침"), HR.ro("PSM")))
+        self.assertEqual(("정의로", "지침으로", "관리와", "지침과", "PSM로", "직업병은", "자료는"), (HR.ro("정의"), HR.ro("지침"), HR.wa("관리"), HR.wa("지침"), HR.ro("PSM"), HR.eun("직업병"), HR.eun("자료")))
         self.assertEqual("『반도체 장비 안전관리』와", HR.wa("『반도체 장비 안전관리』"))
 
     def test_templates_branch_on_data(self):
@@ -343,8 +385,11 @@ class EndToEndTests(unittest.TestCase):
             self.assertEqual(HR.fmt(f.ncs.total), HR.cell_text(rows[-1][1]))
             body = (Path(td) / "diff.json").read_text(encoding="utf-8")
             self.assertNotIn("옛 문장", body); self.assertNotIn("/Users/", body)                       # 대조 JSON 에 본문·절대 경로 없음
+            if render:
+                with self.assertRaises(FileExistsError):
+                    HR.refresh(src, f, out, None, None, render=True)                                       # --force 없이는 덮어쓰지 않는다
             with self.assertRaises(FileExistsError):
-                HR.refresh(src, f, out, None, None, render=False)
+                HR.write_hwpx(src, out, b"", {})
             with self.assertRaises(ValueError):
                 HR.write_hwpx(src, src, b"", {})
 
@@ -359,6 +404,41 @@ class EndToEndTests(unittest.TestCase):
             self.assertEqual(before, tracked.read_bytes() if tracked.exists() else None)   # 기본 대조 경로는 건드리지 않는다
             with self.assertRaises(SystemExit), contextlib.redirect_stdout(io.StringIO()):
                 HR.main(["--hwpx", str(src), "--no-render", "--diff-out", str(tracked)])  # 명시해도 추적 경로는 거부
+
+    def test_refresh_reports_stale_number_and_writes_nothing(self):
+        """숫자 감사 실패: status failed, HWPX·검토 HTML 없음, main 은 1 — 실패 기록은 추적 대조 경로를 덮어쓰지 않는다."""
+        with tempfile.TemporaryDirectory() as td:
+            src, f = self._fixture(td)
+            raw, root, tag = HR.read_section(src)
+            sec = HR.locate_sections(root)["ncs"]
+            stale_p = ET.fromstring(f'<hs:sec {NS}>' + para("기타 12,875건 그대로") + "</hs:sec>")[0]
+            root.insert(list(root).index(sec.paragraphs[-1]) + 1, stale_p)
+            stale = Path(td) / "stale.hwpx"; HR.write_hwpx(src, stale, HR.serialize_section(root, tag), {})
+            out = Path(td) / "o.hwpx"
+            diff = HR.refresh(stale, f, out, Path(td) / "d.json", Path(td) / "rv", render=False, text_review_dir=Path(td) / "t")
+            self.assertEqual("failed", diff["audit"]["status"]); self.assertIn("12,875", diff["audit"]["unmatched"])
+            self.assertFalse(out.exists()); self.assertFalse((Path(td) / "rv").exists()); self.assertFalse((Path(td) / "t").exists())
+            self.assertTrue((Path(td) / "d.json").exists())
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(1, HR.main(["--hwpx", str(stale), "--no-render", "--diff-out", str(Path(td) / "d2.json")]))
+            # 추적 경로로 지정된 실패 대조는 temp 로 우회한다
+            tracked = HR.DEFAULT_DIFF; before = tracked.read_bytes()
+            with contextlib.redirect_stdout(io.StringIO()):
+                HR.refresh(stale, f, out, tracked, None, render=False)
+            self.assertEqual(before, tracked.read_bytes())
+
+    def test_no_render_writes_no_hwpx(self):
+        with tempfile.TemporaryDirectory() as td:
+            src, f = self._fixture(td)
+            out = Path(td) / "never.hwpx"
+            diff = HR.refresh(src, f, out, Path(td) / "d.json", None, render=False)
+            self.assertEqual("ok", diff["audit"]["status"]); self.assertIsNone(diff["output"]); self.assertFalse(out.exists())
+
+    def test_text_review_dir_under_docs_is_refused(self):
+        with tempfile.TemporaryDirectory() as td:
+            src, f = self._fixture(td)
+            with self.assertRaises(SystemExit), contextlib.redirect_stdout(io.StringIO()):
+                HR.main(["--hwpx", str(src), "--no-render", "--text-review-dir", str(HR.HERE / "docs" / "x")])
 
     def test_refresh_refuses_when_a_paragraph_is_missing(self):
         with tempfile.TemporaryDirectory() as td:

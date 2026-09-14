@@ -704,6 +704,8 @@ class DictionaryVersionTests(unittest.TestCase):
         self.assertIn((2, "excluded", "안전 문맥 동반어 없음"), got)      # 같은 줄·앞뒤 줄에 동반어 없음
         self.assertIn((4, "included", "테스트"), got)                     # 뒷줄 '착용'
         self.assertIn((9, "excluded", "안전 문맥 동반어 없음"), got)      # 앞 블록(7행 '보호')은 페이지 경계 밖
+        before = _doc("NCS", "x/LM1903060101_a/a.md", "<!-- page: 1 -->\n반드시 착용한다\n방진복 입장\n")
+        self.assertIn((3, "included", "테스트"), {(r.line, r.decision, r.reason) for r in scan_document(before, [rule])})   # 앞줄의 동반어도 창 안
 
     def test_v2_overrides_apply_held_and_require(self):
         with mock.patch.dict(SKR._V2_OVERRIDES, {("보호구", "방진복"): {"require_patterns": (r"착용",)}, ("인화", "combustible"): {"decision": "held"}}, clear=True):
@@ -744,7 +746,7 @@ class DictionaryVersionTests(unittest.TestCase):
         # 2026-09-14 에 이 테스트가 실제 data/semantic_keyword_recount_20260914.xlsx 를 fixture 로 덮어쓴 적이 있다 —
         # 거부가 실패하면 테스트가 실패해야지, 정본 산출물이 지워지면 안 된다.
         with tempfile.TemporaryDirectory() as td, mock.patch.object(SKR, "HERE", Path(td)):
-            kw = RemediationTests._census_fixture(RemediationTests(), Path(td))
+            kw = census_fixture(Path(td))
             (Path(td) / "docs/03-analysis/data").mkdir(parents=True)
             with self.assertRaises(ValueError) as ctx:
                 run_census(**dict(kw, summary_out=Path(td) / "docs/03-analysis/data/semantic_summary.json"),
@@ -762,6 +764,22 @@ class DictionaryVersionTests(unittest.TestCase):
         self.assertEqual("v1", summary["meta"]["run"]["dictionary"])
         self.assertIsNone(summary["meta"]["run"]["expected"])                    # 비정본 버전: 불일치는 기록만
         self.assertTrue(any(m.startswith("totals.NCS") for m in summary["meta"]["run"]["expected_mismatch"]))
+
+
+def graded_result(text="<!-- page: 1 -->\n안전 안전\n", corpus="NCS", rel="반도체개발/LM1903060101_a/a.md"):
+    """등급까지 붙은 최소 결과 — 여러 테스트 클래스가 공유하는 fixture (RemediationTests._graded_result 와 같다)."""
+    result = aggregate_matches(
+        [KeywordSource("안전", 1, True)],
+        [_doc(corpus, rel, text)],
+        [ExpressionRule("안전", "안전", "exact", "기존 키워드")],
+        [CandidateDecision("안전", "안전성", "held", "equivalent", "문맥 혼재")],
+    )
+    return assign_match_grades(result, {})
+
+
+def census_fixture(root, ncs_body="<!-- page: 1 -->\n안전 안내\n"):
+    """run_census 용 임시 말뭉치·워크북 kwargs — RemediationTests._census_fixture 의 모듈 수준 이름."""
+    return RemediationTests._census_fixture(RemediationTests(), root, ncs_body)
 
 
 class RemediationTests(unittest.TestCase):
@@ -812,13 +830,7 @@ class RemediationTests(unittest.TestCase):
         self.assertNotIn(None, list(leaves(EXPECTED)))
 
     def _graded_result(self, text="<!-- page: 1 -->\n안전 안전\n", corpus="NCS", rel="반도체개발/LM1903060101_a/a.md"):
-        result = aggregate_matches(
-            [KeywordSource("안전", 1, True)],
-            [_doc(corpus, rel, text)],
-            [ExpressionRule("안전", "안전", "exact", "기존 키워드")],
-            [CandidateDecision("안전", "안전성", "held", "equivalent", "문맥 혼재")],
-        )
-        return assign_match_grades(result, {})
+        return graded_result(text, corpus, rel)
 
     def test_summary_metrics_and_check_expected_list_every_mismatch_and_skip_none(self):
         result = self._graded_result()
@@ -1153,12 +1165,14 @@ class DictionaryVersionAuditTests(unittest.TestCase):
         import io, contextlib
         seen = {}
         def fake_run_census(*args, **kwargs):
-            seen.update(kwargs); return RemediationTests._graded_result(RemediationTests())
+            seen.update(kwargs); return graded_result()
         argv = ["semantic_keyword_recount.py", "--source-workbook", "s.xlsx", "--ncs-root", "n", "--school-root", "t",
                 "--xlsx-out", "o.xlsx", "--report-out", "r.md"] + argv_tail
+        out = io.StringIO()
         with mock.patch.object(SKR, "run_census", fake_run_census), mock.patch.object(SKR.sys, "argv", argv), \
-                contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
             SKR.main()
+        self.assertIn(f'"dictionary": "{seen["dictionary"]}"', out.getvalue())      # 측정값 블록도 실제 돌린 사전을 적는다 (ship 리뷰)
         return seen["dictionary"]
 
     def test_main_passes_dictionary_to_run_census_and_rejects_unknown_choice(self):
@@ -1179,7 +1193,7 @@ class DictionaryVersionAuditTests(unittest.TestCase):
     def test_variant_refuses_report_default_name_and_analysis_dir_under_docs(self):
         """변형 실행이 거부하는 나머지 두 자리 — report_out 의 정본 기본 이름, analysis_dir 의 docs/ 하위. 거부 뒤에는 아무것도 쓰지 않는다."""
         with tempfile.TemporaryDirectory() as td, mock.patch.object(SKR, "HERE", Path(td)):
-            kw = RemediationTests._census_fixture(RemediationTests(), Path(td))
+            kw = census_fixture(Path(td))
             expected = {"documents": {"NCS": 86, "교과서": 9}}
             with self.assertRaises(ValueError) as ctx:
                 run_census(**dict(kw, report_out=Path(td) / "semantic_keyword_recount_20260914_report.md"), dictionary="v1fix",
@@ -1196,7 +1210,7 @@ class DictionaryVersionAuditTests(unittest.TestCase):
 
     def test_check_expected_catches_dictionary_mismatch(self):
         """summary_metrics 의 dictionary 는 EXPECTED 와 글자 그대로 비교된다 — v1fix 실행을 v2 정본으로 굳힐 수 없다."""
-        result = RemediationTests._graded_result(RemediationTests())
+        result = graded_result()
         metrics = summary_metrics(result, artifact_manifest(result), dictionary="v1fix")
         self.assertEqual("v1fix", metrics["dictionary"])
         self.assertIn("dictionary: v1fix != v2", check_expected(metrics, {"dictionary": "v2"}))

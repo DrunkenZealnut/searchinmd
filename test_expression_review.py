@@ -8,7 +8,7 @@ from pathlib import Path
 
 import expression_review as ER
 import semantic_keyword_recount as SKR
-from semantic_keyword_recount import Document, GradeAssignment, grade_lookup_key
+from semantic_keyword_recount import Document
 
 
 def _doc(rel, text, corpus="NCS"):
@@ -148,6 +148,16 @@ class ScoreTests(unittest.TestCase):
         scores = ER.score(key, {"grades": labels, "meta": {}}, {"grades": labels, "meta": {}}, texts=texts)
         self.assertEqual(2, next(r for r in scores["expressions"] if r["expression"] == "방진복")["conditional"]["n"])
         self.assertIn("companions", scores["meta"])
+
+    def test_score_refuses_incomplete_coder_file(self):
+        """중단된 코더 실행(항목이 grades 에도 errors 에도 없음)은 ? 로 조용히 세지 않고 멈춘다 (score_coding.check_complete 규약)."""
+        key = {"sample_digest": "d", "items": [{"id": "E1", "keyword": "k", "expression": "e"}, {"id": "E2", "keyword": "k", "expression": "e"}]}
+        full = {"grades": {"E1": 1, "E2": 2}, "meta": {}}
+        partial = {"grades": {"E1": 1}, "errors": {}, "meta": {}}
+        with self.assertRaises(ValueError) as ctx:
+            ER.score(key, full, partial)
+        self.assertIn("E2", str(ctx.exception))
+        ER.score(key, full, {"grades": {"E1": 1}, "errors": {"E2": "timeout"}, "meta": {}})            # errors 에 있으면 완료된 실행
 
     def test_adj_file_is_validated(self):
         key = {"sample_digest": "d", "items": [{"id": "E1", "keyword": "k", "expression": "e"}]}

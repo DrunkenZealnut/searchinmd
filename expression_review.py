@@ -25,13 +25,13 @@ import random
 import re
 import sys
 from collections import Counter, defaultdict
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from pathlib import Path
 
 import score_coding
 import semantic_keyword_recount as SKR
 from semantic_keyword_recount import (
-    Document, ExpressionRule, MatchRecord, aggregate_matches, assign_match_grades, build_default_rules,
+    Document, ExpressionRule, aggregate_matches, assign_match_grades, build_default_rules,
     default_candidate_decisions, load_documents, public_path, scan_document, select_ncs_documents,
 )
 
@@ -41,7 +41,7 @@ PER_EXPRESSION = 30
 PRECISION_FLOOR = 0.8            # 연구책임자 결정 2026-09-14 — CP 95% 하한이 이 값 미만이면 보류/조건부 후보
 SAMPLE_DICTIONARY = "v1fix"      # 표본은 점검 **전** 사전에서 뽑는다 — 점검 대상이 v1fix 의 포함 표현이고, 키 digest 9713a337… 는 이 버전으로 재현된다 (v2 채택 뒤에도 바뀌지 않는다)
 ALPHA = score_coding.ALPHA       # 한 값 — 여기서 "95%" 가 나온다
-LABELS = (1, 2, "?")             # 1 = 사람 안전·보건 뜻, 2 = 아님, ? = 판단 불가 (code_pages.parse_grade 가 읽는 값)
+LABELS = (1, 2, "?")             # 1 = 사람 안전·보건 뜻, 2 = 아님, ? = 판단 불가 (code_pages.parse_grade 가 읽는 값) — _norm 이 쓴다
 
 # 점검 대상 (키워드, 표현) — 비정확 표현 중 정본 출현 ≥ 50 인 18개 + 감사 지목 4개 (계획 §1.3). 보류 표현은 계수 없이 probe 만.
 REVIEW_TARGETS = (
@@ -165,12 +165,17 @@ def window_text(document: Document, record, mark: str = "«{}»") -> str:
     return "\n".join(out)
 
 
+def _under_tracked_docs(path: Path) -> bool:
+    """docs/ 아래(추적) 인가 — 본문을 담는 파일의 경로 거부에 쓴다 (run_census 의 변형 경로 거부와 같은 규칙)."""
+    return os.path.realpath(str(path)).startswith(os.path.realpath(str(HERE / "docs")) + os.sep)
+
+
 def sample_digest(key_items: list[dict]) -> str:
     payload = [(i["id"], i["keyword"], i["expression"], i["corpus"], i["path"], i["line"], i["text_sha256"]) for i in key_items]
     return hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:16]
 
 
-def sheet_and_key(items: list[dict], documents: list[Document] | None = None, seed: int = SEED, per_expression: int = PER_EXPRESSION) -> tuple[dict, dict]:
+def sheet_and_key(items: list[dict], documents: list[Document] | None = None, seed: int = SEED, per_expression: int = PER_EXPRESSION, targets=REVIEW_TARGETS) -> tuple[dict, dict]:
     """시트(본문, 비추적)와 키(본문 없음, 추적). items 에 text 가 없으면 documents 에서 만든다."""
     doc_index = {(d.corpus, d.relative_path): d for d in (documents or [])}
     sheet_items, key_items = [], []
@@ -185,19 +190,21 @@ def sheet_and_key(items: list[dict], documents: list[Document] | None = None, se
                           "path": public_path(item["path"]) if os.path.isabs(item["path"]) else item["path"], "line": item["line"], "text_sha256": sha})
     digest = sample_digest(key_items)
     sheet = {"sample_digest": digest, "coder_prompt": coder_prompt(), "items": sheet_items}
-    key = {"sample_digest": digest, "seed": seed, "per_expression": per_expression, "targets": [list(t) for t in REVIEW_TARGETS], "items": key_items}   # 실제 사용한 값 (CLI --seed/--per-expression)
+    key = {"sample_digest": digest, "seed": seed, "per_expression": per_expression, "targets": [list(t) for t in targets], "items": key_items}   # 실제 사용한 값 (CLI --seed/--per-expression, 대상 표현)
     return sheet, key
 
 
 def write_sample(items: list[dict], sheet_path: Path, key_path: Path, documents: list[Document] | None = None, force: bool = False,
-                 seed: int = SEED, per_expression: int = PER_EXPRESSION) -> dict:
+                 seed: int = SEED, per_expression: int = PER_EXPRESSION, targets=REVIEW_TARGETS) -> dict:
+    if _under_tracked_docs(sheet_path):
+        raise ValueError(f"시트는 교재 본문을 담으므로 추적 경로(docs/)에 쓸 수 없습니다: {sheet_path.name}")
     """시트 json/md 와 키를 쓴다. 키는 라벨과 표본을 묶는 유일한 끈이라 --force 없이는 덮어쓰지 않는다."""
     sheet_path, key_path = Path(sheet_path), Path(key_path)
     if key_path.exists() and not force:
         raise FileExistsError(f"키가 이미 있습니다 — 표본을 다시 뽑으려면 --force: {public_path(key_path)}")
     if any("text" not in i for i in items) and documents is None:
         raise ValueError("documents 가 없으면 text 가 있는 items 만 쓸 수 있습니다")
-    sheet, key = sheet_and_key(items, documents, seed=seed, per_expression=per_expression)
+    sheet, key = sheet_and_key(items, documents, seed=seed, per_expression=per_expression, targets=targets)
     sheet_path.parent.mkdir(parents=True, exist_ok=True); key_path.parent.mkdir(parents=True, exist_ok=True)
     sheet_path.write_text(json.dumps(sheet, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     md = ["# 의미 표현 점검 시트", "", sheet["coder_prompt"], "", f"sample_digest: `{sheet['sample_digest']}` · 항목 {len(sheet['items'])}", ""]
@@ -244,7 +251,7 @@ def kappa(a: list, b: list, cats=(1, 2)) -> float | None:
 
 
 def _norm(label):
-    if label in (1, 2, "?"):
+    if label in LABELS:
         return label
     if label in ("1", "2"):
         return int(label)
@@ -306,6 +313,14 @@ def companion_stats(key: dict, texts: dict, labels: dict, companions=SKR.SAFETY_
     return {"companions": per_comp, "expressions": rows}
 
 
+def check_complete(coder: dict, ids: list[str], name: str) -> None:
+    """코더 파일은 모든 항목을 grades 또는 errors 에 가져야 한다 — 중단된 실행은 ? 가 아니다 (score_coding.check_complete 규약)."""
+    covered = set((coder.get("grades") or {})) | set((coder.get("errors") or {}))
+    missing = [i for i in ids if i not in covered]
+    if missing:
+        raise ValueError(f"코더 {name} 파일에 항목 {len(missing)}개가 없습니다 (grades/errors 어디에도 없음): {', '.join(missing[:5])} — 중단된 실행이면 --resume 으로 마저 돌리십시오")
+
+
 def score(key: dict, a: dict, b: dict, adj: dict | None = None, floor: float = PRECISION_FLOOR, alpha: float = ALPHA, texts: dict | None = None,
           adopted: str | None = None) -> dict:
     """표현별 정밀도·구간·κ·후보 표시. NaN 없음. texts(시트 id→본문) 가 있으면 조건부 규칙 근거(meta.companions, expressions[].conditional) 를 붙인다.
@@ -317,6 +332,7 @@ def score(key: dict, a: dict, b: dict, adj: dict | None = None, floor: float = P
         validate_adj(adj, key)
     adj_labels = (adj or {}).get("labels") or {}
     ids = [i["id"] for i in key["items"]]
+    check_complete(a, ids, "A"); check_complete(b, ids, "B")
     ga, gb = a.get("grades", {}), b.get("grades", {})
     final = final_labels(ids, ga, gb, adj_labels)
     by_expr: dict[tuple[str, str], list[dict]] = defaultdict(list)
@@ -369,7 +385,7 @@ def impact(documents: list[Document], keywords: list[str], existing_grades: dict
     v_included = {}
     for v in versions:
         rules = build_default_rules(keywords, version=v)
-        result = assign_match_grades(aggregate_matches(sources, documents, rules, default_candidate_decisions(version=v)), existing_grades)
+        result = assign_match_grades(aggregate_matches(sources, documents, rules, default_candidate_decisions(version=v), with_summary=False), existing_grades)   # 요약 불필요 — 매칭만 (실행 시간 −40%)
         included = [r for r in result.matches if r.decision == "included"]
         v_included[v] = included
         totals[v] = {c: sum(1 for r in included if r.corpus == c) for c in ("NCS", "교과서")}
@@ -383,7 +399,7 @@ def impact(documents: list[Document], keywords: list[str], existing_grades: dict
         # 보류 표현별 분리(계획 성공 기준: 안전성 / 안전 마진류 각각) — 제외 레코드의 문맥에서 _HELD_INSIDE 패턴을 순서대로 찾는다
         held_split = {c: Counter() for c in ("NCS", "교과서")}
         for r in held_records:
-            for label, pat in zip(("안전성", "안전_마진류"), SKR._HELD_INSIDE.get(r.keyword, ())):
+            for label, pat in zip(SKR.HELD_INSIDE_LABELS.get(r.keyword, ()), SKR._HELD_INSIDE.get(r.keyword, ())):
                 if re.search(pat, r.context, re.IGNORECASE):
                     held_split[r.corpus][label] += 1
                     break
@@ -442,7 +458,7 @@ def main() -> None:
         docs = _load_corpus(args)
         records = collect_records(docs, REVIEW_TARGETS)
         items = build_sample(records, REVIEW_TARGETS, seed=args.seed, per_expression=args.per_expression)
-        key = write_sample(items, args.sheet, args.key, documents=docs, force=args.force, seed=args.seed, per_expression=args.per_expression)
+        key = write_sample(items, args.sheet, args.key, documents=docs, force=args.force, seed=args.seed, per_expression=args.per_expression, targets=REVIEW_TARGETS)
         counts = Counter((it["keyword"], it["expression"]) for it in items)
         print(f"표본 {len(items)}건, 표현 {len(counts)}개, digest {key['sample_digest']}")
         for (k, e), n in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0])):
@@ -481,7 +497,7 @@ def main() -> None:
     elif args.cmd == "impact":
         docs = _load_corpus(args)
         keywords = list(SKR.EXPECTED_KEYWORDS)
-        school = args.school_grade_workbook or args.source_workbook.parent / "ncs_keywords_in_markdown_results_교과서_results_20260415.xlsx"
+        school = args.school_grade_workbook or args.source_workbook.parent / SKR.DEFAULT_SCHOOL_GRADE_WORKBOOK_NAME
         existing = SKR.load_existing_grades(args.source_workbook, school)
         out = impact(docs, keywords, existing)
         args.out.parent.mkdir(parents=True, exist_ok=True)

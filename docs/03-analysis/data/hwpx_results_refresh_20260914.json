@@ -304,7 +304,12 @@
     "keywords[작업환경].corpora.교과서.total",
     "keywords[중독].corpora.NCS.groups[장비].total"
    ],
-   "conditions": {},
+   "conditions": {
+    "zero_keywords_in_sentence": [
+     "직업병",
+     "물질안전보건자료"
+    ]
+   },
    "format_collapsed": false
   },
   {
@@ -339,7 +344,8 @@
    ],
    "keys": [],
    "conditions": {
-    "textbook_accident_pages": 0
+    "textbook_accident_pages": 0,
+    "fall_is_zero": true
    },
    "format_collapsed": false
   },
@@ -536,7 +542,15 @@
     "keywords[진동].corpora.교과서.groups[제조].total",
     "keywords[화재].corpora.NCS.groups[개발].total"
    ],
-   "conditions": {},
+   "conditions": {
+    "zero_keywords": [
+     "추락",
+     "공정안전관리",
+     "직업병",
+     "물질안전보건자료"
+    ],
+    "textbook_accident_pages": 0
+   },
    "format_collapsed": false
   },
   {
@@ -1294,6 +1308,7 @@
    "keys": [
     "cases.books",
     "cases.pages(count)",
+    "cases.pages[LM1903060411_23v3_반도체_재료_안전관리].gist(year)",
     "cases.pages[area=재료](count)",
     "corpora.NCS.groups[제조].documents",
     "keywords[감전].corpora.교과서.grades.1",
@@ -1364,8 +1379,8 @@
     "3",
     "10",
     "6",
-    "1",
     "3",
+    "1",
     "1"
    ],
    "keys": [
@@ -1499,8 +1514,8 @@
    "format": "PNG",
    "width": 702,
    "height": 391,
-   "svg_sha256": "14055b266c30db8f08fb3c8a227212c6219f14655a29a8a87a47eb4d600eef9d",
-   "sha256": "a95867c6cbbeda772c4ba8465ee3e4427a9e8829461cf0ad2d63153a419e3b51",
+   "svg_sha256": "06ac020c61d91f67ed77ae590fe0c99131507f50ac15ea67f49452066ca74edd",
+   "sha256": "5258135fc869e506f73e021db35a2ecff808180651d82fbd691c64c5977b0a3c",
    "bits": 24
   },
   {
@@ -1538,5 +1553,5 @@
   },
   "status": "ok"
  },
- "output_sha256": "d153b36aaf36d46b8375458d3249cc622499e0dec54ecf72ae0b14a4e9e31dc5"
+ "output_sha256": "7e548d28763b3b4474e842b9a79f7c153a5cbba8b4ccc82a0918ced89bc6da6d"
 }

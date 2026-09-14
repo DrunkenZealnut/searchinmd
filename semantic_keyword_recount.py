@@ -33,6 +33,7 @@ PAGE_MARKER_RE = re.compile(r"^\s*" + _MARKER_ANYWHERE_RE.pattern + r"\s*$", re.
 # (resegment.py·recount_grades.py 의 EXPECTED 와 같은 규약). None 은 아직 고정 전 — 비교하지 않는다.
 # documents 는 --force 로도 우회하지 않는다: 코퍼스가 다르면 정본이 아니다. grades.*.unpaged 0 은
 # 연구책임자 결정(2026-09-13, 미배정을 두지 않는다)을 코드가 지키는 자리다.
+DEFAULT_SCHOOL_GRADE_WORKBOOK_NAME = "ncs_keywords_in_markdown_results_교과서_results_20260415.xlsx"   # --source-workbook 과 같은 폴더에서 찾는다
 DICTIONARY_VERSIONS = ("v1", "v1fix", "v2")      # 사전 버전 — v1 2026-09-09 원본, v1fix 결함 2건 수정, v2 도메인 점검 반영(정본)
 DEFAULT_DICTIONARY = "v2"                          # 연구책임자 결정 3 (2026-09-14): 표현 점검(expression-review.analysis.md) 결과 v2 채택 — v1fix 는 결정 1(결함 2건 반영)의 중간 정본
 V1_RULE_CONTENT_SHA256 = "6fc926de45d9ca584d3c470e77caca316f65d3d83d45da10cf3322f487b857e3"   # v1(2026-09-09) 규칙 내용 지문 — 영향표의 기준선이 은근히 바뀌지 않게
@@ -51,6 +52,7 @@ _V2_OVERRIDES: dict[tuple[str, str], dict[str, object]] = {
     ("방사선", "X선"): {"require_patterns": SAFETY_COMPANIONS},
     ("PSM", "PSM"): {"require_patterns": SAFETY_COMPANIONS},
 }
+HOMONYM_REASON = "동음이의 또는 비대상 문맥 제외"
 HELD_INSIDE_REASON = "보류 표현 내부"
 NO_COMPANION_REASON = "안전 문맥 동반어 없음"
 
@@ -614,14 +616,19 @@ def _compile_rule(rule: ExpressionRule) -> re.Pattern[str]:
     return re.compile(source, re.IGNORECASE)
 
 
+def _compile_companions(rule: ExpressionRule) -> re.Pattern[str] | None:
+    """조건부 동반어를 한 패턴으로 — 창(같은 줄 ±1줄)에 하나라도 있으면 매칭."""
+    return re.compile("|".join(f"(?:{req})" for req in rule.require_patterns), re.IGNORECASE) if rule.require_patterns else None
+
+
 def _overlaps(left: tuple[int, int], right: tuple[int, int]) -> bool:
     return left[0] < right[1] and right[0] < left[1]
 
 
 def scan_document(document: Document, rules: list[ExpressionRule]) -> list[MatchRecord]:
-    by_keyword: dict[str, list[tuple[int, ExpressionRule, re.Pattern[str]]]] = defaultdict(list)
+    by_keyword: dict[str, list[tuple[int, ExpressionRule, re.Pattern[str], re.Pattern[str] | None]]] = defaultdict(list)
     for index, rule in enumerate(rules):
-        by_keyword[rule.keyword].append((index, rule, _compile_rule(rule)))
+        by_keyword[rule.keyword].append((index, rule, _compile_rule(rule), _compile_companions(rule)))
 
     records: list[MatchRecord] = []
     for block in split_pages(document):
@@ -634,7 +641,10 @@ def scan_document(document: Document, rules: list[ExpressionRule]) -> list[Match
             for keyword, compiled_rules in by_keyword.items():
                 included_candidates = []
                 excluded_candidates = []          # (start, end, index, rule, text, reason)
-                for rule_index, rule, pattern in compiled_rules:
+                for rule_index, rule, pattern, companions in compiled_rules:
+                    matches_on_line = list(pattern.finditer(line))
+                    if not matches_on_line:
+                        continue                              # 제외·보류·동반어 검사는 규칙이 이 줄에 맞을 때만 (전체 스캔의 16% 절감, 결과 동일)
                     exclusion_spans = []
                     for exclusion in rule.exclude_patterns:
                         exclusion_spans.extend(
@@ -642,14 +652,14 @@ def scan_document(document: Document, rules: list[ExpressionRule]) -> list[Match
                             for match in re.finditer(exclusion, line, re.IGNORECASE)
                         )
                     held_spans = [(m.start(), m.end()) for held in rule.held_patterns for m in re.finditer(held, line, re.IGNORECASE)]
-                    companion = not rule.require_patterns or any(re.search(req, window, re.IGNORECASE) for req in rule.require_patterns)
-                    for match in pattern.finditer(line):
+                    companion = companions is None or companions.search(window) is not None
+                    for match in matches_on_line:
                         item = (match.start(), match.end(), rule_index, rule, match.group(0))
                         span = (match.start(), match.end())
                         if any(_overlaps(span, held) for held in held_spans):
                             excluded_candidates.append(item + (HELD_INSIDE_REASON,))
                         elif any(_overlaps(span, ex) for ex in exclusion_spans):
-                            excluded_candidates.append(item + ("동음이의 또는 비대상 문맥 제외",))
+                            excluded_candidates.append(item + (HOMONYM_REASON,))
                         elif not companion:
                             excluded_candidates.append(item + (NO_COMPANION_REASON,))
                         else:
@@ -917,6 +927,7 @@ def _v1_candidate_decisions() -> list[CandidateDecision]:
     return candidates
 
 
+HELD_INSIDE_LABELS = {"안전": ("안전성", "안전_마진류")}       # _HELD_INSIDE 패턴과 같은 순서 — 영향표(excluded_by_fix)가 이 이름으로 나눈다
 _HELD_INSIDE = {                                   # 보류 표현이 정확 규칙 내부에서 세어지던 결함 (감사 M1(b)) — v1fix 부터
     "안전": (r"안전성", r"안전\s*(?:마진|여유|재고|율|계수)"),
 }
@@ -1004,10 +1015,14 @@ def aggregate_matches(
     rules: list[ExpressionRule],
     candidates: list[CandidateDecision],
     input_artifacts: list[InputArtifact] | None = None,
+    with_summary: bool = True,
 ) -> AnalysisResult:
+    """매칭 전수 + 키워드별 요약. with_summary=False 는 매칭만 필요할 때(영향표) — 요약의 _raw_exact_count 가 실행 시간의 40% 를 차지한다."""
     keywords = [source.keyword for source in sources]
     validate_rules(keywords, rules)
     matches = [record for document in documents for record in scan_document(document, rules)]
+    if not with_summary:
+        return AnalysisResult(tuple(sources), tuple(documents), tuple(rules), tuple(candidates), tuple(matches), (), tuple(input_artifacts or ()))
     source_rows = {source.keyword: source.search_rows for source in sources}
     corpora = []
     for preferred in ("NCS", "교과서"):
@@ -1489,6 +1504,11 @@ _TEXTBOOK_DISPLAY_NAMES = (
 )
 
 
+def _grade_counts(records) -> dict[str, int]:
+    counts = Counter(record.grade for record in records)
+    return {"1": counts[1], "2": counts[2], "3": counts[3], "unpaged": counts[None]}
+
+
 def _dashboard_group(corpus: str, relative_path: str) -> str:
     normalized = unicodedata.normalize("NFC", relative_path)
     if corpus == "NCS":
@@ -1538,7 +1558,6 @@ def dashboard_payload(result: AnalysisResult) -> dict[str, object]:
         keywords.append(item)
 
     corpora = {}
-    group_records_all = included
     for corpus in ("NCS", "교과서"):
         corpus_rows = [
             summary[(corpus, source.keyword)]
@@ -1559,27 +1578,24 @@ def dashboard_payload(result: AnalysisResult) -> dict[str, object]:
         groups = []
         for name in sorted(group_records):
             records = group_records[name]
-            counts = Counter(record.grade for record in records)
             groups.append(
                 {
                     "name": name,
                     "documents": len(documents_by_group[name]),
                     "pages": pages_by_group[name],
                     "total": len(records),
-                    "grades": {"1": counts[1], "2": counts[2], "3": counts[3], "unpaged": counts[None]},
+                    "grades": _grade_counts(records),
                 }
             )
         # 키워드 × 그룹 (D1) — 그룹 순서는 위와 같다
         group_names = [group["name"] for group in groups]
+        per_keyword_group: dict[str, dict[str, list]] = defaultdict(lambda: defaultdict(list))
+        for name, records in group_records.items():
+            for record in records:
+                per_keyword_group[record.keyword][name].append(record)
         for item in keywords:
-            per_group = defaultdict(list)
-            for record in group_records_all:
-                if record.corpus == corpus and record.keyword == item["name"]:
-                    per_group[_dashboard_group(corpus, record.relative_path)].append(record)
             item["corpora"][corpus]["groups"] = [
-                {"name": name, "total": len(per_group[name]),
-                 "grades": {"1": sum(1 for r in per_group[name] if r.grade == 1), "2": sum(1 for r in per_group[name] if r.grade == 2),
-                            "3": sum(1 for r in per_group[name] if r.grade == 3), "unpaged": sum(1 for r in per_group[name] if r.grade is None)}}
+                {"name": name, "total": len(per_keyword_group[item["name"]][name]), "grades": _grade_counts(per_keyword_group[item["name"]][name])}
                 for name in group_names
             ]
         source_counts = Counter(record.grade_source for record in included if record.corpus == corpus)
@@ -2056,7 +2072,7 @@ def run_census(
     ncs_grade_workbook = Path(ncs_grade_workbook or source_workbook)
     school_grade_workbook = Path(
         school_grade_workbook
-        or Path(source_workbook).parent / "ncs_keywords_in_markdown_results_교과서_results_20260415.xlsx"
+        or Path(source_workbook).parent / DEFAULT_SCHOOL_GRADE_WORKBOOK_NAME
     )
     if not school_grade_workbook.is_file():
         raise FileNotFoundError(f"교과서 등급 워크북을 찾을 수 없습니다: {public_path(school_grade_workbook)}")
@@ -2149,7 +2165,7 @@ def main() -> None:
         dictionary=args.dictionary,
     )
     manifest = artifact_manifest(result)
-    metrics = summary_metrics(result, manifest)
+    metrics = summary_metrics(result, manifest, dictionary=args.dictionary)
     print(f"완료: 키워드 {len(result.sources)}개, 문서 {len(result.documents)}개, 상세 {len(result.matches)}건")
     print("측정값 (EXPECTED 고정용):")
     print(json.dumps(metrics, ensure_ascii=False, indent=2))

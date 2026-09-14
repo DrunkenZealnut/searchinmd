@@ -10,7 +10,7 @@
 동작: 절은 제목 텍스트로 찾고(목차의 같은 제목은 건너뛴다), 문단은 원문 첫머리로 찾아 템플릿으로 다시 쓰며(서술 조건은 데이터로
 분기), 표 7~12 는 셀 텍스트만 바꾸고(표 13 만 행 증감), 그림 2~4 는 SVG → 원본 형식·크기로 다시 그려 BinData 바이트를 바꾼다.
 1~3절 밖의 노드와 나머지 ZIP 항목은 바이트 그대로. 원본은 읽기만 하고 새 파일로 쓴다.
-산출물: 새 HWPX(data/, 비추적), 변경 대조 JSON(추적, 본문 문장 없음), 검토 HTML(표·그림만, 추적).
+산출물: 새 HWPX(data/, 비추적), 변경 대조 JSON(추적, 본문 문장 없음), 검토 HTML(표·그림만, 추적), 구/신 문장 병기본 review_text.html(본문 포함 — data/, 비추적).
 숫자 감사: 다시 쓴 1~3절의 모든 숫자 토큰이 정본 값·비율·쪽 번호 중 하나여야 한다 — 아니면 exit 1.
 """
 
@@ -46,7 +46,7 @@ DEFAULT_CASES = HERE / "docs" / "03-analysis" / "data" / "accident_case_pages.js
 DEFAULT_RECOUNT = HERE / "docs" / "03-analysis" / "data" / "summary.json"
 DEFAULT_DIFF = HERE / "docs" / "03-analysis" / "data" / "hwpx_results_refresh_20260914.json"
 DEFAULT_REVIEW_DIR = HERE / "docs" / "03-analysis" / "hwpx-results-refresh"
-FONT = "/System/Library/Fonts/Supplemental/AppleGothic.ttf"
+FONT = os.environ.get("HWPX_FONT", "/System/Library/Fonts/Supplemental/AppleGothic.ttf")   # 없으면 -font 없이 렌더 (다른 OS) — 결정론은 같은 폰트일 때만
 
 CHAPTER_HEADING = "제3장 연구 결과"
 HEADINGS = {                                   # 절 이름 → (시작 제목, 끝 제목) — 본문 제목 텍스트와 정확히 일치해야 한다
@@ -64,7 +64,11 @@ TEXTBOOK_AREA = {
     "반도체 인프라 일반": "재료",
 }
 GRADE_LABEL = {1: "미흡·없음", 2: "형식적 언급", 3: "구체적 대책"}
-COLORS = {1: "#64748b", 2: "#c87a05", 3: "#087f75"}
+COLORS = {1: "#64748b", 2: "#c87a05", 3: "#087f75"}   # 보고서 원본 그림의 인쇄용 색 — 대시보드 등급 램프(--g1 #6b7280 / --g2 #d97706 / --g3 #059669)보다 한 단계 어둡다, 같은 등급 부호
+FP_KIND_LABEL = {"guideline": "보호구 착용 지침", "definition": "무재해운동 정의", "property": "톨루엔의 물성·유해성·인화성 설명"}
+PPE_MAJORITY = 0.6                  # 보호구 등급 2+3 비율이 이 이상이면 "60%를 넘었다"
+NEAR_HALF = (0.4, 0.6)              # 재료 분야 안전 비중이 이 구간이면 "절반 가까이"
+SHARE_TOLERANCE_PP = 3              # 안전 비중 vs 쪽수 비중 차이가 이 이하(%p)면 "비슷한 수준"
 NUMBER_TOKEN = re.compile(r"\d(?:[\d,]*\d)?(?:\.\d+)?%?")          # 1,234 · 12.5% · 33 — 뒤에 붙은 쉼표는 토큰이 아니다
 
 
@@ -150,6 +154,9 @@ class Facts:
         for p in c.pages:
             add(str(p["page"]), f"cases.pages[{p['book']}].page")
         add(pct(c.top_book_pages, c.flagged), "cases.top_book_pages/flagged"); add(pct(c.false_positive, c.flagged), "cases.false_positive/flagged"); add(pct(c.narrative, c.flagged), "cases.narrative/flagged")
+        for p in c.pages:
+            for year in re.findall(r"(\d{4})년", p["gist"]):
+                add(year, f"cases.pages[{p['book']}].gist(year)")
         return index
 
     def all_numbers(self) -> set[str]:
@@ -178,9 +185,9 @@ def pct(part: int, whole: int) -> str:
 def load_facts(summary_path: Path = DEFAULT_SUMMARY, cases_path: Path = DEFAULT_CASES, recount_path: Path | None = DEFAULT_RECOUNT) -> Facts:
     summary = json.loads(Path(summary_path).read_text(encoding="utf-8"))
     cases = json.loads(Path(cases_path).read_text(encoding="utf-8"))
-    textbook_cases = 0
-    if recount_path and Path(recount_path).exists():
-        textbook_cases = int(json.loads(Path(recount_path).read_text(encoding="utf-8"))["textbook"].get("cases_pages", 0))
+    if not recount_path or not Path(recount_path).exists():
+        raise FileNotFoundError(f"recount summary.json 이 없습니다 (교과서 사고사례 쪽 수의 출처): {recount_path}")
+    textbook_cases = int(json.loads(Path(recount_path).read_text(encoding="utf-8"))["textbook"]["cases_pages"])
     order = [k["name"] for k in summary["keywords"]]
 
     def corpus_facts(corpus: str, group_to_area) -> CorpusFacts:
@@ -211,6 +218,9 @@ def load_facts(summary_path: Path = DEFAULT_SUMMARY, cases_path: Path = DEFAULT_
     ncs = corpus_facts("NCS", NCS_GROUP_TO_AREA.get)
     school = corpus_facts("교과서", TEXTBOOK_AREA.get)
     pages = cases["pages"]
+    unknown_kinds = {p["kind"] for p in pages if p["verdict"] == "false_positive" and p["kind"] not in FP_KIND_LABEL}
+    if unknown_kinds:
+        raise ValueError(f"accident_case_pages.json 의 오탐 유형을 모른다: {sorted(unknown_kinds)} — FP_KIND_LABEL 에 추가하십시오")
     by_book = Counter(p["title"] for p in pages)
     top_book, top_pages = by_book.most_common(1)[0]
     industrial = [p for p in pages if p["verdict"] == "case"]
@@ -395,14 +405,13 @@ def wa(word: str) -> str:
     return word + ("와" if _jong(word) in (0, -1) else "과")
 
 
+def eun(word: str) -> str:
+    return word + ("는" if _jong(word) in (0, -1) else "은")
+
+
 def _rank_phrase(corpus: CorpusFacts, names: list[str]) -> str:
     rows = sorted(((n, corpus.keywords[n]["total"]) for n in names), key=lambda kv: (-kv[1], corpus.order.index(kv[0])))
     return ", ".join(f"{q(n)} {fmt(v)}건" for n, v in rows)
-
-
-def _area_rank(corpus: CorpusFacts, key) -> list[str]:
-    """분야를 key 값 내림차순으로 (동률은 AREA_ORDER)."""
-    return [a for a, _ in sorted(((a, key(v)) for a, v in corpus.areas.items()), key=lambda kv: (-kv[1], AREA_ORDER.index(kv[0])))]
 
 
 def _grade_max(grades: dict[int, int]) -> int:
@@ -414,7 +423,7 @@ AREA_LABEL = {"개발": "반도체 개발 분야", "제조": "반도체 제조 �
 
 def _compare_share(value: float, reference: float) -> str:
     diff = (value - reference) * 100
-    if abs(diff) <= 3:
+    if abs(diff) <= SHARE_TOLERANCE_PP:
         return "과 비슷한 수준으로"
     return "보다 낮은 수준으로" if diff < 0 else "보다 높은 수준으로"
 
@@ -430,11 +439,15 @@ def textbook_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
     def area_sentence(area, lead):
         a = s.areas[area]
         return f"{lead} {a['documents']}권, 총 {fmt(a['pages'])}쪽으로 전체의 약 {pct(a['pages'], pages_total)}를 차지하였다."
-    largest_area = _area_rank(s, lambda v: v["pages"])[0]
+    largest_area = max(AREA_ORDER, key=lambda a: s.areas[a]["pages"])
+    def zero_or_count(name, label):                       # "‘X’는 전혀 검출되지 않았고" / "‘X’는 N건에 그쳤고" — 0 주장은 데이터로만
+        return f"{eun(q(label))} 전혀 검출되지 않았고" if k(name) == 0 else f"{eun(q(label))} {fmt(k(name))}건에 그쳤고"
     conditions = {
         "키워드 분석 결과": {"top_keyword": top6[0][0], "zero_keywords": zero},
         "반도체 제조 분야는": {"manufacturing_has_most_pages": largest_area == "제조"},
-        "따라서 장비 분야에서는 전기, 기계, 압력": {"textbook_accident_pages": f.cases.textbook_cases},
+        "따라서 제조 분야는 안전보건교육이 가장 적극적으로": {"zero_keywords_in_sentence": [n for n in ("직업병", "물질안전보건자료") if k(n) == 0]},
+        "따라서 장비 분야에서는 전기, 기계, 압력": {"textbook_accident_pages": f.cases.textbook_cases, "fall_is_zero": k("추락") == 0},
+        "또한 공정안전관리, 직업병, 물질안전보건자료": {"zero_keywords": zero, "textbook_accident_pages": f.cases.textbook_cases},
     }
     return _with_conditions([
         ("본 연구에서는 반도체고등학교의 전공교과서를 대상으로",
@@ -452,20 +465,20 @@ def textbook_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
         ("종합하면, 현행 반도체고등학교의 반도체 교과서에는",
          f"종합하면, 현행 반도체고등학교의 반도체 교과서에는 ‘안전’과 ‘위험’에 대한 일반적인 언급이 있긴 하지만, 사고·부상과 직업병의 발생 원인, 작업자의 유해 인자 노출, 구체적인 예방 대책, 안전보건 제도와 연결되는 내용은 매우 부족하다. 특히 0건으로 확인된 {len(zero)}개 키워드({', '.join(zero)})는 향후 안전보건 교재 개발에서 우선적으로 보완해야 할 핵심 교육 영역으로 볼 수 있다."),
         ("9권의 교과서에서 구체적인 사고",
-         f"{s.documents}권의 교과서에서 구체적인 사고·부상·직업병 사례가 한 건도 발견되지 않았다는 것을 의미하기 때문이다. 단순히 ‘위험’이나 ‘안전’이라는 용어를 소개하는 것과 불산 누출, TMAH 급성중독, 질식, 엑스선 피폭 등의 사고가 어떻게 발생하고 어떻게 예방할 수 있는지를 사례로 학습하는 것은 교육 효과 측면에서 큰 차이가 있다. 따라서 현행 교과서는 위험의 존재를 일부 언급하고 있으나, 학생이 산업현장의 사고와 질병 발생 과정을 이해하고 예방 행동으로 연결하기에는 한계가 있다고 판단된다."),
+         f"{s.documents}권의 교과서에서 구체적인 사고·부상·직업병 사례가 {'한 건도 발견되지 않았다' if f.cases.textbook_cases == 0 else str(f.cases.textbook_cases) + '쪽에서만 발견되었다'}는 것을 의미하기 때문이다. 단순히 ‘위험’이나 ‘안전’이라는 용어를 소개하는 것과 불산 누출, TMAH 급성중독, 질식, 엑스선 피폭 등의 사고가 어떻게 발생하고 어떻게 예방할 수 있는지를 사례로 학습하는 것은 교육 효과 측면에서 큰 차이가 있다. 따라서 현행 교과서는 위험의 존재를 일부 언급하고 있으나, 학생이 산업현장의 사고와 질병 발생 과정을 이해하고 예방 행동으로 연결하기에는 한계가 있다고 판단된다."),
         ("본 연구에서는 9권의 반도체 교과서를",
          f"본 연구에서는 {s.documents}권의 반도체 교과서를 교육 내용에 따라 반도체 개발, 반도체 제조, 반도체 장비, 반도체 재료·인프라 분야로 재분류하였다. 이 분류는 교과서 제목과 주요 교육 내용을 기준으로 한 연구상 분류이며, 대시보드 자체에서 4개 분야별 수치를 별도로 제시한 것은 아니다. 분야별 쪽수는 각 교재 마크다운의 쪽 표식 최댓값을 합한 값이다. 분야별로 설명하면 다음과 같다."),
         ("반도체 개발 분야는",
          area_sentence("개발", "반도체 개발 분야는") + " 『반도체 기초기술』과 『반도체 기초』는 반도체의 원리, 소자, 회로, 기본 기술을 중심으로 구성되기 때문에, 제조 설비나 화학물질을 직접 취급하는 상황에 대한 안전보건 내용은 제조·장비 분야보다 상대적으로 적을 가능성이 높다."),
         ("반도체 제조 분야는",
-         area_sentence("제조", "반도체 제조 분야는").replace("차지하였다.", "차지하여 가장 큰 비중을 보였다." if _area_rank(s, lambda v: v["pages"])[0] == "제조" else "차지하였다.")
+         area_sentence("제조", "반도체 제조 분야는").replace("차지하였다.", "차지하여 가장 큰 비중을 보였다." if largest_area == "제조" else "차지하였다.")
          + " 공정 기초, 포토에칭, 박막 확산, 조립검사 등은 실제 반도체 생산공정과 직접 연결되는 분야이므로, 화학물질, 고온, 특수 가스, 전기, 설비, 방사선, 자동화 장비 등 다양한 위험 요인을 다룰 수 있는 영역이다."),
         ("따라서 제조 분야는 안전보건교육이 가장 적극적으로",
-         f"따라서 제조 분야는 안전보건교육이 가장 적극적으로 통합되어야 하는 분야이다. 하지만 전체 교과서에서 ‘직업병’과 ‘물질안전보건자료’가 전혀 검출되지 않았고 ‘MSDS’는 {fmt(k('MSDS'))}건, ‘작업환경’은 {fmt(k('작업환경'))}건에 그쳤다는 결과를 고려하면, 제조공정 교육이 공정 기술 중심으로 구성되고, 안전보건과 연결은 매우 부족하다고 판단된다. 특히 포토 공정의 현상액과 유기용제, 식각 공정의 산·알칼리와 부식성 물질, 박막·확산 공정의 특수 가스와 고온 설비, 조립·검사 공정의 기계적 위험과 엑스선 검사장비 등을 공정 원리와 함께 설명할 필요가 있다."),
+         f"따라서 제조 분야는 안전보건교육이 가장 적극적으로 통합되어야 하는 분야이다. 하지만 전체 교과서에서 {zero_or_count('직업병', '직업병')} {zero_or_count('물질안전보건자료', '물질안전보건자료')} ‘MSDS’는 {fmt(k('MSDS'))}건, ‘작업환경’은 {fmt(k('작업환경'))}건에 그쳤다는 결과를 고려하면, 제조공정 교육이 공정 기술 중심으로 구성되고, 안전보건과 연결은 매우 부족하다고 판단된다. 특히 포토 공정의 현상액과 유기용제, 식각 공정의 산·알칼리와 부식성 물질, 박막·확산 공정의 특수 가스와 고온 설비, 조립·검사 공정의 기계적 위험과 엑스선 검사장비 등을 공정 원리와 함께 설명할 필요가 있다."),
         ("반도체 장비 분야는",
          area_sentence("장비", "반도체 장비 분야는") + " 장비 유지보수는 정상적인 자동화 생산 작업과 달리 장비 내부 접근, 전원 차단, 잔류 에너지원 제거, 배관 개방, 세정과 부품 교체 등의 작업을 해야 하므로, 사고 위험이 심하게 증가할 수 있다."),
         ("따라서 장비 분야에서는 전기, 기계, 압력",
-         f"따라서 장비 분야에서는 전기, 기계, 압력, 진공, 고온, 화학물질과 같은 위험 에너지원과 함께 LOTO(Lockout/Tagout), 인터로크, 작업 허가, 잔류 에너지원 확인, 유지보수 전후 안전 점검을 핵심적으로 교육해야 한다. 그러나 ‘추락’은 전혀 검출되지 않았고 ‘끼임’은 {fmt(k('끼임'))}건에 그쳤으며, 구체적인 사고 사례도 {f.cases.textbook_cases}건이라는 점을 보았을 때, 장비 유지보수 교육에서 실제 사고 예방 내용이 충분하지 않을 가능성이 있다."),
+         f"따라서 장비 분야에서는 전기, 기계, 압력, 진공, 고온, 화학물질과 같은 위험 에너지원과 함께 LOTO(Lockout/Tagout), 인터로크, 작업 허가, 잔류 에너지원 확인, 유지보수 전후 안전 점검을 핵심적으로 교육해야 한다. 그러나 {zero_or_count('추락', '추락')} ‘끼임’은 {fmt(k('끼임'))}건에 그쳤으며, 구체적인 사고 사례도 {f.cases.textbook_cases}건이라는 점을 보았을 때, 장비 유지보수 교육에서 실제 사고 예방 내용이 충분하지 않을 가능성이 있다."),
         ("반도체 재료·인프라 분야는",
          area_sentence("재료", "반도체 재료·인프라 분야는") + " 이 분야는 반도체 생산에 필요한 화학물질, 특수 가스, 전력, 초순수, 폐수처리, 각종 지원설비와 연결되기 때문에 안전보건 측면에서 매우 중요한 교육 영역이다."),
         ("특히 반도체산업의 대형 사고는",
@@ -479,7 +492,7 @@ def textbook_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
         ("반도체고등학교에서 사용하는 반도체 교과서",
          f"반도체고등학교에서 사용하는 반도체 교과서 {s.documents}권, 총 {fmt(pages_total)}쪽을 대상으로 {len(s.order)}개의 안전보건 관련 키워드를 분석한 결과, {detected}개 키워드에서 총 {fmt(s.total)}건이 검출되었다. 그러나 안전보건교육의 양과 구체성은 전반적으로 부족한 것으로 나타났다. 특히 예방조치와 작업 방법을 제시하는 등급 3은 {fmt(g3)}건({pct(g3, s.total)})에 불과하여, 위험 요인을 학생의 예방 행동으로 연결하는 교육 내용이 매우 적었다."),
         ("또한 공정안전관리, 직업병, 물질안전보건자료",
-         f"또한 {', '.join(zero)} 등 {len(zero)}개 키워드가 전혀 검출되지 않았으며, 구체적인 사고 사례도 {s.documents}권 전체에서 한 건도 확인되지 않았다. 이를 통해 현재 반도체 교과서가 반도체의 기술과 공정 원리를 교육하는 데 중점을 두고 있지만, 산업현장에서 발생할 수 있는 사고·부상·화학물질 노출·직업병을 예방하기 위한 교육은 충분히 통합하지 못함을 알 수 있다."),
+         f"또한 {', '.join(zero)} 등 {len(zero)}개 키워드가 전혀 검출되지 않았으며, 구체적인 사고 사례도 {s.documents}권 전체에서 {'한 건도 확인되지 않았다' if f.cases.textbook_cases == 0 else str(f.cases.textbook_cases) + '쪽에서만 확인되었다'}. 이를 통해 현재 반도체 교과서가 반도체의 기술과 공정 원리를 교육하는 데 중점을 두고 있지만, 산업현장에서 발생할 수 있는 사고·부상·화학물질 노출·직업병을 예방하기 위한 교육은 충분히 통합하지 못함을 알 수 있다."),
     ], conditions)
 
 
@@ -498,6 +511,9 @@ def ncs_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
     ppe = k("보호구")
     ppe23 = ppe["grades"][2] + ppe["grades"][3]
     psm_all3 = k("공정안전관리")["grades"][3] == k("공정안전관리")["total"]
+    ppe_majority = ppe23 / ppe["total"] >= PPE_MAJORITY
+    materials_share = safety["areas"]["재료"]["total"] / safety["total"]
+    near_half = NEAR_HALF[0] <= materials_share < NEAR_HALF[1]
     area_share = lambda area: pct(k("안전")["areas"][area]["total"], safety["total"])
     safety_rank = sorted(AREA_ORDER, key=lambda a: -safety["areas"][a]["total"])
     def area_intro(area, lead):
@@ -509,16 +525,16 @@ def ncs_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
     equip_pages = [p for p in c.pages if p["area"] == "장비"]
     equip_narrative = [p for p in equip_pages if p["verdict"] in ("case", "case_other")]
     equip_fp_kinds = Counter(p["kind"] for p in equip_pages if p["verdict"] == "false_positive")
-    kind_label = {"guideline": "보호구 착용 지침", "definition": "무재해운동 정의", "property": "물질 특성 설명"}
+    kind_label = FP_KIND_LABEL
     conditions = {
         "교과서의 전체 키워드 중 ‘안전’이": {"safety_top_grade": gmax},
         "사고 관련 주요 키워드 검출 건수는": {"accident_keyword_order": [n for n, _ in sorted(((x, k(x)["total"]) for x in accident_kw), key=lambda kv: (-kv[1], n.order.index(kv[0])))]},
-        "‘보호구’는": {"ppe_over_60pct": ppe23 / ppe["total"] >= 0.6},
+        "‘보호구’는": {"ppe_over_60pct": ppe_majority},
         "한편 ‘공정안전관리’는": {"psm_all_grade3": psm_all3},
         "한편 ‘공정안전관리’는 총": {"psm_all_grade3": psm_all3},
         "반도체 제조 분야는 총": {"safety_share_vs_pages": _compare_share(safety["areas"]["제조"]["total"] / safety["total"], n.areas["제조"]["pages"] / pages_total).strip()},
         "반도체 장비 분야는 총": {"equipment_safety_rank": equip_rank, "equipment_narrative_pages": len(equip_narrative)},
-        "반도체 재료 분야는 총": {"materials_is_top": safety_rank[0] == "재료", "near_half": 0.4 <= safety["areas"]["재료"]["total"] / safety["total"] < 0.6},
+        "반도체 재료 분야는 총": {"materials_is_top": safety_rank[0] == "재료", "near_half": near_half},
         "등급 2는 안전보건 관련 키워드가 확인되지만": {"largest_grade": _grade_max(n.grades)},
     }
     return _with_conditions([
@@ -538,7 +554,7 @@ def ncs_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
          f"건강 영향 관련 키워드는 ‘직업병’ {fmt(k('직업병')['total'])}건, ‘질병’ {fmt(k('질병')['total'])}건, ‘유해 인자’ {fmt(k('유해인자')['total'])}건이었다. 또한 ‘방사선’은 {fmt(k('방사선')['total'])}건, ‘소음’은 {fmt(k('소음')['total'])}건, ‘진동’은 {fmt(k('진동')['total'])}건이었지만, 이들 중 상당수는 장비 특성이나 공정 조건 설명에 그치는 경우가 많았다. 특히 ‘직업병’과 ‘질병’의 검출 건수가 매우 낮다는 점은 현재 교과서가 사고 예방 중심으로 구성되어 있으며, 만성 건강위험이나 장기 노출에 따른 질병 예방 교육은 거의 반영하지 못하고 있음을 시사한다. 반도체산업 현장에서 발생할 수 있는 암, 생식독성, 호흡기질환, 피부질환 등을 예방하기 위한 작업 방법, 유해 인자 관리 등의 내용은 거의 없었다."),
         ("‘보호구’는",
          f"‘보호구’는 {fmt(ppe['total'])}건이었고, 이 중 등급 2가 {fmt(ppe['grades'][2])}건({pct(ppe['grades'][2], ppe['total'])}), 등급 3이 {fmt(ppe['grades'][3])}건({pct(ppe['grades'][3], ppe['total'])})으로 "
-         + ("60%를 넘었다." if ppe23 / ppe["total"] >= 0.6 else f"{pct(ppe23, ppe['total'])}였다.")
+         + (f"{int(PPE_MAJORITY * 100)}%를 넘었다." if ppe_majority else f"{pct(ppe23, ppe['total'])}였다.")
          + " 이를 통해 보호구 관련 교육은 비교적 구체적으로 제시되고 있음을 알 수 있다. 실제로 안전화, 헬멧, 보호 장갑, 보호안경, 안전벨트 등 보호구의 종류와 착용 필요성은 상당히 자주 언급된다. 그러나 보호구를 왜 착용해야 하는지, 어떤 위험 요인에 대응하는지, 선택 기준과 한계는 무엇인지까지 확장된 설명은 부족하였다."),
         ("‘작업환경’은",
          f"‘작업환경’은 {fmt(k('작업환경')['total'])}건, ‘중독’은 {fmt(k('중독')['total'])}건으로 검출 건수 자체는 많지 않았다. 하지만 ‘작업환경’의 등급 3 비율은 {fmt(k('작업환경')['grades'][3])}건({pct(k('작업환경')['grades'][3], k('작업환경')['total'])}), ‘중독’의 등급 3 비율은 {fmt(k('중독')['grades'][3])}건({pct(k('중독')['grades'][3], k('중독')['total'])})으로 나타나 전체 등급 3 비율({pct(n.grades[3], n.total)})과 비슷하거나 그보다 높았다. 이는 해당 키워드가 나올 때 단순 언급보다 구체적 상황 설명이나 예방·관리 내용까지 포함된 경우가 적지 않았다는 뜻이다. 다만 절대 건수가 적기 때문에 교과서 전반에서 작업환경 관리와 건강위험 예방이 충분히 체계화되었다고 보기는 어렵다."),
@@ -556,7 +572,7 @@ def ncs_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
          area_intro("장비", "반도체 장비 분야는") + f" 이는 {equip_rel}, 안전보건교육이 비교적 많이 포함된 분야이다. 이 분야의 가장 큰 특징은 사고 사례 집중이다. 사고 사례로 자동 판정된 {c.flagged}쪽 중 {c.by_area_flagged.get('장비', 0)}쪽({pct(c.by_area_flagged.get('장비', 0), c.flagged)})이 이 분야의 『{top_area_book}』 한 권에 몰려 있어, 반도체 교과서에서 사고 교육이 장비 중심으로 이루어지고 있음을 알 수 있다. 다만 원문을 확인하면 그중 실제 사고 서술은 {len(equip_narrative)}쪽({', '.join(p['gist'].split(' (')[0] for p in equip_narrative)})이고 나머지 {len(equip_pages) - len(equip_narrative)}쪽은 {ro('·'.join(kind_label[k] for k, _ in equip_fp_kinds.most_common()))}, 사고 사례 자체는 이 분야에서도 매우 적다(3절 참조)."),
         ("반도체 재료 분야는 총",
          area_intro("재료", "반도체 재료 분야는").replace("차지하였다.", f"차지하여 분야 중 {'가장 높은' if safety_rank[0] == '재료' else str(safety_rank.index('재료') + 1) + '번째'} 비중을 보였다.")
-         + (" 전체 안전보건교육 내용의 절반 가까이가 이 분야에 집중된 셈이다." if 0.4 <= safety["areas"]["재료"]["total"] / safety["total"] < 0.6 else "")),
+         + (" 전체 안전보건교육 내용의 절반 가까이가 이 분야에 집중된 셈이다." if near_half else "")),
         ("실제로 전체적으로 가장 많이 검출된 키워드인 ‘안전’의 경우에도",
          f"실제로 전체적으로 가장 많이 검출된 키워드인 ‘안전’의 경우에도 총 {fmt(safety['total'])}건 중 {fmt(safety['grades'][1])}건({pct(safety['grades'][1], safety['total'])})이 등급 1로 분류되었다. 교과서 내에서 안전 관련 용어가 부분적으로 사용되더라도 실제로는 공정 설명, 설비 설명, 제품 설명에 부수적으로 언급된 것에 불과한 경우가 적지 않다는 점을 보여준다. 이러한 결과는 현재 반도체 교과서에서 안전보건이 독립적 교육 내용으로 충분히 자리 잡지 못하고 있음을 시사한다."),
         ("등급 2는 안전보건 관련 키워드가 확인되지만",
@@ -589,7 +605,7 @@ def case_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
         ("사례의 분포를 보면",
          f"사례의 분포를 보면, 자동 판정 {c.flagged}쪽 중 {c.top_book_pages}쪽이 『{c.top_book}』에 몰려 있어, 현재 교과서에서 사고 관련 내용이 주로 장비 유지보수와 점검 작업 중심으로 구성되어 있다. 반면 {', '.join(a for a in AREA_ORDER if c.by_area_flagged.get(a, 0) == 0)} 분야에서는 사고 사례가 전혀 제시되지 않아, 공정과 직무 전반을 반영한 균형 있는 교육 구성은 부족한 것으로 나타났다."),
         ("사고 유형 측면에서는",
-         f"사고 유형 측면에서는 실제 사고 서술 {c.narrative}쪽이 화학물질(불산) 누출 사고와 시설물(환풍구) 붕괴 사고였다. 자동 판정이 사례로 잡은 나머지 {c.false_positive}쪽은 보호구 착용 지침({kinds.get('guideline', 0)}쪽), 무재해운동 정의({kinds.get('definition', 0)}쪽), 톨루엔의 물성·유해성·인화성 설명({kinds.get('property', 0)}쪽)으로, TMAH·아르신 노출이나 이온주입 장비의 방사선 노출은 사고 사례가 아니라 취급 지침과 유해성 설명의 맥락에서 언급된 것이었다. 즉, 반도체산업의 주요 위험 요인 자체는 교과서에 등장하지만, 그것이 실제 사고 사례로 제시되는 경우는 불산 누출 사고 {c.industrial_events}건에 그친다."),
+         f"사고 유형 측면에서는 실제 사고 서술 {c.narrative}쪽이 화학물질(불산) 누출 사고와 시설물(환풍구) 붕괴 사고였다. 자동 판정이 사례로 잡은 나머지 {c.false_positive}쪽은 {', '.join(f"{FP_KIND_LABEL[kind]}({n}쪽)" for kind, n in kinds.most_common())}으로, TMAH·아르신 노출이나 이온주입 장비의 방사선 노출은 사고 사례가 아니라 취급 지침과 유해성 설명의 맥락에서 언급된 것이었다. 즉, 반도체산업의 주요 위험 요인 자체는 교과서에 등장하지만, 그것이 실제 사고 사례로 제시되는 경우는 불산 누출 사고 {c.industrial_events}건에 그친다."),
         ("사례의 서술 방식 또한 중요한 특징이다",
          "사례의 서술 방식 또한 중요한 특징이다. 실제 사고 서술은 한두 문장으로 매우 간략하게 제시되어, 사고의 발생 원인, 작업조건, 진행 경과, 피해 규모, 재발 방지 대책 등 교육적으로 중요한 정보가 거의 포함되지 않았다. 즉, 학습자가 해당 사례를 통해 위험 요인을 분석하거나 예방 행동을 학습하기에는 충분한 정보가 제공되지 않는 구조이다."),
         ("또한 사고 사례는 대부분 위험 상황을 단순히 언급하는 수준에",
@@ -679,7 +695,11 @@ def image_bits(data: bytes) -> int:
     return depth * channels
 
 
+MIN_GLYPH_PX = 12                   # 한글 하한 (CLAUDE.md 디자인 토큰 --fs-xs) — 작은 래스터(그림 2, 702×391)에서도 지킨다
+
+
 def _svg_text(x, y, text, size=28, fill="#243244", anchor="start", weight="normal"):
+    size = max(MIN_GLYPH_PX, int(size))
     return f'<text x="{x}" y="{y}" font-family="AppleGothic, sans-serif" font-size="{size}" fill="{fill}" text-anchor="{anchor}" font-weight="{weight}">{text}</text>'
 
 
@@ -735,7 +755,8 @@ def render_svg(svg: str, fmt_: str, width: int, height: int) -> bytes:
         svg_path = Path(td) / "chart.svg"
         svg_path.write_text(svg, encoding="utf-8")
         target = "PNG24:-" if fmt_ == "PNG" else "BMP3:-"
-        out = subprocess.run(["magick", "-density", "96", "-background", "white", "-font", FONT, str(svg_path), "-resize", f"{width}x{height}!", "-type", "TrueColor", target],
+        font_args = ["-font", FONT] if Path(FONT).exists() else []
+        out = subprocess.run(["magick", "-density", "96", "-background", "white", *font_args, str(svg_path), "-resize", f"{width}x{height}!", "-type", "TrueColor", target],
                              check=True, capture_output=True).stdout
     w, h, kind = image_dimensions(out)
     if (w, h, kind) != (width, height, fmt_):
@@ -801,13 +822,13 @@ def numbers_in(text: str) -> list[str]:
     return NUMBER_TOKEN.findall(text)
 
 
-ALLOWED_TOKENS = {"0", "1", "2", "3", "4", "30", "2014", "100.0%", "60%"}      # 등급·분야 번호, 30개 키워드, 사고 연도, 합계 비율, 60% 기준
+ALLOWED_TOKENS = {"0", "1", "2", "3", "4", "30", "100.0%", "60%"}      # 등급·분야 번호, 30개 키워드, 합계 비율, 60% 기준 (사고 연도는 cases.gist 에서 온다)
 STRIP_BEFORE_AUDIT = re.compile(r"\d{4}-\d{2}-\d{2}|(?:표|그림)\s*\d+\.?|\d+\)\s|\(\d+\)|등급\s*1~3")   # 날짜·표/그림 번호·목차 번호는 수치가 아니다
 
 
-def audit_numbers(texts: list[str], facts: Facts, extra_allowed: set[str] | None = None) -> list[str]:
+def audit_numbers(texts: list[str], facts: Facts) -> list[str]:
     """정본 값(총계·등급·분야·키워드·쪽수·비율·쪽 번호)이 아닌 숫자 토큰 — 남아 있으면 구 수치다."""
-    allowed = facts.all_numbers() | ALLOWED_TOKENS | (extra_allowed or set())
+    allowed = facts.all_numbers() | ALLOWED_TOKENS
     unmatched = []
     for text in texts:
         for token in numbers_in(STRIP_BEFORE_AUDIT.sub(" ", text)):
@@ -830,6 +851,10 @@ def section_texts(section: Section) -> list[str]:
 
 def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def _under_tracked_docs(path: Path) -> bool:
+    return os.path.realpath(str(path)).startswith(os.path.realpath(str(HERE / "docs")) + os.sep)
 
 
 def public(path: Path) -> str:
@@ -895,7 +920,9 @@ def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_d
         for spec in figure_specs(facts):
             pic = find_picture(sections[spec["section"]], spec["caption"], spec["item"])
             item = pic.find(f".//{HC}img").get("binaryItemIDRef")
-            entry = next(n for n in names if n.startswith("BinData/") and Path(n).stem == item)
+            entry = next((n for n in names if n.startswith("BinData/") and Path(n).stem == item), None)
+            if entry is None:
+                raise ValueError(f"BinData/{item}.* 항목이 HWPX 에 없습니다 (binaryItemIDRef={item})")
             width, height, kind = image_dimensions(z.read(entry))
             svg = spec["svg"](width, height)
             record = {"label": spec["label"], "caption": spec["caption"], "item": item, "entry": entry, "format": kind, "width": width, "height": height, "svg_sha256": sha256(svg.encode("utf-8"))}
@@ -923,11 +950,18 @@ def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_d
 
     if unmatched:
         diff["audit"]["status"] = "failed"
-    else:
+        diff["output"] = None
+    elif render:
         diff["audit"]["status"] = "ok"
         write_hwpx(hwpx, out, serialize_section(root, root_tag), bindata, force=force)
         diff["output_sha256"] = sha256(out.read_bytes())
+    else:
+        diff["audit"]["status"] = "ok"                        # 점검 실행 — HWPX 는 쓰지 않는다
+        diff["output"] = None
     if diff_out:
+        if unmatched and _under_tracked_docs(diff_out):     # 실패 기록이 추적 정본 대조를 덮어쓰지 않게
+            diff_out = Path(tempfile.mkdtemp(prefix="hwpx_refresh_failed_")) / diff_out.name
+            print(f"숫자 감사 실패 — 대조 JSON 은 {diff_out} 에 씁니다 (추적 파일은 그대로)")
         diff_out.parent.mkdir(parents=True, exist_ok=True)
         diff_out.write_text(json.dumps(diff, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     if review_dir and not unmatched:
@@ -961,7 +995,7 @@ def write_text_review(text_review_dir: Path, pairs: list[tuple[str, str, str]]) 
     import html
     text_review_dir.mkdir(parents=True, exist_ok=True)
     parts = ["<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><title>HWPX 제3장 문단 구/신 대조 (비추적)</title>",
-             "<style>body{font-family:-apple-system,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem;line-height:1.5}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:.4rem .6rem;vertical-align:top;font-size:.9rem;width:50%}th{background:#f3f4f6}h2{margin-top:2rem}</style></head><body>",
+             "<style>body{font-family:-apple-system,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem;line-height:1.5}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:.4rem .6rem;vertical-align:top;width:50%}th{background:#f3f4f6}h2{margin-top:2rem}</style></head><body>",
              "<h1>HWPX 제3장 문단 구/신 대조</h1><p>보고서 본문을 담으므로 이 파일은 <code>data/</code> 아래(비추적)에만 둔다.</p>"]
     current = None
     for name, old, new in pairs:
@@ -978,14 +1012,15 @@ def write_text_review(text_review_dir: Path, pairs: list[tuple[str, str, str]]) 
 def write_review(review_dir: Path, facts: Facts, table_specs, images) -> None:
     import base64, html
     review_dir.mkdir(parents=True, exist_ok=True)
-    parts = ["<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><title>HWPX 제3장 표·그림 검토본</title>",
-             "<style>body{font-family:-apple-system,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem}table{border-collapse:collapse;margin:1rem 0}td,th{border:1px solid #ccc;padding:.25rem .6rem;font-size:.9rem}th{background:#f3f4f6}td:nth-child(n+2){text-align:right}img{max-width:100%;border:1px solid #ddd;margin:.5rem 0}</style></head><body>",
+    numeric = re.compile(r"[\d,.%]+")
+    parts = ["<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>HWPX 제3장 표·그림 검토본</title>",
+             "<style>body{font-family:-apple-system,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem}.scroll-x{overflow-x:auto}table{border-collapse:collapse;margin:1rem 0}td,th{border:1px solid #ccc;padding:.25rem .6rem;font-size:.875rem}th{background:#f3f4f6}td.n{text-align:right;font-variant-numeric:tabular-nums}img{max-width:100%;border:1px solid #ddd;margin:.5rem 0}</style></head><body>",
              f"<h1>HWPX 제3장 표·그림 검토본</h1><p>정본 {html.escape(str(facts.run.get('generated_at')))} · git {html.escape(str(facts.run.get('git_commit')))} · 사전 {html.escape(str(facts.run.get('dictionary')))}. 본문 문장은 담지 않는다(표·그림만).</p>"]
     for name, caption, rows, first, header in table_specs:
-        parts.append(f"<h2>{html.escape(caption)} ({name})</h2><table>")
+        parts.append(f"<h2>{html.escape(caption)} ({name})</h2><div class=\"scroll-x\"><table>")
         for row in rows:
-            parts.append("<tr>" + "".join(f"<td>{html.escape(c)}</td>" for c in row) + "</tr>")
-        parts.append("</table>")
+            parts.append("<tr>" + "".join(f"<td class=\"n\">{html.escape(c)}</td>" if numeric.fullmatch(c) else f"<td>{html.escape(c)}</td>" for c in row) + "</tr>")
+        parts.append("</table></div>")
     for caption, data, kind in images:
         if kind == "BMP":
             data = subprocess.run(["magick", "BMP:-", "PNG:-"], input=data, check=True, capture_output=True).stdout
@@ -1008,15 +1043,16 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--text-review-dir", type=Path, default=DEFAULT_TEXT_REVIEW_DIR, help="구/신 문장 병기본 (본문 포함 — data/ 아래, 비추적)")
     args = ap.parse_args(argv)
     facts = load_facts(args.summary, args.cases, args.recount_summary)
+    if _under_tracked_docs(args.text_review_dir):
+        sys.exit(f"구/신 문장 병기본은 보고서 본문을 담으므로 추적 경로(docs/)에 쓸 수 없습니다: {public(args.text_review_dir)}")
     if args.no_render:
-        tracked_docs = os.path.realpath(str(HERE / "docs"))
         if args.diff_out is None:
-            diff_out = Path(tempfile.gettempdir()) / "hwpx_results_refresh_dry.json"
-        elif os.path.realpath(str(args.diff_out)).startswith(tracked_docs + os.sep):
+            diff_out = Path(tempfile.mkdtemp(prefix="hwpx_refresh_dry_")) / "hwpx_results_refresh_dry.json"
+        elif _under_tracked_docs(args.diff_out):
             sys.exit(f"--no-render 점검 실행은 추적 경로에 대조 JSON 을 쓰지 않습니다: {public(args.diff_out)}")
         else:
             diff_out = args.diff_out
-        diff = refresh(args.hwpx, facts, Path(tempfile.gettempdir()) / "hwpx_refresh_dry.hwpx", diff_out, None, force=True, render=False)
+        diff = refresh(args.hwpx, facts, args.out, diff_out, None, force=True, render=False)   # render=False → HWPX 는 쓰지 않는다
         print(f"(점검 실행 — 대조 JSON: {diff_out})")
     else:
         diff = refresh(args.hwpx, facts, args.out, args.diff_out or DEFAULT_DIFF, args.review_dir, force=args.force, text_review_dir=args.text_review_dir)
