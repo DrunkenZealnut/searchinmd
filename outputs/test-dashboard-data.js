@@ -104,7 +104,7 @@ for (const [name, c] of [['NCS', N], ['교과서', T]]) {
   check('S3d ' + name + ' 그룹 합 == corpus total, 그룹 문서 합 == documents', c.groups.reduce((a, g) => a + g.total, 0) === c.total && c.groups.reduce((a, g) => a + g.documents, 0) === c.documents);
 }
 check('S3e 문서 수 NCS 86 / 교과서 9', N.documents === 86 && T.documents === 9, N.documents + '/' + T.documents);
-check('S3f 후보 판정 합 100, 포함 75', Object.values(S.status).reduce((a, b) => a + b, 0) === 100 && S.status.included === 75, JSON.stringify(S.status));
+check('S3f 후보 판정 합 100, 포함 73 / 보류 21 (사전 v2: 방진화·케미컬 보류 전환)', Object.values(S.status).reduce((a, b) => a + b, 0) === 100 && S.status.included === 73 && S.status.held === 21, JSON.stringify(S.status));
 check('S3g 등급 출처(existing/new/unpaged-*) 합 == total, 강제 배정 ≤ 5건', [N, T].every((c) => Object.values(c.grade_sources).reduce((a, b) => a + b, 0) === c.total && (c.grade_sources['unpaged-context'] + c.grade_sources['unpaged-fallback']) <= 5), JSON.stringify([N.grade_sources, T.grade_sources]));
 check('S3h 중복 제거 1건 기록 (LM1903060205)', S.meta.run.dedup.length === 1 && S.meta.run.dedup[0].code === 'LM1903060205' && S.meta.run.dedup[0].dropped.length === 1);
 check('S3i 절대 경로·홈·본문 필드 없음', !/\/Users\/|\/home\/|relative_path|"context"/.test(JSON.stringify(S)));

@@ -9,13 +9,13 @@
   },
   "manifest": {
    "source_sha256": "2721f0f98f799272a0e411cfea5e0cfc0e48858763b8b1a58fe282f732d2fae5",
-   "rule_sha256": "1ffd26c633f7ce67b72e62e86e21a4a535f083a87b6109c918de839a61a95cf3",
-   "detail_sha256": "ae142454ed94c2e509f4da0dd5916bcb069305e9a7e1b103c86d80c2f3269ffb",
-   "summary_sha256": "f26f8e869902870bfe63e580ba0928264b248a8b2df3c12655f703d45f0c0817"
+   "rule_sha256": "c08e6353ebf0f91e24da92009f786972bf739b0fae5a38f720976edf8b9cf302",
+   "detail_sha256": "9acd59626142d30dfc2cb811d14fe47eebc6b348a0fdb822604c42ebba41a0c7",
+   "summary_sha256": "834a8aa5e492529ad178059a4c458675b0c95f697b09ead3257eb846f71b3aac"
   },
   "run": {
-   "generated_at": "2026-09-14T13:48:50+09:00",
-   "git_commit": "2919066",
+   "generated_at": "2026-09-14T14:47:05+09:00",
+   "git_commit": "b797599",
    "git_dirty": true,
    "command": "semantic_keyword_recount.py --source-workbook data/ncs_keywords_in_markdown_results_20260402_재판정_20260414.xlsx --ncs-root data_source/markdown/ncs --school-root data_source/markdown/school-text --xlsx-out data/semantic_keyword_recount_20260914.xlsx --report-out data/semantic_keyword_recount_20260914_report.md --dashboard-data-out docs/semantic_recount_data.js --summary-out docs/03-analysis/data/semantic_summary.json --analysis-dir docs --previous-basis docs/03-analysis/data/reseg_summary.json",
    "xlsx": "semantic_keyword_recount_20260914.xlsx",
@@ -68,7 +68,7 @@
    "expected": true,
    "expected_mismatch": [],
    "force": false,
-   "dictionary": "v1fix"
+   "dictionary": "v2"
   },
   "previous_basis": {
    "source": "docs/03-analysis/data/reseg_summary.json",
@@ -89,62 +89,62 @@
  "corpora": {
   "NCS": {
    "documents": 86,
-   "total": 12310,
-   "graded": 12310,
+   "total": 11517,
+   "graded": 11517,
    "grade_sources": {
-    "existing": 6586,
-    "new": 5723,
-    "unpaged-context": 1,
+    "existing": 6292,
+    "new": 5225,
+    "unpaged-context": 0,
     "unpaged-fallback": 0
    },
    "grades": {
-    "1": 4946,
-    "2": 4795,
-    "3": 2569,
+    "1": 4378,
+    "2": 4614,
+    "3": 2525,
     "unpaged": 0
    },
    "groups": [
     {
      "name": "반도체개발",
      "documents": 30,
-     "total": 1151,
+     "total": 1110,
      "grades": {
-      "1": 565,
-      "2": 344,
-      "3": 242,
+      "1": 541,
+      "2": 333,
+      "3": 236,
       "unpaged": 0
      }
     },
     {
      "name": "반도체장비",
      "documents": 19,
-     "total": 3661,
+     "total": 3239,
      "grades": {
-      "1": 1152,
-      "2": 1483,
-      "3": 1026,
+      "1": 836,
+      "2": 1393,
+      "3": 1010,
       "unpaged": 0
      }
     },
     {
      "name": "반도체재료",
      "documents": 24,
-     "total": 5907,
+     "total": 5840,
      "grades": {
-      "1": 2322,
-      "2": 2400,
-      "3": 1185,
+      "1": 2277,
+      "2": 2389,
+      "3": 1174,
       "unpaged": 0
      }
     },
     {
      "name": "반도체제조",
      "documents": 13,
-     "total": 1591,
+     "total": 1328,
      "grades": {
-      "1": 907,
-      "2": 568,
-      "3": 116,
+      "1": 724,
+      "2": 499,
+      "3": 105,
       "unpaged": 0
      }
     }
@@ -152,27 +152,27 @@
   },
   "교과서": {
    "documents": 9,
-   "total": 1272,
-   "graded": 1272,
+   "total": 1207,
+   "graded": 1207,
    "grade_sources": {
-    "existing": 1191,
-    "new": 81,
+    "existing": 1149,
+    "new": 58,
     "unpaged-context": 0,
     "unpaged-fallback": 0
    },
    "grades": {
-    "1": 691,
-    "2": 464,
-    "3": 117,
+    "1": 633,
+    "2": 459,
+    "3": 115,
     "unpaged": 0
    },
    "groups": [
     {
      "name": "반도체 공정기초",
      "documents": 1,
-     "total": 40,
+     "total": 37,
      "grades": {
-      "1": 40,
+      "1": 37,
       "2": 0,
       "3": 0,
       "unpaged": 0
@@ -181,9 +181,9 @@
     {
      "name": "반도체 기초",
      "documents": 1,
-     "total": 26,
+     "total": 21,
      "grades": {
-      "1": 26,
+      "1": 21,
       "2": 0,
       "3": 0,
       "unpaged": 0
@@ -214,9 +214,9 @@
     {
      "name": "반도체 박막확산",
      "documents": 1,
-     "total": 100,
+     "total": 88,
      "grades": {
-      "1": 86,
+      "1": 74,
       "2": 10,
       "3": 4,
       "unpaged": 0
@@ -225,20 +225,20 @@
     {
      "name": "반도체 인프라 일반",
      "documents": 1,
-     "total": 512,
+     "total": 501,
      "grades": {
-      "1": 161,
-      "2": 266,
-      "3": 85,
+      "1": 155,
+      "2": 263,
+      "3": 83,
       "unpaged": 0
      }
     },
     {
      "name": "반도체 장비 유지보수",
      "documents": 1,
-     "total": 279,
+     "total": 271,
      "grades": {
-      "1": 129,
+      "1": 121,
       "2": 122,
       "3": 28,
       "unpaged": 0
@@ -258,10 +258,10 @@
     {
      "name": "반도체 포토에칭",
      "documents": 1,
-     "total": 142,
+     "total": 116,
      "grades": {
-      "1": 108,
-      "2": 34,
+      "1": 84,
+      "2": 32,
       "3": 0,
       "unpaged": 0
      }
@@ -623,26 +623,26 @@
    ],
    "corpora": {
     "NCS": {
-     "total": 8,
-     "exact": 7,
+     "total": 2,
+     "exact": 1,
      "equivalent": 1,
      "specific": 0,
-     "excluded": 0,
+     "excluded": 6,
      "grades": {
-      "1": 3,
-      "2": 1,
-      "3": 4,
+      "1": 0,
+      "2": 0,
+      "3": 2,
       "unpaged": 0
      }
     },
     "교과서": {
-     "total": 9,
-     "exact": 9,
+     "total": 1,
+     "exact": 1,
      "equivalent": 0,
      "specific": 0,
-     "excluded": 0,
+     "excluded": 8,
      "grades": {
-      "1": 9,
+      "1": 1,
       "2": 0,
       "3": 0,
       "unpaged": 0
@@ -930,32 +930,31 @@
    "name": "화학물질",
    "expressions": [
     "화학 물질",
-    "화학약품",
-    "케미컬"
+    "화학약품"
    ],
    "corpora": {
     "NCS": {
-     "total": 1559,
+     "total": 1080,
      "exact": 330,
-     "equivalent": 1229,
+     "equivalent": 750,
      "specific": 0,
      "excluded": 0,
      "grades": {
-      "1": 750,
-      "2": 492,
-      "3": 317,
+      "1": 400,
+      "2": 385,
+      "3": 295,
       "unpaged": 0
      }
     },
     "교과서": {
-     "total": 82,
+     "total": 61,
      "exact": 10,
-     "equivalent": 72,
+     "equivalent": 51,
      "specific": 0,
      "excluded": 0,
      "grades": {
-      "1": 62,
-      "2": 14,
+      "1": 42,
+      "2": 13,
       "3": 6,
       "unpaged": 0
      }
@@ -1068,28 +1067,28 @@
    ],
    "corpora": {
     "NCS": {
-     "total": 204,
+     "total": 113,
      "exact": 96,
      "equivalent": 6,
-     "specific": 102,
+     "specific": 11,
      "excluded": 0,
      "grades": {
-      "1": 92,
-      "2": 61,
-      "3": 51,
+      "1": 27,
+      "2": 45,
+      "3": 41,
       "unpaged": 0
      }
     },
     "교과서": {
-     "total": 59,
+     "total": 50,
      "exact": 36,
      "equivalent": 1,
-     "specific": 22,
+     "specific": 13,
      "excluded": 0,
      "grades": {
-      "1": 16,
-      "2": 20,
-      "3": 23,
+      "1": 11,
+      "2": 18,
+      "3": 21,
       "unpaged": 0
      }
     }
@@ -1180,7 +1179,6 @@
     "방열복",
     "케미컬복",
     "가스복",
-    "방진화",
     "안전화",
     "장화",
     "안전모",
@@ -1196,27 +1194,27 @@
    ],
    "corpora": {
     "NCS": {
-     "total": 1182,
+     "total": 965,
      "exact": 194,
      "equivalent": 0,
-     "specific": 988,
+     "specific": 771,
      "excluded": 0,
      "grades": {
-      "1": 386,
-      "2": 353,
-      "3": 443,
+      "1": 236,
+      "2": 296,
+      "3": 433,
       "unpaged": 0
      }
     },
     "교과서": {
-     "total": 130,
+     "total": 103,
      "exact": 37,
      "equivalent": 0,
-     "specific": 93,
+     "specific": 66,
      "excluded": 0,
      "grades": {
-      "1": 87,
-      "2": 34,
+      "1": 62,
+      "2": 32,
       "3": 9,
       "unpaged": 0
      }
@@ -1330,8 +1328,8 @@
   }
  ],
  "status": {
-  "held": 19,
-  "included": 75,
+  "held": 21,
+  "included": 73,
   "not-found": 4,
   "excluded": 2
  }

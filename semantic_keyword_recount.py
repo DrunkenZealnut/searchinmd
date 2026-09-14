@@ -33,8 +33,8 @@ PAGE_MARKER_RE = re.compile(r"^\s*" + _MARKER_ANYWHERE_RE.pattern + r"\s*$", re.
 # (resegment.py·recount_grades.py 의 EXPECTED 와 같은 규약). None 은 아직 고정 전 — 비교하지 않는다.
 # documents 는 --force 로도 우회하지 않는다: 코퍼스가 다르면 정본이 아니다. grades.*.unpaged 0 은
 # 연구책임자 결정(2026-09-13, 미배정을 두지 않는다)을 코드가 지키는 자리다.
-DICTIONARY_VERSIONS = ("v1", "v1fix", "v2")      # 사전 버전 — v1 2026-09-09 원본, v1fix 결함 2건 수정(정본), v2 도메인 점검 반영 변형
-DEFAULT_DICTIONARY = "v1fix"                       # 연구책임자 결정 2026-09-14: 결함 2건(영문 단어 경계·보류 표현 계수)은 정본에 반영
+DICTIONARY_VERSIONS = ("v1", "v1fix", "v2")      # 사전 버전 — v1 2026-09-09 원본, v1fix 결함 2건 수정, v2 도메인 점검 반영(정본)
+DEFAULT_DICTIONARY = "v2"                          # 연구책임자 결정 3 (2026-09-14): 표현 점검(expression-review.analysis.md) 결과 v2 채택 — v1fix 는 결정 1(결함 2건 반영)의 중간 정본
 V1_RULE_CONTENT_SHA256 = "6fc926de45d9ca584d3c470e77caca316f65d3d83d45da10cf3322f487b857e3"   # v1(2026-09-09) 규칙 내용 지문 — 영향표의 기준선이 은근히 바뀌지 않게
 SAFETY_COMPANIONS = (r"착용", r"보호", r"노출", r"피폭", r"화상", r"부상", r"위험", r"유해", r"안전", r"보건", r"재해", r"사고")   # 조건부 포함의 동반어 초기 가설 — 점검 결과로 귀납·갱신
 # (키워드, 표현) → {"decision": "held"} 또는 {"require_patterns": (...)}. 점검 결과(expression_review_scores.json)를 보고 손으로 채운다.
@@ -59,20 +59,20 @@ GRADE_SOURCE_LABEL = {"existing": "기존 판정", "new": "신규 판정", "unpa
 STRICT_GROUPS = ("documents", "grade_sources", "candidates", "dedup")         # 이 그룹은 EXPECTED 에 없는 키가 실측에 끼어들어도 불일치다 (적대적 리뷰)
 
 EXPECTED = {
-    "dictionary": DEFAULT_DICTIONARY,                                                     # v1fix (2026-09-14): 결함 2건 반영 — v1 정본(12,506/1,293)에서 NCS −196·교과서 −21
+    "dictionary": DEFAULT_DICTIONARY,                                                     # v2 (2026-09-14, 결정 3): v1fix(12,310/1,272)에서 NCS −793·교과서 −65 — 보류 방진화·케미컬, 조건부 방진복·장갑·X선·PSM
     "documents": {"NCS": 86, "교과서": 9},
-    "totals": {"NCS": 12310, "교과서": 1272},
+    "totals": {"NCS": 11517, "교과서": 1207},
     "grades": {
-        "NCS": {"1": 4946, "2": 4795, "3": 2569, "unpaged": 0},
-        "교과서": {"1": 691, "2": 464, "3": 117, "unpaged": 0},
+        "NCS": {"1": 4378, "2": 4614, "3": 2525, "unpaged": 0},
+        "교과서": {"1": 633, "2": 459, "3": 115, "unpaged": 0},
     },
-    "grade_sources": {"existing": 7777, "new": 5804, "unpaged-context": 1, "unpaged-fallback": 0},
-    "candidates": {"included": 75, "held": 19, "excluded": 2, "not-found": 4},
+    "grade_sources": {"existing": 7441, "new": 5283, "unpaged-context": 0, "unpaged-fallback": 0},
+    "candidates": {"included": 73, "held": 21, "excluded": 2, "not-found": 4},                   # v2: 방진화·케미컬 보류 전환
     "dedup": {"LM1903060205": 1},                                                        # MI 장비 운영 공백 경로(마커 0) 1개를 버린다
-    "rule_sha256": "1ffd26c633f7ce67b72e62e86e21a4a535f083a87b6109c918de839a61a95cf3",    # v1fix — PSM·MSDS 단어 경계, 안전 안의 보류 표현 제외 (v1: 2da5dbf4…)
+    "rule_sha256": "c08e6353ebf0f91e24da92009f786972bf739b0fae5a38f720976edf8b9cf302",    # v2 — 결정 2 처방 (v1fix: 1ffd26c6…, v1: 2da5dbf4…)
     "source_sha256": "2721f0f98f799272a0e411cfea5e0cfc0e48858763b8b1a58fe282f732d2fae5",  # 워크북 3종 + 마크다운 95개(86+9) 본문 — 사전과 무관, 불변
-    "detail_sha256": "ae142454ed94c2e509f4da0dd5916bcb069305e9a7e1b103c86d80c2f3269ffb",  # 상세 전체의 지문 — 총계가 같아도 재배정을 잡는다
-    "summary_sha256": "f26f8e869902870bfe63e580ba0928264b248a8b2df3c12655f703d45f0c0817",
+    "detail_sha256": "9acd59626142d30dfc2cb811d14fe47eebc6b348a0fdb822604c42ebba41a0c7",  # 상세 전체의 지문 — 총계가 같아도 재배정을 잡는다
+    "summary_sha256": "834a8aa5e492529ad178059a4c458675b0c95f697b09ead3257eb846f71b3aac",
 }
 HEADER_NAMES = {
     "number",

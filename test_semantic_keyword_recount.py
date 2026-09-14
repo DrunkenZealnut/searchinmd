@@ -637,8 +637,8 @@ class DictionaryVersionTests(unittest.TestCase):
 
     def test_dictionary_versions_and_default(self):
         self.assertEqual(("v1", "v1fix", "v2"), SKR.DICTIONARY_VERSIONS)
-        self.assertEqual("v1fix", SKR.DEFAULT_DICTIONARY)
-        self.assertEqual("v1fix", EXPECTED["dictionary"])
+        self.assertEqual("v2", SKR.DEFAULT_DICTIONARY)          # 결정 3 (연구책임자 2026-09-14): v2 채택
+        self.assertEqual("v2", EXPECTED["dictionary"])
         with self.assertRaises(ValueError):
             build_default_rules(["안전"], version="v9")
 
@@ -715,7 +715,7 @@ class DictionaryVersionTests(unittest.TestCase):
                            dictionary="v1", expected={"documents": {"NCS": 86, "교과서": 9}}, git={"commit": "x", "dirty": False}, argv=["x"])
             self.assertIn("v1", str(ctx.exception))
             with self.assertRaises(ValueError):
-                run_census(**dict(kw, xlsx_out=Path(SKR.HERE) / "data/semantic_keyword_recount_20260914.xlsx"), dictionary="v2",
+                run_census(**dict(kw, xlsx_out=Path(SKR.HERE) / "data/semantic_keyword_recount_20260914.xlsx"), dictionary="v1fix",
                            expected={"documents": {"NCS": 86, "교과서": 9}}, git={"commit": "x", "dirty": False}, argv=["x"])
             run_census(**kw, dictionary="v1", summary_out=Path(td) / "s.json",
                        expected={"documents": {"NCS": 86, "교과서": 9}, "totals": {"NCS": 999, "교과서": 0}},

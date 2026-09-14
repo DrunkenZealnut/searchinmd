@@ -1,9 +1,9 @@
 # 표현 점검 결과 — 의미 재검산 사전의 정밀도 (semantic-expression-review)
 
-> 분석일: 2026-09-14 · 브랜치 `feat/semantic-expression-review` · 표본 지문 `9713a337b4d94bac` · 정본 사전 `v1fix`
+> 분석일: 2026-09-14 · 브랜치 `feat/semantic-expression-review` · 표본 지문 `9713a337b4d94bac` · 표본 사전 `v1fix`(점검 전) · 정본 사전 `v2`(결정 3, 2026-09-14)
 > 수치 출처: `docs/03-analysis/data/expression_review_scores.json` (표현별 정밀도·구간·κ·조건부 근거), `expression_review_key.json` (표본 키), `expression_review_A.json` / `_B.json` (코더 라벨), `expression_review_adj.json` (연구책임자 재정), `expression_review_impact.json` (사전 v1/v1fix/v2 영향표 — §6).
 > 선행: `docs/01-plan/features/semantic-expression-review.plan.md` · `docs/02-design/features/semantic-expression-review.design.md` · 외부감사 M1 (`docs/archive/2026-09/semantic-recount-remediation/`).
-> **이 문서는 사전 v2 를 채택하지 않는다.** v2 구성(결정 2)과 채택(결정 3)은 연구책임자 판단이다. 대시보드는 여전히 `semantic_summary.json`(v1fix)을 읽는다.
+> v2 구성(결정 2)과 채택(결정 3)은 연구책임자 판단이며 둘 다 2026-09-14 에 났다 — **v2 는 정본**이다(`DEFAULT_DICTIONARY`, `EXPECTED` 재고정, 대시보드 NCS 11,517 / 교과서 1,207). 이 문서의 표본·정밀도는 점검 대상이던 v1fix 사전 기준이다.
 > 설계-구현 갭 분석(bkit Check)은 별도 문서 `semantic-expression-review.analysis.md` 다. 이 문서는 **연구 결과**다.
 > 요약 5 와 §6 은 결정 2(2026-09-14, 계층별 처방) 이후에 채웠다.
 
@@ -163,7 +163,7 @@ v2 가 걷어낸 것: NCS 793 = 보류 551(방진화 72 + 케미컬 479) + 동�
 - **걷어낸 출현의 72%(568/793)가 등급1 페이지의 것이다.** 오염관리·설비·계측 문맥의 출현은 안전 조치가 없는 페이지에 몰려 있었다는 뜻이고, 그래서 등급3 은 −44(−1.7%)에 그친다. 등급3 비율이 20.9→21.9% 로 오르는 것은 분모가 줄어든 구성 효과이지 교재가 나아진 것이 아니다 — 대시보드에 옮길 때 "개선"으로 쓰면 안 된다(CLAUDE.md 의 출현건수 분모 예외 문단과 같은 주의).
 - **`화학물질` −479 는 전부 `케미컬` 보류다.** 케미컬 500건 중 NCS 479건이 CCSS·케미컬 펌프·필터 등 공급 설비 문맥이라는 것이 §3 의 1/30 이다. `화학약품`(v1fix 포함, 정밀도 0.17)은 그대로 두었으므로 `화학물질` 의 남은 1,080건에도 공정 문맥이 많다 — §5.
 - **`X선` 은 13% 만 남는다.** 100건이 X선 회절·검사 장비 문맥이고 방사선 안전 문맥은 15건이다. 감사 M1(d) 가 "`자외선` 은 보류인데 `X선` 은 포함" 이라 한 불일치는 이 처방으로 같은 기준(동반어) 아래 놓인다.
-- **v2 는 변형이다.** `--dictionary v2` 는 추적 산출물 경로를 거부하고 `EXPECTED` 불일치를 기록만 한다. 대시보드·`semantic_summary.json` 은 v1fix 다. 채택(결정 3)이면 정본 재실행·`EXPECTED` 재고정·인용 수치 갱신이 따른다(설계 §3.6).
+- **결정 3 (연구책임자 2026-09-14): v2 채택.** `DEFAULT_DICTIONARY = "v2"`, 정본 재실행(`--force` 측정 → `EXPECTED` 재고정 → 가드 통과, rule `c08e6353…`·detail `9acd5962…`·summary `834a8aa5…`), 대시보드·README·CLAUDE.md·이전 보고서의 인용 수치 갱신. 이제 `v1`·`v1fix` 가 변형이다(추적 산출물 경로 거부, `EXPECTED` 불일치 기록만). 표본은 계속 v1fix 로 뽑는다(`SAMPLE_DICTIONARY` — 키 digest 재현).
 
 ## 7. 한계와 미결
 

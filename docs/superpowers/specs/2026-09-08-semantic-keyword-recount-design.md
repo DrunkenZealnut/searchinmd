@@ -142,7 +142,7 @@
 
 ## 보류 정책 (2026-09-14, `semantic-expression-review` FR-08)
 
-감사 M1(d)(e)가 지적한 "보류 판정의 일관성 부재"를 닫기 위해 명문화한다. 판정 근거·정밀도는 `docs/03-analysis/data/expression_review_scores.json`, 적용은 사전 `v2`(`_V2_OVERRIDES`), 채택은 연구책임자 결정이다.
+감사 M1(d)(e)가 지적한 "보류 판정의 일관성 부재"를 닫기 위해 명문화한다. 판정 근거·정밀도는 `docs/03-analysis/data/expression_review_scores.json`, 적용은 사전 `v2`(`_V2_OVERRIDES`)이며 2026-09-14 결정 3 으로 정본이 됐다(보류 `방진화`·`케미컬`, 조건부 `방진복`·`장갑`·`X선`·`PSM`; 동의어는 그대로 — `expression-review.analysis.md` §5).
 
 1. **영문 일반어** (`safety`·`health`·`risk`·`chemical`·`dust`·`vibration`·`fall`·`leakage`·`safety and health`): 한국어 교재에서 제목·영문 병기·용어 설명에 쓰여 문맥 판정이 불안정하므로 **보류**한다. 영문 약어·고유명(`MSDS`·`PSM`·`PPE`·`combustible`·`flammable`)은 단어 경계로 정확 매칭하며 별도로 판정한다(`v1fix` 부터 `_ascii_term`).
 2. **계측·물성 문맥어** (`자외선`·`X선`·`방사능`): 위해 문맥과 계측 문맥이 섞이므로 같은 기준을 적용한다 — 정밀도 점검의 Clopper-Pearson 95% 하한이 0.8 이상이면 유지, 미만이면 **조건부**(안전 문맥 동반어가 같은 줄 ± 1줄에 있을 때만 계수) 또는 보류. `자외선`(보류)과 `X선`(포함)의 불일치는 이 규칙으로 해소한다.

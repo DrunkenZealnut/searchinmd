@@ -39,6 +39,7 @@ HERE = Path(__file__).resolve().parent
 SEED = 20260914
 PER_EXPRESSION = 30
 PRECISION_FLOOR = 0.8            # 연구책임자 결정 2026-09-14 — CP 95% 하한이 이 값 미만이면 보류/조건부 후보
+SAMPLE_DICTIONARY = "v1fix"      # 표본은 점검 **전** 사전에서 뽑는다 — 점검 대상이 v1fix 의 포함 표현이고, 키 digest 9713a337… 는 이 버전으로 재현된다 (v2 채택 뒤에도 바뀌지 않는다)
 ALPHA = 0.05                     # score_coding.ALPHA 와 같은 값 — 여기서 "95%" 가 나온다
 LABELS = (1, 2, "?")             # 1 = 사람 안전·보건 뜻, 2 = 아님, ? = 판단 불가 (code_pages.parse_grade 가 읽는 값)
 
@@ -84,8 +85,8 @@ def coder_prompt() -> str:
     ])
 
 
-def collect_records(documents: list[Document], targets=REVIEW_TARGETS, version: str = SKR.DEFAULT_DICTIONARY) -> list[ReviewRecord]:
-    """대상 표현의 문맥 후보 전수. 포함 표현은 정본 사전(version)의 included 레코드, 보류 표현은 probe 규칙으로만 찾는다."""
+def collect_records(documents: list[Document], targets=REVIEW_TARGETS, version: str = SAMPLE_DICTIONARY) -> list[ReviewRecord]:
+    """대상 표현의 문맥 후보 전수. 포함 표현은 점검 대상 사전(version, 기본 v1fix)의 included 레코드, 보류 표현은 probe 규칙으로만 찾는다."""
     keywords = sorted({k for k, _ in targets})
     rules = build_default_rules(keywords, version=version)
     wanted = set(targets)

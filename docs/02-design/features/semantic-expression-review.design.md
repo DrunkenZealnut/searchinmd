@@ -45,7 +45,7 @@ semantic_keyword_recount.py                       expression_review.py (신설, 
 
 ```python
 DICTIONARY_VERSIONS = ("v1", "v1fix", "v2")
-DEFAULT_DICTIONARY = "v1fix"          # 연구책임자 결정 2026-09-14: 결함 2건은 정본에 반영
+DEFAULT_DICTIONARY = "v1fix"          # 연구책임자 결정 2026-09-14: 결함 2건은 정본에 반영 → 결정 3 이후 "v2" (§6)
 ```
 
 - `default_candidate_decisions(version=DEFAULT_DICTIONARY)` — `v1`·`v1fix`는 같은 후보 목록(결함은 정확 규칙 쪽), `v2`는 §3.5의 변경을 덧씌운다(`_V2_OVERRIDES`: 표현 → `decision`/`require_patterns`).
@@ -171,6 +171,9 @@ fixture 원칙: 실제 xlsx·코퍼스 없이 돈다(문서 3~5개, 표현 3개)
 | 조건부 판정 창 | 같은 줄 ± 1줄, 페이지 블록 안 | 시트 문맥과 동일 창 |
 | 사전 버전 이름 | `v1`·`v1fix`·`v2` | 계획의 "v1 / v1+결함 / v2" 열과 대응 |
 | SEED | 20260914 | 재현성 |
+| 재정 17건 | 제안(문맥 근거) 승인 — 1×9, 2×6, ?×2 | 연구책임자 2026-09-14 (`expression_review_adj.json`) |
+| **결정 2** v2 구성 | 계층별 처방 — 뜻이 다른 표현만: 보류 `방진화`·`케미컬`, 조건부 `방진복`·`장갑`·`X선`·`PSM`(정확 규칙). 동의어·`가연성`·`combustible` 유지 | 연구책임자 2026-09-14 (`expression-review.analysis.md` §5·§6) |
+| **결정 3** v2 채택 | 채택 — `DEFAULT_DICTIONARY = "v2"`, §3.6 재실행·재고정, 표본은 `SAMPLE_DICTIONARY = "v1fix"` 유지 | 연구책임자 2026-09-14 |
 
 ## 버전 이력
 

@@ -180,22 +180,24 @@ class ImpactTests(unittest.TestCase):
 
 
 class CommittedArtifactsTests(unittest.TestCase):
-    """추적 산출물끼리의 일관성 — 영향표의 v1fix 열은 정본 semantic_summary.json 과 같아야 한다(설계 §3.5)."""
+    """추적 산출물끼리의 일관성 — 영향표의 정본 열(DEFAULT_DICTIONARY, 결정 3 이후 v2)은 semantic_summary.json 과 같아야 한다(설계 §3.5)."""
 
     DATA = Path(__file__).resolve().parent / "docs" / "03-analysis" / "data"
 
-    def test_impact_v1fix_column_equals_canonical_summary(self):
+    def test_impact_canonical_column_equals_canonical_summary(self):
         impact_path, summary_path = self.DATA / "expression_review_impact.json", self.DATA / "semantic_summary.json"
         if not impact_path.exists():
             self.skipTest("expression_review_impact.json 없음")
         impact = json.loads(impact_path.read_text(encoding="utf-8")); summary = json.loads(summary_path.read_text(encoding="utf-8"))
-        self.assertEqual(SKR.DEFAULT_DICTIONARY, "v1fix")
+        canon = SKR.DEFAULT_DICTIONARY
+        self.assertEqual(canon, summary["meta"]["run"]["dictionary"])
+        self.assertEqual({"v1": 12506, "v1fix": 12310}, {v: impact["totals"][v]["NCS"] for v in ("v1", "v1fix")})   # 계보: v1 2026-09-09 · v1fix 결함 2건 반영
         for corpus in ("NCS", "교과서"):
-            self.assertEqual(summary["corpora"][corpus]["total"], impact["totals"]["v1fix"][corpus], corpus)
-            self.assertEqual({g: summary["corpora"][corpus]["grades"][g] for g in ("1", "2", "3")}, impact["grades"]["v1fix"][corpus], corpus)
+            self.assertEqual(summary["corpora"][corpus]["total"], impact["totals"][canon][corpus], corpus)
+            self.assertEqual({g: summary["corpora"][corpus]["grades"][g] for g in ("1", "2", "3")}, impact["grades"][canon][corpus], corpus)
             by_name = {k["name"]: k for k in summary["keywords"]}
             for row in impact["keywords"]:
-                self.assertEqual(by_name[row["name"]]["corpora"][corpus]["total"], row["v1fix"][corpus], (row["name"], corpus))
+                self.assertEqual(by_name[row["name"]]["corpora"][corpus]["total"], row[canon][corpus], (row["name"], corpus))
         self.assertEqual(sum(impact["excluded_by_v2"]["NCS"].values()), impact["totals"]["v1fix"]["NCS"] - impact["totals"]["v2"]["NCS"])
         self.assertEqual(sum(impact["excluded_by_v2"]["교과서"].values()), impact["totals"]["v1fix"]["교과서"] - impact["totals"]["v2"]["교과서"])
         self.assertNotIn("/Users/", impact_path.read_text(encoding="utf-8"))
