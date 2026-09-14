@@ -358,7 +358,7 @@ def score(key: dict, a: dict, b: dict, adj: dict | None = None, floor: float = P
 def impact(documents: list[Document], keywords: list[str], existing_grades: dict, versions=SKR.DICTIONARY_VERSIONS) -> dict:
     """세 사전 버전을 메모리에서 집계 — 총계·등급·키워드·표현별, 결함 수정이 걷어낸 건수. 쓰지 않는다."""
     sources = [SKR.KeywordSource(k, 0, True) for k in keywords]
-    totals, grades, per_kw, per_expr, excluded_by_fix = {}, {}, defaultdict(dict), defaultdict(dict), {}
+    totals, grades, per_kw, per_expr, excluded_by_fix, excluded_by_v2 = {}, {}, defaultdict(dict), defaultdict(dict), {}, {}
     ascii_kw = {k for k in keywords if __import__("re").fullmatch(r"[A-Za-z0-9 ]+", k)}
     v_included = {}
     for v in versions:
@@ -373,16 +373,27 @@ def impact(documents: list[Document], keywords: list[str], existing_grades: dict
         for (k, e), n in Counter((r.keyword, r.expression) for r in included).items():
             per_expr[(k, e)][v] = n
         held_inside = Counter(r.corpus for r in result.matches if r.decision == "excluded" and r.reason == SKR.HELD_INSIDE_REASON)
-        if v == "v1fix":
+        if v == "v1fix" and "v1" in v_included:
             sub = {c: sum(1 for r in v_included["v1"] if r.corpus == c and r.keyword in ascii_kw and r.tier == "exact")
                       - sum(1 for r in included if r.corpus == c and r.keyword in ascii_kw and r.tier == "exact") for c in ("NCS", "교과서")}
             excluded_by_fix = {c: {"PSM_substring": sub[c], "held_inside": held_inside.get(c, 0)} for c in ("NCS", "교과서")}
+        if v == "v2" and "v1fix" in v_included:
+            # v2 가 걷어낸 것: 보류 전환된 표현의 v1fix 출현(held) + 조건부 표현에서 동반어 없이 떨어진 출현(no_companion).
+            # no_companion 은 조건부 표현의 v1fix 포함 − v2 포함(실효 감소) — 제외 레코드 수는 v1fix 에서 더 긴 표현에 가려졌던 매칭까지 세어 몇 건 더 나온다.
+            held_keys = {k for k, o in SKR._V2_OVERRIDES.items() if o.get("decision") == "held"}
+            cond_keys = {k for k, o in SKR._V2_OVERRIDES.items() if o.get("require_patterns")}
+            def _n(rows, c, keys):
+                return sum(1 for r in rows if r.corpus == c and (r.keyword, r.expression) in keys)
+            excluded_by_v2 = {c: {"held": _n(v_included["v1fix"], c, held_keys),
+                                  "no_companion": _n(v_included["v1fix"], c, cond_keys) - _n(included, c, cond_keys)} for c in ("NCS", "교과서")}
     return {
-        "meta": {"versions": list(versions), "documents": len(documents), "keywords": len(keywords)},
+        "meta": {"versions": list(versions), "documents": len(documents), "keywords": len(keywords), "corpus_sha256": SKR._document_set_sha256(documents),
+                 "v2_overrides": {f"{k}:{e}": ("held" if o.get("decision") == "held" else "conditional") for (k, e), o in SKR._V2_OVERRIDES.items()}},
         "totals": totals, "grades": grades,
         "keywords": [{"name": k, **{v: per_kw[k].get(v, {"NCS": 0, "교과서": 0}) for v in versions}} for k in keywords],
         "expressions": [{"keyword": k, "expression": e, **{v: per_expr[(k, e)].get(v, 0) for v in versions}} for (k, e) in sorted(per_expr)],
         "excluded_by_fix": excluded_by_fix,
+        "excluded_by_v2": excluded_by_v2,
     }
 
 

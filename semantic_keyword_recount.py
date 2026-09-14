@@ -37,7 +37,20 @@ DICTIONARY_VERSIONS = ("v1", "v1fix", "v2")      # 사전 버전 — v1 2026-09-
 DEFAULT_DICTIONARY = "v1fix"                       # 연구책임자 결정 2026-09-14: 결함 2건(영문 단어 경계·보류 표현 계수)은 정본에 반영
 V1_RULE_CONTENT_SHA256 = "6fc926de45d9ca584d3c470e77caca316f65d3d83d45da10cf3322f487b857e3"   # v1(2026-09-09) 규칙 내용 지문 — 영향표의 기준선이 은근히 바뀌지 않게
 SAFETY_COMPANIONS = (r"착용", r"보호", r"노출", r"피폭", r"화상", r"부상", r"위험", r"유해", r"안전", r"보건", r"재해", r"사고")   # 조건부 포함의 동반어 초기 가설 — 점검 결과로 귀납·갱신
-_V2_OVERRIDES: dict[tuple[str, str], dict[str, object]] = {}   # (키워드, 표현) → {"decision": "held"} 또는 {"require_patterns": (...)} — 점검 결과를 보고 손으로 채운다
+# (키워드, 표현) → {"decision": "held"} 또는 {"require_patterns": (...)}. 점검 결과(expression_review_scores.json)를 보고 손으로 채운다.
+# 결정 2 (연구책임자 2026-09-14, 계층별 처방): 정밀도 하한 < 0.8 후보 13개 중 **뜻이 키워드와 다른** 표현만 고친다 —
+# 오염관리 장비어(방진복 5/30·방진화 0/30·장갑 22/30), 계측(X선 5/30), 설비명(케미컬 1/30), 마스크(PSM 1/16).
+# 조건부로도 살릴 것이 없는 방진화(0/2)·케미컬(1/7)은 보류, 동반어 창이 O 를 지키는 방진복(5/10)·장갑(22/23)·X선(4/5)·PSM(1/2)은 조건부.
+# 동의어(화학약품·화학 물질·누설·작업 환경)는 정확 키워드에도 같은 공정 문맥이 있어 그대로 둔다(analysis §5); 가연성(28/30 경계)·combustible(n=2)도 유지.
+# 키워드 == 표현 인 항목은 정확 규칙(build_default_rules)에 적용된다.
+_V2_OVERRIDES: dict[tuple[str, str], dict[str, object]] = {
+    ("보호구", "방진화"): {"decision": "held"},
+    ("화학물질", "케미컬"): {"decision": "held"},
+    ("보호구", "방진복"): {"require_patterns": SAFETY_COMPANIONS},
+    ("보호구", "장갑"): {"require_patterns": SAFETY_COMPANIONS},
+    ("방사선", "X선"): {"require_patterns": SAFETY_COMPANIONS},
+    ("PSM", "PSM"): {"require_patterns": SAFETY_COMPANIONS},
+}
 HELD_INSIDE_REASON = "보류 표현 내부"
 NO_COMPANION_REASON = "안전 문맥 동반어 없음"
 
@@ -952,6 +965,7 @@ def build_default_rules(keywords: list[str], version: str = DEFAULT_DICTIONARY) 
             pattern=_ascii_term(keyword) if fixed and re.fullmatch(r"[A-Za-z0-9 ]+", keyword) else None,
             exclude_patterns=exclusions.get(keyword, ()),
             held_patterns=_HELD_INSIDE.get(keyword, ()) if fixed else (),
+            require_patterns=tuple(_V2_OVERRIDES.get((keyword, keyword), {}).get("require_patterns", ())) if version == "v2" else (),
         )
         for keyword in keywords
     ]

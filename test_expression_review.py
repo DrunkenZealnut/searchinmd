@@ -168,6 +168,49 @@ class ImpactTests(unittest.TestCase):
         self.assertTrue(all(set(report["grades"][v]["NCS"]) == {"1", "2", "3"} for v in ("v1", "v1fix", "v2")))
         row = next(k for k in report["keywords"] if k["name"] == "안전")
         self.assertEqual((2, 1), (row["v1"]["NCS"], row["v1fix"]["NCS"]))
+        self.assertEqual(SKR._document_set_sha256(docs), report["meta"]["corpus_sha256"])
+
+    def test_impact_counts_what_v2_removes(self):
+        docs = [_doc("반도체제조/LM1903060101_a/a.md", "<!-- page: 1 -->\nPSM 마스크 종류\n감광제 종류\n\nPSM 위험성 평가\n기록 보관\n\n방진복 규격\n세탁 주기\n\n방진복 착용\n방진화 착용\n케미컬 펌프\n")]   # 창은 ±1줄이라 항목 사이를 띄운다
+        report = ER.impact(docs, ["PSM", "보호구", "화학물질"], existing_grades={}, versions=("v1fix", "v2"))
+        self.assertEqual((6, 2), (report["totals"]["v1fix"]["NCS"], report["totals"]["v2"]["NCS"]))      # v2: PSM 위험성 · 방진복 착용
+        self.assertEqual({"held": 2, "no_companion": 2}, report["excluded_by_v2"]["NCS"])               # 방진화·케미컬 보류 / PSM 마스크·방진복 규격 동반어 없음
+        self.assertEqual([("PSM", "PSM", 2, 1), ("보호구", "방진복", 2, 1), ("보호구", "방진화", 1, 0), ("화학물질", "케미컬", 1, 0)],
+                         [(e["keyword"], e["expression"], e["v1fix"], e["v2"]) for e in report["expressions"]])
+
+
+class CommittedArtifactsTests(unittest.TestCase):
+    """추적 산출물끼리의 일관성 — 영향표의 v1fix 열은 정본 semantic_summary.json 과 같아야 한다(설계 §3.5)."""
+
+    DATA = Path(__file__).resolve().parent / "docs" / "03-analysis" / "data"
+
+    def test_impact_v1fix_column_equals_canonical_summary(self):
+        impact_path, summary_path = self.DATA / "expression_review_impact.json", self.DATA / "semantic_summary.json"
+        if not impact_path.exists():
+            self.skipTest("expression_review_impact.json 없음")
+        impact = json.loads(impact_path.read_text(encoding="utf-8")); summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        self.assertEqual(SKR.DEFAULT_DICTIONARY, "v1fix")
+        for corpus in ("NCS", "교과서"):
+            self.assertEqual(summary["corpora"][corpus]["total"], impact["totals"]["v1fix"][corpus], corpus)
+            self.assertEqual({g: summary["corpora"][corpus]["grades"][g] for g in ("1", "2", "3")}, impact["grades"]["v1fix"][corpus], corpus)
+            by_name = {k["name"]: k for k in summary["keywords"]}
+            for row in impact["keywords"]:
+                self.assertEqual(by_name[row["name"]]["corpora"][corpus]["total"], row["v1fix"][corpus], (row["name"], corpus))
+        self.assertEqual(sum(impact["excluded_by_v2"]["NCS"].values()), impact["totals"]["v1fix"]["NCS"] - impact["totals"]["v2"]["NCS"])
+        self.assertEqual(sum(impact["excluded_by_v2"]["교과서"].values()), impact["totals"]["v1fix"]["교과서"] - impact["totals"]["v2"]["교과서"])
+        self.assertNotIn("/Users/", impact_path.read_text(encoding="utf-8"))
+
+    def test_scores_and_adj_bind_to_committed_key(self):
+        key = json.loads((self.DATA / "expression_review_key.json").read_text(encoding="utf-8"))
+        for name in ("expression_review_scores.json", "expression_review_adj.json"):
+            path = self.DATA / name
+            if not path.exists():
+                self.skipTest(f"{name} 없음")
+            doc = json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(key["sample_digest"], doc.get("sample_digest") or doc["meta"]["sample_digest"], name)   # adj 는 최상위, scores 는 meta
+        scores = json.loads((self.DATA / "expression_review_scores.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(key["items"]), sum(r["n"] + r["unknown"] for r in scores["expressions"]))
+        self.assertFalse(any(isinstance(v, float) and math.isnan(v) for r in scores["expressions"] for v in r.values() if not isinstance(v, dict)))
 
 
 if __name__ == "__main__":

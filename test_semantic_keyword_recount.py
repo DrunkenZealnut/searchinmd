@@ -684,6 +684,29 @@ class DictionaryVersionTests(unittest.TestCase):
         self.assertTrue(any(r.expression == "combustible" for r in fix))
         self.assertEqual("held", next(c for c in v2_cands if c.expression == "combustible").decision)
 
+    def test_v2_decision_2_contents(self):
+        """결정 2 (연구책임자 2026-09-14, 계층별 처방): 뜻이 다른 표현만 고친다 — 보류 방진화·케미컬, 조건부 방진복·장갑·X선·PSM. 동의어·가연성·combustible 은 그대로."""
+        v2 = {(c.keyword, c.expression): c for c in default_candidate_decisions(version="v2")}
+        fix = {(c.keyword, c.expression): c for c in default_candidate_decisions(version="v1fix")}
+        self.assertEqual("held", v2[("보호구", "방진화")].decision); self.assertEqual("included", fix[("보호구", "방진화")].decision)
+        self.assertEqual("held", v2[("화학물질", "케미컬")].decision)
+        for key in (("보호구", "방진복"), ("보호구", "장갑"), ("방사선", "X선")):
+            self.assertEqual(SKR.SAFETY_COMPANIONS, v2[key].require_patterns, key); self.assertEqual((), fix[key].require_patterns, key)
+        for key in (("화학물질", "화학약품"), ("화학물질", "화학 물질"), ("누출", "누설"), ("작업환경", "작업 환경"), ("인화", "가연성"), ("인화", "combustible")):
+            self.assertEqual(fix[key], v2[key], key)
+        self.assertEqual("held", v2[("방사선", "자외선")].decision)
+        rules = {r.expression: r for r in build_default_rules(["PSM", "보호구"], version="v2")}
+        self.assertEqual(SKR.SAFETY_COMPANIONS, rules["PSM"].require_patterns)                   # 정확 키워드에도 조건부가 걸린다
+        self.assertEqual((), next(r for r in build_default_rules(["PSM"], version="v1fix") if r.expression == "PSM").require_patterns)
+        self.assertNotEqual(SKR.rule_content_sha256(build_default_rules(list(SKR.EXPECTED_KEYWORDS), "v1fix")), SKR.rule_content_sha256(build_default_rules(list(SKR.EXPECTED_KEYWORDS), "v2")))
+
+    def test_v2_exact_psm_counts_only_with_companion(self):
+        text = "<!-- page: 1 -->\nPSM(phase shift mask) 종류\n감광제 종류\n\nPSM 이행 점검\n위험성 평가 기록\n"
+        v2 = [r for r in self._scan(text, "v2", keywords=("PSM",)) if r.keyword == "PSM"]
+        self.assertEqual([(2, "excluded", SKR.NO_COMPANION_REASON), (5, "included", "기존 키워드의 정확 문자열")], [(r.line, r.decision, r.reason) for r in v2])
+        fix = [r for r in self._scan(text, "v1fix", keywords=("PSM",)) if r.keyword == "PSM"]
+        self.assertEqual(2, sum(1 for r in fix if r.decision == "included"))
+
     def test_non_default_dictionary_refuses_tracked_outputs_and_records_mismatch(self):
         with tempfile.TemporaryDirectory() as td:
             kw = RemediationTests._census_fixture(RemediationTests(), Path(td))
