@@ -8,6 +8,7 @@ from openpyxl import Workbook, load_workbook
 import json
 import re
 from dataclasses import replace
+from unittest import mock
 
 import semantic_keyword_recount as SKR
 from semantic_keyword_recount import (
@@ -627,6 +628,81 @@ def _doc(corpus, rel, text):
     return Document(corpus, Path(rel), rel, text)
 
 
+class DictionaryVersionTests(unittest.TestCase):
+    """semantic-expression-review §3.1 — 사전 버전(v1/v1fix/v2), 결함 2건, 조건부 규칙, 비정본 버전의 경로 거부."""
+
+    def _scan(self, text, version, keywords=("안전", "PSM", "MSDS")):
+        rules = build_default_rules(list(keywords), version=version)
+        return scan_document(_doc("NCS", "반도체개발/LM1903060101_a/a.md", text), rules)
+
+    def test_dictionary_versions_and_default(self):
+        self.assertEqual(("v1", "v1fix", "v2"), SKR.DICTIONARY_VERSIONS)
+        self.assertEqual("v1fix", SKR.DEFAULT_DICTIONARY)
+        self.assertEqual("v1fix", EXPECTED["dictionary"])
+        with self.assertRaises(ValueError):
+            build_default_rules(["안전"], version="v9")
+
+    def test_v1fix_english_exact_keywords_need_word_boundary(self):
+        text = "<!-- page: 1 -->\nEAPSM 마스크와 Htpsm 공정\nPSM 이행 점검\nMSDS 비치, MSDSX 아님\n"
+        v1 = [(r.expression, r.decision, r.line) for r in self._scan(text, "v1") if r.keyword in ("PSM", "MSDS")]
+        fix = [(r.expression, r.decision, r.line) for r in self._scan(text, "v1fix") if r.keyword in ("PSM", "MSDS")]
+        self.assertEqual(2, sum(1 for e, d, l in v1 if e == "PSM" and d == "included" and l == 2))   # v1: 부분 문자열 2건
+        self.assertEqual([], [x for x in fix if x[0] == "PSM" and x[2] == 2])                        # v1fix: 0건
+        self.assertEqual(1, sum(1 for e, d, l in fix if e == "PSM" and d == "included" and l == 3))
+        self.assertEqual(1, sum(1 for e, d, l in fix if e == "MSDS" and d == "included"))            # MSDSX 는 글자가 이어져 제외
+
+    def test_v1fix_excludes_held_expressions_inside_안전(self):
+        text = "<!-- page: 1 -->\n안전성 검토와 안전 마진 확보\n안전 보건 교육\n작업 안전 수칙\n"
+        v1 = [r for r in self._scan(text, "v1") if r.keyword == "안전"]
+        fix = [r for r in self._scan(text, "v1fix") if r.keyword == "안전"]
+        self.assertEqual(3, sum(1 for r in v1 if r.decision == "included"))        # v1: 안전성·안전 마진·작업 안전 (안전 보건은 기존 제외)
+        self.assertEqual(1, sum(1 for r in fix if r.decision == "included"))       # v1fix: 작업 안전 만
+        held = [r for r in fix if r.decision == "excluded" and r.reason == "보류 표현 내부"]
+        self.assertEqual([2, 2], sorted(r.line for r in held))
+        self.assertEqual(1, sum(1 for r in fix if r.decision == "excluded" and r.reason != "보류 표현 내부"))   # 안전 보건 은 기존 사유 유지
+
+    def test_v1_rule_content_digest_is_unchanged(self):
+        # 2026-09-09 사전의 규칙 내용 지문 — v1 이 은근히 바뀌면 영향표의 기준선이 무너진다
+        self.assertEqual(SKR.V1_RULE_CONTENT_SHA256, SKR.rule_content_sha256(build_default_rules(list(EXPECTED_KEYWORDS), version="v1")))
+
+    def test_require_patterns_exclude_without_companion_in_window(self):
+        rule = ExpressionRule("보호구", "방진복", "specific", "테스트", require_patterns=(r"착용", r"보호"))
+        doc = _doc("NCS", "x/LM1903060101_a/a.md", "<!-- page: 1 -->\n방진복 세탁 주기\n\n방진복 입장\n반드시 착용한다\n<!-- page: 2 -->\n보호 장비\n<!-- page: 3 -->\n방진복 규격\n")
+        got = {(r.line, r.decision, r.reason) for r in scan_document(doc, [rule])}
+        self.assertIn((2, "excluded", "안전 문맥 동반어 없음"), got)      # 같은 줄·앞뒤 줄에 동반어 없음
+        self.assertIn((4, "included", "테스트"), got)                     # 뒷줄 '착용'
+        self.assertIn((9, "excluded", "안전 문맥 동반어 없음"), got)      # 앞 블록(7행 '보호')은 페이지 경계 밖
+
+    def test_v2_overrides_apply_held_and_require(self):
+        with mock.patch.dict(SKR._V2_OVERRIDES, {("보호구", "방진복"): {"require_patterns": (r"착용",)}, ("인화", "combustible"): {"decision": "held"}}, clear=True):
+            v2 = build_default_rules(["보호구", "인화"], version="v2")
+            fix = build_default_rules(["보호구", "인화"], version="v1fix")
+            v2_cands = default_candidate_decisions(version="v2")
+        self.assertEqual((r"착용",), next(r for r in v2 if r.expression == "방진복").require_patterns)
+        self.assertEqual((), next(r for r in fix if r.expression == "방진복").require_patterns)
+        self.assertFalse(any(r.expression == "combustible" for r in v2))
+        self.assertTrue(any(r.expression == "combustible" for r in fix))
+        self.assertEqual("held", next(c for c in v2_cands if c.expression == "combustible").decision)
+
+    def test_non_default_dictionary_refuses_tracked_outputs_and_records_mismatch(self):
+        with tempfile.TemporaryDirectory() as td:
+            kw = RemediationTests._census_fixture(RemediationTests(), Path(td))
+            with self.assertRaises(ValueError) as ctx:
+                run_census(**dict(kw, summary_out=Path(SKR.HERE) / "docs/03-analysis/data/semantic_summary.json"),
+                           dictionary="v1", expected={"documents": {"NCS": 86, "교과서": 9}}, git={"commit": "x", "dirty": False}, argv=["x"])
+            self.assertIn("v1", str(ctx.exception))
+            with self.assertRaises(ValueError):
+                run_census(**dict(kw, xlsx_out=Path(SKR.HERE) / "data/semantic_keyword_recount_20260914.xlsx"), dictionary="v2",
+                           expected={"documents": {"NCS": 86, "교과서": 9}}, git={"commit": "x", "dirty": False}, argv=["x"])
+            run_census(**kw, dictionary="v1", summary_out=Path(td) / "s.json",
+                       expected={"documents": {"NCS": 86, "교과서": 9}, "totals": {"NCS": 999, "교과서": 0}},
+                       git={"commit": "x", "dirty": False}, argv=["x"])
+            summary = json.loads((Path(td) / "s.json").read_text(encoding="utf-8"))
+        self.assertEqual("v1", summary["meta"]["run"]["dictionary"])
+        self.assertIsNone(summary["meta"]["run"]["expected"])                    # 비정본 버전: 불일치는 기록만
+        self.assertTrue(any(m.startswith("totals.NCS") for m in summary["meta"]["run"]["expected_mismatch"]))
+
+
 class RemediationTests(unittest.TestCase):
     """2026-09-13 외부감사 시정(semantic-recount-remediation) — 코퍼스 규칙·가드·manifest·산출물."""
 
@@ -871,6 +947,7 @@ class RemediationTests(unittest.TestCase):
         S = json.loads((Path(SKR.__file__).parent / "docs/03-analysis/data/semantic_summary.json").read_text(encoding="utf-8"))
         C = ("NCS", "교과서")
         metrics = {
+            "dictionary": S["meta"]["run"]["dictionary"],
             "documents": {c: S["corpora"][c]["documents"] for c in C},
             "totals": {c: S["corpora"][c]["total"] for c in C},
             "grades": {c: S["corpora"][c]["grades"] for c in C},

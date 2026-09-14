@@ -9,13 +9,13 @@
   },
   "manifest": {
    "source_sha256": "2721f0f98f799272a0e411cfea5e0cfc0e48858763b8b1a58fe282f732d2fae5",
-   "rule_sha256": "2da5dbf4b4c5cc4959de620f130b4745dd74c5da8da3864deba0639a386784cf",
-   "detail_sha256": "36d6c0223ef58f7d62a898c14cd1339fff29e8fe90f2c419ab859dabfc082cb1",
-   "summary_sha256": "0d2a3ef6c0f9b2bbfbedda228f98543b31fba4cac50c768bea6e714f40acb605"
+   "rule_sha256": "1ffd26c633f7ce67b72e62e86e21a4a535f083a87b6109c918de839a61a95cf3",
+   "detail_sha256": "ae142454ed94c2e509f4da0dd5916bcb069305e9a7e1b103c86d80c2f3269ffb",
+   "summary_sha256": "f26f8e869902870bfe63e580ba0928264b248a8b2df3c12655f703d45f0c0817"
   },
   "run": {
-   "generated_at": "2026-09-14T11:36:34+09:00",
-   "git_commit": "6021edd",
+   "generated_at": "2026-09-14T13:48:50+09:00",
+   "git_commit": "2919066",
    "git_dirty": true,
    "command": "semantic_keyword_recount.py --source-workbook data/ncs_keywords_in_markdown_results_20260402_재판정_20260414.xlsx --ncs-root data_source/markdown/ncs --school-root data_source/markdown/school-text --xlsx-out data/semantic_keyword_recount_20260914.xlsx --report-out data/semantic_keyword_recount_20260914_report.md --dashboard-data-out docs/semantic_recount_data.js --summary-out docs/03-analysis/data/semantic_summary.json --analysis-dir docs --previous-basis docs/03-analysis/data/reseg_summary.json",
    "xlsx": "semantic_keyword_recount_20260914.xlsx",
@@ -67,7 +67,8 @@
    ],
    "expected": true,
    "expected_mismatch": [],
-   "force": false
+   "force": false,
+   "dictionary": "v1fix"
   },
   "previous_basis": {
    "source": "docs/03-analysis/data/reseg_summary.json",
@@ -88,60 +89,60 @@
  "corpora": {
   "NCS": {
    "documents": 86,
-   "total": 12506,
-   "graded": 12506,
+   "total": 12310,
+   "graded": 12310,
    "grade_sources": {
-    "existing": 6689,
-    "new": 5816,
+    "existing": 6586,
+    "new": 5723,
     "unpaged-context": 1,
     "unpaged-fallback": 0
    },
    "grades": {
-    "1": 5057,
-    "2": 4854,
-    "3": 2595,
+    "1": 4946,
+    "2": 4795,
+    "3": 2569,
     "unpaged": 0
    },
    "groups": [
     {
      "name": "반도체개발",
      "documents": 30,
-     "total": 1174,
+     "total": 1151,
      "grades": {
-      "1": 579,
-      "2": 349,
-      "3": 246,
+      "1": 565,
+      "2": 344,
+      "3": 242,
       "unpaged": 0
      }
     },
     {
      "name": "반도체장비",
      "documents": 19,
-     "total": 3699,
+     "total": 3661,
      "grades": {
-      "1": 1165,
-      "2": 1503,
-      "3": 1031,
+      "1": 1152,
+      "2": 1483,
+      "3": 1026,
       "unpaged": 0
      }
     },
     {
      "name": "반도체재료",
      "documents": 24,
-     "total": 6038,
+     "total": 5907,
      "grades": {
-      "1": 2402,
-      "2": 2434,
-      "3": 1202,
+      "1": 2322,
+      "2": 2400,
+      "3": 1185,
       "unpaged": 0
      }
     },
     {
      "name": "반도체제조",
      "documents": 13,
-     "total": 1595,
+     "total": 1591,
      "grades": {
-      "1": 911,
+      "1": 907,
       "2": 568,
       "3": 116,
       "unpaged": 0
@@ -151,18 +152,18 @@
   },
   "교과서": {
    "documents": 9,
-   "total": 1293,
-   "graded": 1293,
+   "total": 1272,
+   "graded": 1272,
    "grade_sources": {
-    "existing": 1212,
+    "existing": 1191,
     "new": 81,
     "unpaged-context": 0,
     "unpaged-fallback": 0
    },
    "grades": {
-    "1": 705,
-    "2": 468,
-    "3": 120,
+    "1": 691,
+    "2": 464,
+    "3": 117,
     "unpaged": 0
    },
    "groups": [
@@ -191,9 +192,9 @@
     {
      "name": "반도체 기초기술 1",
      "documents": 1,
-     "total": 48,
+     "total": 47,
      "grades": {
-      "1": 44,
+      "1": 43,
       "2": 4,
       "3": 0,
       "unpaged": 0
@@ -224,9 +225,9 @@
     {
      "name": "반도체 인프라 일반",
      "documents": 1,
-     "total": 515,
+     "total": 512,
      "grades": {
-      "1": 164,
+      "1": 161,
       "2": 266,
       "3": 85,
       "unpaged": 0
@@ -235,11 +236,11 @@
     {
      "name": "반도체 장비 유지보수",
      "documents": 1,
-     "total": 291,
+     "total": 279,
      "grades": {
-      "1": 134,
-      "2": 126,
-      "3": 31,
+      "1": 129,
+      "2": 122,
+      "3": 28,
       "unpaged": 0
      }
     },
@@ -257,9 +258,9 @@
     {
      "name": "반도체 포토에칭",
      "documents": 1,
-     "total": 147,
+     "total": 142,
      "grades": {
-      "1": 113,
+      "1": 108,
       "2": 34,
       "3": 0,
       "unpaged": 0
@@ -274,28 +275,28 @@
    "expressions": [],
    "corpora": {
     "NCS": {
-     "total": 4119,
-     "exact": 4119,
+     "total": 3929,
+     "exact": 3929,
      "equivalent": 0,
      "specific": 0,
-     "excluded": 316,
+     "excluded": 506,
      "grades": {
-      "1": 1866,
-      "2": 1468,
-      "3": 785,
+      "1": 1761,
+      "2": 1409,
+      "3": 759,
       "unpaged": 0
      }
     },
     "교과서": {
-     "total": 380,
-     "exact": 380,
+     "total": 363,
+     "exact": 363,
      "equivalent": 0,
      "specific": 0,
-     "excluded": 55,
+     "excluded": 72,
      "grades": {
-      "1": 224,
-      "2": 131,
-      "3": 25,
+      "1": 214,
+      "2": 127,
+      "3": 22,
       "unpaged": 0
      }
     }
@@ -635,13 +636,13 @@
      }
     },
     "교과서": {
-     "total": 13,
-     "exact": 13,
+     "total": 9,
+     "exact": 9,
      "equivalent": 0,
      "specific": 0,
      "excluded": 0,
      "grades": {
-      "1": 13,
+      "1": 9,
       "2": 0,
       "3": 0,
       "unpaged": 0
@@ -1265,13 +1266,13 @@
    ],
    "corpora": {
     "NCS": {
-     "total": 459,
-     "exact": 395,
+     "total": 453,
+     "exact": 389,
      "equivalent": 64,
      "specific": 0,
      "excluded": 0,
      "grades": {
-      "1": 132,
+      "1": 126,
       "2": 239,
       "3": 88,
       "unpaged": 0
