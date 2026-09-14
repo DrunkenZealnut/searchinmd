@@ -4,6 +4,8 @@
 >
 > **작성자**: Codex
 > **최초 작성**: 2026-09-08
+>
+> **2026-09-14 주의 (semantic-recount-remediation).** 아래 "NCS 89개·마커 없음 5개"는 2026-09-09 실행 당시의 오염 코퍼스(교재 84 + 변환기 요약본 4 + 중복 1)를 기준으로 한 서술이라 **폐기**됐다. 정본은 `data_source/markdown/ncs` 의 NCS 86권(2026-09-13 추가 2권 포함, 마커 1-based)·교과서 9권이며, 코퍼스 규칙은 `semantic_keyword_recount.py` `select_ncs_documents` 와 `EXPECTED["documents"]` 가 고정한다 — `docs/02-design/features/semantic-recount-remediation.design.md` §3.1.
 > **재검토**: 2026-09-09
 > **상태**: Implemented
 > **프로젝트 수준**: Starter
