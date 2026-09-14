@@ -708,15 +708,21 @@ class DictionaryVersionTests(unittest.TestCase):
         self.assertEqual(2, sum(1 for r in fix if r.decision == "included"))
 
     def test_non_default_dictionary_refuses_tracked_outputs_and_records_mismatch(self):
-        with tempfile.TemporaryDirectory() as td:
+        # 거부 경로는 실제 저장소가 아니라 임시 디렉터리 안의 "같은 모양" 경로로 만든다 (HERE 를 임시로 바꿈).
+        # 2026-09-14 에 이 테스트가 실제 data/semantic_keyword_recount_20260914.xlsx 를 fixture 로 덮어쓴 적이 있다 —
+        # 거부가 실패하면 테스트가 실패해야지, 정본 산출물이 지워지면 안 된다.
+        with tempfile.TemporaryDirectory() as td, mock.patch.object(SKR, "HERE", Path(td)):
             kw = RemediationTests._census_fixture(RemediationTests(), Path(td))
+            (Path(td) / "docs/03-analysis/data").mkdir(parents=True)
             with self.assertRaises(ValueError) as ctx:
-                run_census(**dict(kw, summary_out=Path(SKR.HERE) / "docs/03-analysis/data/semantic_summary.json"),
+                run_census(**dict(kw, summary_out=Path(td) / "docs/03-analysis/data/semantic_summary.json"),
                            dictionary="v1", expected={"documents": {"NCS": 86, "교과서": 9}}, git={"commit": "x", "dirty": False}, argv=["x"])
             self.assertIn("v1", str(ctx.exception))
+            self.assertFalse((Path(td) / "docs/03-analysis/data/semantic_summary.json").exists())
             with self.assertRaises(ValueError):
-                run_census(**dict(kw, xlsx_out=Path(SKR.HERE) / "data/semantic_keyword_recount_20260914.xlsx"), dictionary="v1fix",
+                run_census(**dict(kw, xlsx_out=Path(td) / "semantic_keyword_recount_20260914.xlsx"), dictionary="v1fix",
                            expected={"documents": {"NCS": 86, "교과서": 9}}, git={"commit": "x", "dirty": False}, argv=["x"])
+            self.assertFalse((Path(td) / "semantic_keyword_recount_20260914.xlsx").exists())
             run_census(**kw, dictionary="v1", summary_out=Path(td) / "s.json",
                        expected={"documents": {"NCS": 86, "교과서": 9}, "totals": {"NCS": 999, "교과서": 0}},
                        git={"commit": "x", "dirty": False}, argv=["x"])
