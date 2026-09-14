@@ -159,6 +159,15 @@ class ScoreTests(unittest.TestCase):
         self.assertIn("E2", str(ctx.exception))
         ER.score(key, full, {"grades": {"E1": 1}, "errors": {"E2": "timeout"}, "meta": {}})            # errors 에 있으면 완료된 실행
 
+    def test_score_refuses_coder_labels_from_another_sample_or_prompt(self):
+        key = {"sample_digest": "d", "items": [{"id": "E1", "keyword": "k", "expression": "e"}]}
+        a = {"grades": {"E1": 1}, "meta": {"prompt_sha256": "p1"}, "sample_digest": "d"}
+        with self.assertRaises(ValueError):
+            ER.score(key, a, {"grades": {"E1": 1}, "meta": {"prompt_sha256": "p1"}, "sample_digest": "other"})     # 다른 표본의 라벨
+        with self.assertRaises(ValueError):
+            ER.score(key, a, {"grades": {"E1": 1}, "meta": {"prompt_sha256": "p2"}, "sample_digest": "d"})         # 다른 질문
+        ER.score(key, a, {"grades": {"E1": 1}, "meta": {"prompt_sha256": "p1"}, "sample_digest": "d"})
+
     def test_adj_file_is_validated(self):
         key = {"sample_digest": "d", "items": [{"id": "E1", "keyword": "k", "expression": "e"}]}
         with self.assertRaises(ValueError):
