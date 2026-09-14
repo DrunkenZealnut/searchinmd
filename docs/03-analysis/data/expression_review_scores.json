@@ -8,7 +8,7 @@
   "family_warning": null,
   "alpha": 0.05,
   "floor": 0.8,
-  "adopted": null,
+  "adopted": "v2",
   "companions": {
    "patterns": [
     "착용",

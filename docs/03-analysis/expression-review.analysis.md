@@ -134,7 +134,7 @@
 
 그대로 두는 것: 동의어 `화학약품`·`화학 물질`·`누설`·`작업 환경`(정확 키워드에도 같은 공정 문맥이 있어 문맥 기준을 동의어에만 걸면 비일관 — §5), `가연성`(28/30, 경계 — 60건 2차 패스 후보), `combustible`(2/2, n 부족). `자외선` 은 원래 보류. 동반어 목록은 초기 12개를 그대로 쓴다 — §4 의 O/X 계수에서 X 쪽으로 기우는 동반어가 없었고, 표본에 없는 3개(`피폭`·`부상`·`재해`)는 해가 없다. 조건부는 정확 키워드 `PSM` 에도 걸린다(`build_default_rules` 가 `(키워드, 키워드)` 항목을 정확 규칙에 적용).
 
-영향표 (`expression_review_impact.json`, 코퍼스 `3be0908a…` = 정본 86+9권, 세 버전을 한 번에 메모리에서 집계 — `v1fix` 열은 정본 `semantic_summary.json` 과 같다, `test_impact_v1fix_column_equals_canonical_summary`):
+영향표 (`expression_review_impact.json`, 코퍼스 `3be0908a…` = 정본 86+9권, 세 버전을 한 번에 메모리에서 집계 — 정본 열(결정 3 이후 `v2`)은 `semantic_summary.json` 과 같다, `test_impact_canonical_column_equals_canonical_summary`; `excluded_by_fix` 는 `안전성` 146/14 · `안전 마진류` 44/3 으로도 나뉜다):
 
 | 항목 | v1 (2026-09-09) | v1fix (정본) | v2 (결정 2) | v2 − v1fix |
 |---|---:|---:|---:|---:|
@@ -180,7 +180,7 @@ python3.13 expression_review.py sample --ncs-root data_source/markdown/ncs --sch
 python3.13 code_pages.py --sheet data/expression_review_sheet.json --coder A --backend claude-cli --model claude-opus-5 --out docs/03-analysis/data/expression_review_A.json --workers 4
 python3.13 code_pages.py --sheet data/expression_review_sheet.json --coder B --provider-env ~/.config/auditagent/.env --out docs/03-analysis/data/expression_review_B.json --workers 4
 python3.13 expression_review.py score --list-disagreements     # 재정 대상
-python3.13 expression_review.py score                           # → expression_review_scores.json (시트가 있으면 동반어 근거 포함)
+python3.13 expression_review.py score --adopted v2              # → expression_review_scores.json (시트가 있으면 동반어 근거 포함; --adopted 는 결정 3 기록)
 python3.13 expression_review.py impact --ncs-root data_source/markdown/ncs --school-root data_source/markdown/school-text --source-workbook data/ncs_keywords_in_markdown_results_20260402_재판정_20260414.xlsx   # → expression_review_impact.json (~70 s, 쓰기 없음)
-python3.13 -m unittest test_expression_review                   # 15 tests
+python3.13 -m unittest test_expression_review                   # 16 tests
 ```

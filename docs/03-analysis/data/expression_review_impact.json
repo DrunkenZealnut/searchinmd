@@ -1261,11 +1261,15 @@
  "excluded_by_fix": {
   "NCS": {
    "PSM_substring": 6,
-   "held_inside": 190
+   "held_inside": 190,
+   "안전성": 146,
+   "안전_마진류": 44
   },
   "교과서": {
    "PSM_substring": 4,
-   "held_inside": 17
+   "held_inside": 17,
+   "안전성": 14,
+   "안전_마진류": 3
   }
  },
  "excluded_by_v2": {

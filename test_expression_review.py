@@ -117,6 +117,10 @@ class ScoreTests(unittest.TestCase):
         self.assertFalse(any(isinstance(v, float) and math.isnan(v) for r in scores["expressions"] for v in r.values()))
         self.assertEqual(0.8, scores["meta"]["floor"])
         self.assertIn("kappa", scores["overall"])
+        self.assertIsNone(scores["meta"]["adopted"])                                   # 채택은 손으로 적는다 (설계 §1 원칙 4)
+        self.assertEqual("v2", ER.score(key, a, b, adj=None, adopted="v2")["meta"]["adopted"])
+        with self.assertRaises(ValueError):
+            ER.score(key, a, b, adopted="v9")
 
     def test_score_carries_tier_and_family_warning(self):
         key = {"sample_digest": "d", "items": [{"id": "E1", "keyword": "보호구", "expression": "방진복"}, {"id": "E2", "keyword": "인화", "expression": "가연성"}, {"id": "E3", "keyword": "PSM", "expression": "PSM"}]}
@@ -164,11 +168,16 @@ class ImpactTests(unittest.TestCase):
         report = ER.impact(docs, keywords, existing_grades={}, versions=("v1", "v1fix", "v2"))
         self.assertEqual(["v1", "v1fix", "v2"], report["meta"]["versions"])
         self.assertEqual((5, 3), (report["totals"]["v1"]["NCS"], report["totals"]["v1fix"]["NCS"]))   # v1: EAPSM·PSM·안전성·작업 안전·방진복 / v1fix: PSM·작업 안전·방진복
-        self.assertEqual({"PSM_substring": 1, "held_inside": 1}, report["excluded_by_fix"]["NCS"])
+        self.assertEqual({"PSM_substring": 1, "held_inside": 1, "안전성": 1, "안전_마진류": 0}, report["excluded_by_fix"]["NCS"])
         self.assertTrue(all(set(report["grades"][v]["NCS"]) == {"1", "2", "3"} for v in ("v1", "v1fix", "v2")))
         row = next(k for k in report["keywords"] if k["name"] == "안전")
         self.assertEqual((2, 1), (row["v1"]["NCS"], row["v1fix"]["NCS"]))
         self.assertEqual(SKR._document_set_sha256(docs), report["meta"]["corpus_sha256"])
+
+    def test_impact_splits_held_inside_by_pattern(self):
+        docs = [_doc("반도체제조/LM1903060101_a/a.md", "<!-- page: 1 -->\n안전성 검토\n안전 마진 확보와 안전 재고\n작업 안전\n")]
+        report = ER.impact(docs, ["안전"], existing_grades={}, versions=("v1", "v1fix"))
+        self.assertEqual({"PSM_substring": 0, "held_inside": 3, "안전성": 1, "안전_마진류": 2}, report["excluded_by_fix"]["NCS"])
 
     def test_impact_counts_what_v2_removes(self):
         docs = [_doc("반도체제조/LM1903060101_a/a.md", "<!-- page: 1 -->\nPSM 마스크 종류\n감광제 종류\n\nPSM 위험성 평가\n기록 보관\n\n방진복 규격\n세탁 주기\n\n방진복 착용\n방진화 착용\n케미컬 펌프\n")]   # 창은 ±1줄이라 항목 사이를 띄운다
@@ -212,6 +221,7 @@ class CommittedArtifactsTests(unittest.TestCase):
             self.assertEqual(key["sample_digest"], doc.get("sample_digest") or doc["meta"]["sample_digest"], name)   # adj 는 최상위, scores 는 meta
         scores = json.loads((self.DATA / "expression_review_scores.json").read_text(encoding="utf-8"))
         self.assertEqual(len(key["items"]), sum(r["n"] + r["unknown"] for r in scores["expressions"]))
+        self.assertEqual(SKR.DEFAULT_DICTIONARY, scores["meta"]["adopted"])                # 결정 3 이 scores 에도 적혀 있다
         self.assertFalse(any(isinstance(v, float) and math.isnan(v) for r in scores["expressions"] for v in r.values() if not isinstance(v, dict)))
 
 

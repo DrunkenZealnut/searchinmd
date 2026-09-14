@@ -23,7 +23,7 @@
 ## 2. 아키텍처
 
 ```
-semantic_keyword_recount.py                       expression_review.py (신설, stdlib + openpyxl 불필요)
+semantic_keyword_recount.py                       expression_review.py (신설, stdlib; SKR 를 import 하고 impact 가 등급 워크북을 읽으므로 openpyxl 필요)
   default_candidate_decisions(version)              ├─ sample   : 정본 스캔(v1fix) → 대상 표현 22개 × 30건 층화 표본
   build_default_rules(keywords, version)            │            → data/expression_review_sheet.{json,md} (본문, gitignore)
   scan_document(require_patterns 지원)              │            → docs/03-analysis/data/expression_review_key.json (추적)
@@ -74,7 +74,7 @@ DEFAULT_DICTIONARY = "v1fix"          # 연구책임자 결정 2026-09-14: 결�
 
 - 코더 A: `python3 code_pages.py --sheet data/expression_review_sheet.json --coder A --backend claude-cli --out docs/03-analysis/data/expression_review_A.json`
 - 코더 B: `python3 code_pages.py --sheet … --coder B --provider-env ~/.config/auditagent/.env --out docs/03-analysis/data/expression_review_B.json` (OpenAI 계열; `family_guard` 로 두 코더가 다른 벤더인지 확인).
-- 라벨 파싱은 `code_pages.parse_grade` 그대로(`1`/`2`/`?`; `3` 이 오면 `errors`). 산출물은 라벨·모델·프롬프트 sha256만(본문 없음) — 기존 규약.
+- 라벨 파싱은 `code_pages.parse_grade` 그대로(`1`/`2`/`3`/`?` 를 라벨로 받는다 — `3` 은 이 질문에 없는 값이라 `score` 의 `_norm` 이 채점 시 거부한다; 실제 라벨에 `3` 은 없었다). 산출물은 라벨·모델·프롬프트 sha256만(본문 없음) — 기존 규약.
 - 불일치 목록: `expression_review.py score --list-disagreements` 가 `id·keyword·expression·A·B` 를 표로 출력(본문은 시트에서 id 로 찾는다). 연구책임자 재정은 `docs/03-analysis/data/expression_review_adj.json`: `{"sample_digest", "labels": {"E017": 1, …}, "note"}` — 손으로 쓰는 파일, 스키마는 `score` 가 검증(digest 일치, 라벨 ∈ {1,2,?}, id 가 키에 있음).
 
 ### 3.4 정밀도 — FR-05 (`expression_review.py score`)

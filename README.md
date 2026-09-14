@@ -117,7 +117,7 @@ node    outputs/test-sri.js                  # 38 — 외부 스크립트 SRI (-
 
 Node 기반 하니스는 HTML과 실제 공통 렌더러를 `vm` + DOM mock으로 불러옵니다. 복사해 붙인 사본을 테스트하지 않습니다. `test-core-logic.html` 은 브라우저에서 열어 탭 제목으로 봐도 됩니다 — `run-core-logic-tests.js` 는 같은 HTML 을 헤드리스로 돌릴 뿐입니다. `test-recount-grades.py`는 `openpyxl`을 스텁으로 주입해 pip 패키지 없이도, 원본 엑셀 없이도 돕니다.
 
-의미 재검산 자체(코퍼스 규칙, `EXPECTED` 가드, manifest, 결정론, 산출물 writer)는 `test_semantic_keyword_recount.py` 가 검증합니다 — `python3 -m unittest test_semantic_keyword_recount`, 이것만은 `openpyxl` 이 깔린 Python 이 필요합니다. CI 는 위 하니스 5종 뒤에 `openpyxl` 을 설치하고 이것도 돌립니다.
+의미 재검산 자체(코퍼스 규칙, `EXPECTED` 가드, manifest, 결정론, 산출물 writer)는 `test_semantic_keyword_recount.py` 가 검증합니다 — `python3 -m unittest test_semantic_keyword_recount`, 이것만은 `openpyxl` 이 깔린 Python 이 필요합니다. 표현 점검(`expression_review.py` — 표본·정밀도 구간·재정·영향표)은 `test_expression_review.py` 가 검증하며 같은 조건입니다. CI 는 위 하니스 5종 뒤에 `openpyxl` 을 설치하고 둘 다 돌립니다.
 
 대시보드 데이터는 `semantic_keyword_recount.py` 한 실행이 `docs/semantic_recount_data.js` 와 `docs/03-analysis/data/semantic_summary.json` 에 같은 JSON 으로 씁니다. `test-dashboard-data.js` 는 그 요약 파일을 기준으로 대시보드·분리 분석 페이지·README·`CLAUDE.md` 의 인용값을 대조하므로(S2~S8), 수치는 손으로 고치지 말고 정본 실행을 다시 돌리세요. 위 블록의 단언 수 두 개(`test-dashboard-data.js`, `test-recount-grades.py`)는 하니스가 README·`CLAUDE.md` 의 인용값과 직접 대조하므로(S9, R17), 하니스가 찍는 수를 두 파일에 옮기세요.
 

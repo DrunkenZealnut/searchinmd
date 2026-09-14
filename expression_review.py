@@ -40,7 +40,7 @@ SEED = 20260914
 PER_EXPRESSION = 30
 PRECISION_FLOOR = 0.8            # 연구책임자 결정 2026-09-14 — CP 95% 하한이 이 값 미만이면 보류/조건부 후보
 SAMPLE_DICTIONARY = "v1fix"      # 표본은 점검 **전** 사전에서 뽑는다 — 점검 대상이 v1fix 의 포함 표현이고, 키 digest 9713a337… 는 이 버전으로 재현된다 (v2 채택 뒤에도 바뀌지 않는다)
-ALPHA = 0.05                     # score_coding.ALPHA 와 같은 값 — 여기서 "95%" 가 나온다
+ALPHA = score_coding.ALPHA       # 한 값 — 여기서 "95%" 가 나온다
 LABELS = (1, 2, "?")             # 1 = 사람 안전·보건 뜻, 2 = 아님, ? = 판단 불가 (code_pages.parse_grade 가 읽는 값)
 
 # 점검 대상 (키워드, 표현) — 비정확 표현 중 정본 출현 ≥ 50 인 18개 + 감사 지목 4개 (계획 §1.3). 보류 표현은 계수 없이 probe 만.
@@ -305,8 +305,12 @@ def companion_stats(key: dict, texts: dict, labels: dict, companions=SKR.SAFETY_
     return {"companions": per_comp, "expressions": rows}
 
 
-def score(key: dict, a: dict, b: dict, adj: dict | None = None, floor: float = PRECISION_FLOOR, alpha: float = ALPHA, texts: dict | None = None) -> dict:
-    """표현별 정밀도·구간·κ·후보 표시. NaN 없음. texts(시트 id→본문) 가 있으면 조건부 규칙 근거(meta.companions, expressions[].conditional) 를 붙인다."""
+def score(key: dict, a: dict, b: dict, adj: dict | None = None, floor: float = PRECISION_FLOOR, alpha: float = ALPHA, texts: dict | None = None,
+          adopted: str | None = None) -> dict:
+    """표현별 정밀도·구간·κ·후보 표시. NaN 없음. texts(시트 id→본문) 가 있으면 조건부 규칙 근거(meta.companions, expressions[].conditional) 를 붙인다.
+    adopted 는 연구책임자의 채택 결정(사전 버전) — 자동으로 정하지 않고 손으로 적는다(설계 §1 원칙 4)."""
+    if adopted is not None and adopted not in SKR.DICTIONARY_VERSIONS:
+        raise ValueError(f"adopted 는 {SKR.DICTIONARY_VERSIONS} 중 하나여야 합니다: {adopted!r}")
     tiers = {(c.keyword, c.expression): c.tier for c in SKR.default_candidate_decisions()}
     if adj:
         validate_adj(adj, key)
@@ -344,7 +348,7 @@ def score(key: dict, a: dict, b: dict, adj: dict | None = None, floor: float = P
                "kappa": kappa([x for x, _ in pairs_all], [y for _, y in pairs_all]),
                "disagreements": sum(r["disagreements"] for r in rows), "adjudicated": len(adj_labels)}
     meta = {"sample_digest": key.get("sample_digest"), "coders": {"A": (a.get("meta") or {}).get("model"), "B": (b.get("meta") or {}).get("model")},
-            "family_warning": score_coding.family_guard(a.get("meta"), b.get("meta")), "alpha": alpha, "floor": floor, "adopted": None}
+            "family_warning": score_coding.family_guard(a.get("meta"), b.get("meta")), "alpha": alpha, "floor": floor, "adopted": adopted}
     if texts is not None:
         stats = companion_stats(key, texts, final)
         meta["companions"] = {"patterns": list(SKR.SAFETY_COMPANIONS), "counts": stats["companions"]}
@@ -360,7 +364,7 @@ def impact(documents: list[Document], keywords: list[str], existing_grades: dict
     """세 사전 버전을 메모리에서 집계 — 총계·등급·키워드·표현별, 결함 수정이 걷어낸 건수. 쓰지 않는다."""
     sources = [SKR.KeywordSource(k, 0, True) for k in keywords]
     totals, grades, per_kw, per_expr, excluded_by_fix, excluded_by_v2 = {}, {}, defaultdict(dict), defaultdict(dict), {}, {}
-    ascii_kw = {k for k in keywords if __import__("re").fullmatch(r"[A-Za-z0-9 ]+", k)}
+    ascii_kw = {k for k in keywords if re.fullmatch(r"[A-Za-z0-9 ]+", k)}
     v_included = {}
     for v in versions:
         rules = build_default_rules(keywords, version=v)
@@ -373,11 +377,20 @@ def impact(documents: list[Document], keywords: list[str], existing_grades: dict
             per_kw[k][v] = {c: sum(1 for r in included if r.corpus == c and r.keyword == k) for c in ("NCS", "교과서")}
         for (k, e), n in Counter((r.keyword, r.expression) for r in included).items():
             per_expr[(k, e)][v] = n
-        held_inside = Counter(r.corpus for r in result.matches if r.decision == "excluded" and r.reason == SKR.HELD_INSIDE_REASON)
+        held_records = [r for r in result.matches if r.decision == "excluded" and r.reason == SKR.HELD_INSIDE_REASON]
+        held_inside = Counter(r.corpus for r in held_records)
+        # 보류 표현별 분리(계획 성공 기준: 안전성 / 안전 마진류 각각) — 제외 레코드의 문맥에서 _HELD_INSIDE 패턴을 순서대로 찾는다
+        held_split = {c: Counter() for c in ("NCS", "교과서")}
+        for r in held_records:
+            for label, pat in zip(("안전성", "안전_마진류"), SKR._HELD_INSIDE.get(r.keyword, ())):
+                if re.search(pat, r.context, re.IGNORECASE):
+                    held_split[r.corpus][label] += 1
+                    break
         if v == "v1fix" and "v1" in v_included:
             sub = {c: sum(1 for r in v_included["v1"] if r.corpus == c and r.keyword in ascii_kw and r.tier == "exact")
                       - sum(1 for r in included if r.corpus == c and r.keyword in ascii_kw and r.tier == "exact") for c in ("NCS", "교과서")}
-            excluded_by_fix = {c: {"PSM_substring": sub[c], "held_inside": held_inside.get(c, 0)} for c in ("NCS", "교과서")}
+            excluded_by_fix = {c: {"PSM_substring": sub[c], "held_inside": held_inside.get(c, 0),
+                                   "안전성": held_split[c]["안전성"], "안전_마진류": held_split[c]["안전_마진류"]} for c in ("NCS", "교과서")}
         if v == "v2" and "v1fix" in v_included:
             # v2 가 걷어낸 것: 보류 전환된 표현의 v1fix 출현(held) + 조건부 표현에서 동반어 없이 떨어진 출현(no_companion).
             # no_companion 은 조건부 표현의 v1fix 포함 − v2 포함(실효 감소) — 제외 레코드 수는 v1fix 에서 더 긴 표현에 가려졌던 매칭까지 세어 몇 건 더 나온다.
@@ -417,6 +430,7 @@ def main() -> None:
     c.add_argument("--adj", type=Path, default=DEFAULT_ADJ); c.add_argument("--out", type=Path, default=DEFAULT_SCORES)
     c.add_argument("--floor", type=float, default=PRECISION_FLOOR); c.add_argument("--list-disagreements", action="store_true")
     c.add_argument("--sheet", type=Path, default=DEFAULT_SHEET, help="시트(본문) — 있으면 조건부 규칙 근거(동반어 O/X 계수) 를 붙인다. 출력에 본문은 남지 않는다")
+    c.add_argument("--adopted", choices=SKR.DICTIONARY_VERSIONS, default=None, help="연구책임자가 채택한 사전 버전 — meta.adopted 에 기록 (결정 3: v2)")
     i = sub.add_parser("impact", help="사전 v1/v1fix/v2 영향표")
     i.add_argument("--ncs-root", type=Path, required=True); i.add_argument("--school-root", type=Path, required=True)
     i.add_argument("--source-workbook", type=Path, required=True); i.add_argument("--school-grade-workbook", type=Path)
@@ -451,7 +465,7 @@ def main() -> None:
             if sheet.get("sample_digest") != key.get("sample_digest"):
                 sys.exit(f"시트 digest {sheet.get('sample_digest')} 가 키 {key.get('sample_digest')} 와 다릅니다 — 동반어 계수를 붙일 수 없습니다")
             texts = {it["id"]: it["text"] for it in sheet["items"]}
-        out = score(key, a, b, adj, floor=args.floor, texts=texts)
+        out = score(key, a, b, adj, floor=args.floor, texts=texts, adopted=args.adopted)
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(json.dumps(out, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
         print(f"전체 정밀도 {out['overall']['precision']} (n={out['overall']['n']}), κ {out['overall']['kappa']}, 불일치 {out['overall']['disagreements']}")
