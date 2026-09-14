@@ -55,6 +55,11 @@ class CommittedDiffTests(unittest.TestCase):
         self.assertTrue(diff["source"]["summary_run"]["expected"])
         self.assertNotIn("/Users/", path.read_text(encoding="utf-8"))
         self.assertTrue(all(len(p["locator"]) <= 50 for p in diff["paragraphs"]))          # 문단 식별용 첫머리만, 본문 없음
+        run = json.loads(HR.DEFAULT_SUMMARY.read_text(encoding="utf-8"))["meta"]["run"]
+        self.assertEqual({k: run.get(k) for k in ("generated_at", "git_commit", "dictionary", "expected")}, diff["source"]["summary_run"])   # 대조 JSON 은 지금의 정본 실행에 묶여 있다 (F4)
+        facts = fixture_facts()
+        self.assertEqual([], HR.audit_numbers([" ".join(p["new_numbers"]) for p in diff["paragraphs"]], facts))                    # 기록된 새 숫자는 전부 지금의 정본 값
+        self.assertEqual("v2", HR.CANONICAL_DICTIONARY)
 
 
 # ---------------------------------------------------------------- fixture HWPX
@@ -383,6 +388,148 @@ class TemplateTests(unittest.TestCase):
         for name, template in HR.PARAGRAPH_TEMPLATES.items():
             for prefix, text, _ in template(f):
                 self.assertEqual([], HR.audit_numbers([text], f), (name, prefix))                    # 템플릿이 내는 숫자는 전부 정본 값
+
+
+class AdversarialReviewTests(unittest.TestCase):
+    """Claude 적대적 리뷰(2026-09-14) F1~F9 — 서술 분기·정본 결속·감사 범위·입력 검증·SVG escape·중복 ZIP 항목."""
+
+    def test_workenv_paragraph_compares_each_keyword_with_the_overall_share(self):        # F1
+        f = fixture_facts()
+        n = f.ncs
+        overall = n.grades[3] / n.total
+        text, cond = {k: (v, c) for k, v, c in HR.ncs_paragraphs(f)}["또한 ‘작업환경’은 총"]
+        for name in ("작업환경", "중독"):
+            kw = n.keywords[name]
+            self.assertEqual(HR._share_rel(kw["grades"][3] / kw["total"], overall), cond["g3_vs_overall"][name])
+        rels = set(cond["g3_vs_overall"].values())
+        self.assertEqual("높" in rels and len(rels) == 1, "수준 이상" in text)                 # "수준 이상" 은 둘 다 평균을 웃돌 때만
+        if rels == {"비슷"}:
+            self.assertIn("과 비슷한 수준", text); self.assertIn("뒤지지 않는", text)
+        first = {k: v for k, v, _ in HR.ncs_paragraphs(f)}["‘작업환경’은"]
+        self.assertEqual("낮" in rels, "보다 낮았다" in first)
+        def flipped(w, p):
+            g = copy.deepcopy(f)
+            for name, share in (("작업환경", w), ("중독", p)):
+                kw = g.ncs.keywords[name]; kw["grades"][3] = int(kw["total"] * share); kw["grades"][1] = kw["total"] - kw["grades"][3]; kw["grades"][2] = 0
+            return {k: (v, c) for k, v, c in HR.ncs_paragraphs(g)}["또한 ‘작업환경’은 총"]
+        high, _ = flipped(1.0, 1.0)
+        self.assertIn("수준 이상", high); self.assertIn("상대적으로 충실한 편", high)
+        low, lc = flipped(0.0, 0.0)
+        self.assertIn("에 못 미치는", low); self.assertIn("충실하다고 보기는 어렵다", low); self.assertNotIn("수준 이상", low)
+        self.assertEqual({"작업환경": "낮", "중독": "낮"}, lc["g3_vs_overall"])
+        mixed, mc = flipped(1.0, 0.0)
+        self.assertIn("‘작업환경’은 전체 평균", mixed); self.assertIn("‘중독’은 그에 못 미치는", mixed)
+        self.assertEqual({"작업환경": "높", "중독": "낮"}, mc["g3_vs_overall"])
+
+    def test_share_rel_uses_the_tolerance(self):
+        self.assertEqual(("비슷", "비슷", "높", "낮"), (HR._share_rel(0.216, 0.219), HR._share_rel(0.241, 0.219), HR._share_rel(0.26, 0.219), HR._share_rel(0.18, 0.219)))
+
+    def test_grade2_and_safety_rank_claims_branch(self):                                    # F2
+        f = fixture_facts()
+        base = {k: (v, c) for k, v, c in HR.ncs_paragraphs(f)}
+        self.assertEqual(HR._grade_max(f.ncs.grades) == 2, "등급 2의 비중이 가장 높다는 점" in base["등급 2는 안전보건 관련 키워드가 확인되지만"][0])
+        self.assertEqual(f.ncs.ranked()[0][0] == "안전", "검출 건수가 가장 많았다" in base["교과서의 전체 키워드 중 ‘안전’이"][0])
+        g = copy.deepcopy(f)
+        g.ncs.grades = {1: g.ncs.total - 20, 2: 10, 3: 10}
+        g.ncs.keywords["안전"]["grades"] = {1: 5, 2: 5, 3: g.ncs.keywords["안전"]["total"] - 10}
+        g.ncs.keywords["위험"]["total"] = g.ncs.keywords["안전"]["total"] + 1
+        alt = {k: (v, c) for k, v, c in HR.ncs_paragraphs(g)}
+        t, c = alt["등급 2는 안전보건 관련 키워드가 확인되지만"]
+        self.assertNotIn("가장 높다는 점", t); self.assertIn("세 등급 중 2번째", t); self.assertEqual((1, 2), (c["largest_grade"], c["grade2_rank"]))
+        t, c = alt["교과서의 전체 키워드 중 ‘안전’이"]
+        self.assertIn("2번째로 많았다", t); self.assertIn("등급 3이", t); self.assertNotIn("상대적으로 낮았다", t); self.assertNotIn("등급 2도", t)
+        self.assertEqual((2, 3), (c["safety_rank"], c["safety_top_grade"]))
+        self.assertEqual([], HR.audit_numbers([t], g))
+
+    def test_equipment_case_sentence_branches_on_top_book_area_and_false_positives(self):   # F2
+        f = fixture_facts()
+        base = {k: (v, c) for k, v, c in HR.ncs_paragraphs(f)}["반도체 장비 분야는 총"]
+        self.assertIn(f"『{f.cases.top_book}』 한 권에 몰려 있어", base[0]); self.assertTrue(base[1]["equipment_top_book"])
+        g = copy.deepcopy(f)
+        g.cases.top_book = next(p["title"] for p in g.cases.pages if p["area"] != "장비")
+        alt = {k: (v, c) for k, v, c in HR.ncs_paragraphs(g)}["반도체 장비 분야는 총"]
+        self.assertNotIn("『", alt[0]); self.assertFalse(alt[1]["equipment_top_book"])
+        h = copy.deepcopy(f)
+        for p in h.cases.pages:
+            if p["area"] == "장비":
+                p["verdict"] = "case_other"
+        alt = {k: (v, c) for k, v, c in HR.ncs_paragraphs(h)}["반도체 장비 분야는 총"]
+        self.assertNotIn("나머지", alt[0]); self.assertNotIn(" 로,", alt[0]); self.assertIn("모두 실제 사고 서술", alt[0])
+        i = copy.deepcopy(f)
+        for p in i.cases.pages:
+            if p["area"] == "장비":
+                p["verdict"] = "false_positive"; p["kind"] = "guideline"
+        alt = {k: (v, c) for k, v, c in HR.ncs_paragraphs(i)}["반도체 장비 분야는 총"]
+        self.assertIn("실제 사고 서술은 없고", alt[0]); self.assertEqual(0, alt[1]["equipment_narrative_pages"])
+
+    def test_provenance_comes_from_the_summary_run(self):                                   # F3
+        summary = json.loads(HR.DEFAULT_SUMMARY.read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory() as td:
+            later = copy.deepcopy(summary); later["meta"]["run"]["generated_at"] = "2030-01-02T03:04:05+09:00"
+            (Path(td) / "later.json").write_text(json.dumps(later, ensure_ascii=False), encoding="utf-8")
+            f = HR.load_facts(Path(td) / "later.json", HR.DEFAULT_CASES, HR.DEFAULT_RECOUNT)
+            texts = [t for template in HR.PARAGRAPH_TEMPLATES.values() for _, t, _ in template(f)]
+            self.assertTrue(any("2030-01-02 정본 재검산(의미 표현 사전 v2" in t for t in texts))
+            self.assertFalse(any("2026-09-14" in t for t in texts))                                   # 날짜 리터럴 없음
+            self.assertTrue(any("2030-01-02 정본, 의미 표현 사전 v2" in t for t in texts))
+            other = copy.deepcopy(summary); other["meta"]["run"]["dictionary"] = "v1fix"
+            (Path(td) / "other.json").write_text(json.dumps(other, ensure_ascii=False), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "v1fix"):
+                HR.load_facts(Path(td) / "other.json", HR.DEFAULT_CASES, HR.DEFAULT_RECOUNT)               # 정본 사전이 아니면 거부
+            undated = copy.deepcopy(summary); undated["meta"]["run"].pop("generated_at")
+            (Path(td) / "undated.json").write_text(json.dumps(undated, ensure_ascii=False), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "generated_at"):
+                HR.load_facts(Path(td) / "undated.json", HR.DEFAULT_CASES, HR.DEFAULT_RECOUNT)
+        try:
+            import semantic_keyword_recount as SKR
+        except ImportError:
+            self.skipTest("openpyxl 없음")
+        self.assertEqual(SKR.EXPECTED["dictionary"], HR.CANONICAL_DICTIONARY)
+
+    def test_audit_reads_nested_paragraphs_and_keyword_count_is_a_fact(self):               # F5
+        inner = para("메모 안의 옛 수치 12,875건")
+        outer = f'<hp:p {NS} paraPrIDRef="0"><hp:run charPrIDRef="0"><hp:ctrl><hp:fieldBegin><hp:subList>{inner}</hp:subList></hp:fieldBegin></hp:ctrl><hp:t>본문 1,207건</hp:t></hp:run></hp:p>'
+        section = HR.Section("ncs", 0, 1, [ET.fromstring(outer)])
+        texts = HR.section_texts(section)
+        self.assertTrue(any("12,875" in t for t in texts)); self.assertTrue(any("1,207" in t for t in texts))
+        f = fixture_facts()
+        self.assertNotIn("30", HR.ALLOWED_TOKENS)
+        self.assertIn("keywords(count)", f.value_index()[str(len(f.ncs.order))])
+
+    def test_load_facts_validates_verdicts_and_requires_group_pages(self):                  # F7
+        summary = json.loads(HR.DEFAULT_SUMMARY.read_text(encoding="utf-8")); cases = json.loads(HR.DEFAULT_CASES.read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory() as td:
+            typo = copy.deepcopy(cases); typo["pages"][0]["verdict"] = "case_othr"
+            (Path(td) / "typo.json").write_text(json.dumps(typo, ensure_ascii=False), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "case_othr"):
+                HR.load_facts(HR.DEFAULT_SUMMARY, Path(td) / "typo.json", HR.DEFAULT_RECOUNT)
+            nopages = copy.deepcopy(summary); nopages["corpora"]["NCS"]["groups"][0].pop("pages")
+            (Path(td) / "nopages.json").write_text(json.dumps(nopages, ensure_ascii=False), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "pages"):
+                HR.load_facts(Path(td) / "nopages.json", HR.DEFAULT_CASES, HR.DEFAULT_RECOUNT)
+
+    def test_locate_sections_reports_an_end_heading_before_its_start(self):                 # F7
+        h = HR.HEADINGS
+        xml = f'{HR.XML_DECL}<hs:sec {NS}>' + "".join(para(t) for t in FIXTURE_SECTION_TITLES) + para("제3장 연구 결과") + para(h["textbook"][0]) + para(h["cases"][0]) + para(h["ncs"][0]) + para(h["cases"][1]) + "</hs:sec>"
+        with self.assertRaisesRegex(ValueError, "시작 뒤에 없습니다"):
+            HR.locate_sections(ET.fromstring(xml))
+
+    def test_svg_text_is_escaped(self):                                                     # F8
+        self.assertIn("a&lt;b&gt; &amp; c", HR._svg_text(0, 0, "a<b> & c"))
+
+    def test_write_hwpx_keeps_duplicate_zip_entries_apart(self):                            # F9
+        import warnings
+        with tempfile.TemporaryDirectory() as td:
+            src, out = Path(td) / "src.hwpx", Path(td) / "out.hwpx"
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                with zipfile.ZipFile(src, "w") as z:
+                    z.writestr("Contents/section0.xml", b"<a/>"); z.writestr("BinData/dup.bin", b"one"); z.writestr("BinData/dup.bin", b"two")
+                HR.write_hwpx(src, out, b"<b/>", {})
+            with zipfile.ZipFile(out) as z:
+                dups = [i for i in z.infolist() if i.filename == "BinData/dup.bin"]
+                self.assertEqual([b"one", b"two"], [z.read(i) for i in dups])
+                self.assertEqual(b"<b/>", z.read("Contents/section0.xml"))
 
 
 class EndToEndTests(unittest.TestCase):

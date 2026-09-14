@@ -763,6 +763,7 @@ class DictionaryVersionTests(unittest.TestCase):
             summary = json.loads((Path(td) / "s.json").read_text(encoding="utf-8"))
         self.assertEqual("v1", summary["meta"]["run"]["dictionary"])
         self.assertIsNone(summary["meta"]["run"]["expected"])                    # 비정본 버전: 불일치는 기록만
+        self.assertEqual((False, True), (summary["meta"]["run"]["force"], summary["meta"]["run"]["variant"]))   # --force 를 준 적 없다 — 변형 실행이라 기록만 한 것 (적대적 리뷰 F12)
         self.assertTrue(any(m.startswith("totals.NCS") for m in summary["meta"]["run"]["expected_mismatch"]))
 
 
@@ -941,7 +942,10 @@ class RemediationTests(unittest.TestCase):
         self.assertRegex(run["python"], r"^\d+\.\d+")
         self.assertRegex(run["openpyxl"], r"^\d+\.\d+")
         self.assertTrue(run["expected"])
+        self.assertEqual((False, False), (run["force"], run["variant"]))
         self.assertEqual([{"code": "LM1", "kept": "k.md", "dropped": ["d.md"]}], run["dedup"])
+        variant = run_manifest(result, argv=["x"], force=False, expected_mismatch=["totals.NCS: 1 != 2"], git={"commit": "abc1234", "dirty": True}, variant=True)
+        self.assertEqual((None, False, True), (variant["expected"], variant["force"], variant["variant"]))
         self.assertRegex(run["generated_at"], r"^\d{4}-\d{2}-\d{2}T")
         self.assertTrue(all("sha256" in item and "count" in item and "kind" in item for item in run["inputs"]))
 

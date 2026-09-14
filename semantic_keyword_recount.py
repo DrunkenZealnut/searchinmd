@@ -1225,8 +1225,11 @@ def run_manifest(
     xlsx_out: Path | None = None,
     extra_inputs: list[dict[str, object]] | None = None,
     marker_nonmonotone: list[str] | None = None,
+    variant: bool = False,
 ) -> dict[str, object]:
     """실행 정보 — 어느 실행이 정본인지 저장소가 답하게 하는 블록. 경로는 public_path 로만.
+
+    `force` 는 --force 를 실제로 준 실행만 true 다; 비정본 사전의 변형 실행은 `variant` 로 따로 적는다 (둘 다 `expected` 를 null 로 만든다).
 
     `git_commit` 은 실행이 올라탄 커밋이고 `git_dirty` 는 그 위에 미커밋 변경이 있었는지다. 산출물은 실행 뒤에 커밋되므로
     커밋된 정본 산출물의 manifest 는 언제나 "부모 커밋 + dirty" 를 가리킨다 — 재현은 커밋 뒤 같은 명령을 다시 돌려 가드가 통과하는 것으로 확인한다.
@@ -1243,9 +1246,10 @@ def run_manifest(
         "inputs": [{"kind": a.kind, "count": a.file_count, "sha256": a.sha256} for a in result.input_artifacts] + list(extra_inputs or []),
         "dedup": [{"code": d.code, "kept": d.kept, "dropped": list(d.dropped)} for d in result.dedup],
         "marker_nonmonotone": list(marker_nonmonotone or []),
-        "expected": None if force else True,
+        "expected": None if (force or variant) else True,
         "expected_mismatch": list(expected_mismatch),
         "force": force,
+        "variant": variant,
     }
 
 
@@ -2118,8 +2122,8 @@ def run_census(
     basis = load_previous_basis(previous_basis) if previous_basis is not None else None
     extra_inputs = [{"kind": "이전 기준", "count": 1, "sha256": _file_sha256(previous_basis)}] if previous_basis is not None else []
     run = run_manifest(
-        result, argv if argv is not None else sys.argv, force or variant, mismatch, git=git, xlsx_out=xlsx_out,
-        extra_inputs=extra_inputs, marker_nonmonotone=nonmonotone_markers(documents),
+        result, argv if argv is not None else sys.argv, force, mismatch, git=git, xlsx_out=xlsx_out,
+        extra_inputs=extra_inputs, marker_nonmonotone=nonmonotone_markers(documents), variant=variant,
     )
     run["dictionary"] = dictionary
     payload = summary_payload(result, run=run, previous_basis=basis)

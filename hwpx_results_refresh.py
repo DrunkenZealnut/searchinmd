@@ -9,7 +9,8 @@
 
 동작: 절은 제목 텍스트로 찾고(목차의 같은 제목은 건너뛴다), 문단은 원문 첫머리로 찾아 템플릿으로 다시 쓰며(서술 조건은 데이터로
 분기), 표 7~12 는 셀 텍스트만 바꾸고(표 13 만 행 증감), 그림 2~4 는 SVG → 원본 형식·크기로 다시 그려 BinData 바이트를 바꾼다.
-1~3절 밖의 노드와 나머지 ZIP 항목은 바이트 그대로. 원본은 읽기만 하고 새 파일로 쓴다.
+1~3절 밖의 문단은 구조·값 그대로(ET 직렬화라 빈 태그 표기 `<x/>`→`<x />` 만 바뀔 수 있다 — 쓰기 전 문단 단위로 검사), 나머지 ZIP 항목은 바이트 그대로.
+원본은 읽기만 하고 새 파일로 쓴다. 산출물에 다시 실행할 수는 없다 — 문단을 원본(2026-09-11) 첫머리로 찾으므로 수치가 바뀌면 언제나 원본에서 다시 만든다.
 산출물: 새 HWPX(data/, 비추적), 변경 대조 JSON(추적, 본문 문장 없음), 검토 HTML(표·그림만, 추적), 구/신 문장 병기본 review_text.html(본문 포함 — data/, 비추적).
 숫자 감사: 다시 쓴 1~3절의 모든 숫자 토큰이 정본 값·비율·쪽 번호 중 하나여야 한다 — 아니면 exit 1.
 """
@@ -32,6 +33,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 import xml.etree.ElementTree as ET
+from xml.sax.saxutils import escape
 
 HERE = Path(__file__).resolve().parent
 HP = "{http://www.hancom.co.kr/hwpml/2011/paragraph}"
@@ -48,6 +50,7 @@ DEFAULT_DIFF = HERE / "docs" / "03-analysis" / "data" / "hwpx_results_refresh_20
 DEFAULT_REVIEW_DIR = HERE / "docs" / "03-analysis" / "hwpx-results-refresh"
 FONT = os.environ.get("HWPX_FONT", "/System/Library/Fonts/Supplemental/AppleGothic.ttf")   # 없으면 -font 없이 렌더 (다른 OS) — 결정론은 같은 폰트일 때만
 
+CANONICAL_DICTIONARY = "v2"                    # 보고서에 쓰는 정본 사전 — semantic_keyword_recount.EXPECTED["dictionary"] 와 같아야 한다 (테스트가 대조)
 CHAPTER_HEADING = "제3장 연구 결과"
 HEADINGS = {                                   # 절 이름 → (시작 제목, 끝 제목) — 본문 제목 텍스트와 정확히 일치해야 한다
     "textbook": ("1. 반도체고등학교 전공교과서의 안전보건 키워드 분석 주요 결과", "2. NCS 반도체 자료의 안전보건 키워드 분석 주요 결과"),
@@ -66,6 +69,7 @@ TEXTBOOK_AREA = {
 GRADE_LABEL = {1: "미흡·없음", 2: "형식적 언급", 3: "구체적 대책"}
 COLORS = {1: "#64748b", 2: "#c87a05", 3: "#087f75"}   # 보고서 원본 그림의 인쇄용 색 — 대시보드 등급 램프(--g1 #6b7280 / --g2 #d97706 / --g3 #059669)보다 한 단계 어둡다, 같은 등급 부호
 FP_KIND_LABEL = {"guideline": "보호구 착용 지침", "definition": "무재해운동 정의", "property": "톨루엔의 물성·유해성·인화성 설명"}
+VERDICTS = ("case", "case_other", "false_positive")   # accident_case_pages.json 의 판정 어휘 — 오타는 서술 건수에서 조용히 빠지지 않고 멈춘다
 PPE_MAJORITY = 0.6                  # 보호구 등급 2+3 비율이 이 이상이면 "60%를 넘었다"
 NEAR_HALF = (0.4, 0.6)              # 재료 분야 안전 비중이 이 구간이면 "절반 가까이"
 SHARE_TOLERANCE_PP = 3              # 안전 비중 vs 쪽수 비중 차이가 이 이하(%p)면 "비슷한 수준"
@@ -128,6 +132,7 @@ class Facts:
                 add(fmt(corpus.grades[g]), f"{base}.grades.{g}"); add(pct(corpus.grades[g], corpus.total), f"{base}.grades.{g}/total")
             add(str(sum(1 for k in corpus.keywords.values() if k["total"] == 0)), f"keywords[].corpora.{label}.total==0(count)")
             add(str(sum(1 for k in corpus.keywords.values() if k["total"] > 0)), f"keywords[].corpora.{label}.total>0(count)")
+            add(str(len(corpus.order)), "keywords(count)")
             for name, area in corpus.areas.items():
                 ab = f"{base}.groups[{name}]"
                 add(fmt(area["documents"]), f"{ab}.documents"); add(fmt(area["pages"]), f"{ab}.pages"); add(fmt(area["total"]), f"{ab}.total")
@@ -143,7 +148,8 @@ class Facts:
                 for aname, area in kw["areas"].items():
                     add(fmt(area["total"]), f"{kb}.groups[{aname}].total"); add(pct(area["total"], kw["total"]), f"{kb}.groups[{aname}].total/keyword")
         c = self.cases
-        for value, key in ((c.flagged, "cases.pages(count)"), (c.books, "cases.books"), (c.top_book_pages, "cases.top_book_pages"), (c.narrative, "cases.narrative"),
+        narrative_events = len({p.get("event", p["gist"]) for p in c.pages if p["verdict"] in ("case", "case_other")})
+        for value, key in ((c.flagged, "cases.pages(count)"), (c.books, "cases.books"), (c.top_book_pages, "cases.top_book_pages"), (c.narrative, "cases.narrative"), (narrative_events, "cases.narrative_events"),
                            (c.industrial_events, "cases.industrial_events"), (c.industrial_books, "cases.industrial_books"), (c.false_positive, "cases.false_positive"),
                            (c.textbook_cases, "recount.textbook.cases_pages")):
             add(str(value), key)
@@ -187,6 +193,10 @@ def load_facts(summary_path: Path = DEFAULT_SUMMARY, cases_path: Path = DEFAULT_
     run = summary.get("meta", {}).get("run") or {}
     if run.get("expected") is not True:
         raise ValueError(f"semantic_summary.json 이 가드 통과 정본이 아닙니다 (meta.run.expected={run.get('expected')!r}, force={run.get('force')!r}) — 보고서에 쓸 수 없습니다")
+    if run.get("dictionary") != CANONICAL_DICTIONARY:
+        raise ValueError(f"semantic_summary.json 의 사전이 정본({CANONICAL_DICTIONARY})이 아닙니다: {run.get('dictionary')!r}")
+    if not re.match(r"\d{4}-\d{2}-\d{2}", str(run.get("generated_at", ""))):
+        raise ValueError(f"semantic_summary.json 의 meta.run.generated_at 이 없거나 날짜가 아닙니다: {run.get('generated_at')!r} — 보고서 출처 문구에 필요합니다")
     cases = json.loads(Path(cases_path).read_text(encoding="utf-8"))
     if not recount_path or not Path(recount_path).exists():
         raise FileNotFoundError(f"recount summary.json 이 없습니다 (교과서 사고사례 쪽 수의 출처): {recount_path}")
@@ -200,8 +210,10 @@ def load_facts(summary_path: Path = DEFAULT_SUMMARY, cases_path: Path = DEFAULT_
             area = group_to_area(g["name"])
             if area is None:
                 raise ValueError(f"{corpus} 그룹 '{g['name']}' 의 분야를 모른다 — 대응표를 갱신하십시오")
+            if "pages" not in g:
+                raise ValueError(f"semantic_summary.json 의 그룹 {corpus}/{g['name']} 에 pages 가 없습니다 — 2026-09-14 이후 정본이 필요합니다 (0 으로 채우지 않는다)")
             areas[area]["documents"] += g["documents"]
-            areas[area]["pages"] += g.get("pages", 0)
+            areas[area]["pages"] += g["pages"]
             areas[area]["total"] += g["total"]
             for grade in (1, 2, 3):
                 areas[area]["grades"][grade] += g["grades"][str(grade)]
@@ -223,6 +235,9 @@ def load_facts(summary_path: Path = DEFAULT_SUMMARY, cases_path: Path = DEFAULT_
     ncs = corpus_facts("NCS", NCS_GROUP_TO_AREA.get)
     school = corpus_facts("교과서", TEXTBOOK_AREA.get)
     pages = cases["pages"]
+    unknown_verdicts = {p.get("verdict") for p in pages} - set(VERDICTS)
+    if unknown_verdicts:
+        raise ValueError(f"accident_case_pages.json 의 판정값을 모른다: {sorted(map(str, unknown_verdicts))} — {VERDICTS} 중 하나여야 합니다")
     unknown_kinds = {p["kind"] for p in pages if p["verdict"] == "false_positive" and p["kind"] not in FP_KIND_LABEL}
     if unknown_kinds:
         raise ValueError(f"accident_case_pages.json 의 오탐 유형을 모른다: {sorted(unknown_kinds)} — FP_KIND_LABEL 에 추가하십시오")
@@ -363,7 +378,10 @@ def locate_sections(root: ET.Element) -> dict[str, Section]:
         ends = [i for i in range(body_start, len(texts)) if texts[i] == end_heading]
         if len(starts) != 1 or not ends:
             raise ValueError(f"절 '{name}' 경계를 찾지 못했습니다: 시작 {len(starts)}회, 끝 {len(ends)}회")
-        end = min(e for e in ends if e > starts[0])
+        after = [e for e in ends if e > starts[0]]
+        if not after:
+            raise ValueError(f"절 '{name}' 끝 제목이 시작 뒤에 없습니다 (시작 {starts[0]}, 끝 {ends})")
+        end = min(after)
         sections[name] = Section(name, starts[0], end, tops[starts[0]:end])
     return sections
 
@@ -440,6 +458,30 @@ def eun(word: str) -> str:
     return word + ("는" if _jong(word) in (0, -1) else "은")
 
 
+_DIGIT_JONG = {"0": 1, "1": 8, "2": 0, "3": 1, "4": 0, "5": 0, "6": 1, "7": 1, "8": 1, "9": 0}   # 영·일·이·삼·사·오·육·칠·팔·구 의 받침 유무
+
+
+def iga(word: str) -> str:
+    """주격 조사 — '등급 1이', '등급 2가', '등급 3이' (숫자는 읽는 소리의 받침으로)."""
+    jong = _DIGIT_JONG[word[-1]] if word and word[-1].isdigit() else _jong(word)
+    return word + ("가" if jong in (0, -1) else "이")
+
+
+def _share_rel(share: float, overall: float) -> str:
+    """등급 3 비율을 전체 평균과 견준 관계 — SHARE_TOLERANCE_PP 안이면 '비슷', 그 밖은 '높'/'낮' (F1: 문장이 이 값으로 갈라진다)."""
+    tol = SHARE_TOLERANCE_PP / 100
+    if share >= overall + tol:
+        return "높"
+    if share < overall - tol:
+        return "낮"
+    return "비슷"
+
+
+def provenance(f: "Facts") -> tuple[str, str]:
+    """(정본 날짜, 사전 버전) — 문장의 출처 문구는 semantic_summary.json 의 meta.run 에서만 온다 (F3: 리터럴 금지)."""
+    return str(f.run["generated_at"])[:10], str(f.run["dictionary"])
+
+
 def _rank_phrase(corpus: CorpusFacts, names: list[str]) -> str:
     rows = sorted(((n, corpus.keywords[n]["total"]) for n in names), key=lambda kv: (-kv[1], corpus.order.index(kv[0])))
     return ", ".join(f"{q(n)} {fmt(v)}건" for n, v in rows)
@@ -471,6 +513,7 @@ def textbook_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
         a = s.areas[area]
         return f"{lead} {a['documents']}권, 총 {fmt(a['pages'])}쪽으로 전체의 약 {pct(a['pages'], pages_total)}를 차지하였다."
     largest_area = max(AREA_ORDER, key=lambda a: s.areas[a]["pages"])
+    run_date, dictionary = provenance(f)
     def zero_or_count(name, label):                       # "‘X’는 전혀 검출되지 않았고" / "‘X’는 N건에 그쳤고" — 0 주장은 데이터로만
         return f"{eun(q(label))} 전혀 검출되지 않았고" if k(name) == 0 else f"{eun(q(label))} {fmt(k(name))}건에 그쳤고"
     conditions = {
@@ -482,7 +525,7 @@ def textbook_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
     }
     return _with_conditions([
         ("본 연구에서는 반도체고등학교의 전공교과서를 대상으로",
-         f"본 연구에서는 반도체고등학교의 전공교과서를 대상으로 안전보건교육 내용의 실태를 분석하였다. 분석 대상은 교과서 {s.documents}권, 총 {fmt(pages_total)}페이지이며, ‘사망, 부상, 화학물질, 폭발, 감전, 직업병’ 등 {len(s.order)}개의 안전보건 관련 주요 키워드를 중심으로 AI 기반 텍스트 분석과 수기 검토를 병행하였다. 수치는 2026-09-14 정본 재검산(의미 표현 사전 v2, 출현건수 기준) 값이다."),
+         f"본 연구에서는 반도체고등학교의 전공교과서를 대상으로 안전보건교육 내용의 실태를 분석하였다. 분석 대상은 교과서 {s.documents}권, 총 {fmt(pages_total)}페이지이며, ‘사망, 부상, 화학물질, 폭발, 감전, 직업병’ 등 {len(s.order)}개의 안전보건 관련 주요 키워드를 중심으로 AI 기반 텍스트 분석과 수기 검토를 병행하였다. 수치는 {run_date} 정본 재검산(의미 표현 사전 {dictionary}, 출현건수 기준) 값이다."),
         ("키워드 분석 결과",
          f"키워드 분석 결과 {detected}개 키워드가 검출되었고, {len(zero)}개 키워드는 한 번도 검출되지 않았다. 전체적으로는 {q(top6[0][0])}이 {fmt(top6[0][1]['total'])}건으로 가장 많았으며, "
          + ", ".join(f"{q(n)} {fmt(v['total'])}건" for n, v in top6[1:]) + " 등으로 나타났다. "
@@ -531,6 +574,58 @@ def _with_conditions(entries: list[tuple[str, str]], conditions: dict[str, dict]
     return [(prefix, text, conditions.get(prefix, {})) for prefix, text in entries]
 
 
+def _safety_grade_sentences(safety: dict, gmax: int) -> str:
+    """‘안전’ 의 등급 분포 문장 — 최다 등급이 1·2 면 '형식적' 해석, 3 이면 반대 해석 (F2: gmax 가정 없음)."""
+    share = lambda g: f"{fmt(safety['grades'][g])}건({pct(safety['grades'][g], safety['total'])})"
+    if gmax == 3:
+        return (f"이 중 {iga('등급 3')} {share(3)}으로 가장 많았고, 등급 1은 {share(1)}, 등급 2는 {share(2)}였다. "
+                "‘안전’이 등장하는 대목의 상당수가 구체적 조치와 함께 제시되었다고 해석할 수 있다.")
+    other = 2 if gmax == 1 else 1
+    return (f"그러나 이 중 {iga('등급 ' + str(gmax))} {share(gmax)}으로 가장 많았고, 등급 {other}도 {share(other)}에 달했다. 반면 등급 3은 {share(3)}으로 상대적으로 낮았다. "
+            "‘안전’이라는 단어 자체는 자주 등장하지만, 실제로는 ‘안전에 유의한다.’ 수준의 일반적 표현이 많고, 구체적 예방 행동으로 연결되는 교육은 상대적으로 부족하다고 해석할 수 있다.")
+
+
+def _equipment_case_sentences(c: CaseFacts, equip_pages: list[dict], equip_narrative: list[dict]) -> tuple[str, bool]:
+    """장비 분야의 사고 사례 집중 문장과, 최다 교재가 장비 분야 책이라 『』 로 부를 수 있는지 (F2: 최다 교재 분야·오탐 0쪽 가정 없음)."""
+    equip_flagged = c.by_area_flagged.get("장비", 0)
+    if equip_flagged == 0:
+        return f"사고 사례로 자동 판정된 {c.flagged}쪽 중 이 분야에 속한 쪽은 없었다(3절 참조).", False
+    top_area = next(p["area"] for p in c.pages if p["title"] == c.top_book)
+    top_in_equipment = top_area == "장비"
+    where = (f"이 분야의 『{c.top_book}』 한 권에 몰려 있어" if top_in_equipment and c.top_book_pages == equip_flagged
+             else f"이 분야에 몰려 있고 그중 {c.top_book_pages}쪽이 『{c.top_book}』 한 권에 있어" if top_in_equipment
+             else "이 분야에 몰려 있어")
+    lead = (f"이 분야의 가장 큰 특징은 사고 사례 집중이다. 사고 사례로 자동 판정된 {c.flagged}쪽 중 {equip_flagged}쪽({pct(equip_flagged, c.flagged)})이 {where}, "
+            "반도체 교과서에서 사고 교육이 장비 중심으로 이루어지고 있음을 알 수 있다. ")
+    rest = len(equip_pages) - len(equip_narrative)
+    kinds = ro("·".join(FP_KIND_LABEL[k] for k, _ in Counter(p["kind"] for p in equip_pages if p["verdict"] == "false_positive").most_common()))
+    gists = ", ".join(p["gist"].split(" (")[0] for p in equip_narrative)
+    if equip_narrative and rest:
+        tail = f"다만 원문을 확인하면 그중 실제 사고 서술은 {len(equip_narrative)}쪽({gists})이고 나머지 {rest}쪽은 {kinds}, 사고 사례 자체는 이 분야에서도 매우 적다(3절 참조)."
+    elif equip_narrative:
+        tail = f"원문을 확인하면 그중 {len(equip_narrative)}쪽({gists}) 모두 실제 사고 서술이다(3절 참조)."
+    else:
+        tail = f"다만 원문을 확인하면 그중 실제 사고 서술은 없고 {rest}쪽 모두 {kinds}, 사고 사례 자체는 이 분야에서도 매우 적다(3절 참조)."
+    return lead + tail, top_in_equipment
+
+
+def _g3_vs_overall_sentences(rel: dict[str, str], overall: str) -> str:
+    """‘작업환경’·‘중독’ 의 등급 3 비율을 전체 평균과 견준 해석 문장 (F1: '수준 이상' 은 둘 다 평균을 웃돌 때만)."""
+    first = {"높": f"전체 평균({overall}) 수준 이상의", "비슷": f"전체 평균({overall})과 비슷한 수준의", "낮": f"전체 평균({overall})에 못 미치는 수준의"}
+    again = {"높": "그를 웃도는 수준의", "비슷": "그와 비슷한 수준의", "낮": "그에 못 미치는 수준의"}
+    names = list(rel)
+    if len(set(rel.values())) == 1:
+        degree = first[rel[names[0]]]
+    else:
+        degree = f"{q(names[0])}은 {first[rel[names[0]]]}, {q(names[1])}은 {again[rel[names[1]]]}"
+    lead = f"이 결과는 해당 키워드가 교과서에 자주 등장하지는 않더라도, 일단 등장하는 경우에는 {degree} 구체적인 설명이 수반되는 경향이 있음을 보여준다. "
+    if "낮" in rel.values():
+        return lead + "다시 말하면, 작업환경이나 중독 관련 내용은 양적으로 부족할 뿐 아니라 질적으로도 충실하다고 보기는 어렵다."
+    if set(rel.values()) == {"높"}:
+        return lead + "다시 말하면, 작업환경이나 중독 관련 내용은 양적으로는 부족하지만 질적으로는 상대적으로 충실한 편으로 해석할 수 있다."
+    return lead + "다시 말하면, 작업환경이나 중독 관련 내용은 양적으로는 부족하지만 질적으로는 전체 평균에 뒤지지 않는 편으로 해석할 수 있다."
+
+
 def ncs_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
     n = f.ncs
     c = f.cases
@@ -552,32 +647,34 @@ def ncs_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
         return f"{lead} 총 {a['documents']}권, {fmt(a['pages'])}쪽에서 ‘안전’ 키워드가 {fmt(sa)}건 검출되어, 전체 {fmt(safety['total'])}건 중 약 {area_share(area)}를 차지하였다."
     equip_rank = safety_rank.index("장비") + 1
     equip_rel = "가장 높아" if equip_rank == 1 else f"{AREA_LABEL[safety_rank[0]]} 다음으로 높아" if equip_rank == 2 else f"{equip_rank}번째로 높아"
-    top_area_book = c.top_book
     equip_pages = [p for p in c.pages if p["area"] == "장비"]
     equip_narrative = [p for p in equip_pages if p["verdict"] in ("case", "case_other")]
-    equip_fp_kinds = Counter(p["kind"] for p in equip_pages if p["verdict"] == "false_positive")
-    kind_label = FP_KIND_LABEL
-    workenv_g3 = k("작업환경")["grades"][3] / k("작업환경")["total"] if k("작업환경")["total"] else 0.0
-    poison_g3 = k("중독")["grades"][3] / k("중독")["total"] if k("중독")["total"] else 0.0
+    equip_sentences, equip_top_book = _equipment_case_sentences(c, equip_pages, equip_narrative)
     overall_g3 = n.grades[3] / n.total
-    workenv_vs_overall = "보다 낮았다" if min(workenv_g3, poison_g3) < overall_g3 - SHARE_TOLERANCE_PP / 100 else "과 비슷하거나 그보다 높았다"   # 둘 다 성립할 때만 "높았다"
+    g3_rel = {name: _share_rel(k(name)["grades"][3] / k(name)["total"] if k(name)["total"] else 0.0, overall_g3) for name in ("작업환경", "중독")}
+    workenv_vs_overall = "보다 낮았다" if "낮" in g3_rel.values() else "과 비슷하거나 그보다 높았다"   # 둘 다 평균 아래가 아닐 때만 "비슷하거나 높았다"
+    safety_rank_kw = [name for name, _ in n.ranked()].index("안전") + 1
+    grade2_rank = sorted((1, 2, 3), key=lambda g: (-n.grades[g], g)).index(2) + 1
+    run_date, dictionary = provenance(f)
     conditions = {
-        "교과서의 전체 키워드 중 ‘안전’이": {"safety_top_grade": gmax},
+        "교과서의 전체 키워드 중 ‘안전’이": {"safety_top_grade": gmax, "safety_rank": safety_rank_kw},
         "‘작업환경’은": {"g3_vs_overall": workenv_vs_overall},
         "사고 관련 주요 키워드 검출 건수는": {"accident_keyword_order": [n for n, _ in sorted(((x, k(x)["total"]) for x in accident_kw), key=lambda kv: (-kv[1], n.order.index(kv[0])))]},
         "‘보호구’는": {"ppe_over_60pct": ppe_majority},
         "한편 ‘공정안전관리’는": {"psm_all_grade3": psm_all3},
         "한편 ‘공정안전관리’는 총": {"psm_all_grade3": psm_all3},
         "반도체 제조 분야는 총": {"safety_share_vs_pages": _compare_share(safety["areas"]["제조"]["total"] / safety["total"], n.areas["제조"]["pages"] / pages_total).strip()},
-        "반도체 장비 분야는 총": {"equipment_safety_rank": equip_rank, "equipment_narrative_pages": len(equip_narrative)},
+        "반도체 장비 분야는 총": {"equipment_safety_rank": equip_rank, "equipment_narrative_pages": len(equip_narrative), "equipment_top_book": equip_top_book},
         "반도체 재료 분야는 총": {"materials_is_top": safety_rank[0] == "재료", "near_half": near_half},
-        "등급 2는 안전보건 관련 키워드가 확인되지만": {"largest_grade": _grade_max(n.grades)},
+        "등급 2는 안전보건 관련 키워드가 확인되지만": {"largest_grade": _grade_max(n.grades), "grade2_rank": grade2_rank},
+        "또한 ‘작업환경’은 총": {"g3_vs_overall": g3_rel},
     }
     return _with_conditions([
         ("NCS 기반 반도체 자료를 대상으로",
-         f"NCS 기반 반도체 자료를 대상으로 안전보건교육 내용의 실태를 분석하였다. 분석 대상은 자료 {n.documents}권, 총 {fmt(pages_total)}쪽(교재 마크다운의 쪽 표식 최댓값 합)이며, ’사망, 부상, 화학물질, 폭발, 감전, 직업병’ 등 {len(n.order)}개의 안전보건 관련 주요 키워드를 중심으로 AI 기반 텍스트 분석과 수기 검토를 병행하였다. 수치는 2026-09-14 정본 재검산(의미 표현 사전 v2, 출현건수 기준, 총 {fmt(n.total)}건) 값이다."),
+         f"NCS 기반 반도체 자료를 대상으로 안전보건교육 내용의 실태를 분석하였다. 분석 대상은 자료 {n.documents}권, 총 {fmt(pages_total)}쪽(교재 마크다운의 쪽 표식 최댓값 합)이며, ‘사망, 부상, 화학물질, 폭발, 감전, 직업병’ 등 {len(n.order)}개의 안전보건 관련 주요 키워드를 중심으로 AI 기반 텍스트 분석과 수기 검토를 병행하였다. 수치는 {run_date} 정본 재검산(의미 표현 사전 {dictionary}, 출현건수 기준, 총 {fmt(n.total)}건) 값이다."),
         ("교과서의 전체 키워드 중 ‘안전’이",
-         f"교과서의 전체 키워드 중 ‘안전’이 총 {fmt(safety['total'])}건으로 검출 건수가 가장 많았다. 그러나 이 중 등급 {gmax}이 {fmt(safety['grades'][gmax])}건({pct(safety['grades'][gmax], safety['total'])})으로 가장 많았고, 등급 2도 {fmt(safety['grades'][2])}건({pct(safety['grades'][2], safety['total'])})에 달했다. 반면 등급 3은 {fmt(safety['grades'][3])}건({pct(safety['grades'][3], safety['total'])})으로 상대적으로 낮았다. ‘안전’이라는 단어 자체는 자주 등장하지만, 실제로는 ‘안전에 유의한다.’ 수준의 일반적 표현이 많고, 구체적 예방 행동으로 연결되는 교육은 상대적으로 부족하다고 해석할 수 있다."),
+         f"교과서의 전체 키워드 중 ‘안전’이 총 {fmt(safety['total'])}건으로 검출 건수가 {'가장 많았다' if safety_rank_kw == 1 else str(safety_rank_kw) + '번째로 많았다'}. "
+         + _safety_grade_sentences(safety, gmax)),
         ("사고 관련 주요 키워드 검출 건수는",
          f"사고 관련 주요 키워드 검출 건수는 {_rank_phrase(n, accident_kw)} 순으로 나타났다. ‘누출’, ‘인화’, ‘폭발’, ‘화재’는 비교적 빈도가 높았는데, 이는 화학물질·특수 가스 사용 등 반도체산업의 특성이 교과서에 일정 부분 반영된 결과로 보인다."),
         ("화학물질 관련 키워드는",
@@ -605,24 +702,25 @@ def ncs_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
         ("그러나 등급별 분석에서는 등급 2(형식적 언급)의 비중이 높아",
          f"그러나 등급별 분석에서는 등급 2(형식적 언급)의 비중이 높아, 위험 요인과 예방조치가 구체적으로 연결되지 않는 경우가 많았다. 또한 사고 사례로 자동 판정된 쪽은 이 분야에서 {c.by_area_flagged.get('제조', 0)}쪽으로, 실제 공정에서 발생할 수 있는 다양한 재해 유형을 충분히 반영하지 못한다. 즉, 반도체 제조 분야는 안전교육이 있긴 하지만, 대부분이 공정 설명에 부수적으로 포함된 수준이며, 독립적이고 체계적인 안전보건교육으로 보기에는 한계가 있다."),
         ("반도체 장비 분야는 총",
-         area_intro("장비", "반도체 장비 분야는") + f" 이는 {equip_rel}, 안전보건교육이 비교적 많이 포함된 분야이다. 이 분야의 가장 큰 특징은 사고 사례 집중이다. 사고 사례로 자동 판정된 {c.flagged}쪽 중 {c.by_area_flagged.get('장비', 0)}쪽({pct(c.by_area_flagged.get('장비', 0), c.flagged)})이 이 분야의 『{top_area_book}』 한 권에 몰려 있어, 반도체 교과서에서 사고 교육이 장비 중심으로 이루어지고 있음을 알 수 있다. 다만 원문을 확인하면 그중 실제 사고 서술은 {len(equip_narrative)}쪽({', '.join(p['gist'].split(' (')[0] for p in equip_narrative)})이고 나머지 {len(equip_pages) - len(equip_narrative)}쪽은 {ro('·'.join(kind_label[k] for k, _ in equip_fp_kinds.most_common()))}, 사고 사례 자체는 이 분야에서도 매우 적다(3절 참조)."),
+         area_intro("장비", "반도체 장비 분야는") + f" 이는 {equip_rel}, 안전보건교육이 비교적 많이 포함된 분야이다. " + equip_sentences),
         ("반도체 재료 분야는 총",
          area_intro("재료", "반도체 재료 분야는").replace("차지하였다.", f"차지하여 분야 중 {'가장 높은' if safety_rank[0] == '재료' else str(safety_rank.index('재료') + 1) + '번째'} 비중을 보였다.")
          + (" 전체 안전보건교육 내용의 절반 가까이가 이 분야에 집중된 셈이다." if near_half else "")),
         ("실제로 전체적으로 가장 많이 검출된 키워드인 ‘안전’의 경우에도",
          f"실제로 전체적으로 가장 많이 검출된 키워드인 ‘안전’의 경우에도 총 {fmt(safety['total'])}건 중 {fmt(safety['grades'][1])}건({pct(safety['grades'][1], safety['total'])})이 등급 1로 분류되었다. 교과서 내에서 안전 관련 용어가 부분적으로 사용되더라도 실제로는 공정 설명, 설비 설명, 제품 설명에 부수적으로 언급된 것에 불과한 경우가 적지 않다는 점을 보여준다. 이러한 결과는 현재 반도체 교과서에서 안전보건이 독립적 교육 내용으로 충분히 자리 잡지 못하고 있음을 시사한다."),
         ("등급 2는 안전보건 관련 키워드가 확인되지만",
-         f"등급 2는 안전보건 관련 키워드가 확인되지만, 내용이 대체로 선언적·추상적 수준에 머무는 경우를 의미한다. 대표적으로 “안전에 유의한다”, “작업 시 주의한다”, “보호구를 착용한다”, “화학물질 취급에 주의가 필요하다”와 같은 표현이 여기에 해당한다. 이러한 내용은 안전보건의 중요성을 암시하거나 기본적인 경각심을 주는 데는 의미가 있으나, 어떤 위험 요인이 존재하며, 그 위험을 줄이기 위해 어떤 조치를 어떻게 취해야 하는지까지는 충분히 설명하지 못한다. 실제로 본 연구에서 가장 두드러진 결과는 등급 2의 비중이 가장 높다는 점이었다. 전체 분석 결과, 등급 1(미흡·없음)은 {fmt(n.grades[1])}건, 등급 2(형식적 언급)는 {fmt(n.grades[2])}건, 등급 3(구체적 대책)은 {fmt(n.grades[3])}건으로 나타나 등급 {_grade_max(n.grades)}가 가장 많았으며, 이는 전체의 약 {pct(n.grades[_grade_max(n.grades)], n.total)}를 차지하였다. 특히 ‘안전’ 키워드는 총 {fmt(safety['total'])}건 중 {fmt(safety['grades'][2])}건({pct(safety['grades'][2], safety['total'])})이 등급 2였다. 이 결과는 현재 반도체 교과서의 안전보건교육이 “안전은 중요하다”는 메시지를 전달하는 수준에는 도달했지만, 학생이 실제 현장에서 위험을 식별하고 예방 행동을 수행할 수 있도록 돕는 수준까지는 충분히 발전하지 못했다는 점을 보여준다."),
+         f"등급 2는 안전보건 관련 키워드가 확인되지만, 내용이 대체로 선언적·추상적 수준에 머무는 경우를 의미한다. 대표적으로 “안전에 유의한다”, “작업 시 주의한다”, “보호구를 착용한다”, “화학물질 취급에 주의가 필요하다”와 같은 표현이 여기에 해당한다. 이러한 내용은 안전보건의 중요성을 암시하거나 기본적인 경각심을 주는 데는 의미가 있으나, 어떤 위험 요인이 존재하며, 그 위험을 줄이기 위해 어떤 조치를 어떻게 취해야 하는지까지는 충분히 설명하지 못한다. {'실제로 본 연구에서 가장 두드러진 결과는 등급 2의 비중이 가장 높다는 점이었다.' if grade2_rank == 1 else f'실제로 본 연구에서 등급 2(형식적 언급)의 비중은 세 등급 중 {grade2_rank}번째였다.'} 전체 분석 결과, 등급 1(미흡·없음)은 {fmt(n.grades[1])}건, 등급 2(형식적 언급)는 {fmt(n.grades[2])}건, 등급 3(구체적 대책)은 {fmt(n.grades[3])}건으로 나타나 {iga('등급 ' + str(_grade_max(n.grades)))} 가장 많았으며, 이는 전체의 약 {pct(n.grades[_grade_max(n.grades)], n.total)}를 차지하였다. 특히 ‘안전’ 키워드는 총 {fmt(safety['total'])}건 중 {fmt(safety['grades'][2])}건({pct(safety['grades'][2], safety['total'])})이 등급 2였다. 이 결과는 현재 반도체 교과서의 안전보건교육이 “안전은 중요하다”는 메시지를 전달하는 수준에는 도달했지만, 학생이 실제 현장에서 위험을 식별하고 예방 행동을 수행할 수 있도록 돕는 수준까지는 충분히 발전하지 못했다는 점을 보여준다."),
         ("등급 3은 위험 요인, 사고 유형, 건강 영향",
          f"등급 3은 위험 요인, 사고 유형, 건강 영향, 예방 대책, 작업 절차, 보호구 사용법, 비상 대응 등이 구체적으로 제시되어 실제 행동과 연결 가능한 수준의 교육 내용을 의미한다. 이 등급은 단순히 “주의하라”는 수준을 넘어, 예를 들어 “불산 취급 시 보호장갑과 보호안경을 착용해야 하며 피부 접촉 시 즉시 세척하고 응급조치를 시행한다”와 같이 위험 요인–예방조치–대응 방법이 연계되어 설명되는 경우를 포함한다. 전체적으로 등급 3은 {fmt(n.grades[3])}건으로 전체의 약 {pct(n.grades[3], n.total)}를 차지하였다. 이는 교과서 내에 구체적 안전보건 내용이 일정 부분 존재함을 보여주지만, 여전히 형식적 언급(등급 2)에 비해 적은 수준이다. 즉, 현재 교과서는 구체적이고 실천 가능한 안전교육을 일부 포함하고 있으나, 전체 교육 구조를 대표할 정도로 충분한 비중은 아니라고 볼 수 있다. 키워드별로 보면, 등급 3의 비율이 상대적으로 높은 항목도 확인되었다. 예를 들어 ‘보호구’는 총 {fmt(ppe['total'])}건 중 {fmt(ppe['grades'][3])}건({pct(ppe['grades'][3], ppe['total'])})이 등급 3으로 분류되었다. 이는 보호구 관련 내용이 등장하는 경우에는 비교적 구체적으로 설명되는 비율이 높다는 뜻이다. 즉, 안전화, 헬멧, 보호안경, 장갑 등 보호구의 종류나 착용 필요성이 실제 작업과 연결되어 설명되는 경우가 많았음을 의미한다."),
         ("또한 ‘작업환경’은 총",
-         f"또한 ‘작업환경’은 총 {fmt(k('작업환경')['total'])}건 중 {pct(k('작업환경')['grades'][3], k('작업환경')['total'])}, ‘중독’은 총 {fmt(k('중독')['total'])}건 중 {pct(k('중독')['grades'][3], k('중독')['total'])}가 등급 3에 해당하였다. 이 결과는 해당 키워드가 교과서에 자주 등장하지는 않더라도, 일단 등장하는 경우에는 전체 평균({pct(n.grades[3], n.total)}) 수준 이상의 구체적인 설명이 수반되는 경향이 있음을 보여준다. 다시 말하면, 작업환경이나 중독 관련 내용은 양적으로는 부족하지만 질적으로는 상대적으로 충실한 편으로 해석할 수 있다."),
+         f"또한 ‘작업환경’은 총 {fmt(k('작업환경')['total'])}건 중 {pct(k('작업환경')['grades'][3], k('작업환경')['total'])}, ‘중독’은 총 {fmt(k('중독')['total'])}건 중 {pct(k('중독')['grades'][3], k('중독')['total'])}가 등급 3에 해당하였다. "
+         + _g3_vs_overall_sentences(g3_rel, pct(n.grades[3], n.total))),
         ("한편 ‘공정안전관리’는 총",
          f"한편 ‘공정안전관리’는 총 {fmt(k('공정안전관리')['total'])}건, ‘PSM’은 총 {fmt(k('PSM')['total'])}건으로 절대 빈도는 매우 낮았으나, "
          + ("특히 공정안전관리의 경우 검출된 내용이 모두 등급 3에 해당하였다. " if psm_all3 else f"공정안전관리의 경우 {fmt(k('공정안전관리')['grades'][3])}건({pct(k('공정안전관리')['grades'][3], k('공정안전관리')['total'])})이 등급 3에 해당하였다. ")
          + "이는 해당 개념이 교과서에 거의 포함되어 있지 않지만, 포함되는 경우에는 비교적 구체적이고 전문적인 내용으로 제시되고 있음을 의미한다. 그러나 빈도 자체가 매우 적기 때문에 이를 근거로 교과서 전반의 공정안전교육 수준이 충분하다고 평가하기는 어렵다."),
         ("주: 단위: 건.",
-         f"주: 단위: 건. 등급 비율의 분모: {fmt(n.total)}건(2026-09-14 정본, 의미 표현 사전 v2, 등급 미확정 0건). 등급은 출현이 놓인 페이지의 판정값을 출현별로 연결한 값임."),
+         f"주: 단위: 건. 등급 비율의 분모: {fmt(n.total)}건({run_date} 정본, 의미 표현 사전 {dictionary}, 등급 미확정 0건). 등급은 출현이 놓인 페이지의 판정값을 출현별로 연결한 값임."),
     ], conditions)
 
 
@@ -635,11 +733,12 @@ def case_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
     top_area = next(p["area"] for p in c.pages if p["title"] == c.top_book)
     top_area_label = {"장비": "장비 유지보수와 점검 작업", "재료": "재료·화학물질 취급", "제조": "제조 공정", "개발": "개발"}[top_area]
     industrial_areas = sorted({p["area"] for p in c.pages if p["verdict"] == "case"}, key=AREA_ORDER.index)
+    narrative_events = len({p.get("event", p["gist"]) for p in c.pages if p["verdict"] in ("case", "case_other")})   # 사건 수 — 같은 사건의 중복 게재는 하나
     fp_breakdown = ", ".join(f"{FP_KIND_LABEL[kind]}({n}쪽)" for kind, n in kinds.most_common())
     conditions = {
         "본 연구에서는 NCS 반도체 교과서에 수록된 사고, 부상, 질병 관련 사례를": {"flagged": c.flagged, "narrative": c.narrative, "industrial_events": c.industrial_events, "false_positive": c.false_positive},
         "사례의 분포를 보면": {"areas_without_cases": areas_without, "top_area": top_area},
-        "이러한 분석 결과를 종합하면, NCS 반도체 교과서에 수록된 사고 사례는": {"industrial_areas": industrial_areas},
+        "이러한 분석 결과를 종합하면, NCS 반도체 교과서에 수록된 사고 사례는": {"industrial_areas": industrial_areas, "narrative_events": narrative_events},
     }
     return _with_conditions([
         ("본 연구에서는 NCS 반도체 교과서에 수록된 사고, 부상, 질병 관련 사례를",
@@ -655,7 +754,7 @@ def case_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
         ("또한 사고 사례는 대부분 위험 상황을 단순히 언급하는 수준에",
          "또한 사고 사례는 위험 상황을 단순히 언급하는 수준에 머물러 있으며, 위험 요인 분석이나 예방조치와 연계성이 부족하였다. 이는 사고 사례가 교육적 학습 자료로 활용되기보다는 참고 수준의 정보로 제시되고 있음을 의미한다. 결과적으로 현재 교과서는 사고가 있음을 알리는 기능은 수행하고 있으나, 사고를 통한 위험 인식 강화나 예방 행동 유도 측면에서는 제한적인 역할에 머무르고 있다."),
         ("이러한 분석 결과를 종합하면, NCS 반도체 교과서에 수록된 사고 사례는",
-         f"이러한 분석 결과를 종합하면, NCS 반도체 교과서에 수록된 사고 사례는 양적·질적 측면에서 모두 제한적인 수준이며, 반도체산업의 실제 위험 구조를 충분히 반영하지 못한다고 판단된다. 특히 실제 사고 서술이 {c.narrative}쪽·{c.industrial_events}건에 불과하고, 그마저 {'·'.join(a + ' 분야' for a in industrial_areas)}의 {c.industrial_books}권에 중복 게재된 화학물질 급성 사고 위주이며, 사고 원인과 예방 대책이 충분히 제시되지 않는다는 점은 교육적 활용도를 저해하는 주요 요인이다. 아울러 자동 판정 {c.flagged}쪽 중 {c.false_positive}쪽이 오탐이었다는 점은 키워드 기반 자동 판정만으로 사고 사례를 세어서는 안 되며 원문 확인이 필요함을 보여준다."),
+         f"이러한 분석 결과를 종합하면, NCS 반도체 교과서에 수록된 사고 사례는 양적·질적 측면에서 모두 제한적인 수준이며, 반도체산업의 실제 위험 구조를 충분히 반영하지 못한다고 판단된다. 특히 실제 사고 서술이 {c.narrative}쪽·{narrative_events}건(그중 반도체 산업재해 {c.industrial_events}건)에 불과하고, 그마저 {'·'.join(a + ' 분야' for a in industrial_areas)}의 {c.industrial_books}권에 중복 게재된 화학물질 급성 사고 위주이며, 사고 원인과 예방 대책이 충분히 제시되지 않는다는 점은 교육적 활용도를 저해하는 주요 요인이다. 아울러 자동 판정 {c.flagged}쪽 중 {c.false_positive}쪽이 오탐이었다는 점은 키워드 기반 자동 판정만으로 사고 사례를 세어서는 안 되며 원문 확인이 필요함을 보여준다."),
     ], conditions)
 
 
@@ -746,7 +845,7 @@ MIN_GLYPH_PX = 12                   # 한글 하한 (CLAUDE.md 디자인 토큰 
 
 def _svg_text(x, y, text, size=28, fill="#243244", anchor="start", weight="normal"):
     size = max(MIN_GLYPH_PX, int(size))
-    return f'<text x="{x}" y="{y}" font-family="AppleGothic, sans-serif" font-size="{size}" fill="{fill}" text-anchor="{anchor}" font-weight="{weight}">{text}</text>'
+    return f'<text x="{x}" y="{y}" font-family="AppleGothic, sans-serif" font-size="{size}" fill="{fill}" text-anchor="{anchor}" font-weight="{weight}">{escape(str(text))}</text>'   # 정본 JSON 의 문자열이라도 SVG 로는 escape 해서 넣는다
 
 
 def grade_bars_svg(width: int, height: int, title: str, subtitle: str, grades: dict[int, int], total: int, note: str) -> str:
@@ -866,7 +965,7 @@ def write_hwpx(src: Path, out: Path, section_xml: bytes, bindata: dict[str, byte
             raise ValueError("임시 파일이 입력과 같습니다")
         with zipfile.ZipFile(src) as zin, zipfile.ZipFile(tmp, "w") as zout:
             for info in zin.infolist():
-                data = zin.read(info.filename)
+                data = zin.read(info)                              # 이름이 아니라 항목으로 — 같은 이름이 둘인 ZIP 에서도 각자 바이트
                 if info.filename == SECTION_ENTRY:
                     data = section_xml
                 elif info.filename in bindata:
@@ -886,7 +985,7 @@ def numbers_in(text: str) -> list[str]:
     return NUMBER_TOKEN.findall(text)
 
 
-ALLOWED_TOKENS = {"0", "1", "2", "3", "4", "30", "100.0%", "60%"}      # 등급·분야 번호, 30개 키워드, 합계 비율, 60% 기준 (사고 연도는 cases.gist 에서 온다)
+ALLOWED_TOKENS = {"0", "1", "2", "3", "4", "100.0%", "60%"}            # 등급·분야 번호, 합계 비율, 60% 기준 (키워드 수는 value_index 의 keywords(count), 사고 연도는 cases.gist 에서 온다)
 STRIP_BEFORE_AUDIT = re.compile(r"\d{4}-\d{2}-\d{2}|(?:표|그림)\s*\d+\.?|\d+\)\s|\(\d+\)|등급\s*1~3")   # 날짜·표/그림 번호·목차 번호는 수치가 아니다
 
 
@@ -902,15 +1001,8 @@ def audit_numbers(texts: list[str], facts: Facts) -> list[str]:
 
 
 def section_texts(section: Section) -> list[str]:
-    out = []
-    for p in section.paragraphs:
-        if has_object(p, "tbl"):
-            for tbl in p.findall(f".//{HP}tbl"):
-                for tcs in table_rows(tbl):
-                    out.extend(cell_text(tc) for tc in tcs)
-        else:
-            out.append(direct_text(p))
-    return out
+    """감사 대상 글 — 절의 모든 문단과 그 안에 중첩된 문단(표 셀, 필드·메모 subList) 전부. 다시 쓰는 범위보다 넓게 본다."""
+    return [direct_text(q) for p in section.paragraphs for q in p.iter(HP + "p")]
 
 
 def sha256(data: bytes) -> str:
@@ -1090,7 +1182,7 @@ def write_review(review_dir: Path, facts: Facts, table_specs, images) -> None:
         parts.append("</table></div>")
     for caption, data, kind in images:
         if kind == "BMP":
-            data = subprocess.run(["magick", "BMP:-", "PNG:-"], input=data, check=True, capture_output=True).stdout
+            data = subprocess.run(["magick", "BMP:-", "-strip", "PNG:-"], input=data, check=True, capture_output=True).stdout   # -strip: 날짜 청크 없이 — 같은 그림이면 review.html 도 같은 바이트
         parts.append(f"<h2>{html.escape(caption)}</h2><img alt=\"{html.escape(caption)}\" src=\"data:image/png;base64,{base64.b64encode(data).decode()}\">")
     parts.append("</body></html>")
     (review_dir / "review.html").write_text("".join(parts), encoding="utf-8")
@@ -1130,7 +1222,7 @@ def main(argv: list[str] | None = None) -> int:
         print("정본에 없는 숫자:", ", ".join(diff["audit"]["unmatched"]))
         return 1
     if not args.no_render:
-        print(f"→ {args.out}")
+        print(f"→ {public(args.out)}")
     return 0
 
 

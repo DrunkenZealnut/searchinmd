@@ -197,10 +197,10 @@ def sheet_and_key(items: list[dict], documents: list[Document] | None = None, se
 
 def write_sample(items: list[dict], sheet_path: Path, key_path: Path, documents: list[Document] | None = None, force: bool = False,
                  seed: int = SEED, per_expression: int = PER_EXPRESSION, targets=REVIEW_TARGETS) -> dict:
-    if _under_tracked_docs(sheet_path):
-        raise ValueError(f"시트는 교재 본문을 담으므로 추적 경로(docs/)에 쓸 수 없습니다: {sheet_path.name}")
     """시트 json/md 와 키를 쓴다. 키는 라벨과 표본을 묶는 유일한 끈이라 --force 없이는 덮어쓰지 않는다."""
     sheet_path, key_path = Path(sheet_path), Path(key_path)
+    if _under_tracked_docs(sheet_path):
+        raise ValueError(f"시트는 교재 본문을 담으므로 추적 경로(docs/)에 쓸 수 없습니다: {sheet_path.name}")
     if key_path.exists() and not force:
         raise FileExistsError(f"키가 이미 있습니다 — 표본을 다시 뽑으려면 --force: {public_path(key_path)}")
     if any("text" not in i for i in items) and documents is None:
@@ -343,7 +343,7 @@ def score(key: dict, a: dict, b: dict, adj: dict | None = None, floor: float = P
         if bad:
             raise ValueError(f"시트 본문이 키의 text_sha256 과 다른 항목 {len(bad)}개: {', '.join(bad[:5])}")
     for name, coder in (("A", a), ("B", b)):
-        if coder.get("sample_digest") is not None and coder.get("sample_digest") != key.get("sample_digest"):
+        if coder.get("sample_digest") != key.get("sample_digest") and (full_key or coder.get("sample_digest") is not None):   # 실제 키에는 digest 없는 라벨 파일도 받지 않는다
             raise ValueError(f"코더 {name} 라벨의 sample_digest {coder.get('sample_digest')} 가 키 {key.get('sample_digest')} 와 다릅니다 — 다른 표본의 라벨")
     pa, pb = (a.get("meta") or {}).get("prompt_sha256"), (b.get("meta") or {}).get("prompt_sha256")
     if pa and pb and pa != pb:
@@ -396,6 +396,29 @@ def score(key: dict, a: dict, b: dict, adj: dict | None = None, floor: float = P
 
 
 # ---------------------------------------------------------------- 영향표
+def _held_labels_by_occurrence(held_records, rules) -> dict[tuple[str, str], list[str]]:
+    """보류 표현 안에서 제외된 출현마다 어느 보류 패턴(안전성 / 안전 마진류)에 걸렸는지 — 같은 줄의 제외 레코드는 매칭 순서대로 나오므로,
+    줄에서 규칙 매칭을 다시 찾아 보류 구간과 겹치는 것을 순서대로 짝짓는다(문맥 전체 검색은 한 줄에 둘이 있으면 첫 패턴에 몰린다 — Codex 리뷰)."""
+    rule_pattern = {(r.keyword, r.expression): (r.pattern if r.pattern is not None else re.escape(r.expression)) for r in rules}
+    by_line: dict[tuple, list] = {}
+    for r in held_records:
+        by_line.setdefault((r.corpus, r.relative_path, r.line, r.keyword, r.expression), []).append(r)
+    out: dict[tuple[str, str], list[str]] = {}
+    for (corpus, path, line_no, keyword, expression), recs in by_line.items():
+        labels_patterns = list(zip(SKR.HELD_INSIDE_LABELS.get(keyword, ()), SKR._HELD_INSIDE.get(keyword, ())))
+        line = recs[0].context
+        held_spans = [(label, (m.start(), m.end())) for label, pat in labels_patterns for m in re.finditer(pat, line, re.IGNORECASE)]
+        labels = []
+        for m in re.finditer(rule_pattern.get((keyword, expression), re.escape(expression)), line, re.IGNORECASE):
+            hit = next((label for label, span in held_spans if m.start() < span[1] and span[0] < m.end()), None)
+            if hit:
+                labels.append(hit)
+        if len(labels) != len(recs):                           # 다시 찾은 것이 레코드 수와 다르면 예전 방식(첫 패턴)으로 채운다 — 합계는 보존
+            labels = [next((label for label, pat in labels_patterns if re.search(pat, line, re.IGNORECASE)), labels_patterns[0][0] if labels_patterns else "held")] * len(recs)
+        out.setdefault((corpus, keyword), []).extend(labels)
+    return out
+
+
 def impact(documents: list[Document], keywords: list[str], existing_grades: dict, versions=SKR.DICTIONARY_VERSIONS) -> dict:
     """세 사전 버전을 메모리에서 집계 — 총계·등급·키워드·표현별, 결함 수정이 걷어낸 건수. 쓰지 않는다."""
     sources = [SKR.KeywordSource(k, 0, True) for k in keywords]
@@ -415,13 +438,10 @@ def impact(documents: list[Document], keywords: list[str], existing_grades: dict
             per_expr[(k, e)][v] = n
         held_records = [r for r in result.matches if r.decision == "excluded" and r.reason == SKR.HELD_INSIDE_REASON]
         held_inside = Counter(r.corpus for r in held_records)
-        # 보류 표현별 분리(계획 성공 기준: 안전성 / 안전 마진류 각각) — 제외 레코드의 문맥에서 _HELD_INSIDE 패턴을 순서대로 찾는다
         held_split = {c: Counter() for c in ("NCS", "교과서")}
-        for r in held_records:
-            for label, pat in zip(SKR.HELD_INSIDE_LABELS.get(r.keyword, ()), SKR._HELD_INSIDE.get(r.keyword, ())):
-                if re.search(pat, r.context, re.IGNORECASE):
-                    held_split[r.corpus][label] += 1
-                    break
+        for (corpus, keyword), labels in _held_labels_by_occurrence(held_records, rules).items():
+            for label in labels:
+                held_split[corpus][label] += 1
         if v == "v1fix" and "v1" in v_included:
             sub = {c: sum(1 for r in v_included["v1"] if r.corpus == c and r.keyword in ascii_kw and r.tier == "exact")
                       - sum(1 for r in included if r.corpus == c and r.keyword in ascii_kw and r.tier == "exact") for c in ("NCS", "교과서")}
@@ -485,7 +505,13 @@ def main() -> None:
     elif args.cmd == "score":
         key = json.loads(args.key.read_text(encoding="utf-8"))
         a = json.loads(args.a.read_text(encoding="utf-8")); b = json.loads(args.b.read_text(encoding="utf-8"))
-        adj = json.loads(args.adj.read_text(encoding="utf-8")) if args.adj.exists() else None
+        if args.adj.exists():
+            adj = json.loads(args.adj.read_text(encoding="utf-8"))
+        elif args.adj != DEFAULT_ADJ:
+            sys.exit(f"--adj 파일이 없습니다: {args.adj.name} — 재정 없이 채점하려면 --adj 를 빼십시오")
+        else:
+            adj = None
+            print(f"재정 파일이 없어 불일치는 ? 로 둡니다: {public_path(DEFAULT_ADJ)}")
         if args.list_disagreements:
             ga, gb = a.get("grades", {}), b.get("grades", {})
             adj_labels = (adj or {}).get("labels") or {}

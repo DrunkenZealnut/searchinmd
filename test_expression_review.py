@@ -177,9 +177,11 @@ class ScoreTests(unittest.TestCase):
         items = ER.build_sample(records, TARGETS, seed=1, per_expression=3)
         sheet, key = ER.sheet_and_key(items, FIXTURE_DOCS)
         ids = [i["id"] for i in key["items"]]
-        a = {"grades": {i: 1 for i in ids}, "meta": {}}; b = {"grades": {i: 1 for i in ids}, "meta": {}}
+        a = {"grades": {i: 1 for i in ids}, "meta": {}, "sample_digest": key["sample_digest"]}; b = {"grades": {i: 1 for i in ids}, "meta": {}, "sample_digest": key["sample_digest"]}
         texts = {i["id"]: i["text"] for i in sheet["items"]}
         ER.score(key, a, b, texts=texts)
+        with self.assertRaisesRegex(ValueError, "sample_digest"):
+            ER.score(key, a, {"grades": {i: 1 for i in ids}, "meta": {}}, texts=texts)                        # 실제 키에는 digest 없는 코더 파일을 받지 않는다 (F13)
         tampered = json.loads(json.dumps(key)); tampered["items"][0]["keyword"] = "건강"                    # digest 는 그대로 두고 항목만 바꿈
         with self.assertRaises(ValueError):
             ER.score(tampered, a, b)
@@ -215,9 +217,9 @@ class ImpactTests(unittest.TestCase):
         self.assertEqual(SKR._document_set_sha256(docs), report["meta"]["corpus_sha256"])
 
     def test_impact_splits_held_inside_by_pattern(self):
-        docs = [_doc("반도체제조/LM1903060101_a/a.md", "<!-- page: 1 -->\n안전성 검토\n안전 마진 확보와 안전 재고\n작업 안전\n")]
+        docs = [_doc("반도체제조/LM1903060101_a/a.md", "<!-- page: 1 -->\n안전성 검토\n안전 마진 확보와 안전 재고\n작업 안전\n안전성 검토와 안전 마진\n")]
         report = ER.impact(docs, ["안전"], existing_grades={}, versions=("v1", "v1fix"))
-        self.assertEqual({"PSM_substring": 0, "held_inside": 3, "안전성": 1, "안전_마진류": 2}, report["excluded_by_fix"]["NCS"])
+        self.assertEqual({"PSM_substring": 0, "held_inside": 5, "안전성": 2, "안전_마진류": 3}, report["excluded_by_fix"]["NCS"])   # 한 줄에 둘 다 있어도 출현마다 제 패턴
 
     def test_impact_counts_what_v2_removes(self):
         docs = [_doc("반도체제조/LM1903060101_a/a.md", "<!-- page: 1 -->\nPSM 마스크 종류\n감광제 종류\n\nPSM 위험성 평가\n기록 보관\n\n방진복 규격\n세탁 주기\n\n방진복 착용\n방진화 착용\n케미컬 펌프\n")]   # 창은 ±1줄이라 항목 사이를 띄운다
@@ -310,8 +312,8 @@ class CliAndEdgeTests(unittest.TestCase):
         items = ER.build_sample(records, TARGETS, seed=1, per_expression=3)
         sheet, key = ER.sheet_and_key(items, FIXTURE_DOCS)
         ids = [i["id"] for i in key["items"]]
-        a = {"grades": {i: 1 for i in ids}, "meta": {"model": "claude-opus-5", "base_url": "claude-cli://anthropic"}}
-        b = {"grades": {**{i: 1 for i in ids}, ids[0]: 2, ids[1]: "?"}, "meta": {"model": "gpt-5.6-sol", "base_url": "https://api.openai.com/v1"}}
+        a = {"grades": {i: 1 for i in ids}, "meta": {"model": "claude-opus-5", "base_url": "claude-cli://anthropic"}, "sample_digest": key["sample_digest"]}
+        b = {"grades": {**{i: 1 for i in ids}, ids[0]: 2, ids[1]: "?"}, "meta": {"model": "gpt-5.6-sol", "base_url": "https://api.openai.com/v1"}, "sample_digest": key["sample_digest"]}
         adj = {"sample_digest": key["sample_digest"], "labels": {ids[0]: 2}}
         paths = {}
         for name, doc in (("key", key), ("sheet", sheet), ("a", a), ("b", b), ("adj", adj)):
@@ -344,6 +346,10 @@ class CliAndEdgeTests(unittest.TestCase):
             with self.assertRaises(SystemExit) as ctx:
                 self._main(common[:-4] + ["--sheet", str(wrong), "--out", str(out_path)])
             self.assertIn("digest", str(ctx.exception))
+            # 명시한 --adj 경로가 없으면 조용히 재정 없이 채점하지 않는다 (F13)
+            with self.assertRaises(SystemExit) as ctx:
+                self._main(["score", "--key", str(paths["key"]), "--a", str(paths["a"]), "--b", str(paths["b"]), "--adj", str(Path(td) / "typo.json"), "--out", str(out_path)])
+            self.assertIn("typo.json", str(ctx.exception))
             # 시트가 없으면 근거 없이 쓰고 그 사실을 찍는다
             printed = self._main(common[:-4] + ["--sheet", str(Path(td) / "none.json"), "--out", str(out_path)])
             self.assertIn("시트가 없어", printed)

@@ -27,17 +27,23 @@
     "2"
    ],
    "keys": [
+    "corpora.NCS.groups[개발].documents",
     "corpora.교과서.documents",
     "corpora.교과서.groups[].pages(sum)",
+    "keywords(count)",
+    "keywords[].corpora.NCS.total>0(count)",
     "keywords[끼임].corpora.NCS.groups[제조].total",
     "keywords[누출].corpora.교과서.groups[개발].total",
     "keywords[먼지].corpora.교과서.groups[장비].total",
     "keywords[물질안전보건자료].corpora.NCS.groups[제조].total",
+    "keywords[방사선].corpora.NCS.groups[개발].total",
     "keywords[보호구].corpora.교과서.grades.3",
+    "keywords[부상].corpora.NCS.grades.1",
     "keywords[분진].corpora.NCS.groups[장비].total",
     "keywords[분진].corpora.교과서.total",
     "keywords[산업안전보건법].corpora.NCS.groups[장비].total",
     "keywords[안전보건].corpora.NCS.groups[제조].total",
+    "keywords[유해인자].corpora.NCS.grades.2",
     "keywords[인화].corpora.교과서.groups[개발].total",
     "keywords[중독].corpora.NCS.grades.1",
     "keywords[진동].corpora.교과서.groups[제조].total",
@@ -488,24 +494,30 @@
     "9.5%"
    ],
    "keys": [
+    "corpora.NCS.groups[개발].documents",
     "corpora.교과서.documents",
     "corpora.교과서.grades.3",
     "corpora.교과서.grades.3/total",
     "corpora.교과서.groups[].pages(sum)",
     "corpora.교과서.total",
+    "keywords(count)",
+    "keywords[].corpora.NCS.total>0(count)",
     "keywords[].corpora.교과서.total>0(count)",
     "keywords[끼임].corpora.NCS.groups[제조].total",
     "keywords[누출].corpora.교과서.groups[개발].total",
     "keywords[먼지].corpora.교과서.groups[장비].total",
     "keywords[물질안전보건자료].corpora.NCS.groups[재료].total",
     "keywords[물질안전보건자료].corpora.NCS.groups[제조].total",
+    "keywords[방사선].corpora.NCS.groups[개발].total",
     "keywords[보호구].corpora.교과서.grades.3",
+    "keywords[부상].corpora.NCS.grades.1",
     "keywords[부상].corpora.NCS.grades.3",
     "keywords[부상].corpora.NCS.groups[재료].total",
     "keywords[분진].corpora.NCS.groups[장비].total",
     "keywords[분진].corpora.교과서.total",
     "keywords[산업안전보건법].corpora.NCS.groups[장비].total",
     "keywords[안전보건].corpora.NCS.groups[제조].total",
+    "keywords[유해인자].corpora.NCS.grades.2",
     "keywords[인화].corpora.NCS.groups[개발].total",
     "keywords[인화].corpora.교과서.groups[개발].total",
     "keywords[중독].corpora.NCS.grades.1",
@@ -571,7 +583,13 @@
    "keys": [
     "corpora.NCS.documents",
     "corpora.NCS.groups[].pages(sum)",
-    "corpora.NCS.total"
+    "corpora.NCS.groups[개발].documents",
+    "corpora.NCS.total",
+    "keywords(count)",
+    "keywords[].corpora.NCS.total>0(count)",
+    "keywords[방사선].corpora.NCS.groups[개발].total",
+    "keywords[부상].corpora.NCS.grades.1",
+    "keywords[유해인자].corpora.NCS.grades.2"
    ],
    "conditions": {},
    "format_collapsed": false
@@ -613,7 +631,8 @@
     "keywords[안전].corpora.NCS.total"
    ],
    "conditions": {
-    "safety_top_grade": 1
+    "safety_top_grade": 1,
+    "safety_rank": 1
    },
    "format_collapsed": false
   },
@@ -918,12 +937,18 @@
     "10.7%"
    ],
    "keys": [
+    "corpora.NCS.groups[개발].documents",
     "corpora.NCS.groups[개발].pages",
+    "keywords(count)",
+    "keywords[].corpora.NCS.total>0(count)",
     "keywords[먼지].corpora.NCS.groups[장비].total/keyword",
+    "keywords[방사선].corpora.NCS.groups[개발].total",
+    "keywords[부상].corpora.NCS.grades.1",
     "keywords[안전].corpora.NCS.groups[개발].total",
     "keywords[안전].corpora.NCS.groups[개발].total/keyword",
     "keywords[안전].corpora.NCS.groups[제조].total/keyword",
     "keywords[안전].corpora.NCS.total",
+    "keywords[유해인자].corpora.NCS.grades.2",
     "keywords[작업환경].corpora.교과서.grades.3/total"
    ],
    "conditions": {},
@@ -1049,7 +1074,8 @@
    ],
    "conditions": {
     "equipment_safety_rank": 2,
-    "equipment_narrative_pages": 1
+    "equipment_narrative_pages": 1,
+    "equipment_top_book": true
    },
    "format_collapsed": false
   },
@@ -1158,7 +1184,8 @@
     "keywords[안전].corpora.NCS.total"
    ],
    "conditions": {
-    "largest_grade": 2
+    "largest_grade": 2,
+    "grade2_rank": 1
    },
    "format_collapsed": false
   },
@@ -1225,7 +1252,12 @@
     "keywords[중독].corpora.NCS.grades.3/total",
     "keywords[중독].corpora.NCS.total"
    ],
-   "conditions": {},
+   "conditions": {
+    "g3_vs_overall": {
+     "작업환경": "비슷",
+     "중독": "비슷"
+    }
+   },
    "format_collapsed": false
   },
   {
@@ -1437,6 +1469,7 @@
    "old_numbers": [],
    "new_numbers": [
     "3",
+    "2",
     "1",
     "2",
     "13",
@@ -1460,7 +1493,8 @@
     "industrial_areas": [
      "장비",
      "재료"
-    ]
+    ],
+    "narrative_events": 2
    },
    "format_collapsed": false
   }
@@ -1558,7 +1592,7 @@
   }
  ],
  "audit": {
-  "tokens": 719,
+  "tokens": 723,
   "unmatched": [],
   "out_of_scope": {
    "section": "5. 키워드 기반 문서 분류·분석 방법론",
@@ -1567,5 +1601,5 @@
   },
   "status": "ok"
  },
- "output_sha256": "d963e7ed346a7b9ef4b7211b8a2b96183da737672cad8d8d3e372f1474dd9d3e"
+ "output_sha256": "7827bdb76d19cfa7be842dc6a9bbbed2de9f143cc28e942dda873ca2f11010d3"
 }

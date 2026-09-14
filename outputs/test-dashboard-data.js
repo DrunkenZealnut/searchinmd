@@ -163,6 +163,8 @@ check('S7b "이전 기준" 문장 == reseg (145/2,189, 6.6%)', readme.includes('
 check('S7c 구 문구 없음 (85개 자료, report 제외) · 교재 86권', !readme.includes('85개') && !readme.includes('report 자료') && readme.includes('86권'));
 check('S7d 재생성 절에 정본 명령·shift_page_markers·data_source', readme.includes('semantic_keyword_recount.py') && readme.includes('--ncs-root data_source/markdown/ncs') && readme.includes('shift_page_markers.py') && readme.includes('data_source'));
 check('S7e 의미 출현 총계 == summary', readme.includes(fmt(N.total) + '건') && readme.includes(fmt(T.total) + '건'));
+const readLine = readme.split('\n').find((l) => l.startsWith('그래서 ') && l.includes('이렇게까지만')) || '';
+check('S7g "이렇게까지만 읽어야" 문장의 등급3 비율 == summary·reseg (구 20.8% 아님)', readLine.includes(pct(N.grades['3'], N.graded) + '%(이전 기준 ' + pct(R.page_g['3'], R.pages) + '%)') && !readme.includes('20.8%(이전 기준'));
 // 추적 분석 문서의 말뭉치별 키워드 순위표 — 30행 × 2, 순위·출현·정확/동등/구체·등급1/2/3 전부 summary.keywords 와 같아야 한다
 const skr = read('docs/03-analysis/semantic-keyword-recount.analysis.md');
 const rankBlock = skr.split('## Keyword ranking by corpus')[1] || '';
