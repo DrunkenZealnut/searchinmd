@@ -35,3 +35,9 @@ venv/
 /.env.local
 # write_atomic 이 강제 종료(SIGKILL) 때 남길 수 있는 반쪽 산출물 — 추적 디렉터리에 커밋되지 않게
 /docs/03-analysis/data/*.tmp
+
+# bkit-codex
+.bkit-codex/
+
+# 원본 마크다운·이미지·PDF (연구책임자 지정 정본 소스, 659MB) — data/ 와 같은 이유로 비추적
+/data_source/

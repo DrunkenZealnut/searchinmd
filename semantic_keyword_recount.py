@@ -5,21 +5,53 @@ import argparse
 from dataclasses import asdict, dataclass, replace
 from collections import defaultdict
 from collections import Counter
-from datetime import date
+from datetime import date, datetime, timezone
 import hashlib
+import html
 import json
+import os
 from pathlib import Path
+import platform
 import re
+import subprocess
+import sys
 import unicodedata
 
+import openpyxl
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-from page_utils import GRADE_LABEL
+from page_utils import GRADE_LABEL, PAGE_MARKER_RE as _MARKER_ANYWHERE_RE
 
 
-PAGE_MARKER_RE = re.compile(r"^\s*<!--\s*page:\s*(\d+)\s*-->\s*$", re.IGNORECASE)
+HERE = Path(__file__).resolve().parent
+# 마커만 있는 줄. page_utils.PAGE_MARKER_RE 는 줄 안 어디든 찾는 패턴이라 fullmatch 로 감싼다.
+PAGE_MARKER_RE = re.compile(r"^\s*" + _MARKER_ANYWHERE_RE.pattern + r"\s*$", re.IGNORECASE)
+
+# 회귀 가드 — 정본 실행(2026-09-13, 86권)의 수치. 재실행이 어긋나면 --force 없이는 산출물을 쓰지 않는다
+# (resegment.py·recount_grades.py 의 EXPECTED 와 같은 규약). None 은 아직 고정 전 — 비교하지 않는다.
+# documents 는 --force 로도 우회하지 않는다: 코퍼스가 다르면 정본이 아니다. grades.*.unpaged 0 은
+# 연구책임자 결정(2026-09-13, 미배정을 두지 않는다)을 코드가 지키는 자리다.
+GRADE_SOURCES = ("existing", "new", "unpaged-context", "unpaged-fallback")   # 등급 출처 — EXPECTED·payload·워크북 라벨·하니스가 같은 집합을 쓴다
+GRADE_SOURCE_LABEL = {"existing": "기존 판정", "new": "신규 판정", "unpaged-context": "문맥 판정(마커 없음)", "unpaged-fallback": "등급1 배정(본문 없음)"}
+STRICT_GROUPS = ("documents", "grade_sources", "candidates", "dedup")         # 이 그룹은 EXPECTED 에 없는 키가 실측에 끼어들어도 불일치다 (적대적 리뷰)
+
+EXPECTED = {
+    "documents": {"NCS": 86, "교과서": 9},
+    "totals": {"NCS": 12506, "교과서": 1293},
+    "grades": {
+        "NCS": {"1": 5057, "2": 4854, "3": 2595, "unpaged": 0},
+        "교과서": {"1": 705, "2": 468, "3": 120, "unpaged": 0},
+    },
+    "grade_sources": {"existing": 7901, "new": 5897, "unpaged-context": 1, "unpaged-fallback": 0},
+    "candidates": {"included": 75, "held": 19, "excluded": 2, "not-found": 4},
+    "dedup": {"LM1903060205": 1},                                                        # MI 장비 운영 공백 경로(마커 0) 1개를 버린다
+    "rule_sha256": "2da5dbf4b4c5cc4959de620f130b4745dd74c5da8da3864deba0639a386784cf",    # 2026-09-09 이후 불변 — 사전이 바뀌면 여기서 잡힌다
+    "source_sha256": "2721f0f98f799272a0e411cfea5e0cfc0e48858763b8b1a58fe282f732d2fae5",  # 워크북 3종 + 마크다운 95개(86+9) 본문
+    "detail_sha256": "36d6c0223ef58f7d62a898c14cd1339fff29e8fe90f2c419ab859dabfc082cb1",  # 상세 15,069행 전체의 지문 — 총계가 같아도 재배정을 잡는다
+    "summary_sha256": "0d2a3ef6c0f9b2bbfbedda228f98543b31fba4cac50c768bea6e714f40acb605",
+}
 HEADER_NAMES = {
     "number",
     "번호",
@@ -86,6 +118,15 @@ class Document:
 
 
 @dataclass(frozen=True)
+class DedupRecord:
+    """같은 LM 코드의 파일이 여럿일 때 무엇을 남기고 무엇을 버렸는지 — manifest 에 실린다."""
+
+    code: str
+    kept: str
+    dropped: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class PageBlock:
     page: int | None
     start_line: int
@@ -115,7 +156,7 @@ class MatchRecord:
     context: str
     decision: str
     reason: str
-    grade: int | None = None
+    grade: int | None = None                  # 아래 세 필드는 판정 전 기본값 — assign_match_grades 가 모든 레코드에 1~3 과 GRADE_SOURCES 값을 덮어쓴다
     grade_label: str = "등급 미확정"
     grade_reason: str = "페이지 마커 없음"
     grade_source: str = "unpaged"
@@ -194,6 +235,7 @@ class AnalysisResult:
     matches: tuple[MatchRecord, ...]
     summary: tuple[SummaryRow, ...]
     input_artifacts: tuple[InputArtifact, ...] = ()
+    dedup: tuple[DedupRecord, ...] = ()
 
 
 def read_keyword_workbook(path: Path) -> list[KeywordSource]:
@@ -243,6 +285,63 @@ def load_documents(root: Path, corpus: str) -> list[Document]:
     return documents
 
 
+def _marker_values(document: Document) -> list[int]:
+    return [int(m.group(1)) for line in document.text.splitlines() if (m := PAGE_MARKER_RE.match(line))]
+
+
+def select_ncs_documents(documents: list[Document]) -> tuple[list[Document], list[DedupRecord]]:
+    """NCS 코퍼스 규칙 (2026-09-13 감사 C1 시정).
+
+    LM 코드(LM + 10자리)가 경로에 없는 파일은 교재가 아니므로 ValueError — 조용히 버리지 않는다
+    (report 요약본 같은 비교재는 디스크에서 지우는 것이 규칙). 같은 코드가 여럿이면
+    (마커 수 내림차순, 밑줄 경로 우선, 경로 사전순) 으로 하나만 남기고 나머지를 DedupRecord 로 돌려준다.
+    """
+    missing = [doc.relative_path for doc in documents if not _NCS_CODE_RE.search(doc.relative_path)]
+    if missing:
+        raise ValueError("LM 코드가 없는 NCS 파일 — 교재가 아니면 코퍼스에서 지우십시오: " + ", ".join(missing))
+    by_code: dict[str, list[Document]] = defaultdict(list)
+    for doc in documents:
+        by_code[_NCS_CODE_RE.search(doc.relative_path).group(0).upper()].append(doc)
+    kept, dedup = [], []
+    for code in sorted(by_code):
+        group = sorted(
+            by_code[code],
+            key=lambda d: (-len(_marker_values(d)), " " in d.relative_path, d.relative_path),
+        )
+        kept.append(group[0])
+        if len(group) > 1:
+            dedup.append(DedupRecord(code, group[0].relative_path, tuple(d.relative_path for d in group[1:])))
+    kept.sort(key=lambda d: d.relative_path)
+    return kept, dedup
+
+
+def check_marker_base(documents: list[Document]) -> list[str]:
+    """어느 자리든 1 미만 마커(0-based)가 있는 파일 목록. 비어 있어야 정상 — docs/howto-page-markers.md 의 page_id+1 규약.
+
+    첫 마커만 보면 `<!-- page: 1 --> … <!-- page: 0 -->` 이 통과한다(적대적 리뷰) — 전수 검사.
+    """
+    problems = []
+    for doc in documents:
+        values = _marker_values(doc)
+        if values and min(values) < 1:
+            problems.append(f"{doc.relative_path}: 마커 {min(values)}")
+    return problems
+
+
+def nonmonotone_markers(documents: list[Document]) -> list[str]:
+    """마커 값이 감소하는 파일 목록 — 거부하지 않고 manifest 에 기록한다.
+
+    목차에서 유도한 레거시 마커(insert_page_markers.py Strategy 2)는 같은 제목이 되풀이될 때 앞 쪽으로 되돌아갈 수 있고
+    (정본 코퍼스에 1권), 그 구간의 출현은 되돌아간 쪽 번호로 집계된다. 재유도는 별도 결정.
+    """
+    out = []
+    for doc in documents:
+        values = _marker_values(doc)
+        if any(b < a for a, b in zip(values, values[1:])):
+            out.append(doc.relative_path)
+    return out
+
+
 def split_pages(document: Document) -> list[PageBlock]:
     blocks = []
     current_page = None
@@ -273,7 +372,7 @@ def split_pages(document: Document) -> list[PageBlock]:
 
 
 _TIMESTAMP_PREFIX_RE = re.compile(r"^\d{8}_\d{6}_")
-_NCS_CODE_RE = re.compile(r"LM\d{10}", re.IGNORECASE)
+_NCS_CODE_RE = re.compile(r"(?<![A-Za-z])LM\d{10}", re.IGNORECASE)       # 글자 뒤에 붙은 PLM… 은 코드가 아니다
 
 
 def _canonical_document(corpus: str, value: str) -> str:
@@ -348,7 +447,11 @@ def assign_match_grades(
     result: AnalysisResult,
     existing_grades: dict[tuple[str, str, int], GradeAssignment],
 ) -> AnalysisResult:
-    """Attach a page grade to every semantic occurrence without grading unpaged records."""
+    """Attach a grade to every semantic occurrence, including unpaged records.
+
+    페이지 마커가 없는 출현은 그 줄의 문맥으로 판정(unpaged-context)하고, 문맥이 비면 등급1(unpaged-fallback).
+    연구책임자 결정(2026-09-13): 미배정을 두지 않는다. 정본 코퍼스(86권, 마커 1-based)에서는 대상이 수 건뿐이다.
+    """
     from regrade import grade_page
 
     page_lines: dict[tuple[str, str, int], list[str]] = defaultdict(list)
@@ -370,7 +473,25 @@ def assign_match_grades(
     graded_matches = []
     for record in result.matches:
         if record.page is None:
-            assignment = GradeAssignment(None, "등급 미확정", "페이지 마커 없음", "unpaged")
+            if record.context.strip():
+                grade, _, _, reason = grade_page(
+                    record.context,
+                    word_boundary=False,
+                    normalize=False,
+                )
+                assignment = GradeAssignment(
+                    grade,
+                    GRADE_LABEL[grade],
+                    f"페이지 마커 없는 출현의 문맥 기준: {reason}",
+                    "unpaged-context",
+                )
+            else:
+                assignment = GradeAssignment(
+                    1,
+                    GRADE_LABEL[1],
+                    "페이지·문맥 정보 없음으로 보수적 등급 1 배정",
+                    "unpaged-fallback",
+                )
         else:
             legacy_key = grade_lookup_key(record.corpus, record.relative_path, record.page)
             page_key = (record.corpus, record.relative_path, record.page)
@@ -392,8 +513,8 @@ def assign_match_grades(
                 if text:
                     grade, _, _, reason = grade_page(text, word_boundary=False, normalize=False)
                     assignment = GradeAssignment(grade, GRADE_LABEL[grade], reason, "new")
-                else:
-                    assignment = GradeAssignment(None, "등급 미확정", "페이지 본문을 찾지 못함", "unpaged")
+                else:                                     # 마커는 있는데 본문 블록이 없다 — 미배정을 두지 않는다 (2026-09-13)
+                    assignment = GradeAssignment(1, GRADE_LABEL[1], "페이지 본문 없음으로 보수적 등급 1 배정", "unpaged-fallback")
                 newly_graded[page_key] = assignment
         graded_matches.append(
             replace(
@@ -973,6 +1094,265 @@ def artifact_manifest(result: AnalysisResult) -> dict[str, str]:
     }
 
 
+def public_path(p: Path | str, here: Path | None = None, home: Path | None = None) -> str:
+    """추적 산출물에 싣는 경로. 저장소 안이면 상대 경로, 홈 아래면 `~/…`, 그 밖은 마지막 이름만 (resegment.public_path 와 같은 규칙).
+
+    문자열 접두가 아니라 realpath 로 견주므로 `/private/var` 같은 별칭도 걸린다. 공개 저장소라 절대 경로는 실리지 않는다.
+    """
+    rp = os.path.realpath(str(p))
+    for base, prefix in (
+        (os.path.realpath(str(HERE if here is None else here)), ""),
+        (os.path.realpath(os.path.expanduser("~") if home is None else str(home)), "~/"),
+    ):
+        if rp == base:
+            return prefix.rstrip("/") or "."
+        if rp.startswith(base.rstrip(os.sep) + os.sep):
+            return prefix + os.path.relpath(rp, base).replace(os.sep, "/")
+    return os.path.basename(rp)
+
+
+def _git_info() -> dict[str, object]:
+    try:
+        commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=HERE, capture_output=True, text=True, check=True).stdout.strip()
+        dirty = bool(subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=HERE, capture_output=True, text=True, check=True).stdout.strip())
+    except (OSError, subprocess.CalledProcessError):
+        return {"commit": "unknown", "dirty": None}
+    return {"commit": commit, "dirty": dirty}
+
+
+_PATHISH_RE = re.compile(r"[/\\]|\.(?:xlsx|md|js|json|html)$")
+
+
+def _scrub_argv_token(token: str) -> str:
+    """argv 토큰의 경로를 public_path 로. `--opt=value` 도 값 부분만 걷어낸다 (보안 리뷰: 통째로 realpath 하면 그대로 남는다)."""
+    key, sep, value = token.partition("=")
+    if sep and key.startswith("--"):
+        return key + sep + (public_path(value) if _PATHISH_RE.search(value) else value)
+    return public_path(token) if _PATHISH_RE.search(token) else token
+
+
+def run_manifest(
+    result: AnalysisResult,
+    argv: list[str],
+    force: bool,
+    expected_mismatch: list[str],
+    git: dict[str, object] | None = None,
+    xlsx_out: Path | None = None,
+    extra_inputs: list[dict[str, object]] | None = None,
+    marker_nonmonotone: list[str] | None = None,
+) -> dict[str, object]:
+    """실행 정보 — 어느 실행이 정본인지 저장소가 답하게 하는 블록. 경로는 public_path 로만.
+
+    `git_commit` 은 실행이 올라탄 커밋이고 `git_dirty` 는 그 위에 미커밋 변경이 있었는지다. 산출물은 실행 뒤에 커밋되므로
+    커밋된 정본 산출물의 manifest 는 언제나 "부모 커밋 + dirty" 를 가리킨다 — 재현은 커밋 뒤 같은 명령을 다시 돌려 가드가 통과하는 것으로 확인한다.
+    """
+    git = _git_info() if git is None else git
+    return {
+        "generated_at": datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds"),
+        "git_commit": git["commit"],
+        "git_dirty": git["dirty"],
+        "command": " ".join(_scrub_argv_token(token) for token in argv),
+        "xlsx": os.path.basename(str(xlsx_out)) if xlsx_out else None,
+        "python": platform.python_version(),
+        "openpyxl": openpyxl.__version__,
+        "inputs": [{"kind": a.kind, "count": a.file_count, "sha256": a.sha256} for a in result.input_artifacts] + list(extra_inputs or []),
+        "dedup": [{"code": d.code, "kept": d.kept, "dropped": list(d.dropped)} for d in result.dedup],
+        "marker_nonmonotone": list(marker_nonmonotone or []),
+        "expected": None if force else True,
+        "expected_mismatch": list(expected_mismatch),
+        "force": force,
+    }
+
+
+def summary_metrics(result: AnalysisResult, manifest: dict[str, str]) -> dict[str, object]:
+    """EXPECTED 와 견주는 수치 — 문서 수·총계·등급·등급 출처·후보 판정·중복 제거·해시 4종."""
+    rows = [row for row in result.summary if row.corpus in ("NCS", "교과서")]
+    included = [record for record in result.matches if record.decision == "included"]
+    sources = Counter(record.grade_source for record in included)
+    metrics: dict[str, object] = {
+        "documents": {corpus: sum(1 for d in result.documents if d.corpus == corpus) for corpus in ("NCS", "교과서")},
+        "totals": {corpus: sum(row.semantic_total for row in rows if row.corpus == corpus) for corpus in ("NCS", "교과서")},
+        "grades": {
+            corpus: {
+                "1": sum(row.grade_1 for row in rows if row.corpus == corpus),
+                "2": sum(row.grade_2 for row in rows if row.corpus == corpus),
+                "3": sum(row.grade_3 for row in rows if row.corpus == corpus),
+                "unpaged": sum(row.grade_unpaged for row in rows if row.corpus == corpus),
+            }
+            for corpus in ("NCS", "교과서")
+        },
+        "grade_sources": {key: sources.get(key, 0) for key in GRADE_SOURCES},
+        "candidates": dict(Counter(candidate.decision for candidate in result.candidates)),
+        "dedup": {record.code: len(record.dropped) for record in result.dedup},
+    }
+    metrics.update(manifest)
+    return metrics
+
+
+def check_expected(metrics: dict[str, object], expected: dict[str, object] | None = None, prefix: str = "") -> list[str]:
+    """EXPECTED 와의 불일치 목록. 비어 있으면 통과. 기대값 None 은 아직 미고정 — 비교하지 않는다."""
+    expected = EXPECTED if expected is None else expected
+    bad = []
+    for key, want in expected.items():
+        path = f"{prefix}{key}"
+        have = metrics.get(key) if isinstance(metrics, dict) else None
+        if isinstance(want, dict):
+            bad.extend(check_expected(have if isinstance(have, dict) else {}, want, path + "."))
+            if not prefix and key in STRICT_GROUPS and isinstance(have, dict):      # 실측에만 있는 키 — 새 중복 코드·새 판정 상태
+                bad.extend(f"{path}.{extra}: {have[extra]} != (absent)" for extra in have if extra not in want)
+        elif want is not None and have != want:
+            bad.append(f"{path}: {have} != {want}")
+    return bad
+
+
+PREVIOUS_BASIS_SOURCE = "docs/03-analysis/data/reseg_summary.json"
+PREVIOUS_BASIS_DATE = "2026-09-06"      # 이전 기준의 채택일(resegment Act-3, 2,189쪽·145 가 확정된 실행). reseg_summary.json 의 meta.run_at 은
+                                        # 그 뒤 수치 변화 없이 다시 돈 진단 실행(2026-09-07 marker-offset)이라 별도로 source_run_at 에 싣는다.
+
+
+def load_previous_basis(path: Path) -> dict[str, object]:
+    """이전 기준(페이지 단위, 2026-09-06 재세그먼트)을 payload 에 복사한다 — 렌더러가 브리지 표를 데이터만으로 그리게.
+
+    원본과 어긋나면 하니스(S4)가 잡는다. 여기서는 필요한 키만 옮긴다.
+    """
+    reseg = json.loads(Path(path).read_text(encoding="utf-8"))
+    missing = [key for key in ("pages", "page_g", "books", "cases_pages") if key not in reseg]
+    if missing:
+        raise ValueError(f"이전 기준 파일에 키가 없습니다 ({public_path(path)}): {', '.join(missing)}")
+    return {
+        "source": public_path(path),
+        "date": PREVIOUS_BASIS_DATE,
+        "source_run_at": (reseg.get("meta") or {}).get("run_at"),
+        "unit": "pages",
+        "pages": reseg["pages"],
+        "page_g": reseg["page_g"],
+        "books": reseg["books"],
+        "cases_pages": reseg["cases_pages"],
+        "unresolved_pages": (reseg.get("unresolved") or {}).get("pages"),
+    }
+
+
+def summary_payload(
+    result: AnalysisResult,
+    run: dict[str, object] | None = None,
+    previous_basis: dict[str, object] | None = None,
+) -> dict[str, object]:
+    """dashboard_payload + meta.run + meta.manifest + meta.previous_basis. semantic_recount_data.js 와 semantic_summary.json 이 같은 JSON 을 싣는다."""
+    payload = dashboard_payload(result)
+    payload["meta"]["manifest"] = artifact_manifest(result)
+    if run is not None:
+        payload["meta"]["run"] = run
+    if previous_basis is not None:
+        payload["meta"]["previous_basis"] = previous_basis
+    return payload
+
+
+def _write_text_atomic(path: Path, text: str) -> None:
+    """임시 파일에 쓰고 os.replace — 중단·디스크 부족 때 반쪽 산출물이 추적 경로에 남지 않게 (docs/…/*.tmp 는 gitignore)."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(text, encoding="utf-8")
+    os.replace(tmp, path)
+
+
+def write_summary_json(payload: dict[str, object], path: Path) -> None:
+    _write_text_atomic(path, json.dumps(payload, ensure_ascii=False, indent=1) + "\n")
+
+
+_ANALYSIS_CSS = (
+    'body{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;color:#172033;margin:32px;background:#f6f8fb}'
+    "main{max-width:1500px;margin:auto;background:white;padding:28px 34px;border-radius:12px;box-shadow:0 2px 12px #0001}"
+    "h1{margin-top:0}h2{margin-top:34px;color:#1f4e78}.meta{padding:12px 16px;background:#eef5fb;border-left:4px solid #1f4e78;margin:16px 0 24px;line-height:1.7}"
+    "table{border-collapse:collapse;width:100%;font-size:.875rem;margin:12px 0 28px}th{background:#1f4e78;color:white;position:sticky;top:0}"
+    "td,th{border:1px solid #cbd5e1;padding:7px;vertical-align:top;text-align:left}td:nth-child(2),td:nth-child(3),td:nth-child(4),td:nth-child(5){white-space:nowrap}"
+    ".scroll{overflow:auto}.scroll.tall{max-height:min(850px,80vh)}.scroll:focus-visible{outline:2px solid #1f4e78;outline-offset:2px}"
+    "small{color:#52606d}a.card{display:block;padding:16px;margin:12px 0;border:1px solid #cbd5e1;border-radius:8px;color:#1f4e78;text-decoration:none}a.card:hover,a.card:focus-visible{background:#eef5fb}"
+    "details{margin:8px 0;border:1px solid #cbd5e1;border-radius:8px;padding:0 12px}summary{cursor:pointer;padding:10px 0;font-weight:600;color:#1f4e78;min-height:44px;box-sizing:border-box}summary:focus-visible{outline:2px solid #1f4e78}"
+    "@media(max-width:768px){body{margin:12px}main{padding:16px}}"
+)
+ANALYSIS_PAGE_NAMES = {"index": "keyword-analysis.html", "NCS": "NCS_키워드검색결과.html", "교과서": "교과서_키워드검색결과.html"}
+
+
+def _table_html(headers: list[str], rows: list[list[object]]) -> str:
+    head = "".join(f"<th>{html.escape(str(v))}</th>" for v in headers)
+    body = "".join("<tr>" + "".join(f"<td>{html.escape(str(v))}</td>" for v in row) + "</tr>" for row in rows)
+    return f"<table><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>"
+
+
+def _analysis_meta_line(payload: dict[str, object]) -> str:
+    run = payload["meta"].get("run") or {}
+    docs = payload["corpora"]
+    parts = [f"NCS 교재 {docs['NCS']['documents']}권 · 교과서 {docs['교과서']['documents']}권"]
+    if run.get("xlsx"):
+        parts.append(f"기준 파일: {run['xlsx']}")
+    if run.get("git_commit"):
+        parts.append(f"git {run['git_commit']}{'+' if run.get('git_dirty') else ''} · {run.get('generated_at', '')[:10]}")
+    return " · ".join(parts)
+
+
+def write_analysis_pages(result: AnalysisResult, payload: dict[str, object], docs_dir: Path) -> list[Path]:
+    """분리 분석 페이지 3건 — 목차 + 말뭉치별 요약표·상세표. 정본 실행과 같은 데이터에서 나온다 (구 export_keyword_outputs.py 흡수)."""
+    docs_dir = Path(docs_dir)
+    docs_dir.mkdir(parents=True, exist_ok=True)
+    meta_line = html.escape(_analysis_meta_line(payload))
+    written = []
+    for corpus in ("NCS", "교과서"):
+        records = [r for r in result.matches if r.decision == "included" and r.corpus == corpus]
+        total = len(records)
+        counts: dict[str, Counter] = defaultdict(Counter)
+        for r in records:
+            counts[r.keyword]["전체"] += 1
+            if r.grade in (1, 2, 3):
+                counts[r.keyword][str(r.grade)] += 1
+        summary_rows = []
+        for keyword in sorted(counts, key=lambda k: (-counts[k]["전체"], k)):
+            c = counts[keyword]
+            n = c["전체"]
+            summary_rows.append([keyword, f"{n:,}", f"{n / total:.1%}" if total else "0.0%"]
+                                + [v for g in ("1", "2", "3") for v in (f"{c[g]:,}", f"{c[g] / n:.1%}" if n else "0.0%")])
+        # 상세는 키워드별 닫힌 <details> — 12,536행을 한 표로 두면 모바일 첫 화면 8.1 s (성능 리뷰 실측); 닫힌 details 는 레이아웃에서 빠진다.
+        by_keyword: dict[str, list[list[object]]] = defaultdict(list)
+        for r in records:
+            by_keyword[r.keyword].append([r.relative_path, r.keyword, r.matched_text, r.page if r.page is not None else "", r.grade or "",
+                                          r.grade_label, r.grade_reason, r.context])
+        detail_headers = ["파일", "키워드", "실제 매칭", "페이지", "통일 등급", "등급명", "등급사유", "문맥"]
+        detail_html = "".join(
+            f"<details><summary>{html.escape(keyword)} ({len(rows):,}건)</summary>"
+            f'<div class="scroll tall" tabindex="0" role="region" aria-label="{html.escape(keyword)} 검색결과 표">{_table_html(detail_headers, rows)}</div></details>'
+            for keyword, rows in sorted(by_keyword.items(), key=lambda kv: (-len(kv[1]), kv[0]))
+        )
+        doc = (
+            '<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
+            f"<title>{corpus} 키워드 검색·등급 분석</title><style>{_ANALYSIS_CSS}</style></head><body><main>"
+            f"<h1>{corpus} 키워드 검색·등급 분석 결과</h1>"
+            f'<div class="meta">{meta_line}<br>검색결과 전체: <strong>{total:,}건</strong> (키워드-표현 매칭 레코드 합계 — 고유 문장·쪽 수가 아니다)<br>비율의 분모: 이 말뭉치의 전체 검색결과</div>'
+            "<h2>1. 키워드별 검색결과·비율·등급분류</h2>"
+            f'<div class="scroll" tabindex="0" role="region" aria-label="키워드별 검색결과 요약 표">{_table_html(["키워드", "전체", "전체 비율", "등급 1", "등급 1 비율", "등급 2", "등급 2 비율", "등급 3", "등급 3 비율"], summary_rows)}</div>'
+            "<h2>2. 개별 키워드 검색결과</h2><small>키워드별로 접혀 있습니다 — 제목을 누르면 파일·실제 매칭·페이지·등급·등급사유·문맥이 펼쳐집니다(브라우저 찾기는 접힌 항목도 검색합니다).</small>"
+            + detail_html
+            + "</main></body></html>"
+        )
+        out = docs_dir / ANALYSIS_PAGE_NAMES[corpus]
+        _write_text_atomic(out, doc)
+        written.append(out)
+    index = (
+        '<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
+        f"<title>반도체 키워드 검색·등급 분석 결과</title><style>{_ANALYSIS_CSS}main{{max-width:900px}}</style></head><body><main>"
+        "<h1>반도체 키워드 검색·등급 분석 결과</h1>"
+        f'<div class="meta">{meta_line}<br>등급 분모: 의미 출현건수(연구책임자 결정 2026-09-13). 이전 기준(실제 쪽 단위)은 각 대시보드에 병기.</div>'
+        "<h2>분석 결과</h2>"
+        f'<a class="card" href="{ANALYSIS_PAGE_NAMES["NCS"]}">NCS 키워드 검색결과·비율·등급분류 결과</a>'
+        f'<a class="card" href="{ANALYSIS_PAGE_NAMES["교과서"]}">교과서 키워드 검색결과·비율·등급분류 결과</a>'
+        '<h2>대시보드</h2><a class="card" href="index.html">NCS 반도체 교재 대시보드</a><a class="card" href="textbook.html">반도체고 교과서 대시보드</a>'
+        "</main></body></html>"
+    )
+    out = docs_dir / ANALYSIS_PAGE_NAMES["index"]
+    _write_text_atomic(out, index)
+    written.append(out)
+    return written
+
+
 def _safe_cell(value: object, limit: int = 30000) -> object:
     if not isinstance(value, str):
         return value
@@ -1113,10 +1493,12 @@ def dashboard_payload(result: AnalysisResult) -> dict[str, object]:
                     "grades": {"1": counts[1], "2": counts[2], "3": counts[3], "unpaged": counts[None]},
                 }
             )
+        source_counts = Counter(record.grade_source for record in included if record.corpus == corpus)
         corpora[corpus] = {
             "documents": sum(1 for document in result.documents if document.corpus == corpus),
             "total": sum(row.semantic_total for row in corpus_rows),
             "graded": sum(row.grade_1 + row.grade_2 + row.grade_3 for row in corpus_rows),
+            "grade_sources": {key: source_counts.get(key, 0) for key in GRADE_SOURCES},
             "grades": {
                 "1": sum(row.grade_1 for row in corpus_rows),
                 "2": sum(row.grade_2 for row in corpus_rows),
@@ -1138,14 +1520,18 @@ def dashboard_payload(result: AnalysisResult) -> dict[str, object]:
     }
 
 
-def write_dashboard_data(result: AnalysisResult, path: Path) -> None:
+def write_dashboard_data(result: AnalysisResult, path: Path, payload: dict[str, object] | None = None) -> None:
+    """window.SEMANTIC_RECOUNT — semantic_summary.json 과 같은 JSON. 헤더는 실행 manifest 에서 온다."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    payload = json.dumps(dashboard_payload(result), ensure_ascii=False, separators=(",", ":"))
-    path.write_text(
-        "/* Generated from data/semantic_keyword_recount_20260909.xlsx. Grade denominator: occurrences. */\n"
-        f"window.SEMANTIC_RECOUNT={payload};\n",
-        encoding="utf-8",
+    payload = summary_payload(result) if payload is None else payload
+    run = payload["meta"].get("run") or {}
+    stamp = f"git {run['git_commit']}, {run.get('generated_at', '')}" if run.get("git_commit") else date.today().isoformat()
+    body = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    _write_text_atomic(
+        path,
+        f"/* Generated by semantic_keyword_recount.py ({stamp}). Same JSON as docs/03-analysis/data/semantic_summary.json. Grade denominator: occurrences. */\n"
+        f"window.SEMANTIC_RECOUNT={body};\n",
     )
 
 
@@ -1184,11 +1570,11 @@ def _file_rows(result: AnalysisResult, corpus: str):
             )
 
 
-def write_workbook(result: AnalysisResult, path: Path) -> None:
+def write_workbook(result: AnalysisResult, path: Path, run: dict[str, object] | None = None, audits: list[CandidateAudit] | None = None) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     manifest = artifact_manifest(result)
-    audits = audit_candidates(result)
+    audits = audit_candidates(result) if audits is None else audits       # 6 s 짜리 전수 재검색 — run_census 가 한 번만 계산해 넘긴다
     counts = _match_index(result)
     workbook = Workbook()
     workbook.remove(workbook.active)
@@ -1202,10 +1588,10 @@ def write_workbook(result: AnalysisResult, path: Path) -> None:
         ("계수 단위", "원문 정확 문자열, 동음이의 제외, 유효 정확, 동등 표현, 구체 표현을 분리"),
         ("중복 처리", "같은 키워드 안에서만 왼쪽부터 긴 표현을 우선하며 겹친 구간은 한 번 계수"),
         ("원본 비교", "원본 검색행 수와 새 출현 횟수는 단위가 달라 증감률을 계산하지 않음"),
-        ("페이지", "페이지 마커가 없는 파일의 매칭은 페이지 미확정 파일 수로 별도 표시"),
+        ("페이지", "페이지 마커가 없는 출현은 페이지 미확정으로 표시하되 등급은 그 줄의 문맥으로 판정 (요약 시트의 '페이지 미확정 파일 수' 열)"),
         ("등급 단위", "각 의미 출현에 해당 페이지의 통일 등급을 결합하며 등급 비율은 출현건수를 분모로 계산"),
         ("등급 계보", "기존 페이지는 원본 등급을 상속하고 새 검출 페이지는 기존 기준선 규칙으로 판정"),
-        ("등급 미확정", "페이지 마커가 없는 출현은 총 출현에 포함하되 등급1~3 비율에서는 제외"),
+        ("마커 없는 출현", "그 줄의 문맥으로 판정(unpaged-context), 문맥이 비면 등급1(unpaged-fallback) — 연구책임자 결정 2026-09-13, 미배정을 두지 않는다. 총계는 키워드-표현 매칭 레코드 합계이지 고유 문장·쪽 수가 아님"),
     ]
     for key, value in manifest.items():
         readme_rows.append((key, value))
@@ -1219,6 +1605,8 @@ def write_workbook(result: AnalysisResult, path: Path) -> None:
         _append_row(inputs, (artifact.kind, artifact.path, artifact.file_count, "", artifact.sha256))
     for source in result.sources:
         _append_row(inputs, ("원본 시트", source.keyword, source.search_rows, "있음" if source.has_header else "없음", ""))
+    for key, value in (run or {}).items():
+        _append_row(inputs, ("실행 정보", key, json.dumps(value, ensure_ascii=False) if isinstance(value, (list, dict)) else value, "", ""))
     _style_table(inputs)
 
     summary = workbook.create_sheet("요약")
@@ -1314,7 +1702,7 @@ def write_workbook(result: AnalysisResult, path: Path) -> None:
                     record.relative_path, record.keyword, record.expression, record.matched_text,
                     record.tier, record.line, record.page, record.reason, record.context,
                     record.grade, record.grade_label, record.grade_reason,
-                    {"existing": "기존 판정", "new": "신규 판정", "unpaged": "등급 미확정"}.get(record.grade_source, record.grade_source),
+                    GRADE_SOURCE_LABEL.get(record.grade_source, record.grade_source),
                 ),
             )
         _style_table(worksheet)
@@ -1331,7 +1719,9 @@ def write_workbook(result: AnalysisResult, path: Path) -> None:
             _append_row(evidence_sheet, (record.keyword, record.expression, "excluded-exact", record.corpus, record.relative_path, record.line, record.page, record.reason, record.context))
     _style_table(evidence_sheet)
 
-    workbook.save(path)
+    tmp = path.with_name(path.name + ".tmp")
+    workbook.save(tmp)
+    os.replace(tmp, path)
 
 
 def _markdown_cell(value: object, limit: int = 180) -> str:
@@ -1340,11 +1730,11 @@ def _markdown_cell(value: object, limit: int = 180) -> str:
     return str(value).replace("\n", " ").replace("|", "\\|")[:limit]
 
 
-def write_report(result: AnalysisResult, path: Path) -> None:
+def write_report(result: AnalysisResult, path: Path, run: dict[str, object] | None = None, audits: list[CandidateAudit] | None = None) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     manifest = artifact_manifest(result)
-    audits = audit_candidates(result)
+    audits = audit_candidates(result) if audits is None else audits       # 6 s 짜리 전수 재검색 — run_census 가 한 번만 계산해 넘긴다
     counts = _match_index(result)
     rules_by_keyword = defaultdict(list)
     for rule in result.rules:
@@ -1367,14 +1757,14 @@ def write_report(result: AnalysisResult, path: Path) -> None:
         "",
         "## 키워드 독립 원칙",
         "",
-        "기존 30개 키워드는 의미가 가까워도 병합하지 않았고 서로의 포함 표현으로 등록하지 않았다. 예를 들어 `MSDS`와 `물질안전보건자료`, `PSM`과 `공정안전관리`는 각각 독립 집계했다. 신규 표현도 하나의 기존 키워드에만 배정했으며, 30개 키워드를 합산한 총계는 만들지 않았다.",
+        "기존 30개 키워드는 의미가 가까워도 병합하지 않았고 서로의 포함 표현으로 등록하지 않았다. 예를 들어 `MSDS`와 `물질안전보건자료`, `PSM`과 `공정안전관리`는 각각 독립 집계했다. 신규 표현도 하나의 기존 키워드에만 배정했다. 30개 키워드를 합친 값은 '키워드-표현 매칭 레코드 합계'로만 쓰며 고유 문장·쪽 수가 아니다.",
         "",
         "## 포함·제외 기준",
         "",
         "- 포함: 같은 개념을 직접 지칭하는 표기 변형·영문·동의어 또는 개념을 명백히 함의하는 구체 유형",
         "- 제외: 동음이의, 회로·공정·품질상의 비안전 의미, 다른 키워드 자체, 긴 표현 내부의 중복 부분",
         "- 보류: 문맥에 따라 뜻이 갈리지만 안정적인 자동 판정 조건을 만들기 어려운 표현",
-        "- 미출현: 사전상 가능하지만 98개 조사 원문에서 확인되지 않은 표현",
+        f"- 미출현: 사전상 가능하지만 {len(result.documents)}개 조사 원문에서 확인되지 않은 표현",
         "",
         "## 키워드별 집계",
         "",
@@ -1447,16 +1837,20 @@ def write_report(result: AnalysisResult, path: Path) -> None:
     )
     for key, value in manifest.items():
         lines.append(f"- `{key}`: `{value}`")
+    if run:
+        lines.extend(["", "## 실행 정보", ""])
+        for key, value in run.items():
+            lines.append(f"- `{key}`: `{json.dumps(value, ensure_ascii=False) if isinstance(value, (list, dict)) else value}`")
     lines.extend(
         [
             "",
             "## 한계와 후속 검토",
             "",
-            "원본 워크북은 문장·표·제목 행 수이고 새 결과는 실제 표현 출현 수이므로 직접 증감률로 해석할 수 없다. 페이지 마커가 없는 NCS 파일은 페이지 수 대신 페이지 미확정 파일 수로 표시했다. 보류 표현은 향후 사람이 목적별 문맥 범위를 정하면 별도 규칙으로 재검토할 수 있다.",
+            "원본 워크북은 문장·표·제목 행 수이고 새 결과는 실제 표현 출현 수이므로 직접 증감률로 해석할 수 없다. 페이지 마커가 없는 출현은 그 줄의 문맥으로 판정하고 문맥이 비면 등급1을 배정했다(연구책임자 결정 2026-09-13, 미배정을 두지 않는다; 등급 출처 `unpaged-context`/`unpaged-fallback` 로 구분). 보류 표현은 향후 사람이 목적별 문맥 범위를 정하면 별도 규칙으로 재검토할 수 있다.",
             "",
         ]
     )
-    path.write_text("\n".join(lines), encoding="utf-8")
+    _write_text_atomic(path, "\n".join(lines))
 
 
 def _file_sha256(path: Path) -> str:
@@ -1489,43 +1883,82 @@ def run_census(
     ncs_grade_workbook: Path | None = None,
     school_grade_workbook: Path | None = None,
     dashboard_data_out: Path | None = None,
+    summary_out: Path | None = None,
+    analysis_dir: Path | None = None,
+    previous_basis: Path | None = None,
+    force: bool = False,
+    expected: dict[str, object] | None = None,
+    argv: list[str] | None = None,
+    git: dict[str, object] | None = None,
 ) -> AnalysisResult:
+    """정본 실행 — 산출물 전부를 한 번에 쓴다. EXPECTED 와 어긋나면 force 없이는 아무것도 쓰지 않는다."""
+    expected = EXPECTED if expected is None else expected
+    source_workbook, ncs_root, school_root = Path(source_workbook), Path(ncs_root), Path(school_root)
+    if not source_workbook.is_file():
+        raise FileNotFoundError(f"키워드 등록 워크북을 찾을 수 없습니다: {public_path(source_workbook)}")
+    for label, root in (("NCS", ncs_root), ("교과서", school_root)):
+        if not root.is_dir():
+            raise FileNotFoundError(f"{label} Markdown 루트를 찾을 수 없습니다: {public_path(root)}")
     ncs_grade_workbook = Path(ncs_grade_workbook or source_workbook)
     school_grade_workbook = Path(
         school_grade_workbook
         or Path(source_workbook).parent / "ncs_keywords_in_markdown_results_교과서_results_20260415.xlsx"
     )
     if not school_grade_workbook.is_file():
-        raise FileNotFoundError(f"교과서 등급 워크북을 찾을 수 없습니다: {school_grade_workbook}")
+        raise FileNotFoundError(f"교과서 등급 워크북을 찾을 수 없습니다: {public_path(school_grade_workbook)}")
     sources = read_keyword_workbook(source_workbook)
     keywords = [source.keyword for source in sources]
     if tuple(keywords) != EXPECTED_KEYWORDS:
         raise ValueError("원본 워크북의 30개 키워드 또는 순서가 승인 명세와 다릅니다.")
-    ncs_documents = load_documents(ncs_root, "NCS")
+    ncs_documents, dedup = select_ncs_documents(load_documents(ncs_root, "NCS"))
     school_documents = load_documents(school_root, "교과서")
-    if len(ncs_documents) != 89 or len(school_documents) != 9:
+    zero_based = check_marker_base(ncs_documents + school_documents)
+    if zero_based:
+        raise ValueError("1 미만 페이지 마커(0-based) — shift_page_markers.py 로 +1 한 뒤 다시 실행하십시오: " + "; ".join(zero_based))
+    want_docs = expected.get("documents") if isinstance(expected, dict) else None
+    if want_docs and (len(ncs_documents), len(school_documents)) != (want_docs.get("NCS"), want_docs.get("교과서")):
         raise ValueError(
-            f"입력 Markdown 수가 명세와 다릅니다: NCS={len(ncs_documents)}, 교과서={len(school_documents)}"
+            f"입력 Markdown 수가 정본 코퍼스와 다릅니다: NCS={len(ncs_documents)}, 교과서={len(school_documents)} (기대 {want_docs})"
         )
     documents = ncs_documents + school_documents
     rules = build_default_rules(keywords)
     candidates = default_candidate_decisions()
     artifacts = [
-        InputArtifact("키워드 등록 워크북", str(source_workbook.resolve()), 1, _file_sha256(source_workbook)),
-        InputArtifact("NCS 등급 워크북", str(ncs_grade_workbook.resolve()), 1, _file_sha256(ncs_grade_workbook)),
-        InputArtifact("교과서 등급 워크북", str(school_grade_workbook.resolve()), 1, _file_sha256(school_grade_workbook)),
-        InputArtifact("NCS Markdown", str(ncs_root.resolve()), len(ncs_documents), _document_set_sha256(ncs_documents)),
-        InputArtifact("교과서 Markdown", str(school_root.resolve()), len(school_documents), _document_set_sha256(school_documents)),
+        InputArtifact("키워드 등록 워크북", public_path(source_workbook), 1, _file_sha256(source_workbook)),
+        InputArtifact("NCS 등급 워크북", public_path(ncs_grade_workbook), 1, _file_sha256(ncs_grade_workbook)),
+        InputArtifact("교과서 등급 워크북", public_path(school_grade_workbook), 1, _file_sha256(school_grade_workbook)),
+        InputArtifact("NCS Markdown", public_path(ncs_root), len(ncs_documents), _document_set_sha256(ncs_documents)),
+        InputArtifact("교과서 Markdown", public_path(school_root), len(school_documents), _document_set_sha256(school_documents)),
     ]
     result = aggregate_matches(sources, documents, rules, candidates, artifacts)
     result = assign_match_grades(
         result,
         load_existing_grades(ncs_grade_workbook, school_grade_workbook),
     )
-    write_workbook(result, xlsx_out)
-    write_report(result, report_out)
+    result = replace(result, dedup=tuple(dedup))
+    manifest = artifact_manifest(result)
+    mismatch = check_expected(summary_metrics(result, manifest), expected)
+    if mismatch and not force:
+        print("EXPECTED 불일치 — 산출물을 쓰지 않습니다 (--force 로 강제, 그 뒤 EXPECTED 를 갱신):", file=sys.stderr)
+        for line in mismatch:
+            print("  " + line, file=sys.stderr)
+        raise SystemExit(1)
+    basis = load_previous_basis(previous_basis) if previous_basis is not None else None
+    extra_inputs = [{"kind": "이전 기준", "count": 1, "sha256": _file_sha256(previous_basis)}] if previous_basis is not None else []
+    run = run_manifest(
+        result, argv if argv is not None else sys.argv, force, mismatch, git=git, xlsx_out=xlsx_out,
+        extra_inputs=extra_inputs, marker_nonmonotone=nonmonotone_markers(documents),
+    )
+    payload = summary_payload(result, run=run, previous_basis=basis)
+    audits = audit_candidates(result)
+    write_workbook(result, xlsx_out, run=run, audits=audits)
+    write_report(result, report_out, run=run, audits=audits)
     if dashboard_data_out is not None:
-        write_dashboard_data(result, dashboard_data_out)
+        write_dashboard_data(result, dashboard_data_out, payload=payload)
+    if summary_out is not None:
+        write_summary_json(payload, summary_out)
+    if analysis_dir is not None:
+        write_analysis_pages(result, payload, analysis_dir)
     return result
 
 
@@ -1538,7 +1971,11 @@ def main() -> None:
     parser.add_argument("--report-out", type=Path, required=True)
     parser.add_argument("--ncs-grade-workbook", type=Path, help="기존 NCS 등급 워크북 (기본: --source-workbook)")
     parser.add_argument("--school-grade-workbook", type=Path, help="기존 교과서 등급 워크북")
-    parser.add_argument("--dashboard-data-out", type=Path, help="정적 대시보드 JavaScript 데이터 출력")
+    parser.add_argument("--dashboard-data-out", type=Path, help="정적 대시보드 JavaScript 데이터 출력 (docs/semantic_recount_data.js)")
+    parser.add_argument("--summary-out", type=Path, help="추적 요약 JSON (docs/03-analysis/data/semantic_summary.json)")
+    parser.add_argument("--analysis-dir", type=Path, help="분리 분석 HTML 3건을 쓸 폴더 (docs)")
+    parser.add_argument("--previous-basis", type=Path, help="이전 기준 reseg_summary.json — payload 에 복사해 브리지 표를 그린다")
+    parser.add_argument("--force", action="store_true", help="EXPECTED 불일치여도 쓴다 (manifest 에 기록됨; 그 뒤 EXPECTED 를 갱신할 것)")
     args = parser.parse_args()
     result = run_census(
         args.source_workbook,
@@ -1549,10 +1986,16 @@ def main() -> None:
         ncs_grade_workbook=args.ncs_grade_workbook,
         school_grade_workbook=args.school_grade_workbook,
         dashboard_data_out=args.dashboard_data_out,
+        summary_out=args.summary_out,
+        analysis_dir=args.analysis_dir,
+        previous_basis=args.previous_basis,
+        force=args.force,
     )
     manifest = artifact_manifest(result)
+    metrics = summary_metrics(result, manifest)
     print(f"완료: 키워드 {len(result.sources)}개, 문서 {len(result.documents)}개, 상세 {len(result.matches)}건")
-    print(json.dumps(manifest, ensure_ascii=False, indent=2))
+    print("측정값 (EXPECTED 고정용):")
+    print(json.dumps(metrics, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":
