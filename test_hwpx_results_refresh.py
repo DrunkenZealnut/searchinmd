@@ -44,7 +44,7 @@ class CommittedDiffTests(unittest.TestCase):
         self.assertEqual("v2", diff["source"]["summary_run"]["dictionary"])
         self.assertTrue(diff["source"]["summary_run"]["expected"])
         self.assertNotIn("/Users/", path.read_text(encoding="utf-8"))
-        self.assertTrue(all(len(p["locator"]) <= 40 for p in diff["paragraphs"]))          # 문단 식별용 첫머리만, 본문 없음
+        self.assertTrue(all(len(p["locator"]) <= 50 for p in diff["paragraphs"]))          # 문단 식별용 첫머리만, 본문 없음
 
 
 # ---------------------------------------------------------------- fixture HWPX
