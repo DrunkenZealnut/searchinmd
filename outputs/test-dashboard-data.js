@@ -152,6 +152,25 @@ check('S7b "이전 기준" 문장 == reseg (145/2,189, 6.6%)', readme.includes('
 check('S7c 구 문구 없음 (85개 자료, report 제외) · 교재 86권', !readme.includes('85개') && !readme.includes('report 자료') && readme.includes('86권'));
 check('S7d 재생성 절에 정본 명령·shift_page_markers·data_source', readme.includes('semantic_keyword_recount.py') && readme.includes('--ncs-root data_source/markdown/ncs') && readme.includes('shift_page_markers.py') && readme.includes('data_source'));
 check('S7e 의미 출현 총계 == summary', readme.includes(fmt(N.total) + '건') && readme.includes(fmt(T.total) + '건'));
+// 추적 분석 문서의 말뭉치별 키워드 순위표 — 30행 × 2, 순위·출현·정확/동등/구체·등급1/2/3 전부 summary.keywords 와 같아야 한다
+const skr = read('docs/03-analysis/semantic-keyword-recount.analysis.md');
+const rankBlock = skr.split('## Keyword ranking by corpus')[1] || '';
+const rankErrors = [];
+for (const corpus of ['NCS', '교과서']) {
+  const part = (rankBlock.split('### ' + corpus)[1] || '').split('### ')[0];
+  const rows = part.split('\n').filter(l => /^\| \d+ \| `/.test(l)).map(l => l.split('|').map(c => c.trim()));
+  const want = S.keywords.map(k => ({ name: k.name, c: k.corpora[corpus] })).sort((a, b) => b.c.total - a.c.total || S.keywords.findIndex(k => k.name === a.name) - S.keywords.findIndex(k => k.name === b.name));
+  if (rows.length !== want.length) rankErrors.push(corpus + ' rows ' + rows.length);
+  rows.forEach((r, i) => {
+    const w = want[i]; if (!w) return;
+    const got = [r[1], r[2].replace(/`/g, ''), r[3], r[6], r[7], r[8], r[9], r[10], r[11]].join('|');
+    const exp = [String(i + 1), w.name, fmt(w.c.total), fmt(w.c.exact), fmt(w.c.equivalent), fmt(w.c.specific), fmt(w.c.grades['1']), fmt(w.c.grades['2']), fmt(w.c.grades['3'])].join('|');
+    if (got !== exp) rankErrors.push(corpus + ' ' + got + ' != ' + exp);
+  });
+  const total = part.match(/\| 합계 \| \| ([\d,]+) \|/);
+  if (!total || total[1] !== fmt(S.corpora[corpus].total)) rankErrors.push(corpus + ' 합계 ' + (total && total[1]));
+}
+check('S7f semantic-keyword-recount.analysis.md 키워드 순위표 (NCS·교과서 30행) == summary.keywords', rankErrors.length === 0, rankErrors.slice(0, 3).join('; '));
 
 // ================================================================ S8 CLAUDE.md
 console.log('\n[S8] CLAUDE.md');
