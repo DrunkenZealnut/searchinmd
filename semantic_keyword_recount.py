@@ -2,6 +2,7 @@
 """Meaning-aware recount of 30 independent safety keywords in Markdown corpora."""
 
 import argparse
+import csv
 from dataclasses import asdict, dataclass, replace
 from collections import defaultdict
 from collections import Counter
@@ -22,7 +23,7 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-from page_utils import GRADE_LABEL, PAGE_MARKER_RE as _MARKER_ANYWHERE_RE
+from page_utils import GRADE_LABEL, NCS_PAGED_DIR, PAGE_MARKER_RE as _MARKER_ANYWHERE_RE
 
 
 HERE = Path(__file__).resolve().parent
@@ -409,11 +410,16 @@ _NCS_CODE_RE = re.compile(r"(?<![A-Za-z])LM\d{10}", re.IGNORECASE)       # 글�
 
 @dataclass(frozen=True)
 class PageMapsInfo:
-    """manifest 용 — 줄→쪽 대응 디렉터리, 읽은 파일 수, (코드, 파일 sha256) 목록의 지문."""
+    """manifest 용 — 줄→쪽 대응 디렉터리, 읽은 파일 수, (코드, 파일 sha256) 목록의 지문, 대응 없이 표식으로 가는 목록 교재(코드, 표식 최댓값)."""
 
     dir: str
     files: int
     sha256: str
+    marker_books: tuple[tuple[str, int], ...] = ()      # REAL_PAGE_MARKER_BOOKS 중 실제로 대응이 없던 교재 — manifest real_page_marker_books·S3n 의 출처
+
+    def as_manifest(self) -> dict[str, object]:
+        """meta.run.page_maps 한 줄 — 여기와 occurrence_real_pages_impact.py 가 같은 투영을 쓴다."""
+        return {"dir": self.dir, "files": self.files, "sha256": self.sha256}
 
 
 def _document_code(document: Document) -> str | None:
@@ -425,13 +431,16 @@ def _to_matching_lines(text: str, line_pages: list[int]) -> tuple[int, ...]:
     """대응(split("\n") 줄 규약)을 매칭 규약(splitlines — \x0c·\x1c 같은 구분자도 줄을 가른다)으로 옮긴다 (갭 분석 G-1).
 
     split("\n") 의 한 줄이 splitlines 에서 k 줄이면 같은 쪽을 k 번 싣는다; 파일 끝 개행 뒤의 빈 원소는 splitlines 에 없으므로 뺀다.
+    k 는 조각을 원문 자리 그대로(뒤따르는 "\n" 포함) 세야 한다 — "a\x0c" 홀로는 1줄이지만 "a\x0c\n" 은 2줄이다 (줄 끝 폼피드, 리뷰 testing).
     """
     nl_lines = text.split("\n")
-    if text.endswith("\n"):
+    trailing_newline = text.endswith("\n")
+    if trailing_newline:
         nl_lines = nl_lines[:-1]
     out: list[int] = []
     for index, line in enumerate(nl_lines):
-        out.extend([line_pages[index]] * max(1, len(line.splitlines())))
+        piece = line + "\n" if (index < len(nl_lines) - 1 or trailing_newline) else line
+        out.extend([line_pages[index]] * max(1, len(piece.splitlines())))
     expected = len(text.splitlines())
     if len(out) != expected:
         raise ValueError(f"줄 규약 변환이 어긋났습니다: {len(out)} ≠ splitlines {expected} — 알 수 없는 줄 구분자")
@@ -448,6 +457,7 @@ def load_page_maps(directory: Path, documents: list[Document]) -> tuple[dict[str
     directory = Path(directory)
     maps: dict[str, tuple[int, ...]] = {}
     digests: list[tuple[str, str]] = []
+    marker_books: list[tuple[str, int]] = []
     for document in documents:
         if document.corpus != "NCS":
             continue
@@ -463,11 +473,14 @@ def load_page_maps(directory: Path, documents: list[Document]) -> tuple[dict[str
                 )
             if sorted(markers) != list(range(1, max(markers) + 1)):            # 1..N 이 빠짐·중복 없이 — 빈 쪽은 블록이 없어도 된다
                 raise ValueError(f"REAL_PAGE_MARKER_BOOKS 교재의 표식이 실제 쪽처럼 이어지지 않습니다: {code} (표식 {len(markers)}개, 최댓값 {max(markers)})")
+            marker_books.append((code, max(markers)))
             continue
         payload = json.loads(path.read_text(encoding="utf-8"))
         expected_name = Path(document.path).name
         if payload.get("md") != expected_name:
             raise ValueError(f"줄→쪽 대응 {path.name} 은 다른 파일의 것입니다: md={payload.get('md')!r} ≠ {expected_name!r}")
+        if payload.get("marker_correct") is not None or payload.get("moved_markers"):        # 연구 변형(--marker-correct)의 대응 — 채택 전에는 정본 입력이 아니다 (TODOS ④)
+            raise ValueError(f"줄→쪽 대응 {path.name} 은 마커 보정 변형(marker_correct={payload.get('marker_correct')!r}, moved_markers {len(payload.get('moved_markers') or [])}개)의 것입니다 — 진단 실행의 대응을 쓰십시오")
         line_pages = payload.get("line_pages")
         lines = document.text.split("\n")
         if not isinstance(line_pages, list) or len(line_pages) != len(lines):
@@ -476,12 +489,13 @@ def load_page_maps(directory: Path, documents: list[Document]) -> tuple[dict[str
             raise ValueError(f"줄→쪽 대응 {path.name} 에 1 이상의 정수가 아닌 쪽 값이 있습니다")
         maps[document.relative_path] = _to_matching_lines(document.text, line_pages)      # 매칭(record.line)과 같은 줄 규약으로
         digests.append((code, hashlib.sha256(path.read_bytes()).hexdigest()))
-    info = PageMapsInfo(dir=public_path(directory), files=len(digests), sha256=hashlib.sha256(json.dumps(sorted(digests)).encode("utf-8")).hexdigest())
+    info = PageMapsInfo(dir=public_path(directory), files=len(digests), sha256=hashlib.sha256(json.dumps(sorted(digests)).encode("utf-8")).hexdigest(),
+                        marker_books=tuple(sorted(marker_books)))
     return maps, info
 
 
 DEFAULT_RESEG_CSV_NAME = "ncs_pages_reseg.csv"
-DEFAULT_PAGE_MAPS_DIR = HERE / "data" / "markdown" / "ncs_paged"                          # resegment.py 의 --paged-dir 기본값과 같다
+DEFAULT_PAGE_MAPS_DIR = HERE / NCS_PAGED_DIR                                              # resegment.py 의 --paged-dir 기본값과 같다 (page_utils)
 DEFAULT_RESEG_CSV = HERE / "docs" / "03-analysis" / "data" / DEFAULT_RESEG_CSV_NAME
 
 
@@ -490,7 +504,6 @@ def reseg_agreement(result: AnalysisResult, csv_path: Path, max_disagree: int = 
 
     100% 가 아니면 원인은 둘뿐이다 — 대응 파일이 바뀌었거나 regrade 규칙이 바뀌었다. EXPECTED 가 값을 고정한다.
     """
-    import csv
 
     reseg: dict[tuple[str, int], int] = {}
     with open(csv_path, encoding="utf-8-sig", newline="") as handle:
@@ -593,6 +606,16 @@ def load_existing_grades(
     return assignments
 
 
+def _grade_page_text(text: str, source: str, empty_reason: str) -> GradeAssignment:
+    """쪽 본문에 기준선 규칙 하나(regrade.grade_page, 단어 경계·정규화 없음 — 워크북 판정과 같은 설정)를 적용한다; 본문이 비면 보수적 등급 1(unpaged-fallback)."""
+    from regrade import grade_page                         # assign_match_grades 와 같은 이유의 지역 import (regrade 의 openpyxl 가드)
+
+    if text.strip():
+        grade, _, _, reason = grade_page(text, word_boundary=False, normalize=False)
+        return GradeAssignment(grade, GRADE_LABEL[grade], reason, source)
+    return GradeAssignment(1, GRADE_LABEL[1], empty_reason, "unpaged-fallback")
+
+
 def assign_match_grades(
     result: AnalysisResult,
     existing_grades: dict[tuple[str, str, int], GradeAssignment],
@@ -661,12 +684,7 @@ def assign_match_grades(
             page_key = (record.corpus, record.relative_path, record.page)
             assignment = newly_graded.get(page_key)
             if assignment is None:
-                text = "\n".join(page_lines.get(page_key, ()))
-                if text.strip():
-                    grade, _, _, reason = grade_page(text, word_boundary=False, normalize=False)
-                    assignment = GradeAssignment(grade, GRADE_LABEL[grade], reason, "real-page")
-                else:
-                    assignment = GradeAssignment(1, GRADE_LABEL[1], "실제 쪽 본문 없음으로 보수적 등급 1 배정", "unpaged-fallback")
+                assignment = _grade_page_text("\n".join(page_lines.get(page_key, ())), "real-page", "실제 쪽 본문 없음으로 보수적 등급 1 배정")
                 newly_graded[page_key] = assignment
         else:
             legacy_key = grade_lookup_key(record.corpus, record.relative_path, record.page)
@@ -684,13 +702,8 @@ def assign_match_grades(
                 and len(paged_alias_documents[alias_key[1]]) == 1
             ):
                 assignment = existing_grades.get(alias_key)
-            if assignment is None:
-                text = "\n".join(page_lines.get(page_key, ()))
-                if text:
-                    grade, _, _, reason = grade_page(text, word_boundary=False, normalize=False)
-                    assignment = GradeAssignment(grade, GRADE_LABEL[grade], reason, "new")
-                else:                                     # 마커는 있는데 본문 블록이 없다 — 미배정을 두지 않는다 (2026-09-13)
-                    assignment = GradeAssignment(1, GRADE_LABEL[1], "페이지 본문 없음으로 보수적 등급 1 배정", "unpaged-fallback")
+            if assignment is None:                        # 마커는 있는데 본문 블록이 없으면 등급1 — 미배정을 두지 않는다 (2026-09-13)
+                assignment = _grade_page_text("\n".join(page_lines.get(page_key, ())), "new", "페이지 본문 없음으로 보수적 등급 1 배정")
                 newly_graded[page_key] = assignment
         graded_matches.append(
             replace(
@@ -1403,25 +1416,27 @@ def run_manifest(
         "expected_mismatch": list(expected_mismatch),
         "force": force,
         "variant": variant,
-        "page_maps": {"dir": page_maps.dir, "files": page_maps.files, "sha256": page_maps.sha256} if page_maps else None,   # 줄→쪽 대응 (occurrence-real-pages)
-        "real_page_marker_books": list(REAL_PAGE_MARKER_BOOKS),
+        "page_maps": page_maps.as_manifest() if page_maps else None,                                           # 줄→쪽 대응 (occurrence-real-pages)
+        "real_page_marker_books": [{"code": code, "pages": pages} for code, pages in page_maps.marker_books] if page_maps else None,   # 대응 없이 표식이 실제 쪽인 교재와 그 쪽수 — 대응 없는 실행엔 규칙이 적용되지 않아 null
         "reseg_agreement": {"pages": reseg_agreement["pages"], "agree": reseg_agreement["agree"]} if reseg_agreement else None,
     }
 
 
+def _page_basis(included: list[MatchRecord]) -> dict[str, str]:
+    """쪽 기준 — NCS 출현이 실제 쪽(real-page 판정)에 놓였으면 real, 표식 블록이면 marker; 교과서 표식은 실제 쪽(2,055쪽 = recount 쪽수). 가드(summary_metrics)와 payload 가 같은 값을 쓴다."""
+    ncs_real = any(record.grade_source == "real-page" for record in included if record.corpus == "NCS")
+    return {"NCS": "real" if ncs_real else "marker", "교과서": "marker"}
+
+
 def summary_metrics(result: AnalysisResult, manifest: dict[str, str], dictionary: str = DEFAULT_DICTIONARY,
-                    page_maps: PageMapsInfo | None = None, reseg_agreement: dict[str, object] | None = None,
-                    page_basis: dict[str, str] | None = None) -> dict[str, object]:
+                    page_maps: PageMapsInfo | None = None, reseg_agreement: dict[str, object] | None = None) -> dict[str, object]:
     """EXPECTED 와 견주는 수치 — 사전 버전·문서 수·총계·등급·등급 출처·후보 판정·중복 제거·해시 4종 + 쪽 기준(대응 지문·이전 기준 결속)."""
     rows = [row for row in result.summary if row.corpus in ("NCS", "교과서")]
     included = [record for record in result.matches if record.decision == "included"]
     sources = Counter(record.grade_source for record in included)
-    if page_basis is None:
-        ncs_real = any(record.grade_source == "real-page" for record in included if record.corpus == "NCS")
-        page_basis = {"NCS": "real" if ncs_real else "marker", "교과서": "marker"}
     metrics: dict[str, object] = {
         "dictionary": dictionary,
-        "page_basis": dict(page_basis),
+        "page_basis": _page_basis(included),
         "page_maps_sha256": page_maps.sha256 if page_maps else None,
         "reseg_agreement": {"pages": reseg_agreement["pages"], "agree": reseg_agreement["agree"]} if reseg_agreement else None,
         "documents": {corpus: sum(1 for d in result.documents if d.corpus == corpus) for corpus in ("NCS", "교과서")},
@@ -1474,6 +1489,26 @@ def pdf_pages_from_previous_basis(path: Path) -> dict[str, int]:
         if match and isinstance(pages, int) and pages > 0:
             out[match.group(0).upper()] = pages
     return out
+
+
+def mapped_corpus_digest(files: list[tuple[str, Path]]) -> str:
+    """resegment.py 의 meta.md_corpus_sha256 과 같은 조리법 — 정렬한 (파일 이름, 파일 sha256) 목록을 탭·개행으로 이어 sha256 (같은 이름이 둘이어도 둘 다 센다). 대응이 어느 마크다운 판에서 나왔는지 묶는다."""
+    rows = sorted((name, hashlib.sha256(Path(path).read_bytes()).hexdigest()) for name, path in files)
+    return hashlib.sha256("\n".join(f"{name}\t{digest}" for name, digest in rows).encode("utf-8")).hexdigest()
+
+
+def check_page_maps_against_previous_basis(previous_basis: Path, documents: list[Document], page_maps: dict[str, tuple[int, ...]], pdf_pages: dict[str, int]) -> None:
+    """대응은 이전 기준의 마크다운 판·PDF 에 묶인다 (리뷰 red-team): (1) 대응 교재 파일의 이름+sha256 지문이 이전 기준 meta.md_corpus_sha256 과 같아야 하고(없는 옛 파일이면 건너뜀),
+    (2) 대응의 쪽 값이 그 교재의 PDF 쪽수(per_book.pdf_pages)를 넘으면 다른 교재·손으로 고친 대응이다."""
+    mapped = [(Path(d.path).name, Path(d.path)) for d in documents if d.relative_path in page_maps]
+    expected_digest = ((json.loads(Path(previous_basis).read_text(encoding="utf-8")).get("meta") or {}).get("md_corpus_sha256"))
+    if expected_digest and mapped_corpus_digest(mapped) != expected_digest:
+        raise ValueError(f"줄→쪽 대응의 마크다운 판이 이전 기준과 다릅니다: 대응 교재 {len(mapped)}권의 (이름, sha256) 지문이 {public_path(previous_basis)} 의 meta.md_corpus_sha256 과 어긋난다 — resegment.py 를 같은 마크다운으로 다시 돌리십시오")
+    for document in documents:
+        line_pages = page_maps.get(document.relative_path)
+        code = _document_code(document)
+        if line_pages and code in pdf_pages and max(line_pages) > pdf_pages[code]:
+            raise ValueError(f"줄→쪽 대응의 쪽 값이 교재의 PDF 쪽수를 넘습니다: {code} 최대 {max(line_pages)} > PDF 쪽수 {pdf_pages[code]} — 다른 교재의 대응이거나 손으로 고친 것")
 
 
 def load_previous_basis(path: Path) -> dict[str, object]:
@@ -1555,6 +1590,8 @@ def _analysis_meta_line(payload: dict[str, object]) -> str:
         parts.append(f"기준 파일: {run['xlsx']}")
     if run.get("git_commit"):
         parts.append(f"git {run['git_commit']}{'+' if run.get('git_dirty') else ''} · {run.get('generated_at', '')[:10]}")
+    if (payload["meta"].get("page_basis") or {}).get("NCS") == "real":                       # 상세표 '페이지' 열의 뜻 — NCS 는 실제 PDF 쪽, 교과서는 표식(= 실제 쪽) (리뷰 red-team)
+        parts.append("페이지 열: NCS 는 줄→쪽 대응의 실제 PDF 쪽(2026-09-15~), 교과서는 마크다운 쪽 표식")
     return " · ".join(parts)
 
 
@@ -1752,19 +1789,19 @@ def dashboard_payload(result: AnalysisResult, pdf_pages: dict[str, int] | None =
             if record.corpus == corpus:
                 group_records[_dashboard_group(corpus, record.relative_path)].append(record)
         documents_by_group = defaultdict(set)
-        pages_by_group: dict[str, int] = defaultdict(int)          # 교재 실제 쪽수 = 문서별 마커 최대값의 합 (hwpx-ncs-section-refresh D2)
+        pages_by_group: dict[str, int] = defaultdict(int)          # NCS(pdf_pages 가 있을 때): 이전 기준 per_book.pdf_pages 합 (D4); 교과서·대응 없는 REAL_PAGE_MARKER_BOOKS: 표식 최댓값 합 (hwpx-ncs-section-refresh D2)
         for document in result.documents:
             if document.corpus == corpus:
                 group = _dashboard_group(corpus, document.relative_path)
                 documents_by_group[group].add(document.relative_path)
                 markers = [int(m.group(1)) for m in (PAGE_MARKER_RE.match(line) for line in document.text.splitlines()) if m]
                 code = _document_code(document) if corpus == "NCS" else None
-                if pdf_pages is not None and corpus == "NCS" and markers and code not in REAL_PAGE_MARKER_BOOKS:
-                    if code not in pdf_pages:
-                        raise ValueError(f"PDF 쪽수를 모르는 교재입니다: {code} ({public_path(document.relative_path)}) — 이전 기준 per_book 에 없다")
+                if pdf_pages is not None and corpus == "NCS" and markers and code in pdf_pages:
                     pages_by_group[group] += int(pdf_pages[code])                 # D4: 실제 PDF 쪽수 (reseg_summary.json per_book.pdf_pages)
+                elif pdf_pages is not None and corpus == "NCS" and markers and code not in REAL_PAGE_MARKER_BOOKS:
+                    raise ValueError(f"PDF 쪽수를 모르는 교재입니다: {code} ({public_path(document.relative_path)}) — 이전 기준 per_book 에 없다")
                 else:
-                    pages_by_group[group] += max(markers) if markers else 0         # 마커 줄의 최댓값 — 빈 마지막 쪽 블록도 센다
+                    pages_by_group[group] += max(markers) if markers else 0         # 마커 줄의 최댓값 — 빈 마지막 쪽 블록도 센다 (목록 교재는 표식이 실제 쪽, load_page_maps 와 같은 "대응이 없을 수 있다" 뜻)
         groups = []
         for name in sorted(set(group_records) | set(documents_by_group)):          # 매칭이 하나도 없는 그룹도 문서·쪽수 분모에 남는다
             records = group_records.get(name, [])
@@ -1792,6 +1829,7 @@ def dashboard_payload(result: AnalysisResult, pdf_pages: dict[str, int] | None =
         corpora[corpus] = {
             "documents": sum(1 for document in result.documents if document.corpus == corpus),
             "total": sum(row.semantic_total for row in corpus_rows),
+            "detected_pages": len({(record.relative_path, record.page) for record in included if record.corpus == corpus and record.page is not None}),   # 출현이 놓인 (교재, 쪽) 수 — NCS 는 실제 PDF 쪽(occurrence-real-pages), 브리지 절이 이전 기준 쪽수와 나란히 보인다
             "graded": sum(row.grade_1 + row.grade_2 + row.grade_3 for row in corpus_rows),
             "grade_sources": {key: source_counts.get(key, 0) for key in GRADE_SOURCES},
             "grades": {
@@ -1803,12 +1841,11 @@ def dashboard_payload(result: AnalysisResult, pdf_pages: dict[str, int] | None =
             "groups": groups,
         }
 
-    ncs_real = any(record.grade_source == "real-page" for record in included if record.corpus == "NCS")
     return {
         "meta": {
             "generated": date.today().isoformat(),
             "denominator": "occurrences",
-            "page_basis": {"NCS": "real" if ncs_real else "marker", "교과서": "marker"},   # 교과서 표식은 실제 쪽(2,055쪽 = recount 쪽수)
+            "page_basis": _page_basis(included),
             "gradeLabels": {str(key): value for key, value in GRADE_LABEL.items()},
         },
         "corpora": corpora,
@@ -1888,7 +1925,7 @@ def write_workbook(result: AnalysisResult, path: Path, run: dict[str, object] | 
         ("페이지", "페이지 마커가 없는 출현은 페이지 미확정으로 표시하되 등급은 그 줄의 문맥으로 판정 (요약 시트의 '페이지 미확정 파일 수' 열)"),
         ("등급 단위", "각 의미 출현에 해당 페이지의 통일 등급을 결합하며 등급 비율은 출현건수를 분모로 계산"),
         ("등급 계보", "교과서: 기존 페이지는 원본 등급을 상속하고 새 검출 페이지는 기존 기준선 규칙으로 판정. NCS(실제 쪽 기준 실행): 모든 출현을 줄→실제 PDF 쪽 대응(resegment.py) 위에 놓고 그 쪽 본문에 기준선 규칙 하나로 판정(real-page) — 워크북 라벨(목차 블록) 상속 없음 (occurrence-real-pages, 2026-09-15)"),
-        ("페이지 기준", "실행 정보 시트의 page_maps(대응 파일 수·지문)·reseg_agreement(이전 기준 ncs_pages_reseg.csv 와 공유 쪽 등급 일치)·real_page_marker_books(대응 없이 표식이 실제 쪽인 교재) 참조. NCS 분야별 쪽수는 PDF 쪽수(이전 기준 per_book.pdf_pages), 그 2권은 표식 최댓값"),
+        ("페이지 기준", "입력정보 시트의 실행 정보 행에 있는 page_maps(대응 파일 수·지문)·reseg_agreement(이전 기준 ncs_pages_reseg.csv 와 공유 쪽 등급 일치)·real_page_marker_books(대응 없이 표식이 실제 쪽인 교재) 참조. NCS 분야별 쪽수는 PDF 쪽수(이전 기준 per_book.pdf_pages), real_page_marker_books 에 적힌 교재만 표식 최댓값"),
         ("마커 없는 출현", "그 줄의 문맥으로 판정(unpaged-context), 문맥이 비면 등급1(unpaged-fallback) — 연구책임자 결정 2026-09-13, 미배정을 두지 않는다. 총계는 키워드-표현 매칭 레코드 합계이지 고유 문장·쪽 수가 아님"),
     ]
     for key, value in manifest.items():
@@ -2097,7 +2134,10 @@ def write_report(result: AnalysisResult, path: Path, run: dict[str, object] | No
         "## 조사 범위와 방법",
         "",
         "Markdown 본문을 NFC로 정규화해 전수 검색하고, 영문은 대소문자를 구분하지 않았다. 페이지 주석과 이미지 URL만 있는 줄은 계수하지 않았다. 각 매칭에는 파일·줄·페이지·실제 표현·문맥을 남겼다.",
-        "기존에 판정된 페이지는 통일 등급 1~3을 승계하고, 새로 검출된 페이지만 같은 기준선 규칙으로 판정했다. 등급별 수치는 페이지 수가 아니라 의미 출현건수다.",
+        ("NCS 출현은 줄→실제 PDF 쪽 대응 위에 놓고 그 쪽 본문에 기준선 규칙 하나로 판정했다(워크북 라벨 승계 없음); 교과서는 기존에 판정된 페이지의 통일 등급 1~3을 승계하고 새로 검출된 페이지만 같은 기준선 규칙으로 판정했다. "
+         if _page_basis([r for r in result.matches if r.decision == "included"])["NCS"] == "real"
+         else "기존에 판정된 페이지는 통일 등급 1~3을 승계하고, 새로 검출된 페이지만 같은 기준선 규칙으로 판정했다. ")
+        + "등급별 수치는 페이지 수가 아니라 의미 출현건수다.",
         "",
         "## 키워드 독립 원칙",
         "",
@@ -2309,7 +2349,10 @@ def run_census(
         if previous_basis is None:
             raise ValueError("page_maps_dir 에는 previous_basis(reseg_summary.json) 가 필요합니다 — 분야 쪽수의 PDF 쪽수 출처")
         page_maps, maps_info = load_page_maps(Path(page_maps_dir), ncs_documents)
+        if not page_maps:
+            raise ValueError(f"줄→쪽 대응 폴더에서 읽힌 대응이 하나도 없습니다: {public_path(page_maps_dir)} — 표식 기준으로 조용히 내려앉지 않는다(resegment.py 산출물인지 확인)")
         pdf_pages = pdf_pages_from_previous_basis(Path(previous_basis))
+        check_page_maps_against_previous_basis(Path(previous_basis), ncs_documents, page_maps, pdf_pages)
     result = aggregate_matches(sources, documents, rules, candidates, artifacts, page_maps=page_maps)
     result = assign_match_grades(
         result,
@@ -2319,17 +2362,20 @@ def run_census(
     result = replace(result, dedup=tuple(dedup))
     agreement = reseg_agreement(result, Path(reseg_csv)) if (page_maps and reseg_csv is not None) else None
     manifest = artifact_manifest(result)
-    mismatch = check_expected(summary_metrics(result, manifest, dictionary=dictionary, page_maps=maps_info, reseg_agreement=agreement), expected)
+    metrics = summary_metrics(result, manifest, dictionary=dictionary, page_maps=maps_info, reseg_agreement=agreement)
+    mismatch = check_expected(metrics, expected)
     if mismatch and not force and not variant:
         print("EXPECTED 불일치 — 산출물을 쓰지 않습니다 (--force 로 강제, 그 뒤 EXPECTED 를 갱신):", file=sys.stderr)
         for line in mismatch:
             print("  " + line, file=sys.stderr)
-        if any(line.startswith("reseg_agreement") for line in mismatch):
+        if "reseg_agreement" in expected and metrics["reseg_agreement"] != expected["reseg_agreement"]:
             print("  → 이전 기준과 등급이 다른 쪽이 생겼다: 줄→쪽 대응(page_maps)이 바뀌었거나 regrade 기준선이 바뀐 것 — 어느 쪽인지 확인한 뒤 EXPECTED 를 고칠 것"
                   + (f" (예: {agreement['disagree'][:5]})" if agreement and agreement.get("disagree") else ""), file=sys.stderr)
         raise SystemExit(1)
     basis = load_previous_basis(previous_basis) if previous_basis is not None else None
     extra_inputs = [{"kind": "이전 기준", "count": 1, "sha256": _file_sha256(previous_basis)}] if previous_basis is not None else []
+    if agreement is not None:
+        extra_inputs.append({"kind": "이전 기준 쪽 등급", "count": 1, "sha256": _file_sha256(reseg_csv)})     # --reseg-csv 도 결속(reseg_agreement)을 정하는 입력이다
     run = run_manifest(
         result, argv if argv is not None else sys.argv, force, mismatch, git=git, xlsx_out=xlsx_out,
         extra_inputs=extra_inputs, marker_nonmonotone=nonmonotone_markers(documents), variant=variant,
@@ -2361,13 +2407,30 @@ def main() -> None:
     parser.add_argument("--dashboard-data-out", type=Path, help="정적 대시보드 JavaScript 데이터 출력 (docs/semantic_recount_data.js)")
     parser.add_argument("--summary-out", type=Path, help="추적 요약 JSON (docs/03-analysis/data/semantic_summary.json)")
     parser.add_argument("--analysis-dir", type=Path, help="분리 분석 HTML 3건을 쓸 폴더 (docs)")
-    parser.add_argument("--previous-basis", type=Path, help="이전 기준 reseg_summary.json — payload 에 복사해 브리지 표를 그린다")
+    parser.add_argument("--previous-basis", type=Path, default=HERE / PREVIOUS_BASIS_SOURCE, help="이전 기준 reseg_summary.json — payload 에 복사해 브리지 표를 그리고, --page-maps 의 PDF 쪽수·마크다운 판 지문의 출처 (기본: 추적 파일)")
     parser.add_argument("--force", action="store_true", help="EXPECTED 불일치여도 쓴다 (manifest 에 기록됨; 그 뒤 EXPECTED 를 갱신할 것)")
     parser.add_argument("--dictionary", choices=DICTIONARY_VERSIONS, default=DEFAULT_DICTIONARY, help="사전 버전 — 정본이 아니면 변형 실행(추적 경로 거부)")
     parser.add_argument("--page-maps", type=Path, default=DEFAULT_PAGE_MAPS_DIR, help="줄→실제 쪽 대응 폴더 — NCS 출현을 실제 PDF 쪽에 놓는다(정본은 대응 없이 만들 수 없다); --previous-basis 필요")
     parser.add_argument("--reseg-csv", type=Path, default=DEFAULT_RESEG_CSV, help="이전 기준 쪽 등급 CSV — 공유 쪽 등급 일치를 manifest 에 남긴다")
     args = parser.parse_args()
-    result = run_census(
+    try:
+        result = _main_run(args)
+    except (FileNotFoundError, ValueError) as exc:                  # 새 클론(입력 없음)·잘못된 입력은 traceback 대신 한 줄로 — recount_grades.py 와 같은 태도
+        raise SystemExit(f"오류: {exc}") from None
+    manifest = artifact_manifest(result)
+    run = result.run or {}
+    maps_info = PageMapsInfo(**run["page_maps"]) if run.get("page_maps") else None
+    agreement = run.get("reseg_agreement")
+    metrics = summary_metrics(result, manifest, dictionary=args.dictionary, page_maps=maps_info, reseg_agreement=agreement)
+    print(f"완료: 키워드 {len(result.sources)}개, 문서 {len(result.documents)}개, 상세 {len(result.matches)}건")
+    if agreement and agreement.get("disagree"):
+        print("이전 기준과 등급이 다른 쪽:", agreement["disagree"])
+    print("측정값 (EXPECTED 고정용):")
+    print(json.dumps(metrics, ensure_ascii=False, indent=2))
+
+
+def _main_run(args: argparse.Namespace) -> AnalysisResult:
+    return run_census(
         args.source_workbook,
         args.ncs_root,
         args.school_root,
@@ -2384,16 +2447,6 @@ def main() -> None:
         page_maps_dir=args.page_maps,
         reseg_csv=args.reseg_csv,
     )
-    manifest = artifact_manifest(result)
-    run = result.run or {}
-    maps_info = PageMapsInfo(**run["page_maps"]) if run.get("page_maps") else None
-    agreement = run.get("reseg_agreement")
-    metrics = summary_metrics(result, manifest, dictionary=args.dictionary, page_maps=maps_info, reseg_agreement=agreement)
-    print(f"완료: 키워드 {len(result.sources)}개, 문서 {len(result.documents)}개, 상세 {len(result.matches)}건")
-    if agreement and agreement.get("disagree"):
-        print("이전 기준과 등급이 다른 쪽:", agreement["disagree"])
-    print("측정값 (EXPECTED 고정용):")
-    print(json.dumps(metrics, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

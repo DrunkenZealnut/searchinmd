@@ -118,6 +118,16 @@ class Facts:
     cases_date: str | None = None
     page_basis: dict = field(default_factory=dict)      # meta.page_basis — NCS "real"(실제 PDF 쪽, 2026-09-15~) / "marker"(표식 블록); 교과서는 "marker"(= 실제 쪽)
 
+    @property
+    def ncs_real_pages(self) -> bool:
+        """NCS 출현이 실제 PDF 쪽에 놓인 정본인가 — 2절 도입·'주'·3절 도입 문단이 이 값 하나로 갈린다."""
+        return self.page_basis.get("NCS") == "real"
+
+    @property
+    def marker_books(self) -> list[str]:
+        """대응 없이 표식이 실제 쪽인 교재 코드 — 정본 manifest real_page_marker_books(2026-09-15~, [{code, pages}]); 2절 도입의 "대응이 없는 N권" 이 여기서 나온다."""
+        return [b["code"] for b in (self.run.get("real_page_marker_books") or [])]
+
     def value_index(self) -> dict[str, set[str]]:
         """정본 값(콤마·소수 1자리 % 문자열) → 그 값이 나오는 정본 키 경로들. 숫자 감사의 허용 집합이자 대조 JSON 의 출처(keys) 근거."""
         index: dict[str, set[str]] = {}
@@ -200,7 +210,7 @@ def load_facts(summary_path: Path = DEFAULT_SUMMARY, cases_path: Path = DEFAULT_
         raise ValueError(f"semantic_summary.json 의 meta.run.generated_at 이 없거나 날짜가 아닙니다: {run.get('generated_at')!r} — 보고서 출처 문구에 필요합니다")
     page_basis = summary.get("meta", {}).get("page_basis")
     if not isinstance(page_basis, dict) or page_basis.get("NCS") not in ("real", "marker"):
-        raise ValueError("semantic_summary.json 에 meta.page_basis 가 없습니다 — 2026-09-15 이후 정본(occurrence-real-pages)이 필요합니다: 쪽수 문구가 이 값으로 갈린다")
+        raise ValueError(f"semantic_summary.json 의 meta.page_basis 가 없거나 NCS 값이 real/marker 가 아닙니다: {page_basis!r} — 2026-09-15 이후 정본(occurrence-real-pages)이 필요합니다: 쪽수 문구가 이 값으로 갈린다")
     cases = json.loads(Path(cases_path).read_text(encoding="utf-8"))
     if not recount_path or not Path(recount_path).exists():
         raise FileNotFoundError(f"recount summary.json 이 없습니다 (교과서 사고사례 쪽 수의 출처): {recount_path}")
@@ -674,9 +684,12 @@ def ncs_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
     safety_rank_kw = [name for name, _ in n.ranked()].index("안전") + 1
     grade2_rank = sorted((1, 2, 3), key=lambda g: (-n.grades[g], g)).index(2) + 1
     run_date, dictionary = provenance(f)
-    real_pages = f.page_basis.get("NCS") == "real"
+    real_pages = f.ncs_real_pages
+    marker_books = len(f.marker_books)
+    pages_note = (f"PDF 쪽수; 줄→쪽 대응이 없는 {marker_books}권은 쪽 표식 기준" if marker_books else "PDF 쪽수") if real_pages else "교재 마크다운의 쪽 표식 최댓값 합"
     conditions = {
-        "NCS 기반 반도체 자료를 대상으로": {"page_basis": f.page_basis.get("NCS")},
+        "NCS 기반 반도체 자료를 대상으로": {"page_basis": f.page_basis.get("NCS"), "marker_books": marker_books},
+        "주: 단위: 건.": {"page_basis": f.page_basis.get("NCS")},
         "교과서의 전체 키워드 중 ‘안전’이": {"safety_top_grade": gmax, "safety_rank": safety_rank_kw},
         "‘작업환경’은": {"g3_vs_overall": workenv_vs_overall},
         "사고 관련 주요 키워드 검출 건수는": {"accident_keyword_order": [n for n, _ in sorted(((x, k(x)["total"]) for x in accident_kw), key=lambda kv: (-kv[1], n.order.index(kv[0])))]},
@@ -691,7 +704,7 @@ def ncs_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
     }
     return _with_conditions([
         ("NCS 기반 반도체 자료를 대상으로",
-         f"NCS 기반 반도체 자료를 대상으로 안전보건교육 내용의 실태를 분석하였다. 분석 대상은 자료 {n.documents}권, 총 {fmt(pages_total)}쪽({'PDF 쪽수; 줄→쪽 대응이 없는 2권은 쪽 표식 기준' if real_pages else '교재 마크다운의 쪽 표식 최댓값 합'})이며, ‘사망, 부상, 화학물질, 폭발, 감전, 직업병’ 등 {len(n.order)}개의 안전보건 관련 주요 키워드를 중심으로 AI 기반 텍스트 분석과 수기 검토를 병행하였다. 수치는 {run_date} 정본 재검산(의미 표현 사전 {dictionary}, 출현건수 기준, 총 {fmt(n.total)}건) 값이다."),
+         f"NCS 기반 반도체 자료를 대상으로 안전보건교육 내용의 실태를 분석하였다. 분석 대상은 자료 {n.documents}권, 총 {fmt(pages_total)}쪽({pages_note})이며, ‘사망, 부상, 화학물질, 폭발, 감전, 직업병’ 등 {len(n.order)}개의 안전보건 관련 주요 키워드를 중심으로 AI 기반 텍스트 분석과 수기 검토를 병행하였다. 수치는 {run_date} 정본 재검산(의미 표현 사전 {dictionary}, 출현건수 기준, 총 {fmt(n.total)}건) 값이다."),
         ("교과서의 전체 키워드 중 ‘안전’이",
          f"교과서의 전체 키워드 중 ‘안전’이 총 {fmt(safety['total'])}건으로 검출 건수가 {'가장 많았다' if safety_rank_kw == 1 else str(safety_rank_kw) + '번째로 많았다'}. "
          + _safety_grade_sentences(safety, gmax)),
@@ -756,13 +769,14 @@ def case_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
     narrative_events = len({p.get("event", p["gist"]) for p in c.pages if p["verdict"] in ("case", "case_other")})   # 사건 수 — 같은 사건의 중복 게재는 하나
     fp_breakdown = ", ".join(f"{FP_KIND_LABEL[kind]}({n}쪽)" for kind, n in kinds.most_common())
     conditions = {
-        "본 연구에서는 NCS 반도체 교과서에 수록된 사고, 부상, 질병 관련 사례를": {"flagged": c.flagged, "narrative": c.narrative, "industrial_events": c.industrial_events, "false_positive": c.false_positive},
+        "본 연구에서는 NCS 반도체 교과서에 수록된 사고, 부상, 질병 관련 사례를": {"flagged": c.flagged, "narrative": c.narrative, "industrial_events": c.industrial_events, "false_positive": c.false_positive,
+                                                          "page_basis": f.page_basis.get("NCS")},
         "사례의 분포를 보면": {"areas_without_cases": areas_without, "top_area": top_area},
         "이러한 분석 결과를 종합하면, NCS 반도체 교과서에 수록된 사고 사례는": {"industrial_areas": industrial_areas, "narrative_events": narrative_events},
     }
     return _with_conditions([
         ("본 연구에서는 NCS 반도체 교과서에 수록된 사고, 부상, 질병 관련 사례를",
-         f"본 연구에서는 NCS 반도체 교과서에 수록된 사고, 부상, 질병 관련 사례를 체계적으로 수집·정리하고, 내용 수준과 구성 특성을 분석하였다. 키워드 검색 결과의 ‘사고사례여부’ 자동 판정은 {c.books}권 {c.flagged}쪽을 사례로 잡았으나, 해당 쪽의 원문을 확인한 결과 실제로 사고를 서술한 쪽은 {c.narrative}쪽뿐이었고, 그중 반도체 산업재해는 구미 불산 가스 누출 사고 {c.industrial_events}건({' '.join(wa('『' + b + '』') if i < len(dict.fromkeys(industrial_books)) - 1 else '『' + b + '』' for i, b in enumerate(dict.fromkeys(industrial_books)))} {c.industrial_books}권에 중복 게재)이었으며, 나머지 {len(other)}쪽은 반도체 산업재해가 아닌 사고({', '.join(p['gist'].split(' (')[0] for p in other)})였다(표 13 참조). {'표 13 의 쪽 번호와 1·2절의 분야별 쪽수는 모두 실제 PDF 쪽 기준이다(재세그먼트 줄→쪽 대응).' if f.page_basis.get('NCS') == 'real' else '표 13 의 쪽 번호는 재세그먼트로 확인한 실제 PDF 쪽이다(1·2절의 분야별 쪽수는 마크다운 쪽 표식 최댓값).'} 이러한 결과는 반도체산업이 화학물질, 특수 가스, 고에너지 장비 등을 활용하는 대표적인 고위험 산업임을 감안할 때, 교과서에 수록된 사고 사례의 양적 수준이 매우 제한적임을 보여 준다."),
+         f"본 연구에서는 NCS 반도체 교과서에 수록된 사고, 부상, 질병 관련 사례를 체계적으로 수집·정리하고, 내용 수준과 구성 특성을 분석하였다. 키워드 검색 결과의 ‘사고사례여부’ 자동 판정은 {c.books}권 {c.flagged}쪽을 사례로 잡았으나, 해당 쪽의 원문을 확인한 결과 실제로 사고를 서술한 쪽은 {c.narrative}쪽뿐이었고, 그중 반도체 산업재해는 구미 불산 가스 누출 사고 {c.industrial_events}건({' '.join(wa('『' + b + '』') if i < len(dict.fromkeys(industrial_books)) - 1 else '『' + b + '』' for i, b in enumerate(dict.fromkeys(industrial_books)))} {c.industrial_books}권에 중복 게재)이었으며, 나머지 {len(other)}쪽은 반도체 산업재해가 아닌 사고({', '.join(p['gist'].split(' (')[0] for p in other)})였다(표 13 참조). {'표 13 의 쪽 번호와 1·2절의 분야별 쪽수는 모두 실제 PDF 쪽 기준이다(재세그먼트 줄→쪽 대응).' if f.ncs_real_pages else '표 13 의 쪽 번호는 재세그먼트로 확인한 실제 PDF 쪽이다(1·2절의 분야별 쪽수는 마크다운 쪽 표식 최댓값).'} 이러한 결과는 반도체산업이 화학물질, 특수 가스, 고에너지 장비 등을 활용하는 대표적인 고위험 산업임을 감안할 때, 교과서에 수록된 사고 사례의 양적 수준이 매우 제한적임을 보여 준다."),
         ("사례의 분포를 보면",
          f"사례의 분포를 보면, 자동 판정 {c.flagged}쪽 중 {c.top_book_pages}쪽이 『{c.top_book}』에 몰려 있어, 현재 교과서에서 사고 관련 내용이 주로 {top_area_label} 중심으로 구성되어 있다. "
          + (f"반면 {', '.join(areas_without)} 분야에서는 사고 사례가 전혀 제시되지 않아, 공정과 직무 전반을 반영한 균형 있는 교육 구성은 부족한 것으로 나타났다." if areas_without

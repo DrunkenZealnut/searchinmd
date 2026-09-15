@@ -11,12 +11,14 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
+import math
 from collections import Counter, defaultdict
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 
 import semantic_keyword_recount as SKR
+from page_utils import DENSE_MARKER_RATIO
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_OUT = HERE / "docs" / "03-analysis" / "data" / "occurrence_real_pages_impact.json"
@@ -24,7 +26,12 @@ BLOCK_BASIS_V2 = {                                             # 2026-09-14 정�
     "NCS": {"1": 4378, "2": 4614, "3": 2525},
     "교과서": {"1": 633, "2": 459, "3": 115},
 }
-REAL_MARKER_RATIO = 0.8                                        # 블록 수 / 실제 쪽 수 ≥ 0.8 이면 "표식이 실제 쪽" 교재 (계획 §1.3)
+REAL_MARKER_RATIO = DENSE_MARKER_RATIO                         # 블록 수 / 실제 쪽 수 ≥ 0.8 이면 "표식이 실제 쪽" 교재 (계획 §1.3) — resegment.py 의 마커 밀도 문턱과 같은 값 (page_utils)
+WIDTH_BUCKETS = ((1, "1"), (3, "2-3"), (9, "4-9"), (math.inf, "10+"))   # 출현이 놓인 블록이 걸친 실제 쪽 폭 → 구간 — 판정과 출력 순서가 같은 표
+
+
+def _width_bucket(width: int) -> str:
+    return next(label for limit, label in WIDTH_BUCKETS if width <= limit)
 
 
 def _key(record: SKR.MatchRecord) -> tuple:
@@ -51,16 +58,16 @@ def compute_impact(documents: list[SKR.Document], keywords: list[str], existing_
     sources = [SKR.KeywordSource(k, 0, True) for k in keywords]
     rules = SKR.build_default_rules(keywords, version=dictionary)
     candidates = SKR.default_candidate_decisions(version=dictionary)
-    block = SKR.assign_match_grades(SKR.aggregate_matches(sources, documents, rules, candidates, with_summary=False), existing_grades)
-    real = SKR.assign_match_grades(SKR.aggregate_matches(sources, documents, rules, candidates, with_summary=False, page_maps=page_maps), existing_grades, page_maps=page_maps)
+    ungraded = SKR.aggregate_matches(sources, documents, rules, candidates, with_summary=False)      # 스캔은 한 번(7.9 s) — 대응은 page 만 덧씌운다 (리뷰 performance)
+    block = SKR.assign_match_grades(ungraded, existing_grades)
+    real = SKR.assign_match_grades(replace(ungraded, matches=tuple(SKR.apply_page_maps(list(ungraded.matches), page_maps))), existing_grades, page_maps=page_maps)
     a_list = [r for r in block.matches if r.decision == "included"]
     b_list = [r for r in real.matches if r.decision == "included"]
-    if len(a_list) != len(b_list) or any(_key(x) != _key(y) for x, y in zip(a_list, b_list)):
+    if len(a_list) != len(b_list) or any(_key(x) != _key(y) for x, y in zip(a_list, b_list)):     # 불변식: apply_page_maps 는 매칭을 바꾸지 않는다 — 같은 줄의 같은 표현이 여럿이라 위치로 짝짓는다
         raise ValueError(f"두 집계의 매칭 순서·집합이 다릅니다 (블록 {len(a_list)} vs 실제 쪽 {len(b_list)}) — 대응은 매칭을 바꾸면 안 된다")
-    a = dict(enumerate(a_list)); b = dict(enumerate(b_list))                       # 같은 줄의 같은 표현이 여럿이라 위치로 짝짓는다 (스캔 순서는 결정론)
     corpora = ("NCS", "교과서")
-    grades_a = {c: _grade_counts(r for r in a.values() if r.corpus == c) for c in corpora}
-    grades_b = {c: _grade_counts(r for r in b.values() if r.corpus == c) for c in corpora}
+    grades_a = {c: _grade_counts(r for r in a_list if r.corpus == c) for c in corpora}
+    grades_b = {c: _grade_counts(r for r in b_list if r.corpus == c) for c in corpora}
     if block_reference is not None:
         bad = [c for c in corpora if grades_a[c] != block_reference[c]]
         if bad:
@@ -69,10 +76,10 @@ def compute_impact(documents: list[SKR.Document], keywords: list[str], existing_
     transition = Counter(); by_source = defaultdict(Counter); by_kind = defaultdict(lambda: {"block": Counter(), "real": Counter(), "occurrences": 0})
     per_keyword = defaultdict(lambda: {"block": Counter(), "real": Counter()}); per_group = defaultdict(lambda: {"block": Counter(), "real": Counter()})
     pages_a, pages_b = set(), set()
-    for key, ra in a.items():
+    occ_by_doc: dict[str, dict[int, list[int]]] = defaultdict(lambda: defaultdict(list))   # 문서 → 블록 쪽 → 출현 줄 (블록 폭 표, 한 번만 모은다)
+    for ra, rb in zip(a_list, b_list):
         if ra.corpus != "NCS":
             continue
-        rb = b[key]
         transition[(ra.grade, rb.grade)] += 1
         by_source[ra.grade_source][rb.grade == ra.grade] += 1
         kind = kinds[ra.relative_path]
@@ -81,22 +88,19 @@ def compute_impact(documents: list[SKR.Document], keywords: list[str], existing_
         group = SKR._dashboard_group("NCS", ra.relative_path)
         per_group[group]["block"][ra.grade] += 1; per_group[group]["real"][rb.grade] += 1
         pages_a.add((ra.relative_path, ra.page)); pages_b.add((rb.relative_path, rb.page))
+        occ_by_doc[ra.relative_path][ra.page].append(ra.line)
     # 출현이 놓인 블록의 실제 쪽 폭
     span = Counter()
     for document in documents:
         line_pages = page_maps.get(document.relative_path) if document.corpus == "NCS" else None
         if line_pages is None:
             continue
-        occ_lines = defaultdict(list)
-        for key, ra in a.items():
-            if ra.relative_path == document.relative_path:
-                occ_lines[ra.page].append(ra.line)
+        occ_lines = occ_by_doc.get(document.relative_path, {})
         for block in SKR.split_pages(document):
             if block.page is None or block.page not in occ_lines:
                 continue
             width = len({line_pages[i - 1] for i in range(block.start_line, block.start_line + len(block.lines)) if i - 1 < len(line_pages)})
-            bucket = "1" if width == 1 else "2-3" if width <= 3 else "4-9" if width <= 9 else "10+"
-            span[bucket] += len(occ_lines[block.page])
+            span[_width_bucket(width)] += len(occ_lines[block.page])
     ncs_total = sum(grades_a["NCS"].values())
     moved = sum(v for (x, y), v in transition.items() if x != y)
     return {
@@ -111,11 +115,11 @@ def compute_impact(documents: list[SKR.Document], keywords: list[str], existing_
                                 "block": {str(g): v["block"][g] for g in (1, 2, 3)}, "real": {str(g): v["real"][g] for g in (1, 2, 3)}} for kind, v in sorted(by_kind.items())},
         "keywords": [{"name": k, "block": {str(g): per_keyword[k]["block"][g] for g in (1, 2, 3)}, "real": {str(g): per_keyword[k]["real"][g] for g in (1, 2, 3)}} for k in keywords],
         "groups": {g: {"block": {str(x): v["block"][x] for x in (1, 2, 3)}, "real": {str(x): v["real"][x] for x in (1, 2, 3)}} for g, v in sorted(per_group.items())},
-        "pages": {"block_pages": len(pages_a), "real_pages": len(pages_b), "block_width_of_occurrences": {k: span[k] for k in ("1", "2-3", "4-9", "10+")}},
+        "pages": {"block_pages": len(pages_a), "real_pages": len(pages_b), "block_width_of_occurrences": {label: span[label] for _, label in WIDTH_BUCKETS}},
     }
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--source-workbook", type=Path, required=True)
     parser.add_argument("--ncs-root", type=Path, required=True)
@@ -124,7 +128,7 @@ def main() -> None:
     parser.add_argument("--page-maps", type=Path, required=True)
     parser.add_argument("--previous-basis", type=Path, default=SKR.HERE / SKR.PREVIOUS_BASIS_SOURCE, help="reseg_summary.json — 정렬 자기 검증 수치를 meta 에 병기")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     sources = SKR.read_keyword_workbook(args.source_workbook)
     keywords = [s.keyword for s in sources]
     ncs, _ = SKR.select_ncs_documents(SKR.load_documents(args.ncs_root, "NCS"))
@@ -137,7 +141,7 @@ def main() -> None:
         "generated_at": datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds"),
         "git": SKR._git_info(),
         "inputs": {"source_workbook": SKR._file_sha256(args.source_workbook), "school_grade_workbook": SKR._file_sha256(school),
-                   "ncs_markdown": SKR._document_set_sha256(ncs), "page_maps": {"dir": info.dir, "files": info.files, "sha256": info.sha256}},
+                   "ncs_markdown": SKR._document_set_sha256(ncs), "page_maps": info.as_manifest()},
     })
     if args.previous_basis and Path(args.previous_basis).is_file():                       # 정렬 오차는 이전 기준과 같은 대응의 것 — 그 자기 검증 수치를 병기 (계획 §5)
         reseg = json.loads(Path(args.previous_basis).read_text(encoding="utf-8"))

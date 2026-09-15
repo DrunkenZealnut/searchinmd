@@ -18,10 +18,10 @@
    "summary_sha256": "282d6c221b9e2c0c5841ea9dd73a63f0999ad5730ae22ec39a7e9c4a6b34d569"
   },
   "run": {
-   "generated_at": "2026-09-15T11:45:01+09:00",
-   "git_commit": "f28d496",
+   "generated_at": "2026-09-15T15:02:39+09:00",
+   "git_commit": "18b0a68",
    "git_dirty": true,
-   "command": "semantic_keyword_recount.py --source-workbook data/ncs_keywords_in_markdown_results_20260402_재판정_20260414.xlsx --ncs-root data_source/markdown/ncs --school-root data_source/markdown/school-text --xlsx-out data/semantic_keyword_recount_20260915.xlsx --report-out data/semantic_keyword_recount_20260915_report.md --dashboard-data-out docs/semantic_recount_data.js --summary-out docs/03-analysis/data/semantic_summary.json --analysis-dir docs --previous-basis docs/03-analysis/data/reseg_summary.json --page-maps data/markdown/ncs_paged --reseg-csv docs/03-analysis/data/ncs_pages_reseg.csv",
+   "command": "semantic_keyword_recount.py --source-workbook data/ncs_keywords_in_markdown_results_20260402_재판정_20260414.xlsx --ncs-root data_source/markdown/ncs --school-root data_source/markdown/school-text --xlsx-out data/semantic_keyword_recount_20260915.xlsx --report-out data/semantic_keyword_recount_20260915_report.md --dashboard-data-out docs/semantic_recount_data.js --summary-out docs/03-analysis/data/semantic_summary.json --analysis-dir docs --page-maps data/markdown/ncs_paged --reseg-csv docs/03-analysis/data/ncs_pages_reseg.csv",
    "xlsx": "semantic_keyword_recount_20260915.xlsx",
    "python": "3.13.7",
    "openpyxl": "3.1.5",
@@ -55,6 +55,11 @@
      "kind": "이전 기준",
      "count": 1,
      "sha256": "f3ef18c3888987a537f48ef347fac7cebf966286f98c55fc4083be566de9128f"
+    },
+    {
+     "kind": "이전 기준 쪽 등급",
+     "count": 1,
+     "sha256": "74adeb7e2bf46fa311e10766808b175749ca9b29145cf6dec1a89069ee5555d0"
     }
    ],
    "dedup": [
@@ -79,8 +84,14 @@
     "sha256": "36de1bff377c09c730bd66fd00574b3546201175c8645b55be98ff2de11747da"
    },
    "real_page_marker_books": [
-    "LM1903060408",
-    "LM1903060424"
+    {
+     "code": "LM1903060408",
+     "pages": 120
+    },
+    {
+     "code": "LM1903060424",
+     "pages": 119
+    }
    ],
    "reseg_agreement": {
     "pages": 2035,
@@ -108,6 +119,7 @@
   "NCS": {
    "documents": 86,
    "total": 11517,
+   "detected_pages": 2492,
    "graded": 11517,
    "grade_sources": {
     "real-page": 11517,
@@ -176,6 +188,7 @@
   "교과서": {
    "documents": 9,
    "total": 1207,
+   "detected_pages": 388,
    "graded": 1207,
    "grade_sources": {
     "real-page": 0,

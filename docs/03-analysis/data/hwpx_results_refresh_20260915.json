@@ -3,8 +3,8 @@
   "hwpx": "반도체 기초보고서_20260911.hwpx",
   "hwpx_sha256": "ad5167ea1434a6b7195765ecfacb9669b87dcb16a82245442fa96d0b4bc51ff5",
   "summary_run": {
-   "generated_at": "2026-09-15T11:45:01+09:00",
-   "git_commit": "f28d496",
+   "generated_at": "2026-09-15T15:02:39+09:00",
+   "git_commit": "18b0a68",
    "dictionary": "v2",
    "expected": true
   },
@@ -598,7 +598,8 @@
     "keywords[산업안전보건법].corpora.NCS.grades.2"
    ],
    "conditions": {
-    "page_basis": "real"
+    "page_basis": "real",
+    "marker_books": 2
    },
    "format_collapsed": false
   },
@@ -1314,7 +1315,9 @@
    "keys": [
     "corpora.NCS.total"
    ],
-   "conditions": {},
+   "conditions": {
+    "page_basis": "real"
+   },
    "format_collapsed": false
   },
   {
@@ -1361,7 +1364,8 @@
     "flagged": 13,
     "narrative": 3,
     "industrial_events": 1,
-    "false_positive": 10
+    "false_positive": 10,
+    "page_basis": "real"
    },
    "format_collapsed": false
   },

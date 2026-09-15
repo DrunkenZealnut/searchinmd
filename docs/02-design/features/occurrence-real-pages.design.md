@@ -111,7 +111,7 @@ def reseg_agreement(result, csv_path) -> dict:   # {"pages": n, "agree": n, "dis
 
 ### 3.8 발표면 · HWPX — FR-08·09
 
-- `docs/semantic_grade_dashboard.js`: 브리지 절에 `meta.page_basis` 가 `real` 이면 문구 "출현은 이전 기준과 같은 실제 PDF 쪽에 놓이며, 두 수치의 차이는 분모(출현건수 vs 쪽)뿐이다" 를 넣고, 마커 없는 출현 문장은 현행. `index.html` 의 정적 `.ctn` 값은 하니스 `S5` 가 잡는 대로 갱신.
+- `docs/semantic_grade_dashboard.js`: 브리지 절에 `meta.page_basis` 가 `real` 이면 제 문단으로 "출현은 이전 기준과 같은 실제 PDF 쪽에 놓이며 … 공유 쪽 등급 일치 N/N (100.0%) … 두 수치는 같은 쪽 모집단을 집계 단위(출현건수 vs 쪽)만 달리해 센 것이라, 차이는 집계 단위와 그에 따른 가중뿐이다" 를 넣고(출고 전 리뷰 Codex·design: "분모뿐" 은 분자·분모가 함께 바뀌므로 느슨한 표현 — 집계 단위·가중으로 고침, 일치율은 히어로와 같은 N/N (100.0%) 형식), 데이터 주는 0건인 등급 출처를 적지 않으며(NCS 는 실제 쪽 판정 N건만), 마커 없는 출현 문장은 현행. `index.html` 의 정적 `.ctn` 값은 하니스 `S5` 가 잡는 대로 갱신.
 - `hwpx_results_refresh.py`: `Facts.run` 에 `page_basis` 를 읽어(`load_facts` 가 필수로 요구) 2절 도입 "총 N쪽(교재 마크다운의 쪽 표식 최댓값 합)" ↔ "총 N쪽(PDF 쪽수; 표식이 실제 쪽인 2권은 표식 기준)", 3절 "표 13 의 쪽 번호는 재세그먼트로 확인한 실제 PDF 쪽이다(1·2절의 분야별 쪽수는 마크다운 쪽 표식 최댓값)" ↔ "(1·2절의 분야별 쪽수도 PDF 쪽수)" 로 분기; `DEFAULT_OUT`/`DEFAULT_DIFF` 의 날짜를 정본 실행일에서 만든다(`…_{YYYYMMDD}_정본.hwpx`, `hwpx_results_refresh_{YYYYMMDD}.json`) — 하드코딩 20260914 제거. 옛 대조 JSON 은 `docs/03-analysis/data/` 에 그대로 두고 data README 가 계보로 적는다.
 - README·CLAUDE.md: 재생성 절에 `--page-maps data/markdown/ncs_paged`, 예외 문단 수치(등급3 비율·분모), 그룹 4 문단(대응·결속·D2 목록·`real-page`), `docs/03-analysis/data/README.md` 계보 행.
 
@@ -166,6 +166,7 @@ def reseg_agreement(result, csv_path) -> dict:   # {"pages": n, "agree": n, "dis
 | 9 | `reseg_agreement` 는 `label` 출처 쪽을 제외 | 라벨 쪽은 실제 쪽이 아니고, 그 2권은 지금 표식(실제 쪽)으로 판정된다(갭 G-3) |
 | 10 | 대응을 매칭 줄 규약(`splitlines`)으로 옮겨 싣는다 | `\x0c` 가 든 1권에서 줄 번호가 밀리는 잠재 결함(갭 G-1) — 정본 수치는 바뀌지 않았고(경계 줄 출현 0건) 규약만 통일 |
 | 11 | 설계 밖 추가: `AnalysisResult.run`(main 의 metrics 출력용 manifest 사본), `page is None` 레코드는 덧씌우지 않음, 표식 없는 NCS 문서는 대응 대상 아님, 2절 "주" 문단도 `page_basis` 분기, 목록 교재 표식은 1..N 이어야, `pdf_pages` 를 모르는 대응 교재는 오류, `Facts.page_basis` 별도 필드 | 갭 G-9 기록 |
+| 12 | 출고 전 리뷰(2026-09-15, review army 6 + red team + Codex) 반영: `load_page_maps` 가 `--marker-correct` 변형의 대응(`marker_correct`·`moved_markers`)을 거부하고 대응이 하나도 안 읽히면 실행을 거부, manifest `real_page_marker_books` 는 실제로 대응이 없던 목록 교재의 `[{code, pages}]`(대응 없는 실행은 null — 하니스 `S3n` 이 하드코딩 239 대신 여기서 읽음), `--reseg-csv` 지문을 입력 7번째로 기록, `_to_matching_lines` 가 줄 끝 `\x0c`(조각 + 개행) 를 세는 방식으로 고침, `_page_basis`·`_grade_page_text`·`PageMapsInfo.as_manifest` 로 중복 유도 제거, `dashboard_payload` 는 `pdf_pages` 에 있는 교재를 우선(목록 교재도 대응이 생기면 PDF 쪽수), 영향표는 스캔 1회 + 덧씌우기(21.7 → 14.0 s, 산출물 동일), `DENSE_MARKER_RATIO`·`NCS_PAGED_DIR` 를 `page_utils` 로, HWPX 는 page_basis 로 갈리는 문단 셋 모두 `conditions` 기록. 레드팀 6건도 반영: 대응은 이전 기준의 마크다운 판(`meta.md_corpus_sha256`, 같은 조리법 `mapped_corpus_digest`)과 PDF 쪽수(`max(line_pages) ≤ per_book.pdf_pages`)에 묶여야 통과(`check_page_maps_against_previous_basis`), payload `corpora.*.detected_pages`(출현이 놓인 (교재, 쪽) 수 — NCS 2,492 = 영향표 `pages.real_pages`, 교과서 388)로 브리지 문구를 "같은 쪽 기준·같은 규칙이지 같은 쪽 집합은 아니다(닿은 쪽 2,492 vs 2,189, 공유 2,035 전부 일치; 집합 차이는 검출 사전, 비율 차이는 집계 단위·가중)" 로 고침(CLAUDE.md 도), HWPX 2절 "대응이 없는 N권" 은 manifest `real_page_marker_books` 수로 분기(`Facts.marker_books`, conditions), `--previous-basis` 기본값 = 추적 `reseg_summary.json`(최소 호출로 정본 실행), `main()` 은 입력 오류를 traceback 대신 한 줄로, 결과 HTML meta 줄에 "페이지 열: NCS 는 실제 PDF 쪽 · 교과서는 표식" 명시 | 수치·해시 불변(정본 재실행 가드 통과, 출력 HWPX sha 동일), 테스트 171 → 175, 하니스 72 → 79 |
 
 ---
 

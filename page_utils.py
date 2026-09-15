@@ -18,6 +18,8 @@ BASELINE = 'baseline'            # 재현 기준선(현행 규칙)의 변형 라
 TRUNCATION_MARK = '...'
 GRADE_LABEL = {1: '미흡·없음', 2: '형식적 언급', 3: '구체적 대책'}   # 출하 등급 라벨 — recount_grades.py·resegment.py 가 공유한다
 PAGE_MARKER_RE = re.compile(r'<!--\s*page:\s*(\d+)\s*-->')          # <!-- page: N --> 마커 — build_page_map·insert_page_markers.py·resegment.py 가 공유한다
+DENSE_MARKER_RATIO = 0.8         # 마커(블록) 수가 쪽수의 80% 이상이면 쪽 단위 마커 — resegment.py(마커 vs PDF 쪽)·occurrence_real_pages_impact.py(블록 vs 대응 쪽)가 같은 문턱을 쓴다
+NCS_PAGED_DIR = os.path.join('data', 'markdown', 'ncs_paged')   # resegment.py 가 줄→쪽 대응(<LM코드>.pages.json)을 남기고 semantic_keyword_recount.py 가 읽는 곳 (gitignore)
 
 
 def nfc(s):

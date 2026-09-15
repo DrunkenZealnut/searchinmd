@@ -586,9 +586,42 @@ class RealPageBasisTests(unittest.TestCase):
             g = HR.load_facts(Path(td) / "marker.json", HR.DEFAULT_CASES, HR.DEFAULT_RECOUNT)
             ncs_m = {k: v for k, v, _ in HR.ncs_paragraphs(g)}
             self.assertIn("등급은 출현이 놓인 페이지의 판정값을 출현별로 연결한 값임.", ncs_m["주: 단위: 건."]); self.assertNotIn("줄→쪽 대응", ncs_m["주: 단위: 건."])
-            self.assertEqual({"page_basis": "marker"}, next(c for k, _, c in HR.ncs_paragraphs(g) if k == "NCS 기반 반도체 자료를 대상으로"))
-            self.assertEqual({"page_basis": "real"}, next(c for k, _, c in HR.ncs_paragraphs(fixture_facts()) if k == "NCS 기반 반도체 자료를 대상으로"))
+            self.assertEqual({"page_basis": "marker", "marker_books": 2}, next(c for k, _, c in HR.ncs_paragraphs(g) if k == "NCS 기반 반도체 자료를 대상으로"))
+            self.assertEqual({"page_basis": "real", "marker_books": 2}, next(c for k, _, c in HR.ncs_paragraphs(fixture_facts()) if k == "NCS 기반 반도체 자료를 대상으로"))
             self.assertEqual(HR.run_day(fixture_facts()), HR.run_day(g))                                                        # 산출물 이름은 page_basis 와 무관 — 실행일만
+
+
+    def test_page_basis_branches_are_recorded_in_conditions_and_render_defaults_follow_the_run_day(self):   # 리뷰(maintainability·testing)
+        """page_basis 로 갈리는 문단 셋(2절 도입·'주'·3절 도입) 모두 conditions 에 page_basis 를 남긴다; 렌더 실행의 기본 --out/--diff-out 은 정본 실행일 이름이다; 잘못된 page_basis 는 값을 말하며 거부."""
+        f = fixture_facts(); self.assertTrue(f.ncs_real_pages)
+        for key in ("NCS 기반 반도체 자료를 대상으로", "주: 단위: 건."):
+            self.assertEqual("real", next(c for k, _, c in HR.ncs_paragraphs(f) if k == key)["page_basis"], key)
+        # 대응 없이 표식으로 간 교재 수는 정본 manifest(real_page_marker_books)에서 — "2권" 을 손으로 쓰지 않는다 (리뷰 red-team)
+        intro_key = "NCS 기반 반도체 자료를 대상으로"
+        intro = {k: (v, c) for k, v, c in HR.ncs_paragraphs(f)}[intro_key]
+        self.assertEqual([b["code"] for b in f.run["real_page_marker_books"]], f.marker_books); self.assertEqual(2, len(f.marker_books))
+        self.assertIn("줄→쪽 대응이 없는 2권은 쪽 표식 기준", intro[0]); self.assertEqual(2, intro[1]["marker_books"])
+        one = copy.deepcopy(f); one.run = dict(f.run, real_page_marker_books=f.run["real_page_marker_books"][:1])
+        v1, c1 = {k: (v, c) for k, v, c in HR.ncs_paragraphs(one)}[intro_key]
+        self.assertIn("줄→쪽 대응이 없는 1권은 쪽 표식 기준", v1); self.assertEqual(1, c1["marker_books"])
+        none = copy.deepcopy(f); none.run = dict(f.run, real_page_marker_books=[])
+        v0, c0 = {k: (v, c) for k, v, c in HR.ncs_paragraphs(none)}[intro_key]
+        self.assertIn("총 ", v0); self.assertNotIn("줄→쪽 대응이 없는", v0); self.assertIn("(PDF 쪽수)", v0); self.assertEqual(0, c0["marker_books"])
+        self.assertEqual("real", next(c for k, _, c in HR.case_paragraphs(f) if k.startswith("본 연구에서는 NCS 반도체 교과서에 수록된"))["page_basis"])
+        from unittest import mock
+        seen = {}
+        def fake_refresh(hwpx, facts, out, diff_out, review_dir, **kw):
+            seen.update(out=out, diff_out=diff_out, review_dir=review_dir, force=kw.get("force"), text_review_dir=kw.get("text_review_dir"))
+            return {"paragraphs": [], "tables": [], "figures": [], "audit": {"tokens": 0, "unmatched": []}}
+        with tempfile.TemporaryDirectory() as td, mock.patch.object(HR, "refresh", fake_refresh), contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(0, HR.main(["--hwpx", "x.hwpx", "--text-review-dir", td]))
+        self.assertEqual((HR.default_out_path(f), HR.default_diff_path(f), HR.DEFAULT_REVIEW_DIR, False), (seen["out"], seen["diff_out"], seen["review_dir"], seen["force"]))
+        with tempfile.TemporaryDirectory() as td:
+            summary = json.loads(HR.DEFAULT_SUMMARY.read_text(encoding="utf-8"))
+            broken = copy.deepcopy(summary); broken["meta"]["page_basis"] = {"NCS": "pdf"}
+            (Path(td) / "broken.json").write_text(json.dumps(broken, ensure_ascii=False), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, r"page_basis.*'pdf'"):                                # 값이 있는데 틀린 경우도 그 값을 말한다
+                HR.load_facts(Path(td) / "broken.json", HR.DEFAULT_CASES, HR.DEFAULT_RECOUNT)
 
 
 class EndToEndTests(unittest.TestCase):
