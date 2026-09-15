@@ -33,10 +33,12 @@ class CommittedDiffTests(unittest.TestCase):
     """실문서 실행의 대조 JSON — 숫자 감사 통과, 문단 45·표 7·그림 3, 본문·절대 경로 없음."""
 
     def test_committed_diff_json(self):
-        path = DATA / "hwpx_results_refresh_20260914.json"
-        if not path.exists():
+        paths = sorted(DATA.glob("hwpx_results_refresh_2*.json"))
+        if not paths:
             self.skipTest("대조 JSON 없음")
+        path = paths[-1]                                                                                   # 가장 최근 실행(날짜 접미)
         diff = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual({"NCS": "real", "교과서": "marker"}, diff["source"]["page_basis"])                    # occurrence-real-pages 이후의 정본으로 만든 산출물
         self.assertEqual(([], "ok"), (diff["audit"]["unmatched"], diff["audit"]["status"]))
         self.assertTrue(diff["audit"]["out_of_scope"]["found"])                                                    # 2장 5절 기록 (계획 §2.2)
         self.assertEqual((7, 3), (len(diff["tables"]), len(diff["figures"])))
@@ -57,6 +59,7 @@ class CommittedDiffTests(unittest.TestCase):
         self.assertTrue(all(len(p["locator"]) <= 50 for p in diff["paragraphs"]))          # 문단 식별용 첫머리만, 본문 없음
         run = json.loads(HR.DEFAULT_SUMMARY.read_text(encoding="utf-8"))["meta"]["run"]
         self.assertEqual({k: run.get(k) for k in ("generated_at", "git_commit", "dictionary", "expected")}, diff["source"]["summary_run"])   # 대조 JSON 은 지금의 정본 실행에 묶여 있다 (F4)
+        self.assertEqual(path.name, HR.default_diff_path(fixture_facts()).name)                                                          # 날짜 접미 = 정본 실행일
         facts = fixture_facts()
         self.assertEqual([], HR.audit_numbers([" ".join(p["new_numbers"]) for p in diff["paragraphs"]], facts))                    # 기록된 새 숫자는 전부 지금의 정본 값
         self.assertEqual("v2", HR.CANONICAL_DICTIONARY)
@@ -540,6 +543,36 @@ class AdversarialReviewTests(unittest.TestCase):
                 self.assertEqual(b"<b/>", z.read("Contents/section0.xml"))
 
 
+class RealPageBasisTests(unittest.TestCase):
+    """occurrence-real-pages: 정본의 meta.page_basis 를 읽어 2·3절 쪽수 문구를 가르고, 산출물 이름은 정본 실행일을 따른다."""
+
+    def test_load_facts_requires_page_basis_and_templates_branch_on_it(self):
+        f = fixture_facts()
+        self.assertEqual({"NCS": "real", "교과서": "marker"}, f.page_basis)
+        ncs = {k: v for k, v, _ in HR.ncs_paragraphs(f)}; cases = {k: v for k, v, _ in HR.case_paragraphs(f)}; school = {k: v for k, v, _ in HR.textbook_paragraphs(f)}
+        self.assertIn("PDF 쪽수", ncs["NCS 기반 반도체 자료를 대상으로"]); self.assertNotIn("쪽 표식 최댓값 합", ncs["NCS 기반 반도체 자료를 대상으로"])
+        self.assertIn("실제 PDF 쪽", ncs["주: 단위: 건."])
+        self.assertIn("모두 실제 PDF 쪽 기준", cases["본 연구에서는 NCS 반도체 교과서에 수록된 사고, 부상, 질병 관련 사례를"])
+        self.assertIn("쪽 표식 최댓값", school["본 연구에서는 9권의 반도체 교과서를"])                       # 교과서는 표식 기준 그대로
+        summary = json.loads(HR.DEFAULT_SUMMARY.read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory() as td:
+            marker = copy.deepcopy(summary); marker["meta"]["page_basis"] = {"NCS": "marker", "교과서": "marker"}
+            (Path(td) / "marker.json").write_text(json.dumps(marker, ensure_ascii=False), encoding="utf-8")
+            g = HR.load_facts(Path(td) / "marker.json", HR.DEFAULT_CASES, HR.DEFAULT_RECOUNT)
+            ncs_m = {k: v for k, v, _ in HR.ncs_paragraphs(g)}; cases_m = {k: v for k, v, _ in HR.case_paragraphs(g)}
+            self.assertIn("쪽 표식 최댓값 합", ncs_m["NCS 기반 반도체 자료를 대상으로"]); self.assertIn("마크다운 쪽 표식 최댓값", cases_m["본 연구에서는 NCS 반도체 교과서에 수록된 사고, 부상, 질병 관련 사례를"])
+            old = copy.deepcopy(summary); old["meta"].pop("page_basis")
+            (Path(td) / "old.json").write_text(json.dumps(old, ensure_ascii=False), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "page_basis"):
+                HR.load_facts(Path(td) / "old.json", HR.DEFAULT_CASES, HR.DEFAULT_RECOUNT)
+
+    def test_output_names_follow_the_run_date(self):
+        f = fixture_facts()
+        day = str(f.run["generated_at"])[:10].replace("-", "")
+        self.assertEqual(f"반도체 기초보고서_{day}_정본.hwpx", HR.default_out_path(f).name); self.assertEqual(f"hwpx_results_refresh_{day}.json", HR.default_diff_path(f).name)
+        self.assertTrue(HR._under_tracked_docs(HR.default_diff_path(f))); self.assertFalse(HR._under_tracked_docs(HR.default_out_path(f)))
+
+
 class EndToEndTests(unittest.TestCase):
     def _fixture(self, td):
         f = fixture_facts()
@@ -610,7 +643,7 @@ class EndToEndTests(unittest.TestCase):
     def test_no_render_never_writes_the_tracked_diff(self):
         with tempfile.TemporaryDirectory() as td:
             src, f = self._fixture(td)
-            tracked = HR.DEFAULT_DIFF
+            tracked = HR.default_diff_path(f)
             before = tracked.read_bytes() if tracked.exists() else None
             with contextlib.redirect_stdout(io.StringIO()):
                 rc = HR.main(["--hwpx", str(src), "--no-render"])
@@ -636,7 +669,7 @@ class EndToEndTests(unittest.TestCase):
             with contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(1, HR.main(["--hwpx", str(stale), "--no-render", "--diff-out", str(Path(td) / "d2.json")]))
             # 추적 경로로 지정된 실패 대조는 temp 로 우회한다
-            tracked = HR.DEFAULT_DIFF; before = tracked.read_bytes()
+            tracked = HR.default_diff_path(f); before = tracked.read_bytes()
             with contextlib.redirect_stdout(io.StringIO()):
                 HR.refresh(stale, f, out, tracked, None, render=False)
             self.assertEqual(before, tracked.read_bytes())
