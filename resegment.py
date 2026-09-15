@@ -40,15 +40,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import regrade as RG  # noqa: E402
 from recount_grades import as_page, write_atomic  # noqa: E402
-from page_utils import nfc, GRADE_LABEL, PAGE_MARKER_RE as MARKER_RE  # noqa: E402
+from page_utils import nfc, GRADE_LABEL, PAGE_MARKER_RE as MARKER_RE, DENSE_MARKER_RATIO, NCS_PAGED_DIR  # noqa: E402
 
 _STRIP = re.compile(r'[\s#*_>|\[\]()!`\-–·•○●◆◇■□▶▷※,.:;]+')
 CODE_RE = re.compile(r'(LM\d{10})')
 DEFAULT_MD_ROOT = os.path.join(HERE, 'data', 'markdown', 'ncs')
 DEFAULT_WORKBOOK = os.path.join(HERE, 'data', RG.NCS_FILE)
 DEFAULT_OUT = os.path.join(HERE, 'docs', '03-analysis', 'data')
-DEFAULT_PAGED = os.path.join(HERE, 'data', 'markdown', 'ncs_paged')
-DENSE_MARKER_RATIO = 0.8        # 마커 수가 PDF 쪽수의 80% 이상이면 쪽 단위 마커로 보고 정렬을 검증한다
+DEFAULT_PAGED = os.path.join(HERE, NCS_PAGED_DIR)                        # 줄→쪽 대응 — semantic_keyword_recount.py 의 --page-maps 기본값과 같은 곳 (page_utils)
 COL_NUMBER, COL_AREA, COL_CONTENTS, COL_CASE, COL_REASON = 0, 1, 3, 6, 8          # 나머지 열 위치는 regrade.py 와 공유
 COL_FILENAME, COL_PAGE, COL_GRADE = RG.COL_FILENAME, RG.COL_PAGE, RG.COL_GRADE
 MIN_KEY_CHARS = 10              # 행→줄 매칭 키의 최소 길이 — 이보다 짧은 마지막 줄은 전체 본문 키로 대신한다

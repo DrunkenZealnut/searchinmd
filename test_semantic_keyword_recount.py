@@ -645,7 +645,7 @@ class OutputTests(unittest.TestCase):
         payload = dashboard_payload(result)
 
         self.assertEqual(2, payload["corpora"]["NCS"]["total"])
-        self.assertEqual({"existing": 2, "new": 0, "unpaged-context": 0, "unpaged-fallback": 0}, payload["corpora"]["NCS"]["grade_sources"])
+        self.assertEqual({"real-page": 0, "existing": 2, "new": 0, "unpaged-context": 0, "unpaged-fallback": 0}, payload["corpora"]["NCS"]["grade_sources"])
         self.assertEqual({"1": 0, "2": 2, "3": 0, "unpaged": 0}, payload["corpora"]["NCS"]["grades"])
         self.assertEqual(2, payload["keywords"][0]["corpora"]["NCS"]["grades"]["2"])
         with tempfile.TemporaryDirectory() as td:
@@ -840,7 +840,7 @@ class RemediationTests(unittest.TestCase):
         self.assertEqual({"NCS": 1, "교과서": 0}, metrics["documents"])
         self.assertEqual({"NCS": 2, "교과서": 0}, metrics["totals"])
         self.assertEqual({"1": 2, "2": 0, "3": 0, "unpaged": 0}, metrics["grades"]["NCS"])
-        self.assertEqual({"existing": 0, "new": 2, "unpaged-context": 0, "unpaged-fallback": 0}, metrics["grade_sources"])
+        self.assertEqual({"real-page": 0, "existing": 0, "new": 2, "unpaged-context": 0, "unpaged-fallback": 0}, metrics["grade_sources"])
         self.assertEqual({"held": 1}, metrics["candidates"])
         self.assertEqual({"LM1": 1}, metrics["dedup"])
         expected = {"documents": {"NCS": 2, "교과서": None}, "totals": {"NCS": 2, "교과서": 0}, "rule_sha256": "nope"}
@@ -1023,14 +1023,18 @@ class RemediationTests(unittest.TestCase):
         # CI 가 자기 증명이 되지 않게: 커밋된 정본 요약을 Python EXPECTED 와 직접 대조한다 (적대적 리뷰)
         S = json.loads((Path(SKR.__file__).parent / "docs/03-analysis/data/semantic_summary.json").read_text(encoding="utf-8"))
         C = ("NCS", "교과서")
+        run = S["meta"]["run"]
         metrics = {
-            "dictionary": S["meta"]["run"]["dictionary"],
+            "dictionary": run["dictionary"],
+            "page_basis": S["meta"]["page_basis"],                                                          # occurrence-real-pages: 정본은 실제 쪽 기준
+            "page_maps_sha256": (run.get("page_maps") or {}).get("sha256"),
+            "reseg_agreement": run.get("reseg_agreement"),
             "documents": {c: S["corpora"][c]["documents"] for c in C},
             "totals": {c: S["corpora"][c]["total"] for c in C},
             "grades": {c: S["corpora"][c]["grades"] for c in C},
-            "grade_sources": {k: sum(S["corpora"][c]["grade_sources"][k] for c in C) for k in SKR.GRADE_SOURCES},
+            "grade_sources": {k: sum(S["corpora"][c]["grade_sources"].get(k, 0) for c in C) for k in SKR.GRADE_SOURCES},
             "candidates": S["status"],
-            "dedup": {d["code"]: len(d["dropped"]) for d in S["meta"]["run"]["dedup"]},
+            "dedup": {d["code"]: len(d["dropped"]) for d in run["dedup"]},
             **S["meta"]["manifest"],
         }
         self.assertEqual([], check_expected(metrics))
@@ -1246,6 +1250,650 @@ class DictionaryVersionAuditTests(unittest.TestCase):
         marker_only = _doc("NCS", "반도체개발/LM1903060102_e/e.md", "<!-- page: 3 -->\n")
         payload = summary_payload(assign_match_grades(aggregate_matches([KeywordSource("안전", 1, True)], [marker_only], [ExpressionRule("안전", "안전", "exact", "기존")], []), {}))
         self.assertEqual(3, payload["corpora"]["NCS"]["groups"][0]["pages"])     # 마커만 있는 문서도 죽지 않는다
+
+
+
+# ---------------------------------------------------------------- occurrence-real-pages (2026-09-15)
+def _real_page_fixture(root: Path):
+    """대응 있는 교재 1 + 대응 없는 명시 목록 교재 1 + 대응 없고 목록에도 없는 교재 1 — 설계 §3.1~3.3."""
+    ncs = root / "ncs"; (ncs / "반도체개발").mkdir(parents=True); (ncs / "반도체재료").mkdir(parents=True)
+    a_text = "<!-- page: 1 -->\n안전 안전 안전\n<!-- page: 2 -->\n안전 위험 보호구 착용 안전 안전 안전 방지 예방 환기 차단 대피 안전모\n안전 위험\n"
+    (ncs / "반도체개발" / "LM1903060101_a.md").write_text(a_text, encoding="utf-8")
+    b_text = "<!-- page: 1 -->\n안전\n<!-- page: 2 -->\n안전 안전\n"
+    (ncs / "반도체재료" / "LM1903060408_b.md").write_text(b_text, encoding="utf-8")            # REAL_PAGE_MARKER_BOOKS 의 하나
+    c_text = "<!-- page: 1 -->\n안전\n"
+    (ncs / "반도체재료" / "LM1903060499_c.md").write_text(c_text, encoding="utf-8")            # 대응 없음·목록 없음
+    maps = root / "maps"; maps.mkdir()
+    # a: 6줄(split("\n") 기준, 끝의 빈 문자열 포함) — 블록 2 의 두 줄이 실제 쪽 12·13 으로 갈라진다
+    (maps / "LM1903060101.pages.json").write_text(json.dumps({"md": "LM1903060101_a.md", "line_pages": [10, 10, 12, 12, 13, 13]}), encoding="utf-8")
+    docs = SKR.load_documents(ncs, "NCS")
+    return ncs, maps, docs
+
+
+class RealPageTests(unittest.TestCase):
+    """줄→실제 쪽 대응(occurrence-real-pages): 로딩·검증, 쪽 덧씌우기, 실제 쪽 판정, 이전 기준 결속, 분야 쪽수, manifest."""
+
+    def _rules(self):
+        return [ExpressionRule("안전", "안전", "exact", "기존 키워드")], [KeywordSource("안전", 1, True)], [CandidateDecision("안전", "안전성", "held", "equivalent", "문맥 혼재")]
+
+    def test_load_page_maps_validates_and_requires_map_or_listed_book(self):
+        with tempfile.TemporaryDirectory() as td:
+            ncs, maps, docs = _real_page_fixture(Path(td))
+            a, b, c = (next(d for d in docs if code in d.relative_path) for code in ("LM1903060101", "LM1903060408", "LM1903060499"))
+            with self.assertRaisesRegex(ValueError, "LM1903060499"):
+                SKR.load_page_maps(maps, docs)                                                   # 대응도 목록도 없다
+            page_maps, info = SKR.load_page_maps(maps, [a, b])
+            self.assertEqual({a.relative_path: (10, 10, 12, 12, 13)}, page_maps)                # b 는 목록 교재 — 표식 그대로; 파일 끝 개행 뒤 빈 원소는 매칭 규약(splitlines)에 없어 빠진다
+            self.assertEqual((1, 5), (info.files, len(page_maps[a.relative_path])))
+            self.assertRegex(info.sha256, r"^[0-9a-f]{64}$"); self.assertEqual(info.sha256, SKR.load_page_maps(maps, [a, b])[1].sha256)
+            bad = Path(td) / "bad"; bad.mkdir()
+            for name, payload, msg in (("md", {"md": "other.md", "line_pages": [10, 10, 12, 12, 13, 13]}, "다른 파일"),
+                                       ("len", {"md": "LM1903060101_a.md", "line_pages": [10, 10, 12]}, "줄 수"),
+                                       ("zero", {"md": "LM1903060101_a.md", "line_pages": [0, 10, 12, 12, 13, 13]}, "1 이상")):
+                (bad / "LM1903060101.pages.json").write_text(json.dumps(payload), encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, msg, msg=name):
+                    SKR.load_page_maps(bad, [a])
+            b_gap = _doc("NCS", "반도체재료/LM1903060408_b.md", "<!-- page: 1 -->\n안전\n<!-- page: 3 -->\n안전\n")
+            with self.assertRaisesRegex(ValueError, "LM1903060408"):
+                SKR.load_page_maps(maps, [b_gap])                                                 # 목록 교재인데 표식이 빠졌다(2 없음)
+            no_marker = _doc("NCS", "반도체재료/LM1903060477_empty.md", "")
+            self.assertEqual(({}, 0), (SKR.load_page_maps(maps, [no_marker])[0], SKR.load_page_maps(maps, [no_marker])[1].files))   # 표식 없는 문서는 대상 아님
+            school_maps, school_info = SKR.load_page_maps(maps, [_doc("교과서", "school.md", "<!-- page: 1 -->\n안전\n")])
+            self.assertEqual(({}, 0), (school_maps, school_info.files))                                              # 교과서는 대상 아님 — 파일 수도 0
+
+    def test_apply_page_maps_overlays_pages_after_matching(self):
+        with tempfile.TemporaryDirectory() as td:
+            ncs, maps, docs = _real_page_fixture(Path(td))
+            docs = [d for d in docs if "LM1903060499" not in d.relative_path]
+            rules, sources, candidates = self._rules()
+            page_maps, _ = SKR.load_page_maps(maps, docs)
+            plain = aggregate_matches(sources, docs, rules, candidates)
+            real = aggregate_matches(sources, docs, rules, candidates, page_maps=page_maps)
+            self.assertEqual(len(plain.matches), len(real.matches))                               # 매칭은 표식 블록 위에서 — 총계 불변
+            a_pages = sorted({r.page for r in real.matches if "LM1903060101" in r.relative_path})
+            self.assertEqual([10, 12, 13], a_pages)                                                # 블록 1→10, 블록 2 의 줄 4→12·줄 5→13
+            self.assertEqual([1, 2], sorted({r.page for r in real.matches if "LM1903060408" in r.relative_path}))   # 목록 교재는 표식 그대로
+            row = next(r for r in real.summary if r.corpus == "NCS" and r.keyword == "안전")
+            self.assertEqual(5, row.page_count)                                                     # 검출 쪽 수는 실제 쪽 기준 (10·12·13 + 1·2)
+            self.assertEqual(4, next(r for r in plain.summary if r.corpus == "NCS" and r.keyword == "안전").page_count)
+
+    def test_real_page_grading_uses_page_text_and_ignores_workbook_labels(self):
+        with tempfile.TemporaryDirectory() as td:
+            ncs, maps, docs = _real_page_fixture(Path(td))
+            docs = [d for d in docs if "LM1903060499" not in d.relative_path]
+            rules, sources, candidates = self._rules()
+            page_maps, _ = SKR.load_page_maps(maps, docs)
+            result = aggregate_matches(sources, docs, rules, candidates, page_maps=page_maps)
+            a = next(d for d in docs if "LM1903060101" in d.relative_path)
+            existing = {SKR.grade_lookup_key("NCS", a.relative_path, 12): GradeAssignment(3, "구체적 대책", "워크북", "existing")}
+            graded = assign_match_grades(result, existing, page_maps=page_maps)
+            by_page = {}
+            for r in graded.matches:
+                if "LM1903060101" in r.relative_path: by_page.setdefault(r.page, set()).add((r.grade, r.grade_source))
+            self.assertEqual({10: {(1, "real-page")}, 12: {(3, "real-page")}, 13: {(1, "real-page")}}, by_page)   # 쪽 12 는 본문 판정 3, 쪽 13 은 짧아 1 — 워크북 라벨은 무시
+            self.assertTrue(all(r.grade_source == "real-page" for r in graded.matches if "LM1903060408" in r.relative_path))   # 목록 교재도 실제 쪽(표식 블록) 판정 — 워크북 라벨 없음
+            plain = assign_match_grades(aggregate_matches(sources, docs, rules, candidates), existing)
+            self.assertTrue(all(r.grade_source in ("new", "existing") for r in plain.matches))                                       # 대응 없이 부르면 현행 그대로
+            self.assertIn("real-page", SKR.GRADE_SOURCES)
+
+    def test_reseg_agreement_counts_shared_pages(self):
+        with tempfile.TemporaryDirectory() as td:
+            ncs, maps, docs = _real_page_fixture(Path(td))
+            docs = [d for d in docs if "LM1903060499" not in d.relative_path]
+            rules, sources, candidates = self._rules()
+            page_maps, _ = SKR.load_page_maps(maps, docs)
+            graded = assign_match_grades(aggregate_matches(sources, docs, rules, candidates, page_maps=page_maps), {}, page_maps=page_maps)
+            csv_path = Path(td) / "reseg.csv"
+            csv_path.write_text("﻿영역,교재,페이지,등급,출처\n반도체개발,LM1903060101_a,10,1,text\n반도체개발,LM1903060101_a,12,3,text-fallback\n반도체개발,LM1903060101_a,99,2,text\n반도체재료,LM1903060408_b,1,3,label\n", encoding="utf-8")
+            self.assertEqual({"pages": 2, "agree": 2, "disagree": []}, SKR.reseg_agreement(graded, csv_path))          # label 출처(라벨 쪽)는 견주지 않는다
+            csv_path.write_text("﻿영역,교재,페이지,등급\n반도체개발,LM1903060101_a,10,1\n반도체개발,LM1903060101_a,12,2\n", encoding="utf-8")
+            agreement = SKR.reseg_agreement(graded, csv_path)
+            self.assertEqual((2, 1), (agreement["pages"], agreement["agree"])); self.assertEqual([{"book": "LM1903060101", "page": 12, "ours": 3, "reseg": 2}], agreement["disagree"])
+
+    def test_group_pages_use_pdf_pages_when_given(self):
+        with tempfile.TemporaryDirectory() as td:
+            ncs, maps, docs = _real_page_fixture(Path(td))
+            docs = [d for d in docs if "LM1903060499" not in d.relative_path]
+            rules, sources, candidates = self._rules()
+            page_maps, _ = SKR.load_page_maps(maps, docs)
+            graded = assign_match_grades(aggregate_matches(sources, docs, rules, candidates, page_maps=page_maps), {}, page_maps=page_maps)
+            payload = SKR.dashboard_payload(graded, pdf_pages={"LM1903060101": 40})
+            groups = {g["name"]: g["pages"] for g in payload["corpora"]["NCS"]["groups"]}
+            self.assertEqual({"반도체개발": 40, "반도체재료": 2}, groups)                          # 대응 교재는 PDF 쪽수, 목록 교재는 표식 최댓값
+            self.assertEqual({"반도체개발": 2, "반도체재료": 2}, {g["name"]: g["pages"] for g in SKR.dashboard_payload(graded)["corpora"]["NCS"]["groups"]})
+            self.assertEqual({"NCS": "real", "교과서": "marker"}, payload["meta"]["page_basis"])
+            self.assertEqual({"NCS": "marker", "교과서": "marker"}, SKR.dashboard_payload(assign_match_grades(aggregate_matches(sources, docs, rules, candidates), {}))["meta"]["page_basis"])
+            with self.assertRaisesRegex(ValueError, "LM1903060101"):
+                SKR.dashboard_payload(graded, pdf_pages={})                                          # 대응 교재인데 PDF 쪽수를 모른다
+
+    def test_manifest_and_metrics_carry_page_maps_and_agreement(self):
+        result = graded_result()
+        info = SKR.PageMapsInfo(dir="data/markdown/ncs_paged", files=84, sha256="a" * 64)
+        run = SKR.run_manifest(result, argv=["x"], force=False, expected_mismatch=[], git={"commit": "abc1234", "dirty": False},
+                               page_maps=info, reseg_agreement={"pages": 3, "agree": 3, "disagree": []})
+        self.assertEqual({"dir": "data/markdown/ncs_paged", "files": 84, "sha256": "a" * 64}, run["page_maps"])
+        self.assertEqual({"pages": 3, "agree": 3}, run["reseg_agreement"]); self.assertEqual([], run["real_page_marker_books"])              # 대응 있는 실행, 표식으로 간 목록 교재 없음
+        with_books = SKR.run_manifest(result, argv=["x"], force=False, expected_mismatch=[], page_maps=replace(info, marker_books=(("LM1903060408", 120), ("LM1903060424", 119))))
+        self.assertEqual([{"code": "LM1903060408", "pages": 120}, {"code": "LM1903060424", "pages": 119}], with_books["real_page_marker_books"])   # S3n 이 분야 쪽수 합의 나머지를 여기서 읽는다
+        self.assertIsNone(SKR.run_manifest(result, argv=["x"], force=False, expected_mismatch=[])["real_page_marker_books"])                        # 대응 없는 실행에는 규칙이 적용되지 않았다
+        metrics = SKR.summary_metrics(result, SKR.artifact_manifest(result), page_maps=info, reseg_agreement=run["reseg_agreement"])
+        self.assertEqual(("a" * 64, {"pages": 3, "agree": 3}, {"NCS": "marker", "교과서": "marker"}), (metrics["page_maps_sha256"], metrics["reseg_agreement"], metrics["page_basis"]))   # 이 fixture 에는 real-page 판정이 없다
+        self.assertEqual([], SKR.check_expected(metrics, {"page_maps_sha256": "a" * 64, "reseg_agreement": {"pages": 3, "agree": 3}, "page_basis": {"NCS": "marker", "교과서": "marker"}}))
+        self.assertEqual(["page_basis.NCS: marker != real"], SKR.check_expected(metrics, {"page_basis": {"NCS": "real", "교과서": "marker"}}))   # 대응 없는 실행은 정본 EXPECTED 와 어긋난다
+        self.assertEqual(["reseg_agreement.agree: 3 != 4"], SKR.check_expected(metrics, {"reseg_agreement": {"pages": 3, "agree": 4}}))
+        plain = SKR.summary_metrics(result, SKR.artifact_manifest(result))
+        self.assertEqual((None, None, {"NCS": "marker", "교과서": "marker"}), (plain["page_maps_sha256"], plain["reseg_agreement"], plain["page_basis"]))   # 대응 없는 실행은 정본 EXPECTED 와 어긋난다
+
+    def test_run_census_wires_page_maps_agreement_and_pdf_pages(self):
+        """run_census(page_maps_dir=, reseg_csv=): 대응 로딩 → 실제 쪽 판정 → 결속 → manifest·metrics·payload; 대응 없는 실행은 정본 EXPECTED(page_basis real)와 어긋난다."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            kw = census_fixture(root, ncs_body="<!-- page: 1 -->\n안전 안전 안전\n<!-- page: 2 -->\n안전 위험 보호구 착용 안전 안전 안전 방지 예방 환기 차단 대피 안전모\n안전 위험\n")
+            maps = root / "maps"; maps.mkdir(); (root / "empty_maps").mkdir()
+            (maps / "LM1903060101.pages.json").write_text(json.dumps({"md": "LM1903060101_안전.md", "line_pages": [10, 10, 12, 12, 13, 13]}), encoding="utf-8")
+            csv_path = root / "reseg.csv"; csv_path.write_text("﻿영역,교재,페이지,등급\n반도체개발,LM1903060101_안전,10,1\n반도체개발,LM1903060101_안전,12,3\n", encoding="utf-8")
+            reseg = root / "reseg_summary.json"
+            reseg.write_text(json.dumps({"pages": 2189, "page_g": {"1": 1519, "2": 525, "3": 145}, "books": 86, "cases_pages": 13, "unresolved": {"pages": 51},
+                                         "per_book": {"LM1903060101_안전": {"pdf_pages": 40}}, "meta": {"expected": True, "run_at": "2026-09-07T08:48:51+00:00"}}), encoding="utf-8")
+            with mock.patch.object(SKR, "REAL_PAGE_MARKER_BOOKS", tuple(f"LM19030602{i:02d}" for i in range(1, 86))):   # 빈 fixture 교재는 표식이 없어 대상 밖이지만, 목록 규칙도 같이 검증
+                with self.assertRaisesRegex(ValueError, "previous_basis"):
+                    run_census(**kw, expected={"documents": {"NCS": 86, "교과서": 9}}, page_maps_dir=maps, reseg_csv=csv_path, git={"commit": "x", "dirty": False}, argv=["x"])
+                result = run_census(**kw, expected={"documents": {"NCS": 86, "교과서": 9}}, page_maps_dir=maps, reseg_csv=csv_path, previous_basis=reseg,
+                                    summary_out=root / "s.json", git={"commit": "x", "dirty": False}, argv=["x"])
+            summary = json.loads((root / "s.json").read_text(encoding="utf-8"))
+            run = summary["meta"]["run"]
+            self.assertEqual((1, "maps"), (run["page_maps"]["files"], Path(run["page_maps"]["dir"]).name)); self.assertRegex(run["page_maps"]["sha256"], r"^[0-9a-f]{64}$")
+            self.assertEqual({"pages": 2, "agree": 2}, run["reseg_agreement"]); self.assertEqual([], run["real_page_marker_books"])
+            self.assertEqual({"NCS": "real", "교과서": "marker"}, summary["meta"]["page_basis"])
+            self.assertEqual(["이전 기준", "이전 기준 쪽 등급"], [i["kind"] for i in run["inputs"][-2:]])                                          # --reseg-csv 도 지문을 남긴다 (리뷰 maintainability)
+            self.assertEqual(SKR._file_sha256(csv_path), run["inputs"][-1]["sha256"])
+            with mock.patch.object(SKR, "REAL_PAGE_MARKER_BOOKS", ("LM1903060101",)), self.assertRaisesRegex(ValueError, "대응이 하나도"):   # 목록 교재뿐인 코퍼스 + 빈 대응 폴더 — 표식 기준으로 조용히 내려앉지 않는다
+                run_census(**dict(kw, xlsx_out=root / "o3.xlsx", report_out=root / "o3.md"), expected={"documents": {"NCS": 86, "교과서": 9}}, page_maps_dir=root / "empty_maps",
+                           previous_basis=reseg, git={"commit": "x", "dirty": False}, argv=["x"])
+            self.assertEqual(3, summary["corpora"]["NCS"]["detected_pages"]); self.assertEqual(0, summary["corpora"]["교과서"]["detected_pages"])   # 출현이 놓인 (교재, 쪽) 수 — 쪽 10·12·13; 교과서 fixture 는 빈 파일 (브리지 문구의 출처)
+            # 대응은 그 마크다운 판에 묶인다: 이전 기준의 md_corpus_sha256(이름+sha256)이 대응 교재의 실제 파일과 다르면 거부, 같으면 통과 (리뷰 red-team)
+            md_path = next(p for p in (root / "ncs").rglob("*.md") if "LM1903060101" in p.name)
+            digest_ok = SKR.mapped_corpus_digest([("LM1903060101_안전.md", md_path)])
+            bound = json.loads(reseg.read_text(encoding="utf-8")); bound["meta"]["md_corpus_sha256"] = digest_ok
+            reseg_ok = root / "reseg_ok.json"; reseg_ok.write_text(json.dumps(bound), encoding="utf-8")
+            run_census(**dict(kw, xlsx_out=root / "o4.xlsx", report_out=root / "o4.md"), expected={"documents": {"NCS": 86, "교과서": 9}}, page_maps_dir=maps, previous_basis=reseg_ok,
+                       git={"commit": "x", "dirty": False}, argv=["x"])
+            bound["meta"]["md_corpus_sha256"] = "0" * 64; reseg_bad = root / "reseg_bad.json"; reseg_bad.write_text(json.dumps(bound), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "md_corpus_sha256"):
+                run_census(**dict(kw, xlsx_out=root / "o5.xlsx", report_out=root / "o5.md"), expected={"documents": {"NCS": 86, "교과서": 9}}, page_maps_dir=maps, previous_basis=reseg_bad,
+                           git={"commit": "x", "dirty": False}, argv=["x"])
+            # 대응의 쪽 값은 그 교재의 PDF 쪽수를 넘을 수 없다 (손으로 고친·다른 교재의 대응)
+            bad_csv = root / "reseg_bad.csv"; bad_csv.write_text("﻿영역,교재,페이지,등급\n반도체개발,LM1903060101_안전,10,x\n", encoding="utf-8")   # 정수가 아닌 등급 — 파일·행을 말하는 ValueError
+            with self.assertRaisesRegex(ValueError, r"reseg_bad\.csv.*페이지 '10'"):
+                SKR.reseg_agreement(graded_result(), bad_csv)
+            bound["meta"].pop("md_corpus_sha256"); bound["per_book"]["LM1903060101_안전"]["pdf_pages"] = 12
+            reseg_small = root / "reseg_small.json"; reseg_small.write_text(json.dumps(bound), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "PDF 쪽수.*13"):
+                run_census(**dict(kw, xlsx_out=root / "o6.xlsx", report_out=root / "o6.md"), expected={"documents": {"NCS": 86, "교과서": 9}}, page_maps_dir=maps, previous_basis=reseg_small,
+                           git={"commit": "x", "dirty": False}, argv=["x"])
+            ncs = summary["corpora"]["NCS"]
+            self.assertEqual({"real-page": ncs["total"], "existing": 0, "new": 0, "unpaged-context": 0, "unpaged-fallback": 0}, ncs["grade_sources"])   # 30개 키워드 전부 실제 쪽 판정
+            self.assertEqual(40, next(g["pages"] for g in ncs["groups"] if g["name"] == "반도체개발"))
+            self.assertEqual(0, ncs["grades"]["unpaged"]); self.assertGreater(ncs["grades"]["3"], 0); self.assertGreater(ncs["grades"]["1"], 0)   # 쪽 12 는 등급3, 쪽 10·13 은 등급1
+            metrics = SKR.summary_metrics(result, SKR.artifact_manifest(result))
+            self.assertEqual({"NCS": "real", "교과서": "marker"}, metrics["page_basis"])
+            # 대응 없이 돌린 실행은 page_basis 가 marker 라 정본 EXPECTED(real) 와 어긋난다 → 쓰지 않는다
+            with self.assertRaises(SystemExit):
+                run_census(**dict(kw, xlsx_out=root / "o2.xlsx", report_out=root / "o2.md"), expected={"documents": {"NCS": 86, "교과서": 9}, "page_basis": {"NCS": "real", "교과서": "marker"}},
+                           git={"commit": "x", "dirty": False}, argv=["x"])
+            self.assertFalse((root / "o2.xlsx").exists())
+
+    def test_main_passes_page_maps_and_reseg_csv(self):
+        seen = {}
+        def fake_run_census(*args, **kwargs):
+            seen.update(kwargs); return graded_result()
+        argv = ["semantic_keyword_recount.py", "--source-workbook", "s.xlsx", "--ncs-root", "n", "--school-root", "t", "--xlsx-out", "o.xlsx", "--report-out", "r.md",
+                "--page-maps", "maps", "--reseg-csv", "r.csv"]
+        import io, contextlib
+        with mock.patch.object(SKR, "run_census", fake_run_census), mock.patch.object(SKR.sys, "argv", argv), contextlib.redirect_stdout(io.StringIO()):
+            SKR.main()
+        self.assertEqual((Path("maps"), Path("r.csv")), (seen["page_maps_dir"], seen["reseg_csv"]))
+
+    # ---- 출고 전 커버리지 감사 (2026-09-15): 대응 로딩·판정·결속·분야 쪽수·manifest 의 남은 분기
+    def test_document_code_from_directory_or_missing(self):
+        """_document_code: 파일명에 없으면 경로에서, 소문자는 대문자로, 글자 뒤에 붙은 PLM… 은 코드가 아니다; 코드 없는 표식 문서는 대응도 목록도 찾을 수 없어 거부."""
+        self.assertEqual("LM1903060101", SKR._document_code(_doc("NCS", "반도체개발/LM1903060101_a/a.md", "")))       # 디렉터리에서
+        self.assertEqual("LM1903060101", SKR._document_code(_doc("NCS", "반도체개발/lm1903060101_a.md", "")))          # 대문자로 정규화
+        self.assertIsNone(SKR._document_code(_doc("NCS", "반도체개발/PLM1903060101_a.md", "")))                      # 글자 뒤에 붙은 PLM… 은 코드가 아니다
+        with tempfile.TemporaryDirectory() as td:
+            maps = Path(td) / "maps"; maps.mkdir()
+            with self.assertRaisesRegex(ValueError, r"\(None\)"):
+                SKR.load_page_maps(maps, [_doc("NCS", "반도체개발/nocode/x.md", "<!-- page: 1 -->\n안전\n")])
+
+    def test_load_page_maps_refuses_marker_corrected_variant_maps_and_records_marker_books(self):   # 리뷰(testing·maintainability)
+        with tempfile.TemporaryDirectory() as td:
+            ncs, maps, docs = _real_page_fixture(Path(td))
+            a = next(d for d in docs if "LM1903060101" in d.relative_path); b = next(d for d in docs if "LM1903060408" in d.relative_path)
+            _, info = SKR.load_page_maps(maps, [a, b])
+            self.assertEqual((("LM1903060408", 2),), info.marker_books)                          # 대응 없는 목록 교재와 그 표식 최댓값 — manifest·S3n 이 여기서 읽는다
+            self.assertEqual({"dir": SKR.public_path(maps), "files": 1, "sha256": info.sha256}, info.as_manifest())
+            (maps / "LM1903060101.pages.json").write_text(json.dumps({"md": "LM1903060101_a.md", "line_pages": [10, 10, 12, 12, 13, 13], "marker_correct": 0.1, "moved_markers": [[3, 4]]}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "marker_correct"):
+                SKR.load_page_maps(maps, [a])                                                        # 연구 변형(--marker-correct)의 대응은 정본 입력이 아니다
+            (maps / "LM1903060101.pages.json").write_text(json.dumps({"md": "LM1903060101_a.md", "line_pages": [10, 10, 12, 12, 13, 13], "marker_correct": None, "moved_markers": [[3, 4]]}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "moved_markers"):
+                SKR.load_page_maps(maps, [a])
+            (maps / "LM1903060101.pages.json").write_text(json.dumps({"md": "LM1903060101_a.md", "line_pages": [10, 10, 12, 12, 13, 13], "marker_correct": None, "moved_markers": []}), encoding="utf-8")
+            self.assertEqual(1, SKR.load_page_maps(maps, [a])[1].files)                            # 진단 실행(보정 없음)의 대응은 그대로 받는다
+            for broken, hint in (('{"md": ', "LM1903060101.pages.json"), ("[1, 2]", "객체"), ('{"md": "LM1903060101_a.md", "line_pages": [10, 10, 12, 12, 13, 13], "moved_markers": 3}', "moved_markers")):
+                (maps / "LM1903060101.pages.json").write_text(broken, encoding="utf-8")            # 깨진 JSON·목록 payload·이상한 moved_markers — 전부 파일 이름을 말하는 ValueError (적대적 리뷰 2·3)
+                with self.assertRaisesRegex(ValueError, hint):
+                    SKR.load_page_maps(maps, [a])
+
+    def test_load_page_maps_rejects_non_list_bool_and_string_page_values(self):
+        with tempfile.TemporaryDirectory() as td:
+            ncs, maps, docs = _real_page_fixture(Path(td))
+            a = next(d for d in docs if "LM1903060101" in d.relative_path)
+            bad = Path(td) / "bad"; bad.mkdir()
+            for name, payload, msg in (("notlist", {"md": "LM1903060101_a.md", "line_pages": {"1": 10}}, r"\? ≠ 6"),
+                                       ("missing", {"md": "LM1903060101_a.md"}, r"\? ≠ 6"),
+                                       ("bool", {"md": "LM1903060101_a.md", "line_pages": [True, 10, 12, 12, 13, 13]}, "1 이상의 정수"),     # JSON true 는 int 의 하위형 — 따로 막는다
+                                       ("str", {"md": "LM1903060101_a.md", "line_pages": ["10", 10, 12, 12, 13, 13]}, "1 이상의 정수")):
+                (bad / "LM1903060101.pages.json").write_text(json.dumps(payload), encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, msg, msg=name):
+                    SKR.load_page_maps(bad, [a])
+
+    def test_reseg_agreement_skips_incomplete_rows_and_caps_disagreements(self):
+        with tempfile.TemporaryDirectory() as td:
+            ncs, maps, docs = _real_page_fixture(Path(td))
+            docs = [d for d in docs if "LM1903060499" not in d.relative_path]
+            rules, sources, candidates = self._rules()
+            page_maps, _ = SKR.load_page_maps(maps, docs)
+            graded = assign_match_grades(aggregate_matches(sources, docs, rules, candidates, page_maps=page_maps), {}, page_maps=page_maps)
+            csv_path = Path(td) / "reseg.csv"
+            csv_path.write_text("영역,교재,페이지,등급,출처\n반도체개발,LM1903060101_a,,1,text\n반도체개발,LM1903060101_a,10,,text\n반도체개발,없는교재,10,1,text\n"
+                                "반도체개발,LM1903060101_a,10,3,text\n반도체개발,LM1903060101_a,12,1,text\n반도체재료,LM1903060408_b,1,2,text\n", encoding="utf-8")
+            full = SKR.reseg_agreement(graded, csv_path)
+            self.assertEqual((3, 0), (full["pages"], full["agree"]))                                     # 쪽·등급이 빈 행과 코드 없는 행은 무시; 공유 세 쪽 모두 불일치
+            self.assertEqual([("LM1903060101", 10), ("LM1903060101", 12), ("LM1903060408", 1)], [(d["book"], d["page"]) for d in full["disagree"]])
+            capped = SKR.reseg_agreement(graded, csv_path, max_disagree=1)
+            self.assertEqual((3, 0, 1), (capped["pages"], capped["agree"], len(capped["disagree"])))     # 예시는 잘라도 집계는 전체
+
+    def test_apply_page_maps_leaves_textbook_and_out_of_range_lines_alone(self):
+        rules = [ExpressionRule("안전", "안전", "exact", "기존 키워드")]
+        ncs = _doc("NCS", "반도체개발/LM1903060101_a.md", "<!-- page: 1 -->\n안전\n안전\n")
+        school = _doc("교과서", "반도체개발/LM1903060101_a.md", "<!-- page: 1 -->\n안전\n안전\n")       # 같은 경로 키라도 교과서는 대응 대상이 아니다
+        matches = [r for d in (ncs, school) for r in scan_document(d, rules)]
+        out = SKR.apply_page_maps(matches, {"반도체개발/LM1903060101_a.md": (10, 12)})                 # 줄 3 은 대응 범위 밖 (검증을 거치지 않은 짧은 대응)
+        self.assertEqual({("NCS", 2): 12, ("NCS", 3): 1, ("교과서", 2): 1, ("교과서", 3): 1}, {(r.corpus, r.line): r.page for r in out})
+        self.assertEqual(matches, SKR.apply_page_maps(matches, None)); self.assertIsNot(matches, SKR.apply_page_maps(matches, {}))   # 대응 없음 → 같은 내용의 새 리스트
+
+    def test_real_page_grade_falls_back_to_grade1_when_the_page_has_no_text(self):
+        """방어 분기: 대응 교재의 레코드가 본문 없는 쪽에 놓이면(정상 대응에서는 불가능) 등급1·unpaged-fallback 로 기록한다 — 미배정을 두지 않는다."""
+        with tempfile.TemporaryDirectory() as td:
+            ncs, maps, docs = _real_page_fixture(Path(td))
+            docs = [d for d in docs if "LM1903060101" in d.relative_path]
+            rules, sources, candidates = self._rules()
+            page_maps, _ = SKR.load_page_maps(maps, docs)
+            result = aggregate_matches(sources, docs, rules, candidates, page_maps=page_maps)
+            stray = replace(result, matches=tuple(replace(r, page=999) if r.line == 2 else r for r in result.matches))
+            graded = assign_match_grades(stray, {}, page_maps=page_maps)
+            by_line = {r.line: (r.page, r.grade, r.grade_source, r.grade_reason) for r in graded.matches if r.decision == "included"}
+            self.assertEqual((999, 1, "unpaged-fallback", "실제 쪽 본문 없음으로 보수적 등급 1 배정"), by_line[2])
+            self.assertEqual((12, 3, "real-page"), by_line[4][:3])                                       # 나머지는 실제 쪽 판정 그대로
+            self.assertEqual(0, sum(1 for r in graded.matches if r.grade is None))
+
+    def test_pdf_pages_from_previous_basis_filters_unusable_entries(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "reseg_summary.json"
+            path.write_text(json.dumps({"per_book": {
+                "LM1903060101_a": {"pdf_pages": 40}, "lm1903060102_b": {"pdf_pages": 7},          # 소문자 코드도 대문자 키로
+                "LM1903060103_c": {}, "LM1903060104_d": {"pdf_pages": None}, "LM1903060105_e": {"pdf_pages": "12"},
+                "LM1903060106_f": {"pdf_pages": 0}, "LM1903060107_g": None, "코드없음": {"pdf_pages": 9}}}), encoding="utf-8")
+            self.assertEqual({"LM1903060101": 40, "LM1903060102": 7}, SKR.pdf_pages_from_previous_basis(path))
+            path.write_text(json.dumps({"pages": 2189}), encoding="utf-8")
+            self.assertEqual({}, SKR.pdf_pages_from_previous_basis(path))                              # per_book 없음
+
+    def test_group_pages_textbook_and_markerless_ncs_ignore_pdf_pages(self):
+        rules = [ExpressionRule("안전", "안전", "exact", "기존 키워드")]; sources = [KeywordSource("안전", 1, True)]
+        docs = [_doc("NCS", "반도체개발/LM1903060101_a.md", "<!-- page: 1 -->\n안전\n<!-- page: 3 -->\n"),
+                _doc("NCS", "반도체개발/LM1903060102_b.md", "안전\n"),                                  # 표식 없음 — 쪽수 0, PDF 쪽수를 묻지 않는다
+                _doc("교과서", "school-1.md", "<!-- page: 1 -->\n안전\n<!-- page: 5 -->\n")]
+        graded = assign_match_grades(aggregate_matches(sources, docs, rules, []), {})
+        payload = SKR.dashboard_payload(graded, pdf_pages={"LM1903060101": 40})
+        self.assertEqual({"반도체개발": 40}, {g["name"]: g["pages"] for g in payload["corpora"]["NCS"]["groups"]})
+        self.assertEqual([5], [g["pages"] for g in payload["corpora"]["교과서"]["groups"]])           # 교과서는 pdf_pages 가 있어도 표식 최댓값
+        self.assertEqual({"NCS": "marker", "교과서": "marker"}, payload["meta"]["page_basis"])           # real-page 판정이 없으면 marker
+
+    def test_run_census_with_maps_but_no_reseg_csv_records_no_agreement(self):
+        """reseg_csv 없이 돌린 대응 실행: 결속은 None 으로 기록되고(manifest·metrics·result.run) 정본 EXPECTED 의 reseg_agreement 와 어긋난다; 대응 없는 manifest 는 page_maps None."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            kw = census_fixture(root, ncs_body="<!-- page: 1 -->\n안전 안전 안전\n<!-- page: 2 -->\n안전 위험\n")
+            maps = root / "maps"; maps.mkdir()
+            (maps / "LM1903060101.pages.json").write_text(json.dumps({"md": "LM1903060101_안전.md", "line_pages": [10, 10, 12, 12, 12]}), encoding="utf-8")
+            reseg = root / "reseg_summary.json"
+            reseg.write_text(json.dumps({"pages": 2189, "page_g": {"1": 1519, "2": 525, "3": 145}, "books": 86, "cases_pages": 13, "unresolved": {"pages": 51},
+                                         "per_book": {"LM1903060101_안전": {"pdf_pages": 40}}, "meta": {"expected": True, "run_at": "2026-09-07T08:48:51+00:00"}}), encoding="utf-8")
+            with mock.patch.object(SKR, "REAL_PAGE_MARKER_BOOKS", tuple(f"LM19030602{i:02d}" for i in range(1, 86))):
+                result = run_census(**kw, expected={"documents": {"NCS": 86, "교과서": 9}}, page_maps_dir=maps, previous_basis=reseg,
+                                    summary_out=root / "s.json", git={"commit": "x", "dirty": False}, argv=["x"])
+            run = json.loads((root / "s.json").read_text(encoding="utf-8"))["meta"]["run"]
+            self.assertIsNone(run["reseg_agreement"]); self.assertEqual(1, run["page_maps"]["files"])
+            self.assertEqual((1, None), (result.run["page_maps"]["files"], result.run["reseg_agreement"]))
+            metrics = SKR.summary_metrics(result, SKR.artifact_manifest(result), page_maps=SKR.PageMapsInfo(**result.run["page_maps"]))
+            self.assertEqual([f"reseg_agreement.pages: None != {EXPECTED['reseg_agreement']['pages']}", f"reseg_agreement.agree: None != {EXPECTED['reseg_agreement']['agree']}"],
+                             check_expected(metrics, {"reseg_agreement": EXPECTED["reseg_agreement"]}))
+            legacy = SKR.run_manifest(graded_result(), argv=["x"], force=False, expected_mismatch=[], git={"commit": "x", "dirty": False})
+            self.assertEqual((None, None, None), (legacy["page_maps"], legacy["reseg_agreement"], legacy["real_page_marker_books"]))   # 대응 없는 실행: 목록 규칙도 적용되지 않았다
+
+    def test_main_prints_disagreements_and_metrics_from_result_run(self):
+        run = {"page_maps": {"dir": "data/markdown/ncs_paged", "files": 84, "sha256": "b" * 64},
+               "reseg_agreement": {"pages": 3, "agree": 2, "disagree": [{"book": "LM1903060101", "page": 7, "ours": 1, "reseg": 2}]}}
+        argv = ["semantic_keyword_recount.py", "--source-workbook", "s.xlsx", "--ncs-root", "n", "--school-root", "t", "--xlsx-out", "o.xlsx", "--report-out", "r.md"]
+        import io, contextlib
+        out = io.StringIO()
+        with mock.patch.object(SKR, "run_census", lambda *a, **k: replace(graded_result(), run=run)), mock.patch.object(SKR.sys, "argv", argv), contextlib.redirect_stdout(out):
+            SKR.main()
+        text = out.getvalue()
+        self.assertIn("이전 기준과 등급이 다른 쪽: [{'book': 'LM1903060101', 'page': 7, 'ours': 1, 'reseg': 2}]", text)
+        metrics = json.loads(text.split("측정값 (EXPECTED 고정용):", 1)[1])
+        self.assertEqual(("b" * 64, {"pages": 3, "agree": 2}), (metrics["page_maps_sha256"], metrics["reseg_agreement"]))     # result.run 에서 PageMapsInfo 를 되살린다
+        quiet = io.StringIO()
+        with mock.patch.object(SKR, "run_census", lambda *a, **k: replace(graded_result(), run={"page_maps": None, "reseg_agreement": {"pages": 3, "agree": 3, "disagree": []}})), \
+                mock.patch.object(SKR.sys, "argv", argv), contextlib.redirect_stdout(quiet):
+            SKR.main()
+        self.assertNotIn("이전 기준과 등급이 다른 쪽", quiet.getvalue()); self.assertIn('"page_maps_sha256": null', quiet.getvalue())   # 불일치 없으면 줄 자체가 없다
+
+    def test_workbook_readme_and_run_sheet_state_the_page_basis(self):
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / "o.xlsx"
+            run = {"git_commit": "abc1234", "page_maps": {"dir": "data/markdown/ncs_paged", "files": 84, "sha256": "c" * 64},
+                   "reseg_agreement": {"pages": 3, "agree": 3}, "real_page_marker_books": list(SKR.REAL_PAGE_MARKER_BOOKS)}
+            write_workbook(graded_result(), out, run=run)
+            book = load_workbook(out, read_only=True)
+            readme = {row[0]: row[1] for row in book["README"].iter_rows(values_only=True)}
+            self.assertIn("real-page", readme["등급 계보"]); self.assertIn("워크북 라벨(목차 블록) 상속 없음", readme["등급 계보"])
+            self.assertIn("page_maps", readme["페이지 기준"]); self.assertIn("per_book.pdf_pages", readme["페이지 기준"])
+            info = {row[1]: row[2] for row in book["입력정보"].iter_rows(values_only=True) if row[0] == "실행 정보"}
+            self.assertEqual(run["page_maps"], json.loads(info["page_maps"])); self.assertEqual({"pages": 3, "agree": 3}, json.loads(info["reseg_agreement"]))
+            self.assertEqual(list(SKR.REAL_PAGE_MARKER_BOOKS), json.loads(info["real_page_marker_books"]))
+
+
+class ImpactScriptTests(unittest.TestCase):
+    """occurrence_real_pages_impact.py — 블록 기준(A) vs 실제 쪽 기준(B): 총계 불변, 이동 행렬, 계보 검증, 산출물에 본문·절대 경로 없음."""
+
+    def _setup(self, td):
+        import occurrence_real_pages_impact as IMP
+        ncs, maps, docs = _real_page_fixture(Path(td))
+        docs = [d for d in docs if "LM1903060499" not in d.relative_path]
+        page_maps, _ = SKR.load_page_maps(maps, docs)
+        a = next(d for d in docs if "LM1903060101" in d.relative_path)
+        existing = {SKR.grade_lookup_key("NCS", a.relative_path, 2): GradeAssignment(3, "구체적 대책", "워크북 라벨(블록)", "existing")}
+        return IMP, docs, page_maps, existing
+
+    def test_impact_reports_transition_and_keeps_totals(self):
+        with tempfile.TemporaryDirectory() as td:
+            IMP, docs, page_maps, existing = self._setup(td)
+            out = IMP.compute_impact(docs, ["안전"], existing, page_maps, block_reference=None)
+            self.assertEqual(out["totals"]["NCS"], sum(out["grades"]["block"]["NCS"].values())); self.assertEqual(sum(out["grades"]["block"]["NCS"].values()), sum(out["grades"]["real"]["NCS"].values()))
+            # LM…0101 블록 2(줄 4 의 5건 + 줄 5 의 1건)는 A 에서 워크북 라벨 3 을 상속, B 에서 쪽 12(5건) → 3, 쪽 13(1건) → 1; 나머지 6건은 양쪽 다 등급1
+            self.assertEqual({"1": 6, "2": 0, "3": 6}, out["grades"]["block"]["NCS"]); self.assertEqual({"1": 7, "2": 0, "3": 5}, out["grades"]["real"]["NCS"])
+            self.assertEqual((11, 1, 1), (out["transition"]["unchanged"], out["transition"]["moved"], out["transition"]["matrix"]["3->1"]))
+            self.assertEqual({"existing": {"occurrences": 6, "unchanged": 5, "unchanged_pct": 83.3}, "new": {"occurrences": 6, "unchanged": 6, "unchanged_pct": 100.0}}, out["by_source"])
+            self.assertEqual({"real-marker-nomap", "toc-block"}, set(out["by_book_kind"]))            # LM…0408 은 목록 교재, LM…0101 은 블록 2 → 실제 쪽 3
+            self.assertEqual((4, 5), (out["pages"]["block_pages"], out["pages"]["real_pages"]))
+            self.assertEqual({"1": 3, "2-3": 6, "4-9": 0, "10+": 0}, out["pages"]["block_width_of_occurrences"])
+
+    def test_impact_refuses_when_block_basis_differs_from_reference(self):
+        with tempfile.TemporaryDirectory() as td:
+            IMP, docs, page_maps, existing = self._setup(td)
+            with self.assertRaisesRegex(ValueError, "계보"):
+                IMP.compute_impact(docs, ["안전"], existing, page_maps, block_reference=IMP.BLOCK_BASIS_V2)
+            IMP.compute_impact(docs, ["안전"], existing, page_maps, block_reference={"NCS": {"1": 6, "2": 0, "3": 6}, "교과서": {"1": 0, "2": 0, "3": 0}})
+
+    def test_impact_main_writes_json_without_absolute_paths(self):
+        import io, contextlib
+        import occurrence_real_pages_impact as IMP
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            kw = census_fixture(root, ncs_body="<!-- page: 1 -->\n안전 안전 안전\n<!-- page: 2 -->\n안전 위험 보호구 착용 안전 안전 안전 방지 예방 환기 차단 대피 안전모\n안전 위험\n")
+            maps = root / "maps"; maps.mkdir()
+            (maps / "LM1903060101.pages.json").write_text(json.dumps({"md": "LM1903060101_안전.md", "line_pages": [10, 10, 12, 12, 13, 13]}), encoding="utf-8")
+            out = root / "impact.json"
+            argv = ["occurrence_real_pages_impact.py", "--source-workbook", str(kw["source_workbook"]), "--ncs-root", str(kw["ncs_root"]), "--school-root", str(kw["school_root"]),
+                    "--school-grade-workbook", str(kw["school_grade_workbook"]), "--page-maps", str(maps), "--out", str(out),
+                    "--previous-basis", str(root / "reseg_min.json")]                                 # 기본값은 추적 정본 reseg — fixture 대응은 그 판에 묶이지 않으니 최소 이전 기준을 준다
+            (root / "reseg_min.json").write_text(json.dumps({"per_book": {}, "meta": {}}), encoding="utf-8")
+            buf = io.StringIO()
+            with mock.patch.object(IMP, "BLOCK_BASIS_V2", None), contextlib.redirect_stdout(buf):
+                IMP.main(argv[1:])
+            text = out.read_text(encoding="utf-8"); data = json.loads(text)
+            self.assertNotIn(str(root), text); self.assertNotIn("/Users/", text)
+            self.assertEqual(1, data["meta"]["inputs"]["page_maps"]["files"]); self.assertEqual(data["totals"]["NCS"], sum(data["grades"]["real"]["NCS"].values()))
+            self.assertIn("이동", buf.getvalue())
+
+    # ---- 출고 전 커버리지 감사 (2026-09-15): book_kind 의 세 값, 짝짓기 거부, 폭 구간 4-9·10+, 교과서 레코드, 정렬 자기 검증 병기
+    def test_book_kind_real_marker_and_empty_map(self):
+        import occurrence_real_pages_impact as IMP
+        dense = _doc("NCS", "반도체개발/LM1903060101_a.md", "<!-- page: 1 -->\n안전\n<!-- page: 2 -->\n안전\n<!-- page: 3 -->\n안전\n<!-- page: 4 -->\n안전\n<!-- page: 5 -->\n안전\n")
+        self.assertEqual("real-marker", IMP.book_kind(dense, {dense.relative_path: (1, 1, 2, 2, 3, 3, 4, 4, 5, 6)}))            # 블록 5 / 실제 쪽 6 = 0.83 ≥ 0.8
+        self.assertEqual("toc-block", IMP.book_kind(dense, {dense.relative_path: (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)}))            # 5 / 10 = 0.5
+        self.assertEqual("toc-block", IMP.book_kind(dense, {dense.relative_path: ()}))                                          # 실제 쪽 0 — 나눗셈 없이 toc-block
+        self.assertEqual("real-marker-nomap", IMP.book_kind(dense, {}))
+        self.assertEqual(0.8, IMP.REAL_MARKER_RATIO)
+        # 이전 기준이 그 교재의 대응을 어떻게 만들었는지(per_book.method) 알면 그것이 분류다 — 비율은 method 를 모르는 교재의 대체 규칙 (적대적 리뷰 1)
+        methods = {"LM1903060101": "alignment"}
+        self.assertEqual("toc-block", IMP.book_kind(dense, {dense.relative_path: (1, 1, 2, 2, 3, 3, 4, 4, 5, 6)}, methods))      # 비율은 0.83 이지만 DP 정렬로 만든 대응
+        self.assertEqual("real-marker", IMP.book_kind(dense, {dense.relative_path: (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)}, {"LM1903060101": "markers"}))
+        self.assertEqual("real-marker-nomap", IMP.book_kind(dense, {}, methods))                                                # 대응 없음이 method 보다 앞선다
+        self.assertEqual({"LM1903060101": "alignment", "LM1903060102": "markers"},
+                         IMP.book_methods({"per_book": {"LM1903060101_a": {"method": "alignment"}, "반도체개발/LM1903060102_b": {"method": "markers"}, "LM1903060408_c": {"method": None}, "no code": {"method": "markers"}}}))
+
+    def test_impact_refuses_when_the_map_changes_the_match_set(self):
+        with tempfile.TemporaryDirectory() as td:
+            IMP, docs, page_maps, existing = self._setup(td)
+            original = SKR.apply_page_maps
+            with mock.patch.object(SKR, "apply_page_maps", lambda matches, maps: original(matches, maps)[:-1] if maps else original(matches, maps)):     # 실제 쪽 집계만 한 건 잃는다
+                with self.assertRaisesRegex(ValueError, "매칭 순서·집합"):
+                    IMP.compute_impact(docs, ["안전"], existing, page_maps, block_reference=None)
+            with mock.patch.object(SKR, "apply_page_maps", lambda matches, maps: list(reversed(original(matches, maps))) if maps else original(matches, maps)):   # 수는 같고 순서만 다르다
+                with self.assertRaisesRegex(ValueError, "매칭 순서·집합"):
+                    IMP.compute_impact(docs, ["안전"], existing, page_maps, block_reference=None)
+
+    def test_impact_block_width_buckets_grade3_share_and_textbook_records(self):
+        """블록 폭 4-9·10+ 구간, 등급3 비율, 교과서 레코드는 이동 행렬 밖(불변). 블록 2 (안전 ×12) 는 블록 판정 2, 실제 쪽 12개로 흩어지면 각 1."""
+        import occurrence_real_pages_impact as IMP
+        wide = "<!-- page: 1 -->\n" + "안전\n" * 5 + "<!-- page: 2 -->\n" + "안전\n" * 12
+        ncs = _doc("NCS", "반도체개발/LM1903060101_a.md", wide)
+        school = _doc("교과서", "school-1.md", "<!-- page: 1 -->\n안전\n")
+        line_pages = tuple([10] + [10, 11, 12, 13, 14] + [30] + list(range(30, 42)))                 # 표식 줄은 뒤따르는 쪽; 블록 1 → 실제 쪽 5개(4-9), 블록 2 → 12개(10+)
+        out = IMP.compute_impact([ncs, school], ["안전"], {}, {ncs.relative_path: line_pages}, block_reference=None)
+        self.assertEqual({"1": 0, "2-3": 0, "4-9": 5, "10+": 12}, out["pages"]["block_width_of_occurrences"])
+        self.assertEqual({"NCS": 17, "교과서": 1}, out["totals"])
+        self.assertEqual(({"1": 5, "2": 12, "3": 0}, {"1": 17, "2": 0, "3": 0}), (out["grades"]["block"]["NCS"], out["grades"]["real"]["NCS"]))
+        self.assertEqual(({"1": 1, "2": 0, "3": 0}, {"1": 1, "2": 0, "3": 0}), (out["grades"]["block"]["교과서"], out["grades"]["real"]["교과서"]))   # 교과서는 대응 밖 — 불변
+        self.assertEqual({"NCS": {"block": 0.0, "real": 0.0}, "교과서": {"block": 0.0, "real": 0.0}}, out["grade3_share"])
+        self.assertEqual((5, 12, 12), (out["transition"]["unchanged"], out["transition"]["moved"], out["transition"]["matrix"]["2->1"]))   # 교과서 1건은 NCS 행렬에 없다
+        # 같은 표식 값의 블록이 둘(비단조·중복 표식 교재)이어도 출현은 제 줄이 든 블록 하나에만 — 폭 표의 합 == 대응 교재의 출현 수 (CodeRabbit PR #17)
+        dup = _doc("NCS", "반도체개발/LM1903060102_b.md", "<!-- page: 1 -->\n안전\n<!-- page: 1 -->\n안전\n안전\n")
+        out2 = IMP.compute_impact([dup], ["안전"], {}, {dup.relative_path: (5, 5, 6, 6, 7)}, block_reference=None)          # 블록 1 → 쪽 5(폭 1), 블록 2 → 쪽 6·7(폭 2)
+        self.assertEqual({"1": 1, "2-3": 2, "4-9": 0, "10+": 0}, out2["pages"]["block_width_of_occurrences"])
+        self.assertEqual(out2["totals"]["NCS"], sum(out2["pages"]["block_width_of_occurrences"].values()))
+        self.assertEqual({"new": {"occurrences": 17, "unchanged": 5, "unchanged_pct": 29.4}}, out["by_source"])
+        self.assertEqual((2, 17), (out["pages"]["block_pages"], out["pages"]["real_pages"]))
+        self.assertEqual({"toc-block": {"books": 1, "occurrences": 17, "block": {"1": 5, "2": 12, "3": 0}, "real": {"1": 17, "2": 0, "3": 0}}}, out["by_book_kind"])
+        self.assertEqual({"반도체개발": {"block": {"1": 5, "2": 12, "3": 0}, "real": {"1": 17, "2": 0, "3": 0}}}, out["groups"])
+
+    def test_impact_main_alignment_self_check_follows_previous_basis(self):
+        import io, contextlib
+        import occurrence_real_pages_impact as IMP
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            kw = census_fixture(root, ncs_body="<!-- page: 1 -->\n안전 안전 안전\n<!-- page: 2 -->\n안전 위험\n")
+            maps = root / "maps"; maps.mkdir()
+            (maps / "LM1903060101.pages.json").write_text(json.dumps({"md": "LM1903060101_안전.md", "line_pages": [10, 10, 12, 12, 12]}), encoding="utf-8")
+            reseg = root / "reseg_summary.json"
+            reseg.write_text(json.dumps({"alignment_check": {"books": 23, "overall": {"lines": 100, "exact": 0.9, "near": 0.95, "nogap_exact": 0.92}}, "hybrid_lines": 7}), encoding="utf-8")
+            base = ["occurrence_real_pages_impact.py", "--source-workbook", str(kw["source_workbook"]), "--ncs-root", str(kw["ncs_root"]), "--school-root", str(kw["school_root"]),
+                    "--school-grade-workbook", str(kw["school_grade_workbook"]), "--page-maps", str(maps)]
+            bare = root / "reseg_bare.json"; bare.write_text(json.dumps({"per_book": {}, "meta": {}}), encoding="utf-8")   # 정렬 자기 검증이 없는 이전 기준
+            with mock.patch.object(IMP, "BLOCK_BASIS_V2", None), contextlib.redirect_stdout(io.StringIO()), self.assertRaises(FileNotFoundError):
+                IMP.main(base[1:] + ["--out", str(root / "none.json"), "--previous-basis", str(root / "missing.json")])          # 잘못 적은 경로가 결속을 조용히 건너뛰지 않는다 (적대적 리뷰 12)
+            self.assertFalse((root / "none.json").exists())
+            for tag, previous in (("with", reseg), ("without", bare)):
+                out = root / f"{tag}.json"
+                with mock.patch.object(IMP, "BLOCK_BASIS_V2", None), contextlib.redirect_stdout(io.StringIO()):
+                    IMP.main(base[1:] + ["--out", str(out), "--previous-basis", str(previous)])
+                meta = json.loads(out.read_text(encoding="utf-8"))["meta"]
+                if tag == "with":
+                    check = meta["alignment_self_check"]
+                    self.assertEqual((23, 100, 0.9, 0.92, None, 7), (check["books"], check["lines"], check["exact"], check["nogap_exact"], check["all_lines"], check["hybrid_lines"]))   # 없는 키는 None 으로 병기
+                    self.assertEqual("reseg_summary.json", Path(check["source"]).name); self.assertNotIn(str(root), json.dumps(meta))
+                else:
+                    self.assertNotIn("alignment_self_check", meta)                                                                # 이전 기준에 정렬 자기 검증이 없으면 병기하지 않는다
+            # 영향표도 정본과 같은 결속을 거친다 (Codex 구조 리뷰 P2): 대응의 쪽 값이 이전 기준 PDF 쪽수를 넘거나 마크다운 판 지문이 다르면 쓰지 않는다
+            bound = root / "reseg_bound.json"
+            bound.write_text(json.dumps({"per_book": {"LM1903060101_안전": {"pdf_pages": 11}}, "meta": {}}), encoding="utf-8")
+            with mock.patch.object(IMP, "BLOCK_BASIS_V2", None), contextlib.redirect_stdout(io.StringIO()), self.assertRaisesRegex(ValueError, "PDF 쪽수"):
+                IMP.main(base[1:] + ["--out", str(root / "bound.json"), "--previous-basis", str(bound)])
+            self.assertFalse((root / "bound.json").exists())
+            bound.write_text(json.dumps({"per_book": {"LM1903060101_안전": {"pdf_pages": 40}}, "meta": {"md_corpus_sha256": "0" * 64}}), encoding="utf-8")
+            with mock.patch.object(IMP, "BLOCK_BASIS_V2", None), contextlib.redirect_stdout(io.StringIO()), self.assertRaisesRegex(ValueError, "md_corpus_sha256"):
+                IMP.main(base[1:] + ["--out", str(root / "bound.json"), "--previous-basis", str(bound)])
+
+
+class CommittedImpactTests(unittest.TestCase):
+    """추적 영향표(occurrence_real_pages_impact.json)를 정본에 묶는다 — 다른 대응·다른 사전으로 다시 만든 표가 등급 수만 우연히 맞아 통과하지 않게 (리뷰 testing)."""
+
+    def test_committed_impact_json_is_bound_to_the_canonical_run(self):
+        import occurrence_real_pages_impact as IMP
+        text = (Path(SKR.__file__).parent / "docs/03-analysis/data/occurrence_real_pages_impact.json").read_text(encoding="utf-8")
+        I = json.loads(text)
+        self.assertEqual(IMP.BLOCK_BASIS_V2, I["grades"]["block"]); self.assertEqual(IMP.BLOCK_BASIS_V2, I["meta"]["block_reference"])          # 블록 기준 열 = 옛 정본(계보)
+        self.assertEqual({c: {g: EXPECTED["grades"][c][g] for g in ("1", "2", "3")} for c in ("NCS", "교과서")}, I["grades"]["real"])      # 실제 쪽 열 = 정본 EXPECTED
+        self.assertEqual(EXPECTED["totals"], I["totals"]); self.assertEqual(EXPECTED["dictionary"], I["meta"]["dictionary"])
+        self.assertEqual(EXPECTED["page_maps_sha256"], I["meta"]["inputs"]["page_maps"]["sha256"])                                          # 같은 줄→쪽 대응
+        self.assertEqual(sum(I["grades"]["real"]["NCS"].values()), I["transition"]["unchanged"] + I["transition"]["moved"])
+        self.assertEqual(sum(v["occurrences"] for v in I["by_source"].values()), I["totals"]["NCS"])
+        self.assertNotIn("/Users/", text); self.assertNotIn(str(Path.home()), text)
+
+
+class LineConventionTests(unittest.TestCase):
+    """갭 분석 Act-1 (2026-09-15). G-1: 매칭의 줄 번호는 splitlines() 인데 대응은 split("\\n") 기준 — \\x0c 같은 줄 구분자가 있으면 그 뒤가 한 줄씩 밀린다,
+    대응을 매칭 규약으로 옮겨 싣는다. G-4·G-6: CLI 기본값, 제외 레코드·목록 교재·변형 사전에도 대응 적용, 결속 불일치 거부, 대응 적용 결정론, 대응 폴더 부재."""
+
+    def test_page_maps_are_remapped_to_the_matching_line_convention(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td); ncs = root / "ncs" / "반도체개발"; ncs.mkdir(parents=True)
+            text = "<!-- page: 1 -->\n안전 x\x0cy\n안전\n<!-- page: 2 -->\n안전\n"           # split("\\n") 6줄(끝 빈 문자열 포함) · splitlines 6줄(\\x0c 로 하나 늘고 끝 빈 줄이 빠짐)
+            (ncs / "LM1903060101_a.md").write_text(text, encoding="utf-8")
+            maps = root / "maps"; maps.mkdir()
+            (maps / "LM1903060101.pages.json").write_text(json.dumps({"md": "LM1903060101_a.md", "line_pages": [10, 10, 10, 20, 20, 20]}), encoding="utf-8")
+            docs = SKR.load_documents(root / "ncs", "NCS")
+            page_maps, _ = SKR.load_page_maps(maps, docs)
+            self.assertEqual((10, 10, 10, 10, 20, 20), page_maps[docs[0].relative_path])                  # 매칭 규약(splitlines) 으로 옮겨진 대응
+            rules = [ExpressionRule("안전", "안전", "exact", "기존 키워드")]
+            result = aggregate_matches([KeywordSource("안전", 1, True)], docs, rules, [], page_maps=page_maps)
+            self.assertEqual({2: 10, 4: 10, 6: 20}, {r.line: r.page for r in result.matches if r.decision == "included"})   # 줄 4 의 '안전' 은 쪽 10 (밀리면 20)
+            graded = assign_match_grades(result, {}, page_maps=page_maps)
+            self.assertTrue(all(r.grade_source == "real-page" for r in graded.matches))
+            bad = maps / "bad"; bad.mkdir()
+            (bad / "LM1903060101.pages.json").write_text(json.dumps({"md": "LM1903060101_a.md", "line_pages": [10, 10, 10, 20, 20]}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "줄 수"):
+                SKR.load_page_maps(bad, docs)                                                            # 길이 검사는 대응 규약(split("\\n")) 그대로
+
+    def test_to_matching_lines_separator_at_end_of_line_expands_instead_of_raising(self):     # 리뷰(testing): 줄 끝 \x0c
+        # "a\x0c" 뒤에 "\n" 이 오면 splitlines 는 두 줄("a", "") 인데 split("\n") 조각은 하나 — 그 쪽을 두 번 싣는다 (PDF 변환기가 넣는 줄 끝 폼피드)
+        self.assertEqual((10, 10, 20), SKR._to_matching_lines("a\x0c\nb\n", [10, 20, 30]))
+        self.assertEqual((10, 10, 20), SKR._to_matching_lines("a\x0b\nb\n", [10, 20, 30]))
+        self.assertEqual((10, 20), SKR._to_matching_lines("a\nb\x0c", [10, 20]))                 # 개행 없는 마지막 조각: 추가 줄 없음
+        self.assertEqual((10, 20, 20, 30), SKR._to_matching_lines("a\n\x0c\nb", [10, 20, 30]))
+        self.assertEqual((10, 20, 30), SKR._to_matching_lines("a\nb\nc", [10, 20, 30]))          # 구분자 없는 보통 문서는 그대로
+
+    def test_excluded_records_and_listed_books_with_maps_and_variant_runs(self):          # Act-1 G-6
+        with tempfile.TemporaryDirectory() as td:
+            ncs, maps, docs = _real_page_fixture(Path(td))
+            docs = [d for d in docs if "LM1903060499" not in d.relative_path]
+            b = next(d for d in docs if "LM1903060408" in d.relative_path)
+            (maps / "LM1903060408.pages.json").write_text(json.dumps({"md": "LM1903060408_b.md", "line_pages": [30, 30, 31, 31, 31]}), encoding="utf-8")
+            page_maps, info = SKR.load_page_maps(maps, docs)
+            self.assertEqual((30, 30, 31, 31), page_maps[b.relative_path]); self.assertEqual(2, info.files)              # 목록 교재라도 대응이 있으면 대응을 쓴다
+            rules = build_default_rules(["안전"], version="v1fix")                                                         # 변형 사전에도 대응은 그대로 적용
+            result = aggregate_matches([KeywordSource("안전", 1, True)], docs, rules, SKR.default_candidate_decisions(version="v1fix"), page_maps=page_maps)
+            excluded = [r for r in result.matches if r.decision != "included"]
+            self.assertTrue(all(r.page in (10, 12, 13, 30, 31) for r in result.matches if r.corpus == "NCS"), "제외·보류 레코드도 실제 쪽을 받는다")
+            self.assertTrue(any(r.page == 31 for r in result.matches if "LM1903060408" in r.relative_path))
+
+    def test_run_census_refuses_agreement_mismatch_and_is_deterministic_with_maps(self):  # Act-1 G-6
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            kw = census_fixture(root, ncs_body="<!-- page: 1 -->\n안전 안전 안전\n<!-- page: 2 -->\n안전 위험 보호구 착용 안전 안전 안전 방지 예방 환기 차단 대피 안전모\n안전 위험\n")
+            maps = root / "maps"; maps.mkdir()
+            (maps / "LM1903060101.pages.json").write_text(json.dumps({"md": "LM1903060101_안전.md", "line_pages": [10, 10, 12, 12, 13, 13]}), encoding="utf-8")
+            reseg = root / "reseg_summary.json"
+            reseg.write_text(json.dumps({"pages": 2189, "page_g": {"1": 1519, "2": 525, "3": 145}, "books": 86, "cases_pages": 13, "unresolved": {"pages": 51},
+                                         "per_book": {"LM1903060101_안전": {"pdf_pages": 40}}, "meta": {"expected": True, "run_at": "2026-09-07T08:48:51+00:00"}}), encoding="utf-8")
+            csv_path = root / "reseg.csv"; csv_path.write_text("﻿영역,교재,페이지,등급,출처\n반도체개발,LM1903060101_안전,12,1,text\n", encoding="utf-8")   # 쪽 12 는 본문 판정 3 — 이전 기준이 1 이면 결속 실패
+            with mock.patch.object(SKR, "REAL_PAGE_MARKER_BOOKS", tuple(f"LM19030602{i:02d}" for i in range(1, 86))):
+                with self.assertRaises(SystemExit):
+                    run_census(**kw, expected={"documents": {"NCS": 86, "교과서": 9}, "reseg_agreement": {"pages": 1, "agree": 1}}, page_maps_dir=maps, reseg_csv=csv_path, previous_basis=reseg,
+                               git={"commit": "x", "dirty": False}, argv=["x"])
+                self.assertFalse(kw["xlsx_out"].exists())
+                csv_path.write_text("﻿영역,교재,페이지,등급,출처\n반도체개발,LM1903060101_안전,12,3,text\n", encoding="utf-8")
+                hashes = []
+                for n in (1, 2):
+                    run_census(**dict(kw, xlsx_out=root / f"o{n}.xlsx", report_out=root / f"o{n}.md"), expected={"documents": {"NCS": 86, "교과서": 9}, "reseg_agreement": {"pages": 1, "agree": 1}},
+                               page_maps_dir=maps, reseg_csv=csv_path, previous_basis=reseg, summary_out=root / f"s{n}.json", git={"commit": "x", "dirty": False}, argv=["x"])
+                    hashes.append(json.loads((root / f"s{n}.json").read_text(encoding="utf-8"))["meta"]["manifest"])
+                self.assertEqual(hashes[0], hashes[1])                                                                     # 대응을 적용해도 같은 fixture → 같은 해시
+                with self.assertRaisesRegex(FileNotFoundError, "대응 폴더"):
+                    run_census(**dict(kw, xlsx_out=root / "o3.xlsx", report_out=root / "o3.md"), expected={"documents": {"NCS": 86, "교과서": 9}}, page_maps_dir=root / "none", previous_basis=reseg,
+                               git={"commit": "x", "dirty": False}, argv=["x"])
+
+    def test_main_defaults_to_the_paged_dir_and_reseg_csv(self):                                # Act-1 G-4
+        seen = {}
+        def fake_run_census(*args, **kwargs):
+            seen.update(kwargs); return graded_result()
+        argv = ["semantic_keyword_recount.py", "--source-workbook", "s.xlsx", "--ncs-root", "n", "--school-root", "t", "--xlsx-out", "o.xlsx", "--report-out", "r.md"]
+        import io, contextlib
+        with mock.patch.object(SKR, "run_census", fake_run_census), mock.patch.object(SKR.sys, "argv", argv), contextlib.redirect_stdout(io.StringIO()):
+            SKR.main()
+        self.assertEqual((SKR.DEFAULT_PAGE_MAPS_DIR, SKR.DEFAULT_RESEG_CSV, SKR.HERE / SKR.PREVIOUS_BASIS_SOURCE), (seen["page_maps_dir"], seen["reseg_csv"], seen["previous_basis"]))   # 최소 호출로 정본 실행 (리뷰 red-team)
+        err = io.StringIO()                                                                  # 새 클론(입력 없음)은 traceback 이 아니라 한 줄 메시지로 끝난다
+        with mock.patch.object(SKR.sys, "argv", argv), contextlib.redirect_stderr(err), self.assertRaises(SystemExit) as ctx:
+            SKR.main()
+        self.assertIn("찾을 수 없습니다", str(ctx.exception)); self.assertNotIn("Traceback", err.getvalue())
+
+    # ---- 출고 전 커버리지 감사 (2026-09-15): 줄 규약의 남은 변형, 결속 불일치 때의 stderr 힌트
+    def test_to_matching_lines_crlf_no_trailing_newline_and_unknown_separator(self):
+        """\\r\\n 은 split("\\n") 조각 끝의 \\r 이 splitlines 에서 사라질 뿐 줄 수가 같고, 끝 개행이 없으면 빈 원소를 빼지 않는다; 빈 본문(splitlines 0줄 vs split 1줄)은 거부."""
+        self.assertEqual((10, 20, 20), SKR._to_matching_lines("a\r\nb\r\nc", [10, 20, 20]))          # 끝 개행 없음: 3 원소 그대로
+        self.assertEqual((10, 20), SKR._to_matching_lines("a\r\nb\r\n", [10, 20, 30]))              # 끝 개행: 마지막 빈 원소(30) 는 splitlines 에 없다
+        self.assertEqual((10, 10, 20), SKR._to_matching_lines("a\rb\nc", [10, 20]))                  # 홀로 선 \r 도 splitlines 는 줄로 가른다
+        with self.assertRaisesRegex(ValueError, "줄 규약"):
+            SKR._to_matching_lines("", [1])
+
+    def test_run_census_mismatch_prints_agreement_hint_with_examples(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            kw = census_fixture(root, ncs_body="<!-- page: 1 -->\n안전 안전 안전\n<!-- page: 2 -->\n안전 위험\n")
+            maps = root / "maps"; maps.mkdir()
+            (maps / "LM1903060101.pages.json").write_text(json.dumps({"md": "LM1903060101_안전.md", "line_pages": [10, 10, 12, 12, 12]}), encoding="utf-8")
+            reseg = root / "reseg_summary.json"
+            reseg.write_text(json.dumps({"pages": 2189, "page_g": {"1": 1519, "2": 525, "3": 145}, "books": 86, "cases_pages": 13, "unresolved": {"pages": 51},
+                                         "per_book": {"LM1903060101_안전": {"pdf_pages": 40}}, "meta": {"expected": True, "run_at": "2026-09-07T08:48:51+00:00"}}), encoding="utf-8")
+            csv_path = root / "reseg.csv"; csv_path.write_text("영역,교재,페이지,등급\n반도체개발,LM1903060101_안전,10,3\n", encoding="utf-8")   # 쪽 10 은 본문 판정 1
+            import io, contextlib
+            listed = tuple(f"LM19030602{i:02d}" for i in range(1, 86))
+            err = io.StringIO()
+            with mock.patch.object(SKR, "REAL_PAGE_MARKER_BOOKS", listed), contextlib.redirect_stderr(err), self.assertRaises(SystemExit):
+                run_census(**kw, expected={"documents": {"NCS": 86, "교과서": 9}, "reseg_agreement": {"pages": 1, "agree": 1}}, page_maps_dir=maps, reseg_csv=csv_path,
+                           previous_basis=reseg, git={"commit": "x", "dirty": False}, argv=["x"])
+            self.assertIn("reseg_agreement.agree: 0 != 1", err.getvalue())
+            self.assertIn("줄→쪽 대응(page_maps)이 바뀌었거나 regrade 기준선이 바뀐 것", err.getvalue())
+            self.assertIn("'book': 'LM1903060101', 'page': 10, 'ours': 1, 'reseg': 3", err.getvalue())                          # 어느 쪽인지 바로 보이게 예시를 붙인다
+            self.assertFalse(kw["xlsx_out"].exists())
+            err2 = io.StringIO()                                                                                                 # 결속은 맞고 다른 항목이 어긋나면 힌트가 없다
+            with mock.patch.object(SKR, "REAL_PAGE_MARKER_BOOKS", listed), contextlib.redirect_stderr(err2), self.assertRaises(SystemExit):
+                run_census(**kw, expected={"documents": {"NCS": 86, "교과서": 9}, "reseg_agreement": {"pages": 1, "agree": 0}, "totals": {"NCS": 999999}}, page_maps_dir=maps,
+                           reseg_csv=csv_path, previous_basis=reseg, git={"commit": "x", "dirty": False}, argv=["x"])
+            self.assertIn("totals.NCS", err2.getvalue()); self.assertNotIn("regrade 기준선", err2.getvalue())
 
 
 if __name__ == "__main__":

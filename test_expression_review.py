@@ -247,9 +247,11 @@ class CommittedArtifactsTests(unittest.TestCase):
         canon = SKR.DEFAULT_DICTIONARY
         self.assertEqual(canon, summary["meta"]["run"]["dictionary"])
         self.assertEqual({"v1": 12506, "v1fix": 12310}, {v: impact["totals"][v]["NCS"] for v in ("v1", "v1fix")})   # 계보: v1 2026-09-09 · v1fix 결함 2건 반영
+        real_pages = json.loads((self.DATA / "occurrence_real_pages_impact.json").read_text(encoding="utf-8"))   # 2026-09-15: 정본 등급은 실제 쪽 기준 — 사전 영향표(블록 기준)의 v2 등급은 그 표의 "block" 열과 같아야 한다
         for corpus in ("NCS", "교과서"):
             self.assertEqual(summary["corpora"][corpus]["total"], impact["totals"][canon][corpus], corpus)
-            self.assertEqual({g: summary["corpora"][corpus]["grades"][g] for g in ("1", "2", "3")}, impact["grades"][canon][corpus], corpus)
+            self.assertEqual(real_pages["grades"]["block"][corpus], impact["grades"][canon][corpus], corpus)                 # 블록 기준 계보 (4,378/4,614/2,525)
+            self.assertEqual({g: summary["corpora"][corpus]["grades"][g] for g in ("1", "2", "3")}, real_pages["grades"]["real"][corpus], corpus)   # 실제 쪽 기준 = 정본
             by_name = {k["name"]: k for k in summary["keywords"]}
             for row in impact["keywords"]:
                 self.assertEqual(by_name[row["name"]]["corpora"][corpus]["total"], row[canon][corpus], (row["name"], corpus))
