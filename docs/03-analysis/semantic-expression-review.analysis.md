@@ -148,7 +148,7 @@
 |---|---|---|
 | `expression_review_key.json` | `{sample_digest, seed, targets, items[id,keyword,expression,corpus,path,line,text_sha256]}` | 동일 + `per_expression: 30`; 618 항목, 본문 없음 |
 | `data/expression_review_sheet.json` (비추적) | `{sample_digest, coder_prompt, items[id,keyword,expression,text]}` | 동일; `/data/` 로 gitignore |
-| `expression_review_adj.json` | `{sample_digest, labels, note}` | 동일 + `adjudicator`, `date`; 17건 (1×9, 2×6, ?×2) |
+| `expression_review_adj.json` | `{sample_digest, labels, note}` | 동일 + `adjudicator`, `date`; 17건 (1×8, 2×7, ?×2) |
 
 ---
 

@@ -203,6 +203,14 @@ class ErrorPathTests(unittest.TestCase):
                 HR.load_facts(path, HR.DEFAULT_CASES, HR.DEFAULT_RECOUNT)
             self.assertIn("반도체신규", str(ctx.exception))
 
+    def test_load_facts_refuses_unknown_keyword_group(self):                                      # CodeRabbit PR #16
+        summary = json.loads(HR.DEFAULT_SUMMARY.read_text(encoding="utf-8"))
+        summary["keywords"][0]["corpora"]["NCS"]["groups"].append({"name": "반도체신규", "documents": 1, "total": 1, "grades": {"1": 1, "2": 0, "3": 0}})
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "summary.json"; path.write_text(json.dumps(summary, ensure_ascii=False), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "반도체신규"):                                 # KeyError: None 이 아니라 대응표 갱신 안내
+                HR.load_facts(path, HR.DEFAULT_CASES, HR.DEFAULT_RECOUNT)
+
     def test_locate_sections_refuses_document_without_body_chapter_heading(self):
         root = ET.fromstring(f'<hs:sec {NS}>' + para("제3장 연구 결과") + para("본문") + "</hs:sec>")      # 목차 1회뿐
         with self.assertRaises(ValueError):

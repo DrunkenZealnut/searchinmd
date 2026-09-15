@@ -287,6 +287,34 @@ class CliAndEdgeTests(unittest.TestCase):
             ER.main()
         return buf.getvalue()
 
+    def test_sheet_inside_repo_is_allowed_only_under_data(self):                                  # CodeRabbit PR #16 (Major)
+        """시트는 교재 본문을 담는다 — 저장소 안에서는 data/ 아래만, 저장소 밖은 그대로 허용."""
+        from unittest import mock
+        items = [{"id": "E1", "keyword": "k", "expression": "e", "corpus": "NCS", "path": "a.md", "line": 1, "text": "t"}]
+        with tempfile.TemporaryDirectory() as td, mock.patch.object(ER, "HERE", Path(td)):
+            for bad in (Path(td) / "README_sheet.json", Path(td) / "docs" / "sheet.json", Path(td) / "outputs" / "sheet.json"):
+                with self.assertRaisesRegex(ValueError, "data/"):
+                    ER.write_sample(items, bad, Path(td) / "k.json")
+            self.assertFalse((Path(td) / "k.json").exists())
+            with tempfile.TemporaryDirectory() as outside:
+                key = ER.write_sample(items, Path(outside) / "sheet.json", Path(outside) / "key.json")        # 저장소 밖 — 허용
+                self.assertTrue((Path(outside) / "sheet.json").exists() and key["sample_digest"])
+            key = ER.write_sample(items, Path(td) / "data" / "sheet.json", Path(td) / "data" / "key.json")      # data/ 아래 — 허용
+            self.assertTrue((Path(td) / "data" / "sheet.md").exists())
+
+    def test_cli_list_disagreements_checks_sample_and_prompt_binding(self):                    # CodeRabbit PR #16 (Major)
+        """--list-disagreements 도 score 와 같은 결속 검사를 거친다 — 다른 표본·다른 질문의 라벨을 재정 대상으로 내밀지 않는다."""
+        with tempfile.TemporaryDirectory() as td:
+            paths, ids, key = self._score_fixture(td)
+            other = json.loads(paths["b"].read_text(encoding="utf-8")); other["sample_digest"] = "0" * 16
+            paths["b"].write_text(json.dumps(other, ensure_ascii=False), encoding="utf-8")
+            with self.assertRaises((SystemExit, ValueError)) as ctx:
+                self._main(["score", "--key", str(paths["key"]), "--a", str(paths["a"]), "--b", str(paths["b"]), "--adj", str(paths["adj"]), "--list-disagreements"])
+            self.assertIn("sample_digest", str(ctx.exception))
+
+    def test_impact_console_survives_zero_total(self):                                         # CodeRabbit PR #16 (Minor)
+        self.assertEqual("0.0", ER._pct(0, 0)); self.assertEqual("25.0", ER._pct(1, 4))
+
     def test_cli_sample_writes_sheet_and_key_and_refuses_overwrite_without_force(self):
         """sample: 시트 json/md(비추적 경로) + 키를 쓰고 표본 요약을 찍는다; 키가 있으면 --force 없이는 FileExistsError 로 멈춘다."""
         with tempfile.TemporaryDirectory() as td:

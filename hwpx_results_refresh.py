@@ -225,6 +225,8 @@ def load_facts(summary_path: Path = DEFAULT_SUMMARY, cases_path: Path = DEFAULT_
                 raise ValueError(f"semantic_summary.json 에 키워드×그룹({k['name']}/{corpus})이 없습니다 — 2026-09-14 이후 정본이 필요합니다")
             for g in kc["groups"]:
                 area = group_to_area(g["name"])
+                if area is None:
+                    raise ValueError(f"{corpus} 키워드 그룹 '{g['name']}'({k['name']}) 의 분야를 모른다 — 대응표를 갱신하십시오")
                 kw_areas[area]["total"] += g["total"]
                 for grade in (1, 2, 3):
                     kw_areas[area]["grades"][grade] += g["grades"][str(grade)]

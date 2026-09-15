@@ -171,6 +171,14 @@ def _under_tracked_docs(path: Path) -> bool:
     return rp == docs or rp.startswith(docs + os.sep)
 
 
+def _sheet_path_in_repo_outside_data(path: Path) -> bool:
+    """저장소 안인데 data/ 아래가 아닌가 — 본문을 담는 시트는 저장소 안에서는 gitignore 된 data/ 에만 쓴다 (CodeRabbit PR #16); 저장소 밖은 허용."""
+    rp, repo, data = os.path.realpath(str(path)), os.path.realpath(str(HERE)), os.path.realpath(str(HERE / "data"))
+    inside_repo = rp == repo or rp.startswith(repo + os.sep)
+    under_data = rp.startswith(data + os.sep)
+    return inside_repo and not under_data
+
+
 def sample_digest(key_items: list[dict]) -> str:
     payload = [(i["id"], i["keyword"], i["expression"], i["corpus"], i["path"], i["line"], i["text_sha256"]) for i in key_items]
     return hashlib.sha256(json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:16]
@@ -199,8 +207,8 @@ def write_sample(items: list[dict], sheet_path: Path, key_path: Path, documents:
                  seed: int = SEED, per_expression: int = PER_EXPRESSION, targets=REVIEW_TARGETS) -> dict:
     """시트 json/md 와 키를 쓴다. 키는 라벨과 표본을 묶는 유일한 끈이라 --force 없이는 덮어쓰지 않는다."""
     sheet_path, key_path = Path(sheet_path), Path(key_path)
-    if _under_tracked_docs(sheet_path):
-        raise ValueError(f"시트는 교재 본문을 담으므로 추적 경로(docs/)에 쓸 수 없습니다: {sheet_path.name}")
+    if _under_tracked_docs(sheet_path) or _sheet_path_in_repo_outside_data(sheet_path):
+        raise ValueError(f"시트는 교재 본문을 담으므로 저장소 안에서는 data/ 아래에만 쓸 수 있습니다: {sheet_path.name}")
     if key_path.exists() and not force:
         raise FileExistsError(f"키가 이미 있습니다 — 표본을 다시 뽑으려면 --force: {public_path(key_path)}")
     if any("text" not in i for i in items) and documents is None:
@@ -314,12 +322,34 @@ def companion_stats(key: dict, texts: dict, labels: dict, companions=SKR.SAFETY_
     return {"companions": per_comp, "expressions": rows}
 
 
+def _pct(part: int, whole: int) -> str:
+    """콘솔용 비율 — 매칭이 없는 입력(합계 0)에서도 ZeroDivisionError 없이 0.0."""
+    return f"{part / whole * 100:.1f}" if whole else "0.0"
+
+
 def check_complete(coder: dict, ids: list[str], name: str) -> None:
     """코더 파일은 모든 항목을 grades 또는 errors 에 가져야 한다 — 중단된 실행은 ? 가 아니다 (score_coding.check_complete 규약)."""
     covered = set((coder.get("grades") or {})) | set((coder.get("errors") or {}))
     missing = [i for i in ids if i not in covered]
     if missing:
         raise ValueError(f"코더 {name} 파일에 항목 {len(missing)}개가 없습니다 (grades/errors 어디에도 없음): {', '.join(missing[:5])} — 중단된 실행이면 --resume 으로 마저 돌리십시오")
+
+
+def check_binding(key: dict, a: dict, b: dict, full_key: bool | None = None) -> None:
+    """코더 라벨이 이 표본·이 질문의 것인지 — digest·prompt_sha256·완전성. score 와 --list-disagreements 가 같은 검사를 거친다 (CodeRabbit PR #16)."""
+    ids = [i["id"] for i in key["items"]]
+    if full_key is None:
+        full_key = all("text_sha256" in i for i in key["items"])
+    for name, coder in (("A", a), ("B", b)):
+        if coder.get("sample_digest") != key.get("sample_digest") and (full_key or coder.get("sample_digest") is not None):   # 실제 키에는 digest 없는 라벨 파일도 받지 않는다
+            raise ValueError(f"코더 {name} 라벨의 sample_digest {coder.get('sample_digest')} 가 키 {key.get('sample_digest')} 와 다릅니다 — 다른 표본의 라벨")
+    pa, pb = (a.get("meta") or {}).get("prompt_sha256"), (b.get("meta") or {}).get("prompt_sha256")
+    if pa and pb and pa != pb:
+        raise ValueError("두 코더의 prompt_sha256 이 다릅니다 — 같은 질문으로 판정한 라벨만 채점합니다")
+    want = hashlib.sha256(coder_prompt().encode("utf-8")).hexdigest()
+    if (pa or pb) and (pa or pb) != want:
+        raise ValueError(f"코더 라벨의 질문(prompt_sha256 {(pa or pb)[:16]}…)이 지금의 coder_prompt()({want[:16]}…)와 다릅니다 — 질문이 바뀌었으면 다시 판정하십시오")
+    check_complete(a, ids, "A"); check_complete(b, ids, "B")
 
 
 def score(key: dict, a: dict, b: dict, adj: dict | None = None, floor: float = PRECISION_FLOOR, alpha: float = ALPHA, texts: dict | None = None,
@@ -342,16 +372,7 @@ def score(key: dict, a: dict, b: dict, adj: dict | None = None, floor: float = P
         bad = [i["id"] for i in key["items"] if hashlib.sha256(texts.get(i["id"], "").encode("utf-8")).hexdigest() != i["text_sha256"]]
         if bad:
             raise ValueError(f"시트 본문이 키의 text_sha256 과 다른 항목 {len(bad)}개: {', '.join(bad[:5])}")
-    for name, coder in (("A", a), ("B", b)):
-        if coder.get("sample_digest") != key.get("sample_digest") and (full_key or coder.get("sample_digest") is not None):   # 실제 키에는 digest 없는 라벨 파일도 받지 않는다
-            raise ValueError(f"코더 {name} 라벨의 sample_digest {coder.get('sample_digest')} 가 키 {key.get('sample_digest')} 와 다릅니다 — 다른 표본의 라벨")
-    pa, pb = (a.get("meta") or {}).get("prompt_sha256"), (b.get("meta") or {}).get("prompt_sha256")
-    if pa and pb and pa != pb:
-        raise ValueError("두 코더의 prompt_sha256 이 다릅니다 — 같은 질문으로 판정한 라벨만 채점합니다")
-    want = hashlib.sha256(coder_prompt().encode("utf-8")).hexdigest()
-    if (pa or pb) and (pa or pb) != want:
-        raise ValueError(f"코더 라벨의 질문(prompt_sha256 {(pa or pb)[:16]}…)이 지금의 coder_prompt()({want[:16]}…)와 다릅니다 — 질문이 바뀌었으면 다시 판정하십시오")
-    check_complete(a, ids, "A"); check_complete(b, ids, "B")
+    check_binding(key, a, b, full_key=full_key)
     ga, gb = a.get("grades", {}), b.get("grades", {})
     final = final_labels(ids, ga, gb, adj_labels)
     by_expr: dict[tuple[str, str], list[dict]] = defaultdict(list)
@@ -513,6 +534,12 @@ def main() -> None:
             adj = None
             print(f"재정 파일이 없어 불일치는 ? 로 둡니다: {public_path(DEFAULT_ADJ)}")
         if args.list_disagreements:
+            try:
+                check_binding(key, a, b)                                   # 다른 표본·다른 질문의 라벨을 재정 대상으로 내밀지 않는다
+                if adj:
+                    validate_adj(adj, key)
+            except ValueError as exc:
+                sys.exit(str(exc))
             ga, gb = a.get("grades", {}), b.get("grades", {})
             adj_labels = (adj or {}).get("labels") or {}
             print("id\tkeyword\texpression\tA\tB\tadj")
@@ -548,8 +575,8 @@ def main() -> None:
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(json.dumps(out, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
         for v in out["meta"]["versions"]:
-            g = out["grades"][v]["NCS"]; tot = sum(g.values())
-            print(f"{v:6} NCS {out['totals'][v]['NCS']:,} (등급3 {g['3']:,} = {g['3'] / tot * 100:.1f}%) · 교과서 {out['totals'][v]['교과서']:,}")
+            g = out["grades"][v]["NCS"]
+            print(f"{v:6} NCS {out['totals'][v]['NCS']:,} (등급3 {g['3']:,} = {_pct(g['3'], sum(g.values()))}%) · 교과서 {out['totals'][v]['교과서']:,}")
         print("결함 수정이 걷어낸 것:", out["excluded_by_fix"])
 
 
