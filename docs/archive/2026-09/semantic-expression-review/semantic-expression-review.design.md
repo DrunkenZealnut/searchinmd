@@ -1,7 +1,7 @@
 # 의미 표현 사전 도메인 점검 설계
 
 > **Feature**: semantic-expression-review
-> **Plan**: [semantic-expression-review.plan.md](../../01-plan/features/semantic-expression-review.plan.md) (Approved 2026-09-14 — 결함 2건 정본 반영 / 코더 2계열 / 하한 0.8)
+> **Plan**: [semantic-expression-review.plan.md](semantic-expression-review.plan.md) (Approved 2026-09-14 — 결함 2건 정본 반영 / 코더 2계열 / 하한 0.8)
 > **Author**: Claude (Opus 5)
 > **Date**: 2026-09-14
 > **Status**: Draft

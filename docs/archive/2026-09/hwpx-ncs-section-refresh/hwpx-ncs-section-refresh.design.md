@@ -4,7 +4,7 @@
 >
 > **Project**: SearchInMD
 > **Feature**: hwpx-ncs-section-refresh
-> **Plan**: `docs/01-plan/features/hwpx-ncs-section-refresh.plan.md` (Approved — D1~D5)
+> **Plan**: `hwpx-ncs-section-refresh.plan.md` (Approved — D1~D5)
 > **Author**: Claude (Opus 5)
 > **Date**: 2026-09-14
 > **Status**: Draft

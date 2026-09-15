@@ -1,7 +1,7 @@
 # semantic-expression-review — 설계 대비 구현 갭 분석
 
 > 분석일: 2026-09-14 · 브랜치 feat/semantic-expression-review · 설계 대비 구현 갭 분석 (bkit Check)
-> 설계: `docs/02-design/features/semantic-expression-review.design.md` (§3.1~3.8 상세, §4 테스트 대응표, §5 구현 순서, §6 결정 기록 — 결정 2·3 포함) · 계획: `docs/01-plan/features/semantic-expression-review.plan.md` (FR-01~FR-10, §4 성공 기준)
+> 설계: `semantic-expression-review.design.md` (§3.1~3.8 상세, §4 테스트 대응표, §5 구현 순서, §6 결정 기록 — 결정 2·3 포함) · 계획: `semantic-expression-review.plan.md` (FR-01~FR-10, §4 성공 기준)
 > 구현: `semantic_keyword_recount.py`, `expression_review.py`, `test_semantic_keyword_recount.py` (`DictionaryVersionTests`), `test_expression_review.py`, `.github/workflows/test.yml`, 산출물 `docs/03-analysis/data/expression_review_{key,A,B,adj,scores,impact}.json`, `semantic_summary.json`, `docs/03-analysis/data/README.md`, `CLAUDE.md` 그룹 4, `docs/superpowers/specs/2026-09-08-semantic-keyword-recount-design.md` "보류 정책" 절
 > **연구 결과(정밀도·κ·영향표)는 별도 문서 `expression-review.analysis.md` 다.** 이 문서는 설계 항목이 구현·테스트·산출물에 어떻게 대응하는지만 본다.
 

@@ -2,9 +2,9 @@
 
 > 분석일: 2026-09-14 · 브랜치 `feat/semantic-expression-review` · 표본 지문 `9713a337b4d94bac` · 표본 사전 `v1fix`(점검 전) · 정본 사전 `v2`(결정 3, 2026-09-14)
 > 수치 출처: `docs/03-analysis/data/expression_review_scores.json` (표현별 정밀도·구간·κ·조건부 근거), `expression_review_key.json` (표본 키), `expression_review_A.json` / `_B.json` (코더 라벨), `expression_review_adj.json` (연구책임자 재정), `expression_review_impact.json` (사전 v1/v1fix/v2 영향표 — §6).
-> 선행: `docs/01-plan/features/semantic-expression-review.plan.md` · `docs/02-design/features/semantic-expression-review.design.md` · 외부감사 M1 (`docs/archive/2026-09/semantic-recount-remediation/`).
+> 선행: `docs/archive/2026-09/semantic-expression-review/semantic-expression-review.plan.md` · `docs/archive/2026-09/semantic-expression-review/semantic-expression-review.design.md` · 외부감사 M1 (`docs/archive/2026-09/semantic-recount-remediation/`).
 > v2 구성(결정 2)과 채택(결정 3)은 연구책임자 판단이며 둘 다 2026-09-14 에 났다 — **v2 는 정본**이다(`DEFAULT_DICTIONARY`, `EXPECTED` 재고정, 대시보드 NCS 11,517 / 교과서 1,207). 이 문서의 표본·정밀도는 점검 대상이던 v1fix 사전 기준이다.
-> 설계-구현 갭 분석(bkit Check)은 별도 문서 `semantic-expression-review.analysis.md` 다. 이 문서는 **연구 결과**다.
+> 설계-구현 갭 분석(bkit Check)은 별도 문서 `docs/archive/2026-09/semantic-expression-review/semantic-expression-review.analysis.md` 다(2026-09-15 보관). 이 문서는 **연구 결과**다.
 > 요약 5 와 §6 은 결정 2(2026-09-14, 계층별 처방) 이후에 채웠다.
 
 ## 요약

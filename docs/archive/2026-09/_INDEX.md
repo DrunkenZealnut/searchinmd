@@ -1,6 +1,6 @@
 # Archive Index — 2026-09
 
-보관 산출물 목록. `coding-v1` 은 **폐기된 라벨의 기록**, `recoding`·`resegment`·`resegment-publish`·`marker-offset`·`semantic-recount-remediation` 은 완료된 PDCA 기능 문서다.
+보관 산출물 목록. `coding-v1` 은 **폐기된 라벨의 기록**, `recoding`·`resegment`·`resegment-publish`·`marker-offset`·`semantic-recount-remediation`·`semantic-expression-review`·`hwpx-ncs-section-refresh` 는 완료된 PDCA 기능 문서다.
 
 | Item | 종류 | 보관일 | 보관 파일 |
 |------|------|--------|-----------|
@@ -10,6 +10,8 @@
 | [resegment-publish](resegment-publish/) | PDCA 기능 (완료, Match Rate 93%) | 2026-09-07 | plan · design · analysis(갭 Check-1/2) · report |
 | [marker-offset](marker-offset/) | PDCA 기능 (완료, Match Rate 100%; 채택 여부는 결정 대기) | 2026-09-08 | plan · design · analysis(갭 + Act-1) · report |
 | [semantic-recount-remediation](semantic-recount-remediation/) | PDCA 기능 (완료, Match Rate Act-0 96% → 100%; PR #15) | 2026-09-14 | plan · design · analysis(갭 + Act-1 + Act-2 ship 리뷰) · report |
+| [semantic-expression-review](semantic-expression-review/) | PDCA 기능 (완료, Match Rate 96% → Act-1 100%; PR #16 머지 `6f1fa1f`) | 2026-09-15 | plan · design · analysis(갭 + Act-1) · report |
+| [hwpx-ncs-section-refresh](hwpx-ncs-section-refresh/) | PDCA 기능 (완료, Match Rate 92% → Act-1 100%; PR #16 머지 `6f1fa1f`) | 2026-09-15 | plan · design · analysis(갭 + Act-1) · report |
 
 ## coding-v1
 
@@ -87,3 +89,35 @@
 - [Design](semantic-recount-remediation/semantic-recount-remediation.design.md)
 - [Analysis (갭 + Act-1 + Act-2)](semantic-recount-remediation/semantic-recount-remediation.analysis.md)
 - [Report](semantic-recount-remediation/semantic-recount-remediation.report.md)
+
+## semantic-expression-review
+
+의미 표현 사전의 도메인 점검과 v2 채택 — 2026-09-14, Plan → Design → Do → Check(96%) → Act-1(G-1~G-8, 100%) → ship 리뷰(PR #16: 스페셜리스트·레드팀·Codex/Claude 적대적·CodeRabbit 2회) → Report → PR #16 머지(2026-09-15, main `6f1fa1f`).
+
+- **Problem**: 정본 13,799건 중 28.4%(동등 2,417 + 구체 1,507)가 LLM 단독으로 고른 표현의 값이고 검토 기록이 없었다(감사 M1·m3); 14개 키워드가 사람 보호 vs 오염관리·계측·설비 문맥을 한 규칙으로 세었다.
+- **Solution**: 연구책임자 결정 1(v1fix: 영문 정확 키워드 단어 경계, `안전` 안의 보류 표현 제외)·2(계층별 처방: 보류 `방진화`·`케미컬`, 조건부 `방진복`·`장갑`·`X선`·`PSM`, 동의어 유지)·3(v2 채택). `expression_review.py` sample/score/impact — 22개 표현 618건 층화 표본, 2계열 코더(A `claude-opus-5`, B `gpt-5.6-sol`, κ 0.965), 재정 17건, Clopper-Pearson 하한 0.8; `semantic_keyword_recount.py` 사전 버전 v1/v1fix/v2·조건부 규칙(`SAFETY_COMPANIONS`)·변형 실행 거부.
+- **결과**: 정본 NCS 12,506 → **11,517**(등급 4,378/4,614/2,525 = 21.9%), 교과서 1,293 → 1,207. 등급3 비율 20.8 → 21.9% 는 구성 효과(걷어낸 NCS 출현의 72%가 등급1). 하니스 unittest 137·S1~S9 68·R 390.
+- **이월**(`TODOS.md` 1·6): `가연성` 60건 2차 패스, 정확 키워드 문맥 대조 표본, 동반어 동음이의 근거 축적, 같은 줄 중복 표현 위치 보존, F11 phantom "동반어 없음" 제외(정본 워크북 복귀 뒤 재실행). 측정 정밀도가 하한 아래인데 채택된 동의어 4개·조건부 2개는 연구 결과 문서 §5·§7 이 명시.
+- **관련 자산**: 연구 결과 `docs/03-analysis/expression-review.analysis.md`, 데이터 `docs/03-analysis/data/expression_review_{key,A,B,adj,scores,impact}.json`, 정본 `semantic_summary.json`(사전 v2), 규칙 `CLAUDE.md` "Dictionary versions"·`expression_review.py` 문단, 보류 정책 `docs/superpowers/specs/2026-09-08-semantic-keyword-recount-design.md`.
+
+보관 문서:
+- [Plan](semantic-expression-review/semantic-expression-review.plan.md)
+- [Design](semantic-expression-review/semantic-expression-review.design.md)
+- [Analysis (갭 + Act-1)](semantic-expression-review/semantic-expression-review.analysis.md)
+- [Report](semantic-expression-review/semantic-expression-review.report.md)
+
+## hwpx-ncs-section-refresh
+
+기초보고서 HWPX 제3장 1~3절을 정본 수치로 재작성 — 2026-09-14, Plan(연구책임자 결정 D1~D5) → Design → Do → Check(92%) → Act-1(G-1~G-11, 100%) → ship 리뷰(PR #16: 레드팀 CRITICAL 2·Codex 적대적 10·Claude 적대적 F1~F15) → Report → PR #16 머지(2026-09-15).
+
+- **Problem**: 보고서 제3장의 수치가 폐기된 2026-09-09 실행값(85종·12,875건·813 미확정)과 2026-04 행 수의 혼합이었고, "9건의 사례"·"모두 등급 3"·"전체 평균 수준 이상" 같은 서술이 정본과 모순됐다.
+- **Solution**: 새 추적 스크립트 `hwpx_results_refresh.py`(stdlib + ImageMagick) — 정본 JSON(`semantic_summary.json` 키워드×그룹·그룹 쪽수 추가, `accident_case_pages.json` 13쪽 원문 확인 판정)만 읽어 절을 제목으로 찾고 문단 45·표 7·그림 3을 재작성, 서술 조건은 데이터로 분기해 대조 JSON `conditions` 에 기록, 1~3절 모든 숫자 토큰을 정본 값과 감사(미일치면 쓰지 않음), 1~3절 밖 문단 불변 검사, 재실행 바이트 동일(`-strip`).
+- **결과**: `data/반도체 기초보고서_20260914_정본.hwpx`(비추적, sha256 `7827bdb7…`) — NCS 86권 8,914쪽 11,517건(38.0/40.1/21.9%), 교과서 9권 2,055쪽 1,207건, 사고사례 자동 판정 13쪽 → 실제 서술 3쪽·2건(반도체 산업재해 1건)·오탐 10쪽; 대조 JSON 숫자 토큰 723·미일치 0; `test_hwpx_results_refresh` 39.
+- **한계·이월**(`TODOS.md` 5): 숫자 감사는 "정본 밖 숫자 없음"만 보장(작은 수의 다의성), 산출물에 재실행 불가(원본에서만), 한글(HWP) 렌더링 `[→E2E]` 미확인, 2장 5절 등 범위 밖 절과 다른 작업의 미추적 문서는 기록만.
+- **관련 자산**: 대조 JSON `docs/03-analysis/data/hwpx_results_refresh_20260914.json`, 검토 HTML `docs/03-analysis/hwpx-results-refresh/review.html`, 판정 데이터 `docs/03-analysis/data/accident_case_pages.json`, 규칙 `CLAUDE.md` 그룹 4 `hwpx_results_refresh.py` 문단, README 산출물 재생성 절.
+
+보관 문서:
+- [Plan](hwpx-ncs-section-refresh/hwpx-ncs-section-refresh.plan.md)
+- [Design](hwpx-ncs-section-refresh/hwpx-ncs-section-refresh.design.md)
+- [Analysis (갭 + Act-1)](hwpx-ncs-section-refresh/hwpx-ncs-section-refresh.analysis.md)
+- [Report](hwpx-ncs-section-refresh/hwpx-ncs-section-refresh.report.md)

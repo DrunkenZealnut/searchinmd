@@ -3,8 +3,8 @@
 > 분석일: 2026-09-14 · 브랜치 feat/semantic-expression-review · 설계 대비 구현 갭 분석 (bkit Check)
 >
 > **Feature**: hwpx-ncs-section-refresh
-> **Plan**: `docs/01-plan/features/hwpx-ncs-section-refresh.plan.md` (Approved, FR-01~FR-12, 성공 기준 8항, 결정 D1~D5)
-> **Design**: `docs/02-design/features/hwpx-ncs-section-refresh.design.md` (§3.1~3.9, §4 테스트 설계, §5 구현 순서, §6 결정 기록)
+> **Plan**: `hwpx-ncs-section-refresh.plan.md` (Approved, FR-01~FR-12, 성공 기준 8항, 결정 D1~D5)
+> **Design**: `hwpx-ncs-section-refresh.design.md` (§3.1~3.9, §4 테스트 설계, §5 구현 순서, §6 결정 기록)
 > **구현**: `hwpx_results_refresh.py` · `semantic_keyword_recount.py`(`dashboard_payload`) · `test_hwpx_results_refresh.py` · `test_semantic_keyword_recount.py` · `outputs/test-dashboard-data.js`(S3j·S3k) · `.github/workflows/test.yml`
 > **산출물**: `docs/03-analysis/data/accident_case_pages.json` · `docs/03-analysis/data/hwpx_results_refresh_20260914.json` · `docs/03-analysis/hwpx-results-refresh/review.html` · `docs/03-analysis/data/semantic_summary.json`(`corpora.*.groups[].pages`, `keywords[].corpora.*.groups`) · `docs/03-analysis/data/README.md` · `CLAUDE.md` 그룹 4 · `README.md` · `TODOS.md` 5번
 > **Author**: Claude (Opus 5, bkit gap-detector) — 결정: 연구책임자
