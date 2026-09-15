@@ -14,7 +14,7 @@
 | [반도체고 교과서 9권](https://drunkenzealnut.github.io/searchinmd/textbook.html) | 검출 362쪽·전체 2,055쪽 두 분모를 병기, NCS 대비 비교는 검출쪽 기준 |
 | [OSHA 안전교육](https://drunkenzealnut.github.io/searchinmd/osha.html) | 미국 OSHA 반도체 화학물질 안전교육 과정과의 비교 |
 
-핵심 수치 하나만 옮기면 — **구체적 안전대책(등급3) 페이지에 놓인 키워드 출현 비율은 NCS 21.9%, 교과서 9.5%** 입니다(둘 다 등급 확정 출현 분모: 2,525/11,517 과 115/1,207; 의미 출현 총계 NCS 11,517건 · 교과서 1,207건, 연구책임자 결정 2026-09-13 으로 분모를 출현건수로 바꿈; 사전 v2 — 2026-09-14 표현 점검으로 뜻이 다른 확장 표현을 걷어낸 결과이며, 이전 사전 v1fix 의 20.9%/9.2% 에서 오른 것은 분모가 줄어든 구성 효과입니다 — [표현 점검 결과](docs/03-analysis/expression-review.analysis.md) §6). **이전 기준**(페이지 단위, 2026-09-06 재세그먼트)으로는 NCS 6.6%(145/2,189)·교과서 2.2%(8/362)이며, 두 값의 차이는 가중 방식의 차이이지 교재가 나아진 것이 아닙니다 — 대시보드의 "이전 기준과의 관계" 절과 [등급 결합 보고서](docs/04-report/features/semantic-occurrence-grades.report.md)의 브리지 표를 보십시오.
+핵심 수치 하나만 옮기면 — **구체적 안전대책(등급3) 페이지에 놓인 키워드 출현 비율은 NCS 21.7%, 교과서 9.5%** 입니다(둘 다 등급 확정 출현 분모: 2,502/11,517 과 115/1,207; 의미 출현 총계 NCS 11,517건 · 교과서 1,207건, 연구책임자 결정 2026-09-13 으로 분모를 출현건수로 바꿈; 사전 v2 — 2026-09-14 표현 점검으로 뜻이 다른 확장 표현을 걷어낸 결과이며, 이전 사전 v1fix 의 20.9%/9.2% 에서 오른 것은 분모가 줄어든 구성 효과입니다 — [표현 점검 결과](docs/03-analysis/expression-review.analysis.md) §6; 2026-09-15 부터 NCS 출현은 목차 블록이 아니라 **실제 PDF 쪽**에 놓고 그 쪽 본문에 규칙 하나로 판정합니다 — 블록 기준 v2 의 21.9%(4,378/4,614/2,525)에서 등급3 은 거의 그대로이고 등급1→2 이동이 큽니다, [영향표](docs/03-analysis/data/occurrence_real_pages_impact.json)). **이전 기준**(페이지 단위, 2026-09-06 재세그먼트)으로는 NCS 6.6%(145/2,189)·교과서 2.2%(8/362)이며, 두 값은 같은 실제 쪽 위에서 분모(출현건수 vs 쪽)만 다릅니다 — 교재가 나아진 것이 아닙니다 — 대시보드의 "이전 기준과의 관계" 절과 [등급 결합 보고서](docs/04-report/features/semantic-occurrence-grades.report.md)의 브리지 표를 보십시오.
 
 교과서는 전체 쪽수를 알기에 다른 각도로도 볼 수 있습니다 — **9권 2,055쪽 중 구체적 대책은 8쪽(0.39%)** 이고, 그중 6권은 0쪽입니다. NCS 는 전체 쪽수 대비 비율을 산출하지 않습니다(PDF 84권 8,861쪽을 확보했지만 검출 쪽 분모로 통일했습니다). 분모가 다른 두 값을 나란히 빼면 안 됩니다.
 
@@ -76,12 +76,13 @@ pip install openpyxl
 python3 semantic_keyword_recount.py \
   --source-workbook data/ncs_keywords_in_markdown_results_20260402_재판정_20260414.xlsx \
   --ncs-root data_source/markdown/ncs --school-root data_source/markdown/school-text \
-  --xlsx-out data/semantic_keyword_recount_20260914.xlsx --report-out data/semantic_keyword_recount_20260914_report.md \
+  --xlsx-out data/semantic_keyword_recount_20260915.xlsx --report-out data/semantic_keyword_recount_20260915_report.md \
   --dashboard-data-out docs/semantic_recount_data.js --summary-out docs/03-analysis/data/semantic_summary.json \
-  --analysis-dir docs --previous-basis docs/03-analysis/data/reseg_summary.json
+  --analysis-dir docs --previous-basis docs/03-analysis/data/reseg_summary.json \
+  --page-maps data/markdown/ncs_paged --reseg-csv docs/03-analysis/data/ncs_pages_reseg.csv
 ```
 
-교과서 등급 워크북(`ncs_keywords_in_markdown_results_교과서_results_20260415.xlsx`)은 `--source-workbook` 과 같은 폴더에서 자동으로 찾고, 없으면 멈춥니다(`--school-grade-workbook` 으로 따로 지정). 실행 명령·입력 파일별 sha256·git commit 은 `semantic_summary.json` 의 `meta.run` 에 남으므로, 수치가 어긋나면 어느 입력이 달라졌는지 거기서 추적합니다.
+`--page-maps` 는 `resegment.py` 가 남긴 줄→실제 PDF 쪽 대응(`data/markdown/ncs_paged/<LM코드>.pages.json`, 84권, 비추적)입니다 — 2026-09-15 부터 NCS 출현은 목차 블록 표식이 아니라 이 대응으로 실제 쪽에 놓이고 그 쪽 본문에 규칙 하나로 등급이 판정됩니다(`occurrence-real-pages`; 대응이 없는 2권 `LM1903060408`·`LM1903060424` 는 표식이 실제 쪽이라 그대로, `REAL_PAGE_MARKER_BOOKS`). `--reseg-csv` 는 이전 기준 쪽 등급과의 일치(공유 쪽 2,035개 전부 일치)를 `meta.run.reseg_agreement` 에 남기고 `EXPECTED` 가 그 값을 고정합니다. 대응 없이 돌리면 `page_basis` 가 어긋나 정본으로 쓰이지 않습니다. 블록 기준(2026-09-14)과의 차이는 `python3 occurrence_real_pages_impact.py --source-workbook … --ncs-root … --school-root … --page-maps data/markdown/ncs_paged` 가 `docs/03-analysis/data/occurrence_real_pages_impact.json` 에 남깁니다(총계 불변, 등급 이동 4,016건). 교과서 등급 워크북(`ncs_keywords_in_markdown_results_교과서_results_20260415.xlsx`)은 `--source-workbook` 과 같은 폴더에서 자동으로 찾고, 없으면 멈춥니다(`--school-grade-workbook` 으로 따로 지정). 실행 명령·입력 파일별 sha256·git commit 은 `semantic_summary.json` 의 `meta.run` 에 남으므로, 수치가 어긋나면 어느 입력이 달라졌는지 거기서 추적합니다.
 
 정본이 아닌 사전(`--dictionary v1` 또는 `v1fix`)은 **변형 실행**이라 `docs/` 아래와 정본 기본 이름으로는 쓰지 못하고, `EXPECTED` 불일치를 `meta.run` 에 기록만 합니다. 사전을 v2 로 고른 근거인 **표현 점검**(`expression_review.py sample` → `code_pages.py` 코더 2계열 → `score` → `impact`)은 실행 순서와 결과가 [표현 점검 결과](docs/03-analysis/expression-review.analysis.md) §8 에 있고, 대시보드 수치를 바꾸지 않습니다. 기초보고서 **HWPX 재작성**(`python3 hwpx_results_refresh.py`, 원본 `data/반도체 기초보고서_20260911.hwpx` → 새 파일 `…_20260914_정본.hwpx`)은 숫자를 추적된 `semantic_summary.json`·`accident_case_pages.json`·`summary.json` 에서만 가져와 제3장 1~3절의 문단·표·그림을 다시 쓰며, 그림에 ImageMagick(`magick`)이 필요하고 `--no-render` 면 그림 없이 점검만 합니다. 다시 쓴 절의 숫자가 하나라도 정본 값이 아니면 아무것도 쓰지 않습니다.
 
@@ -111,7 +112,7 @@ python3 resegment.py                    # 약 30초. 내장 EXPECTED 회귀 검�
 
 ```bash
 node    outputs/test-search-equivalence.js   # 24 — 검색 동치성 + 청크 렌더 + 지연 캐시
-node    outputs/test-dashboard-data.js       # 68 — 정본 요약(semantic_summary.json) ↔ data.js ↔ 대시보드·분리 분석·README·CLAUDE.md 교차검증, 이전 기준(reseg) 계보
+node    outputs/test-dashboard-data.js       # 71 — 정본 요약(semantic_summary.json) ↔ data.js ↔ 대시보드·분리 분석·README·CLAUDE.md 교차검증, 이전 기준(reseg) 계보
 python3 outputs/test-recount-grades.py       # 390 — 재집계·재채점·페이지 마커·절단 판정·재코딩(코더 호출·채점)·재세그먼트
 node    outputs/run-core-logic-tests.js       # 32 — 제목 판정·정규화 (헤드리스)
 node    outputs/test-sri.js                  # 38 — 외부 스크립트 SRI (--online 이면 CDN 대조)
@@ -134,6 +135,7 @@ semantic_keyword_recount.py        30개 키워드 의미 단위 재검산 + 출
 shift_page_markers.py              <!-- page: N --> 마커 값 일괄 이동 (0-based 로 변환된 파일을 1-based 로)
 expression_review.py               의미 표현 사전 도메인 점검 — 표본·코더 채점(정밀도 CP 구간·κ)·사전 v1/v1fix/v2 영향표 (연구용, 미발표)
 hwpx_results_refresh.py            기초보고서 HWPX 제3장 1~3절(교과서·NCS·사고사례)의 문단·표 7개·그림 3개를 정본 수치로 재작성 (숫자 감사 통과 시에만 새 파일 출력)
+occurrence_real_pages_impact.py    블록 기준(2026-09-14) vs 실제 쪽 기준(2026-09-15) 등급 이동 영향표 (연구용, 계보 검증)
 resegment.py                       워크북 페이지 라벨을 원본 PDF 실제 쪽으로 재배치해 등급 재집계 (NCS 쪽 단위 — 이전 기준의 정본, 병기용)
 make_coding_sheet.py, code_pages.py, score_coding.py  코딩 표본 생성 · AI 코더 항목별 호출 · 교차 판정 채점
 truncation_audit.py                엑셀 셀 한도 절단 전수 실측 (pip 불필요)
@@ -177,7 +179,7 @@ python3 osha_downloader.py
 - **NCS 의 '페이지'는 실제 쪽이 아니라 목차 단위 블록인 경우가 많습니다.** 2026-04 검색 당시 마크다운의 페이지 마커가 목차에서 유도된 것이라, 워크북 페이지 라벨 하나가 실제 10~58쪽을 묶기도 합니다. 엑셀 셀 한도(32,767자)에 닿은 라벨 16개는 그 증상이며, 이전 판의 "16쪽이 잘려 있어 등급3 은 108~112쪽 구간" 이라는 해석은 **철회합니다**(외부감사 C1, 2026-09-04). `resegment.py` 로 검출 행을 원본 PDF 실제 쪽에 다시 놓으면 검출 1,847→2,189쪽, 등급3 108쪽(5.8%)→145쪽(6.6%)이고, 정렬 오차는 ±1쪽 수준입니다. 이 실제 쪽 기준 값은 2026-09-13 부터 "이전 기준"으로 병기되고, 공식 KPI 는 출현건수 기준입니다([재세그먼트 결과](docs/03-analysis/resegment-results.analysis.md)).
 - 라벨 블록의 극단 사례가 `반도체 장비 안전관리` 입니다. 라벨 기준으로는 검출 페이지가 p.46 과 p.136~154 의 20쪽뿐이라 p.47~135 가 통째로 빈 것처럼 보이지만, 실제로는 그 20개 라벨이 136쪽을 묶은 블록이었습니다(라벨 p.154 한 칸의 273행이 실제 58쪽에 흩어집니다). 재세그먼트 후 등급3 145쪽 중 42쪽이 이 한 권에서 나옵니다. 라벨 기준 수치(1,847쪽·등급3 108쪽)는 이 때문에 더 이상 발표하지 않습니다.
 
-그래서 21.9%(이전 기준 6.6%)는 이렇게까지만 읽어야 합니다 — **결함이 확인된 현행 규칙의 출력값이며(출현건수 기준도 같은 페이지 등급을 물려받습니다), 두 계열의 AI 코더 기준 재현율이 13~21%(진짜 등급3 22~37%)라 참값의 상한으로 해석할 수 없습니다. 사람 코딩은 아직 없습니다.**
+그래서 21.7%(이전 기준 6.6%)는 이렇게까지만 읽어야 합니다 — **결함이 확인된 현행 규칙의 출력값이며(출현건수 기준도 같은 페이지 등급을 물려받습니다), 두 계열의 AI 코더 기준 재현율이 13~21%(진짜 등급3 22~37%)라 참값의 상한으로 해석할 수 없습니다. 사람 코딩은 아직 없습니다.**
 
 남은 과제는 `TODOS.md`에 있습니다.
 
