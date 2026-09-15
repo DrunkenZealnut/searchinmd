@@ -93,7 +93,7 @@ def compute_impact(documents: list[SKR.Document], keywords: list[str], existing_
     transition = Counter(); by_source = defaultdict(Counter); by_kind = defaultdict(lambda: {"block": Counter(), "real": Counter(), "occurrences": 0})
     per_keyword = defaultdict(lambda: {"block": Counter(), "real": Counter()}); per_group = defaultdict(lambda: {"block": Counter(), "real": Counter()})
     pages_a, pages_b = set(), set()
-    occ_by_doc: dict[str, dict[int, list[int]]] = defaultdict(lambda: defaultdict(list))   # 문서 → 블록 쪽 → 출현 줄 (블록 폭 표, 한 번만 모은다)
+    occ_by_doc: dict[str, Counter] = defaultdict(Counter)                          # 문서 → 출현 줄 → 건수 (블록 폭 표; 블록은 쪽 값이 아니라 줄 범위로 가른다 — 같은 표식 값의 블록이 둘인 교재에서 이중 계수하지 않게, CodeRabbit PR #17)
     for ra, rb in zip(a_list, b_list):
         if ra.corpus != "NCS":
             continue
@@ -105,19 +105,23 @@ def compute_impact(documents: list[SKR.Document], keywords: list[str], existing_
         group = SKR._dashboard_group("NCS", ra.relative_path)
         per_group[group]["block"][ra.grade] += 1; per_group[group]["real"][rb.grade] += 1
         pages_a.add((ra.relative_path, ra.page)); pages_b.add((rb.relative_path, rb.page))
-        occ_by_doc[ra.relative_path][ra.page].append(ra.line)
+        occ_by_doc[ra.relative_path][ra.line] += 1
     # 출현이 놓인 블록의 실제 쪽 폭
     span = Counter()
     for document in documents:
         line_pages = page_maps.get(document.relative_path) if document.corpus == "NCS" else None
         if line_pages is None:
             continue
-        occ_lines = occ_by_doc.get(document.relative_path, {})
+        occ_lines = occ_by_doc.get(document.relative_path, Counter())
         for block in SKR.split_pages(document):
-            if block.page is None or block.page not in occ_lines:
+            if block.page is None:
                 continue
-            width = len({line_pages[i - 1] for i in range(block.start_line, block.start_line + len(block.lines)) if i - 1 < len(line_pages)})
-            span[_width_bucket(width)] += len(occ_lines[block.page])
+            rows = range(block.start_line, block.start_line + len(block.lines))
+            hits = sum(occ_lines.get(i, 0) for i in rows)
+            if not hits:
+                continue
+            width = len({line_pages[i - 1] for i in rows if i - 1 < len(line_pages)})
+            span[_width_bucket(width)] += hits
     ncs_total = sum(grades_a["NCS"].values())
     moved = sum(v for (x, y), v in transition.items() if x != y)
     return {

@@ -1710,6 +1710,11 @@ class ImpactScriptTests(unittest.TestCase):
         self.assertEqual(({"1": 1, "2": 0, "3": 0}, {"1": 1, "2": 0, "3": 0}), (out["grades"]["block"]["교과서"], out["grades"]["real"]["교과서"]))   # 교과서는 대응 밖 — 불변
         self.assertEqual({"NCS": {"block": 0.0, "real": 0.0}, "교과서": {"block": 0.0, "real": 0.0}}, out["grade3_share"])
         self.assertEqual((5, 12, 12), (out["transition"]["unchanged"], out["transition"]["moved"], out["transition"]["matrix"]["2->1"]))   # 교과서 1건은 NCS 행렬에 없다
+        # 같은 표식 값의 블록이 둘(비단조·중복 표식 교재)이어도 출현은 제 줄이 든 블록 하나에만 — 폭 표의 합 == 대응 교재의 출현 수 (CodeRabbit PR #17)
+        dup = _doc("NCS", "반도체개발/LM1903060102_b.md", "<!-- page: 1 -->\n안전\n<!-- page: 1 -->\n안전\n안전\n")
+        out2 = IMP.compute_impact([dup], ["안전"], {}, {dup.relative_path: (5, 5, 6, 6, 7)}, block_reference=None)          # 블록 1 → 쪽 5(폭 1), 블록 2 → 쪽 6·7(폭 2)
+        self.assertEqual({"1": 1, "2-3": 2, "4-9": 0, "10+": 0}, out2["pages"]["block_width_of_occurrences"])
+        self.assertEqual(out2["totals"]["NCS"], sum(out2["pages"]["block_width_of_occurrences"].values()))
         self.assertEqual({"new": {"occurrences": 17, "unchanged": 5, "unchanged_pct": 29.4}}, out["by_source"])
         self.assertEqual((2, 17), (out["pages"]["block_pages"], out["pages"]["real_pages"]))
         self.assertEqual({"toc-block": {"books": 1, "occurrences": 17, "block": {"1": 5, "2": 12, "3": 0}, "real": {"1": 17, "2": 0, "3": 0}}}, out["by_book_kind"])

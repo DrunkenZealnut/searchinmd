@@ -721,10 +721,11 @@ class EndToEndTests(unittest.TestCase):
             with contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(1, HR.main(["--hwpx", str(stale), "--no-render", "--diff-out", str(Path(td) / "d2.json")]))
             # 추적 경로로 지정된 실패 대조는 temp 로 우회한다
-            tracked = HR.default_diff_path(f); before = tracked.read_bytes()
+            tracked = HR.default_diff_path(f)
+            before = tracked.read_bytes() if tracked.exists() else None                        # 정본 실행일의 대조 JSON 이 아직 없는 트리(재실행 직후)에서도 무쓰기 검사가 돈다 (CodeRabbit PR #17)
             with contextlib.redirect_stdout(io.StringIO()):
                 HR.refresh(stale, f, out, tracked, None, render=False)
-            self.assertEqual(before, tracked.read_bytes())
+            self.assertEqual(before, tracked.read_bytes() if tracked.exists() else None)
 
     def test_no_render_writes_no_hwpx(self):
         with tempfile.TemporaryDirectory() as td:

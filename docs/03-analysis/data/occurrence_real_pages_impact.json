@@ -16,9 +16,9 @@
    }
   },
   "book_kind_rule": "previous basis per_book.method (markers → real-marker, alignment → toc-block); fallback blocks / distinct real pages >= 0.8; no map → real-marker-nomap",
-  "generated_at": "2026-09-15T15:40:33+09:00",
+  "generated_at": "2026-09-15T17:29:19+09:00",
   "git": {
-   "commit": "f5a1c0d",
+   "commit": "e80943a",
    "dirty": true
   },
   "inputs": {
@@ -603,7 +603,7 @@
   "block_width_of_occurrences": {
    "1": 3718,
    "2-3": 2335,
-   "4-9": 3024,
+   "4-9": 3022,
    "10+": 2027
   }
  }

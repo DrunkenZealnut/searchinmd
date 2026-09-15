@@ -23,7 +23,7 @@
 | 갭 | 🔴 High 1 (G-1 줄 번호 규약 불일치 — `split_pages` 는 `splitlines()`, 대응은 `split("\n")`; 정본 코퍼스 1권에서 실제로 어긋남) · 🟡 Low 10 (설계 갱신 4 · 문서 2 · 테스트 보강 1 · 구현 소폭 보강 3) · 🔵 설계 외 추가 9 (`AnalysisResult.run`, 영향표 `grade3_share`·3분류·순서 검증, 2절 "주" 문단 분기 등) |
 | 판정 | Match Rate ≥ 90% 이나 **G-1 은 발표값(쪽 배정)에 닿는 결함**이므로 Act-1 로 먼저 닫고(정본 재실행·`EXPECTED` 재고정 수반) 보고서로 갈 것을 권고. 나머지 갭은 설계·문서·테스트 수준 |
 | 정본 결과 | NCS 86권 11,517건 → 등급 3,788 / 5,227 / 2,502 (등급3 21.7%), `grade_sources` NCS `real-page` 11,517 · `existing` 0 · `new` 0; 교과서 1,207건 불변(633/459/115, `existing` 1,149 · `new` 58); `meta.page_basis {NCS: real, 교과서: marker}`; `meta.run.page_maps` 84권 sha256 `36de1bff…`; `meta.run.reseg_agreement` 2,035 / 2,035; NCS 분야 쪽수 합 3,435 + 1,780 + 2,522 + 1,363 = **9,100**; `meta.run.expected true · force false · variant false` |
-| 영향표 | 블록 기준 4,378 / 4,614 / 2,525 → 실제 쪽 3,788 / 5,227 / 2,502 · 이동 4,016건(1→2 1,296 · 1→3 398 · 2→1 727 · 2→3 587 · 3→1 377 · 3→2 631) · `by_source` existing 52.8% / new 79.9% 불변 · `by_book_kind` real-marker 25 · toc-block 59 · real-marker-nomap 2 · 검출 쪽 1,785 → 2,492 · 블록 폭 3,718 / 2,335 / 3,024 / 2,027 — 계획 §1.3 실측과 전부 일치 |
+| 영향표 | 블록 기준 4,378 / 4,614 / 2,525 → 실제 쪽 3,788 / 5,227 / 2,502 · 이동 4,016건(1→2 1,296 · 1→3 398 · 2→1 727 · 2→3 587 · 3→1 377 · 3→2 631) · `by_source` existing 52.8% / new 79.9% 불변 · `by_book_kind` real-marker 25 · toc-block 59 · real-marker-nomap 2 · 검출 쪽 1,785 → 2,492 · 블록 폭 3,718 / 2,335 / 3,022 / 2,027 — 계획 §1.3 실측과 전부 일치 |
 | HWPX | 대조 JSON `source.page_basis {NCS: real}` · `source.hwpx_sha256 ad5167ea…`(2026-09-14 실행과 같음 → 원본 불변) · `output` `…_20260915_정본.hwpx` · 숫자 토큰 724 · 미일치 0 · status ok |
 
 **하니스 (코디네이터가 직접 실행한 결과를 인용 — 이 분석은 테스트를 실행하지 않았다)**
@@ -85,7 +85,7 @@ git: 이 분석은 git 명령을 쓰지 않았다. `semantic_summary.json` `meta
 | `by_source` | A 의 existing/new 불변율 | existing 6,292 → 52.8% · new 5,225 → 79.9% (87-98행) | 일치 |
 | `by_book_kind` | 실제 쪽 / 목차 블록 | real-marker 23권 3,586건 · toc-block 61권 7,516건 · real-marker-nomap 2권 415건, 각 block/real 등급 — 분류는 이전 기준 `per_book.method`(markers/alignment, 출고 전 적대적 리뷰 1: 비율 규칙은 DP 정렬 교재 2권을 실제 쪽에 넣었다), 비율 0.8 은 method 를 모르는 교재의 대체 규칙 — 계획 §1.3 의 23 / 61 / 2 | 일치 (3분류, `book_kind_rule` 을 meta 에 기록) |
 | `keywords` / `groups` | 키워드별·분야별 A/B | 30건 / 4 그룹 (143행~·535행~) | 일치 |
-| `pages` | 검출 쪽 A/B, 블록 폭 | 1,785 → 2,492 · 폭 1쪽 3,718 · 2~3쪽 2,335 · 4~9쪽 3,024 · 10쪽+ 2,027 (585-594행) | 일치 |
+| `pages` | 검출 쪽 A/B, 블록 폭 | 1,785 → 2,492 · 폭 1쪽 3,718 · 2~3쪽 2,335 · 4~9쪽 3,022 · 10쪽+ 2,027 — 합 11,102 = 대응 교재의 출현 수 (CodeRabbit PR #17: 같은 표식 값의 블록 둘에 출현이 겹쳐 세이던 2건 제거) | 일치 |
 | `meta` | 입력 sha256·실행 시각·git | `dictionary v2`·`unit`·`corpus_note`·`block_reference`·`book_kind_rule`·`generated_at`·`git {f28d496, dirty}`·`inputs {source_workbook, school_grade_workbook, ncs_markdown, page_maps{dir, files 84, sha256}}` (2-34행) | 일치 |
 | 정렬 자기 검증(±1쪽 94.9% 등) | 계획 §4-2·§5 "영향표에 병기" | 없음 | 누락 (G-10) |
 | 본문·절대 경로 | 없음 | 없음(`test_impact_main_writes_json_without_absolute_paths`) | 일치 |

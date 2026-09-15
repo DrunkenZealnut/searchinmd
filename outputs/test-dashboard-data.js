@@ -187,7 +187,7 @@ check('S7c 구 문구 없음 (85개 자료, report 제외) · 교재 86권', !re
 check('S7d 재생성 절에 정본 명령·shift_page_markers·data_source', readme.includes('semantic_keyword_recount.py') && readme.includes('--ncs-root data_source/markdown/ncs') && readme.includes('shift_page_markers.py') && readme.includes('data_source'));
 check('S7e 의미 출현 총계 == summary', readme.includes(fmt(N.total) + '건') && readme.includes(fmt(T.total) + '건'));
 const readLine = readme.split('\n').find((l) => l.startsWith('그래서 ') && l.includes('이렇게까지만')) || '';
-check('S7h README 의 실제 쪽 기준 수치 == summary·영향표 (공유 쪽 N개 전부 일치, 등급 이동 N건)', readme.includes('공유 쪽 ' + fmt(S.meta.run.reseg_agreement.pages) + '개 전부 일치') && S.meta.run.reseg_agreement.agree === S.meta.run.reseg_agreement.pages && readme.includes('등급 이동 ' + fmt(I.transition.moved) + '건'));
+check('S7h README 의 실제 쪽 기준 수치 == summary·영향표 (공유 쪽 N개 전부 일치, 등급 이동 N건, 닿은 실제 쪽 N개 vs 이전 기준 N쪽)', readme.includes('공유 쪽 ' + fmt(S.meta.run.reseg_agreement.pages) + '개 전부 일치') && S.meta.run.reseg_agreement.agree === S.meta.run.reseg_agreement.pages && readme.includes('등급 이동 ' + fmt(I.transition.moved) + '건') && readme.includes('닿은 실제 쪽 ' + fmt(N.detected_pages) + '개 vs 이전 기준 ' + fmt(R.pages) + '쪽, 공유 쪽 ' + fmt(S.meta.run.reseg_agreement.pages) + '개는 등급이 전부 일치'));
 check('S7g "이렇게까지만 읽어야" 문장의 등급3 비율 == summary·reseg (구 20.8% 아님)', readLine.includes(pct(N.grades['3'], N.graded) + '%(이전 기준 ' + pct(R.page_g['3'], R.pages) + '%)') && !readme.includes('20.8%(이전 기준'));
 // 추적 분석 문서의 말뭉치별 키워드 순위표 — 30행 × 2, 순위·출현·정확/동등/구체·등급1/2/3 전부 summary.keywords 와 같아야 한다
 const skr = read('docs/03-analysis/semantic-keyword-recount.analysis.md');
