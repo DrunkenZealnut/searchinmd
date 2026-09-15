@@ -1,0 +1,5586 @@
+{
+ "coder": "B",
+ "sample_digest": "9713a337b4d94bac",
+ "meta": {
+  "model": "gpt-5.6-sol",
+  "base_url": "https://api.openai.com/v1",
+  "key_var": "AUDIT_LLM_API_KEY",
+  "temperature": 0.0,
+  "seed": 20260904,
+  "prompt_sha256": "694793d493191788184301f5381e1ec6380d372e2b163ecae392cf8c4f8b95ce",
+  "run_at": "2026-09-14T04:55:52+00:00",
+  "context_isolated": true,
+  "provider_env": "~/.config/auditagent/.env",
+  "version": null,
+  "model_reported": "gpt-5.6-sol",
+  "temperature_honored": false,
+  "seed_honored": true
+ },
+ "grades": {
+  "E001": 2,
+  "E004": 1,
+  "E003": 2,
+  "E002": 1,
+  "E008": 1,
+  "E005": 2,
+  "E007": 2,
+  "E010": 1,
+  "E006": 1,
+  "E012": 1,
+  "E013": 1,
+  "E009": 1,
+  "E015": 2,
+  "E016": 1,
+  "E014": 1,
+  "E018": 1,
+  "E019": 2,
+  "E011": "?",
+  "E017": 1,
+  "E020": 2,
+  "E023": 2,
+  "E022": 2,
+  "E021": 2,
+  "E025": 2,
+  "E027": 2,
+  "E028": 1,
+  "E024": 1,
+  "E029": 1,
+  "E026": 1,
+  "E030": 2,
+  "E031": 2,
+  "E034": 2,
+  "E032": 2,
+  "E035": 2,
+  "E036": 2,
+  "E033": 2,
+  "E037": 2,
+  "E040": 2,
+  "E039": 2,
+  "E038": 2,
+  "E041": 2,
+  "E042": 2,
+  "E043": 2,
+  "E045": 2,
+  "E044": 2,
+  "E046": 2,
+  "E047": 2,
+  "E050": 2,
+  "E049": 2,
+  "E051": 1,
+  "E048": 2,
+  "E053": 2,
+  "E054": 2,
+  "E056": 2,
+  "E055": 2,
+  "E057": 2,
+  "E058": 2,
+  "E052": 1,
+  "E060": 2,
+  "E059": 2,
+  "E061": 1,
+  "E064": 2,
+  "E062": 1,
+  "E063": 1,
+  "E065": 1,
+  "E066": 1,
+  "E067": 1,
+  "E070": 1,
+  "E068": 1,
+  "E071": 1,
+  "E069": 1,
+  "E072": 1,
+  "E076": 1,
+  "E073": 1,
+  "E074": 2,
+  "E075": 1,
+  "E077": 1,
+  "E078": 1,
+  "E080": 1,
+  "E081": 1,
+  "E083": 1,
+  "E082": 1,
+  "E079": 1,
+  "E086": 1,
+  "E085": 1,
+  "E084": 1,
+  "E088": 1,
+  "E087": 1,
+  "E089": 1,
+  "E090": 1,
+  "E092": 1,
+  "E093": 2,
+  "E091": 1,
+  "E095": 1,
+  "E094": 1,
+  "E096": 1,
+  "E098": 1,
+  "E099": 1,
+  "E100": 1,
+  "E101": 1,
+  "E102": 1,
+  "E104": 1,
+  "E105": 1,
+  "E097": 1,
+  "E103": 1,
+  "E108": 1,
+  "E107": 1,
+  "E109": 1,
+  "E111": 1,
+  "E106": 1,
+  "E112": 1,
+  "E114": 2,
+  "E110": 1,
+  "E116": 2,
+  "E115": 2,
+  "E113": 2,
+  "E117": 2,
+  "E118": 1,
+  "E119": 2,
+  "E120": 2,
+  "E124": 2,
+  "E122": 2,
+  "E121": 2,
+  "E123": 2,
+  "E125": 1,
+  "E127": 1,
+  "E126": 2,
+  "E128": 1,
+  "E129": 2,
+  "E131": 2,
+  "E132": 2,
+  "E133": 2,
+  "E135": 2,
+  "E134": 2,
+  "E130": 2,
+  "E137": 2,
+  "E138": 2,
+  "E140": 2,
+  "E139": 2,
+  "E141": 2,
+  "E142": 2,
+  "E143": 2,
+  "E145": 2,
+  "E136": 2,
+  "E146": 2,
+  "E149": 2,
+  "E150": 2,
+  "E148": 2,
+  "E151": 1,
+  "E144": 1,
+  "E152": 1,
+  "E155": 1,
+  "E147": 1,
+  "E156": 1,
+  "E158": 1,
+  "E157": 1,
+  "E154": 1,
+  "E153": 1,
+  "E159": 1,
+  "E160": 1,
+  "E163": 1,
+  "E162": 1,
+  "E164": 1,
+  "E166": 1,
+  "E161": 1,
+  "E165": 1,
+  "E167": 1,
+  "E169": 1,
+  "E171": 1,
+  "E170": 1,
+  "E172": 1,
+  "E175": 1,
+  "E174": 1,
+  "E173": 1,
+  "E178": 1,
+  "E179": 1,
+  "E168": 1,
+  "E176": 1,
+  "E180": 1,
+  "E177": 1,
+  "E183": 1,
+  "E181": 2,
+  "E184": 1,
+  "E185": 1,
+  "E187": 1,
+  "E188": 2,
+  "E182": 2,
+  "E186": 1,
+  "E189": 2,
+  "E190": 2,
+  "E192": 2,
+  "E195": 2,
+  "E194": 2,
+  "E191": 2,
+  "E196": 2,
+  "E199": 2,
+  "E197": 2,
+  "E198": 2,
+  "E193": 2,
+  "E202": 2,
+  "E203": 2,
+  "E204": 2,
+  "E200": 2,
+  "E201": 2,
+  "E206": 2,
+  "E209": 2,
+  "E207": 2,
+  "E205": 2,
+  "E208": 2,
+  "E211": 1,
+  "E213": 2,
+  "E212": 2,
+  "E214": 2,
+  "E216": 1,
+  "E215": 2,
+  "E217": 1,
+  "E218": 2,
+  "E219": 2,
+  "E210": 2,
+  "E223": 2,
+  "E220": 1,
+  "E221": 1,
+  "E224": 2,
+  "E226": 2,
+  "E222": 2,
+  "E229": 2,
+  "E227": 1,
+  "E225": 2,
+  "E228": 1,
+  "E233": 2,
+  "E230": 2,
+  "E234": 2,
+  "E231": 2,
+  "E237": 1,
+  "E236": 2,
+  "E232": 2,
+  "E235": 2,
+  "E239": 2,
+  "E241": 1,
+  "E238": 2,
+  "E243": 1,
+  "E240": 2,
+  "E242": 1,
+  "E244": 2,
+  "E246": 1,
+  "E247": 1,
+  "E248": 2,
+  "E245": 2,
+  "E252": 1,
+  "E250": 1,
+  "E253": 1,
+  "E249": 2,
+  "E251": 1,
+  "E256": 1,
+  "E254": 1,
+  "E258": 1,
+  "E257": 1,
+  "E259": 1,
+  "E261": 1,
+  "E255": 1,
+  "E260": 1,
+  "E262": 2,
+  "E263": "?",
+  "E266": 1,
+  "E264": 2,
+  "E267": 1,
+  "E265": 2,
+  "E271": 1,
+  "E268": 1,
+  "E269": "?",
+  "E273": 1,
+  "E274": 1,
+  "E272": 1,
+  "E275": 1,
+  "E277": 1,
+  "E276": 1,
+  "E270": "?",
+  "E281": 1,
+  "E279": 1,
+  "E282": 1,
+  "E278": 1,
+  "E283": 1,
+  "E284": 1,
+  "E280": 1,
+  "E285": 1,
+  "E286": 1,
+  "E290": 1,
+  "E289": 1,
+  "E292": 1,
+  "E288": 1,
+  "E293": 1,
+  "E287": 1,
+  "E294": 1,
+  "E295": 1,
+  "E291": 1,
+  "E296": 1,
+  "E299": 1,
+  "E297": 1,
+  "E300": 1,
+  "E301": 2,
+  "E302": 2,
+  "E298": 1,
+  "E304": 2,
+  "E307": 2,
+  "E303": 2,
+  "E306": 2,
+  "E305": 2,
+  "E308": 2,
+  "E310": 2,
+  "E309": 2,
+  "E311": 2,
+  "E313": 2,
+  "E316": 2,
+  "E312": 2,
+  "E317": 2,
+  "E314": 1,
+  "E319": 2,
+  "E318": 2,
+  "E315": 1,
+  "E320": 2,
+  "E322": 2,
+  "E324": 2,
+  "E323": 2,
+  "E325": 2,
+  "E321": 2,
+  "E328": 1,
+  "E329": 1,
+  "E327": 1,
+  "E331": 1,
+  "E326": 2,
+  "E332": 1,
+  "E335": 1,
+  "E333": 1,
+  "E330": 2,
+  "E334": 1,
+  "E339": 1,
+  "E337": 1,
+  "E338": 1,
+  "E336": 1,
+  "E342": 1,
+  "E341": 1,
+  "E340": 1,
+  "E345": 1,
+  "E347": 1,
+  "E346": 1,
+  "E343": 1,
+  "E344": "?",
+  "E348": 1,
+  "E349": 1,
+  "E351": 1,
+  "E350": 1,
+  "E354": 1,
+  "E353": 1,
+  "E355": 1,
+  "E356": 1,
+  "E359": 1,
+  "E358": 1,
+  "E360": 1,
+  "E361": 2,
+  "E357": 1,
+  "E352": 1,
+  "E363": 2,
+  "E362": 2,
+  "E367": 2,
+  "E364": 2,
+  "E366": 2,
+  "E368": 2,
+  "E370": 2,
+  "E369": 2,
+  "E365": 2,
+  "E372": 2,
+  "E371": 2,
+  "E373": 2,
+  "E376": 2,
+  "E375": 2,
+  "E377": 2,
+  "E378": 2,
+  "E379": 2,
+  "E374": 2,
+  "E381": 2,
+  "E380": 2,
+  "E382": 2,
+  "E383": 2,
+  "E386": 2,
+  "E387": 2,
+  "E385": 2,
+  "E388": 2,
+  "E384": 2,
+  "E389": 2,
+  "E391": 1,
+  "E390": 2,
+  "E392": 1,
+  "E393": 1,
+  "E396": 1,
+  "E397": 1,
+  "E395": 1,
+  "E398": 1,
+  "E394": 1,
+  "E400": 1,
+  "E401": 1,
+  "E402": 1,
+  "E403": 1,
+  "E404": 1,
+  "E399": 1,
+  "E405": 1,
+  "E409": 1,
+  "E408": 1,
+  "E406": 1,
+  "E411": 1,
+  "E407": 1,
+  "E412": 1,
+  "E410": 1,
+  "E415": 1,
+  "E413": 1,
+  "E416": 1,
+  "E417": 1,
+  "E418": 1,
+  "E419": 1,
+  "E421": 1,
+  "E420": 1,
+  "E422": 1,
+  "E414": 1,
+  "E425": 1,
+  "E427": 1,
+  "E426": 1,
+  "E428": 1,
+  "E424": 1,
+  "E423": 1,
+  "E430": 1,
+  "E431": 1,
+  "E432": 1,
+  "E433": 1,
+  "E434": 1,
+  "E436": 1,
+  "E437": 1,
+  "E438": 1,
+  "E439": 1,
+  "E429": 1,
+  "E440": 1,
+  "E441": 1,
+  "E443": 1,
+  "E444": 1,
+  "E435": 1,
+  "E442": 1,
+  "E445": 1,
+  "E446": 1,
+  "E447": 1,
+  "E448": 1,
+  "E451": 1,
+  "E450": 1,
+  "E452": 1,
+  "E453": 1,
+  "E454": 1,
+  "E456": 1,
+  "E458": 1,
+  "E449": 1,
+  "E457": 1,
+  "E459": 1,
+  "E460": 1,
+  "E455": 1,
+  "E464": 1,
+  "E463": 1,
+  "E462": 1,
+  "E465": 1,
+  "E467": 1,
+  "E468": 1,
+  "E469": 1,
+  "E466": 1,
+  "E461": 1,
+  "E470": 1,
+  "E471": 1,
+  "E474": 1,
+  "E472": 1,
+  "E473": 1,
+  "E477": 1,
+  "E475": 1,
+  "E479": 1,
+  "E478": 1,
+  "E480": 1,
+  "E482": 1,
+  "E483": 1,
+  "E481": 1,
+  "E476": 1,
+  "E486": 1,
+  "E484": 1,
+  "E487": 1,
+  "E488": 1,
+  "E490": 1,
+  "E489": 1,
+  "E491": 1,
+  "E485": 1,
+  "E493": 1,
+  "E494": 1,
+  "E492": 1,
+  "E497": 1,
+  "E496": 1,
+  "E495": 1,
+  "E499": 1,
+  "E498": 1,
+  "E501": 1,
+  "E503": 1,
+  "E500": 1,
+  "E505": 1,
+  "E506": 1,
+  "E502": 1,
+  "E507": 1,
+  "E509": 1,
+  "E508": 1,
+  "E510": 1,
+  "E511": 1,
+  "E512": 1,
+  "E513": 1,
+  "E516": 1,
+  "E504": 1,
+  "E514": 1,
+  "E515": 1,
+  "E518": 1,
+  "E519": 1,
+  "E520": 1,
+  "E517": 1,
+  "E522": 1,
+  "E523": 1,
+  "E521": 1,
+  "E524": 1,
+  "E527": 1,
+  "E525": 1,
+  "E528": 1,
+  "E529": 1,
+  "E531": 1,
+  "E526": 1,
+  "E532": 1,
+  "E534": 1,
+  "E535": 1,
+  "E536": 1,
+  "E530": 1,
+  "E533": 1,
+  "E539": 1,
+  "E537": 1,
+  "E540": 1,
+  "E542": 2,
+  "E538": 1,
+  "E543": 2,
+  "E545": 2,
+  "E546": 2,
+  "E544": 2,
+  "E541": 1,
+  "E548": 2,
+  "E547": 2,
+  "E550": 2,
+  "E551": 2,
+  "E553": 2,
+  "E554": 2,
+  "E556": 2,
+  "E549": 2,
+  "E552": 2,
+  "E559": 1,
+  "E557": 1,
+  "E555": 2,
+  "E560": 1,
+  "E558": 1,
+  "E561": 1,
+  "E563": 1,
+  "E562": 1,
+  "E565": 1,
+  "E566": 1,
+  "E569": 1,
+  "E568": 1,
+  "E564": 1,
+  "E567": 1,
+  "E570": 1,
+  "E571": 1,
+  "E572": 1,
+  "E574": 1,
+  "E575": 1,
+  "E576": 1,
+  "E578": 1,
+  "E579": 1,
+  "E580": 1,
+  "E581": 1,
+  "E577": 1,
+  "E573": 1,
+  "E582": 1,
+  "E584": 1,
+  "E587": 1,
+  "E588": 1,
+  "E583": 1,
+  "E585": 1,
+  "E591": 2,
+  "E586": 1,
+  "E592": 2,
+  "E593": 2,
+  "E590": 2,
+  "E594": 2,
+  "E597": 2,
+  "E596": 2,
+  "E589": 2,
+  "E599": 2,
+  "E600": 2,
+  "E598": 2,
+  "E602": 2,
+  "E603": 2,
+  "E604": 2,
+  "E595": 1,
+  "E605": 2,
+  "E606": 2,
+  "E607": 2,
+  "E608": 2,
+  "E601": 2,
+  "E610": 2,
+  "E611": 2,
+  "E613": 2,
+  "E615": 2,
+  "E609": 2,
+  "E616": 2,
+  "E612": 2,
+  "E618": 2,
+  "E617": 2,
+  "E614": 2
+ },
+ "errors": {},
+ "raw": {
+  "E001": {
+   "answer": "2",
+   "tokens_in": 356,
+   "tokens_out": 4,
+   "latency_ms": 3013,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E004": {
+   "answer": "1",
+   "tokens_in": 185,
+   "tokens_out": 32,
+   "latency_ms": 3514,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E003": {
+   "answer": "2",
+   "tokens_in": 188,
+   "tokens_out": 32,
+   "latency_ms": 3655,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E002": {
+   "answer": "1",
+   "tokens_in": 278,
+   "tokens_out": 4,
+   "latency_ms": 3769,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E008": {
+   "answer": "1",
+   "tokens_in": 246,
+   "tokens_out": 4,
+   "latency_ms": 840,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E005": {
+   "answer": "2",
+   "tokens_in": 228,
+   "tokens_out": 27,
+   "latency_ms": 2117,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E007": {
+   "answer": "2",
+   "tokens_in": 192,
+   "tokens_out": 31,
+   "latency_ms": 1776,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E010": {
+   "answer": "1",
+   "tokens_in": 225,
+   "tokens_out": 4,
+   "latency_ms": 773,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E006": {
+   "answer": "1",
+   "tokens_in": 242,
+   "tokens_out": 123,
+   "latency_ms": 2955,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E012": {
+   "answer": "1",
+   "tokens_in": 243,
+   "tokens_out": 39,
+   "latency_ms": 1367,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E013": {
+   "answer": "1",
+   "tokens_in": 238,
+   "tokens_out": 4,
+   "latency_ms": 972,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E009": {
+   "answer": "1",
+   "tokens_in": 249,
+   "tokens_out": 126,
+   "latency_ms": 3126,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E015": {
+   "answer": "2",
+   "tokens_in": 237,
+   "tokens_out": 4,
+   "latency_ms": 874,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E016": {
+   "answer": "1",
+   "tokens_in": 383,
+   "tokens_out": 4,
+   "latency_ms": 782,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E014": {
+   "answer": "1",
+   "tokens_in": 197,
+   "tokens_out": 38,
+   "latency_ms": 2293,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E018": {
+   "answer": "1",
+   "tokens_in": 164,
+   "tokens_out": 37,
+   "latency_ms": 1317,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E019": {
+   "answer": "2",
+   "tokens_in": 242,
+   "tokens_out": 4,
+   "latency_ms": 849,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E011": {
+   "answer": "?",
+   "tokens_in": 284,
+   "tokens_out": 226,
+   "latency_ms": 5051,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E017": {
+   "answer": "1",
+   "tokens_in": 262,
+   "tokens_out": 73,
+   "latency_ms": 2542,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E020": {
+   "answer": "2",
+   "tokens_in": 232,
+   "tokens_out": 29,
+   "latency_ms": 1386,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E023": {
+   "answer": "2",
+   "tokens_in": 205,
+   "tokens_out": 4,
+   "latency_ms": 864,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E022": {
+   "answer": "2",
+   "tokens_in": 243,
+   "tokens_out": 34,
+   "latency_ms": 1298,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E021": {
+   "answer": "2",
+   "tokens_in": 176,
+   "tokens_out": 75,
+   "latency_ms": 2476,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E025": {
+   "answer": "2",
+   "tokens_in": 177,
+   "tokens_out": 86,
+   "latency_ms": 1999,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E027": {
+   "answer": "2",
+   "tokens_in": 241,
+   "tokens_out": 36,
+   "latency_ms": 1779,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E028": {
+   "answer": "1",
+   "tokens_in": 290,
+   "tokens_out": 57,
+   "latency_ms": 2921,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E024": {
+   "answer": "1",
+   "tokens_in": 184,
+   "tokens_out": 233,
+   "latency_ms": 5472,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E029": {
+   "answer": "1",
+   "tokens_in": 319,
+   "tokens_out": 28,
+   "latency_ms": 2465,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E026": {
+   "answer": "1",
+   "tokens_in": 195,
+   "tokens_out": 187,
+   "latency_ms": 5476,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E030": {
+   "answer": "2",
+   "tokens_in": 370,
+   "tokens_out": 4,
+   "latency_ms": 765,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E031": {
+   "answer": "2",
+   "tokens_in": 195,
+   "tokens_out": 4,
+   "latency_ms": 997,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E034": {
+   "answer": "2",
+   "tokens_in": 252,
+   "tokens_out": 4,
+   "latency_ms": 814,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E032": {
+   "answer": "2",
+   "tokens_in": 465,
+   "tokens_out": 24,
+   "latency_ms": 1123,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E035": {
+   "answer": "2",
+   "tokens_in": 225,
+   "tokens_out": 36,
+   "latency_ms": 1252,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E036": {
+   "answer": "2",
+   "tokens_in": 188,
+   "tokens_out": 30,
+   "latency_ms": 1370,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E033": {
+   "answer": "2",
+   "tokens_in": 231,
+   "tokens_out": 37,
+   "latency_ms": 2543,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E037": {
+   "answer": "2",
+   "tokens_in": 193,
+   "tokens_out": 28,
+   "latency_ms": 2449,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E040": {
+   "answer": "2",
+   "tokens_in": 356,
+   "tokens_out": 4,
+   "latency_ms": 1036,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E039": {
+   "answer": "2",
+   "tokens_in": 196,
+   "tokens_out": 33,
+   "latency_ms": 1583,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E038": {
+   "answer": "2",
+   "tokens_in": 223,
+   "tokens_out": 25,
+   "latency_ms": 2716,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E041": {
+   "answer": "2",
+   "tokens_in": 175,
+   "tokens_out": 28,
+   "latency_ms": 1019,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E042": {
+   "answer": "2",
+   "tokens_in": 171,
+   "tokens_out": 31,
+   "latency_ms": 1311,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E043": {
+   "answer": "2",
+   "tokens_in": 175,
+   "tokens_out": 25,
+   "latency_ms": 1104,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E045": {
+   "answer": "2",
+   "tokens_in": 241,
+   "tokens_out": 32,
+   "latency_ms": 1100,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E044": {
+   "answer": "2",
+   "tokens_in": 207,
+   "tokens_out": 33,
+   "latency_ms": 1498,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E046": {
+   "answer": "2",
+   "tokens_in": 231,
+   "tokens_out": 36,
+   "latency_ms": 1027,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E047": {
+   "answer": "2",
+   "tokens_in": 227,
+   "tokens_out": 30,
+   "latency_ms": 1359,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E050": {
+   "answer": "2",
+   "tokens_in": 261,
+   "tokens_out": 35,
+   "latency_ms": 1239,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E049": {
+   "answer": "2",
+   "tokens_in": 231,
+   "tokens_out": 41,
+   "latency_ms": 1531,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E051": {
+   "answer": "1",
+   "tokens_in": 241,
+   "tokens_out": 4,
+   "latency_ms": 1887,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E048": {
+   "answer": "2",
+   "tokens_in": 190,
+   "tokens_out": 31,
+   "latency_ms": 2740,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E053": {
+   "answer": "2",
+   "tokens_in": 380,
+   "tokens_out": 4,
+   "latency_ms": 1023,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E054": {
+   "answer": "2",
+   "tokens_in": 380,
+   "tokens_out": 27,
+   "latency_ms": 1818,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E056": {
+   "answer": "2",
+   "tokens_in": 169,
+   "tokens_out": 37,
+   "latency_ms": 2267,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E055": {
+   "answer": "2",
+   "tokens_in": 164,
+   "tokens_out": 45,
+   "latency_ms": 3063,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E057": {
+   "answer": "2",
+   "tokens_in": 397,
+   "tokens_out": 4,
+   "latency_ms": 1415,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E058": {
+   "answer": "2",
+   "tokens_in": 232,
+   "tokens_out": 4,
+   "latency_ms": 1087,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E052": {
+   "answer": "1",
+   "tokens_in": 245,
+   "tokens_out": 131,
+   "latency_ms": 5271,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E060": {
+   "answer": "2",
+   "tokens_in": 377,
+   "tokens_out": 4,
+   "latency_ms": 1194,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E059": {
+   "answer": "2",
+   "tokens_in": 178,
+   "tokens_out": 4,
+   "latency_ms": 1909,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E061": {
+   "answer": "1",
+   "tokens_in": 221,
+   "tokens_out": 34,
+   "latency_ms": 2320,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E064": {
+   "answer": "2",
+   "tokens_in": 261,
+   "tokens_out": 56,
+   "latency_ms": 1614,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E062": {
+   "answer": "1",
+   "tokens_in": 217,
+   "tokens_out": 78,
+   "latency_ms": 2802,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E063": {
+   "answer": "1",
+   "tokens_in": 218,
+   "tokens_out": 90,
+   "latency_ms": 3364,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E065": {
+   "answer": "1",
+   "tokens_in": 370,
+   "tokens_out": 43,
+   "latency_ms": 2650,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E066": {
+   "answer": "1",
+   "tokens_in": 284,
+   "tokens_out": 33,
+   "latency_ms": 1926,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E067": {
+   "answer": "1",
+   "tokens_in": 163,
+   "tokens_out": 68,
+   "latency_ms": 2116,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E070": {
+   "answer": "1",
+   "tokens_in": 351,
+   "tokens_out": 4,
+   "latency_ms": 844,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E068": {
+   "answer": "1",
+   "tokens_in": 163,
+   "tokens_out": 56,
+   "latency_ms": 2016,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E071": {
+   "answer": "1",
+   "tokens_in": 256,
+   "tokens_out": 4,
+   "latency_ms": 911,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E069": {
+   "answer": "1",
+   "tokens_in": 242,
+   "tokens_out": 4,
+   "latency_ms": 2104,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E072": {
+   "answer": "1",
+   "tokens_in": 241,
+   "tokens_out": 32,
+   "latency_ms": 1266,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E076": {
+   "answer": "1",
+   "tokens_in": 260,
+   "tokens_out": 4,
+   "latency_ms": 1095,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E073": {
+   "answer": "1",
+   "tokens_in": 256,
+   "tokens_out": 61,
+   "latency_ms": 2141,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E074": {
+   "answer": "2",
+   "tokens_in": 170,
+   "tokens_out": 56,
+   "latency_ms": 2096,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E075": {
+   "answer": "1",
+   "tokens_in": 175,
+   "tokens_out": 31,
+   "latency_ms": 1512,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E077": {
+   "answer": "1",
+   "tokens_in": 238,
+   "tokens_out": 4,
+   "latency_ms": 1126,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E078": {
+   "answer": "1",
+   "tokens_in": 269,
+   "tokens_out": 57,
+   "latency_ms": 1557,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E080": {
+   "answer": "1",
+   "tokens_in": 258,
+   "tokens_out": 4,
+   "latency_ms": 2107,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E081": {
+   "answer": "1",
+   "tokens_in": 256,
+   "tokens_out": 52,
+   "latency_ms": 1660,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E083": {
+   "answer": "1",
+   "tokens_in": 245,
+   "tokens_out": 4,
+   "latency_ms": 720,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E082": {
+   "answer": "1",
+   "tokens_in": 213,
+   "tokens_out": 4,
+   "latency_ms": 2058,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E079": {
+   "answer": "1",
+   "tokens_in": 163,
+   "tokens_out": 77,
+   "latency_ms": 3535,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E086": {
+   "answer": "1",
+   "tokens_in": 340,
+   "tokens_out": 4,
+   "latency_ms": 985,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E085": {
+   "answer": "1",
+   "tokens_in": 185,
+   "tokens_out": 70,
+   "latency_ms": 1685,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E084": {
+   "answer": "1",
+   "tokens_in": 213,
+   "tokens_out": 94,
+   "latency_ms": 2584,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E088": {
+   "answer": "1",
+   "tokens_in": 241,
+   "tokens_out": 4,
+   "latency_ms": 776,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E087": {
+   "answer": "1",
+   "tokens_in": 208,
+   "tokens_out": 38,
+   "latency_ms": 1813,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E089": {
+   "answer": "1",
+   "tokens_in": 227,
+   "tokens_out": 4,
+   "latency_ms": 1008,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E090": {
+   "answer": "1",
+   "tokens_in": 508,
+   "tokens_out": 4,
+   "latency_ms": 845,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E092": {
+   "answer": "1",
+   "tokens_in": 233,
+   "tokens_out": 4,
+   "latency_ms": 942,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E093": {
+   "answer": "2",
+   "tokens_in": 186,
+   "tokens_out": 28,
+   "latency_ms": 1405,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E091": {
+   "answer": "1",
+   "tokens_in": 210,
+   "tokens_out": 4,
+   "latency_ms": 1837,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E095": {
+   "answer": "1",
+   "tokens_in": 292,
+   "tokens_out": 4,
+   "latency_ms": 812,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E094": {
+   "answer": "1",
+   "tokens_in": 180,
+   "tokens_out": 4,
+   "latency_ms": 1585,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E096": {
+   "answer": "1",
+   "tokens_in": 214,
+   "tokens_out": 4,
+   "latency_ms": 938,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E098": {
+   "answer": "1",
+   "tokens_in": 214,
+   "tokens_out": 4,
+   "latency_ms": 945,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E099": {
+   "answer": "1",
+   "tokens_in": 412,
+   "tokens_out": 4,
+   "latency_ms": 1469,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E100": {
+   "answer": "1",
+   "tokens_in": 620,
+   "tokens_out": 4,
+   "latency_ms": 1151,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E101": {
+   "answer": "1",
+   "tokens_in": 184,
+   "tokens_out": 4,
+   "latency_ms": 1553,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E102": {
+   "answer": "1",
+   "tokens_in": 215,
+   "tokens_out": 17,
+   "latency_ms": 981,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E104": {
+   "answer": "1",
+   "tokens_in": 259,
+   "tokens_out": 4,
+   "latency_ms": 882,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E105": {
+   "answer": "1",
+   "tokens_in": 280,
+   "tokens_out": 4,
+   "latency_ms": 920,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E097": {
+   "answer": "1",
+   "tokens_in": 214,
+   "tokens_out": 4,
+   "latency_ms": 4605,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E103": {
+   "answer": "1",
+   "tokens_in": 196,
+   "tokens_out": 4,
+   "latency_ms": 3273,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E108": {
+   "answer": "1",
+   "tokens_in": 198,
+   "tokens_out": 4,
+   "latency_ms": 901,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E107": {
+   "answer": "1",
+   "tokens_in": 319,
+   "tokens_out": 4,
+   "latency_ms": 1993,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E109": {
+   "answer": "1",
+   "tokens_in": 182,
+   "tokens_out": 4,
+   "latency_ms": 874,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E111": {
+   "answer": "1",
+   "tokens_in": 183,
+   "tokens_out": 4,
+   "latency_ms": 843,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E106": {
+   "answer": "1",
+   "tokens_in": 196,
+   "tokens_out": 4,
+   "latency_ms": 3279,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E112": {
+   "answer": "1",
+   "tokens_in": 190,
+   "tokens_out": 4,
+   "latency_ms": 1105,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E114": {
+   "answer": "2",
+   "tokens_in": 160,
+   "tokens_out": 54,
+   "latency_ms": 1772,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E110": {
+   "answer": "1",
+   "tokens_in": 213,
+   "tokens_out": 4,
+   "latency_ms": 3139,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E116": {
+   "answer": "2",
+   "tokens_in": 177,
+   "tokens_out": 31,
+   "latency_ms": 1840,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E115": {
+   "answer": "2",
+   "tokens_in": 167,
+   "tokens_out": 57,
+   "latency_ms": 3086,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E113": {
+   "answer": "2",
+   "tokens_in": 166,
+   "tokens_out": 35,
+   "latency_ms": 3767,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E117": {
+   "answer": "2",
+   "tokens_in": 153,
+   "tokens_out": 42,
+   "latency_ms": 2273,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E118": {
+   "answer": "1",
+   "tokens_in": 190,
+   "tokens_out": 4,
+   "latency_ms": 849,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E119": {
+   "answer": "2",
+   "tokens_in": 208,
+   "tokens_out": 55,
+   "latency_ms": 1655,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E120": {
+   "answer": "2",
+   "tokens_in": 157,
+   "tokens_out": 51,
+   "latency_ms": 2662,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E124": {
+   "answer": "2",
+   "tokens_in": 165,
+   "tokens_out": 38,
+   "latency_ms": 1385,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E122": {
+   "answer": "2",
+   "tokens_in": 231,
+   "tokens_out": 25,
+   "latency_ms": 3645,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E121": {
+   "answer": "2",
+   "tokens_in": 256,
+   "tokens_out": 31,
+   "latency_ms": 4017,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E123": {
+   "answer": "2",
+   "tokens_in": 329,
+   "tokens_out": 28,
+   "latency_ms": 2965,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E125": {
+   "answer": "1",
+   "tokens_in": 213,
+   "tokens_out": 4,
+   "latency_ms": 887,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E127": {
+   "answer": "1",
+   "tokens_in": 203,
+   "tokens_out": 28,
+   "latency_ms": 1322,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E126": {
+   "answer": "2",
+   "tokens_in": 357,
+   "tokens_out": 25,
+   "latency_ms": 1541,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E128": {
+   "answer": "1",
+   "tokens_in": 178,
+   "tokens_out": 29,
+   "latency_ms": 1481,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E129": {
+   "answer": "2",
+   "tokens_in": 172,
+   "tokens_out": 59,
+   "latency_ms": 1839,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E131": {
+   "answer": "2",
+   "tokens_in": 191,
+   "tokens_out": 49,
+   "latency_ms": 1464,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E132": {
+   "answer": "2",
+   "tokens_in": 231,
+   "tokens_out": 65,
+   "latency_ms": 1839,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E133": {
+   "answer": "2",
+   "tokens_in": 206,
+   "tokens_out": 49,
+   "latency_ms": 1985,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E135": {
+   "answer": "2",
+   "tokens_in": 295,
+   "tokens_out": 38,
+   "latency_ms": 1693,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E134": {
+   "answer": "2",
+   "tokens_in": 160,
+   "tokens_out": 90,
+   "latency_ms": 3439,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E130": {
+   "answer": "2",
+   "tokens_in": 281,
+   "tokens_out": 40,
+   "latency_ms": 5294,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E137": {
+   "answer": "2",
+   "tokens_in": 165,
+   "tokens_out": 29,
+   "latency_ms": 1730,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E138": {
+   "answer": "2",
+   "tokens_in": 193,
+   "tokens_out": 30,
+   "latency_ms": 1270,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E140": {
+   "answer": "2",
+   "tokens_in": 165,
+   "tokens_out": 30,
+   "latency_ms": 1026,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E139": {
+   "answer": "2",
+   "tokens_in": 372,
+   "tokens_out": 4,
+   "latency_ms": 1264,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E141": {
+   "answer": "2",
+   "tokens_in": 176,
+   "tokens_out": 28,
+   "latency_ms": 1234,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E142": {
+   "answer": "2",
+   "tokens_in": 238,
+   "tokens_out": 38,
+   "latency_ms": 1508,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E143": {
+   "answer": "2",
+   "tokens_in": 193,
+   "tokens_out": 58,
+   "latency_ms": 1937,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E145": {
+   "answer": "2",
+   "tokens_in": 271,
+   "tokens_out": 34,
+   "latency_ms": 1342,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E136": {
+   "answer": "2",
+   "tokens_in": 255,
+   "tokens_out": 4,
+   "latency_ms": 6616,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E146": {
+   "answer": "2",
+   "tokens_in": 228,
+   "tokens_out": 32,
+   "latency_ms": 1498,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E149": {
+   "answer": "2",
+   "tokens_in": 202,
+   "tokens_out": 27,
+   "latency_ms": 1267,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E150": {
+   "answer": "2",
+   "tokens_in": 290,
+   "tokens_out": 25,
+   "latency_ms": 1500,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E148": {
+   "answer": "2",
+   "tokens_in": 172,
+   "tokens_out": 117,
+   "latency_ms": 3867,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E151": {
+   "answer": "1",
+   "tokens_in": 222,
+   "tokens_out": 4,
+   "latency_ms": 895,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E144": {
+   "answer": "1",
+   "tokens_in": 167,
+   "tokens_out": 75,
+   "latency_ms": 6186,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E152": {
+   "answer": "1",
+   "tokens_in": 178,
+   "tokens_out": 4,
+   "latency_ms": 1747,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E155": {
+   "answer": "1",
+   "tokens_in": 219,
+   "tokens_out": 4,
+   "latency_ms": 759,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E147": {
+   "answer": "1",
+   "tokens_in": 167,
+   "tokens_out": 92,
+   "latency_ms": 7381,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E156": {
+   "answer": "1",
+   "tokens_in": 179,
+   "tokens_out": 4,
+   "latency_ms": 1124,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E158": {
+   "answer": "1",
+   "tokens_in": 224,
+   "tokens_out": 4,
+   "latency_ms": 919,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E157": {
+   "answer": "1",
+   "tokens_in": 207,
+   "tokens_out": 42,
+   "latency_ms": 1349,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E154": {
+   "answer": "1",
+   "tokens_in": 148,
+   "tokens_out": 33,
+   "latency_ms": 5098,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E153": {
+   "answer": "1",
+   "tokens_in": 169,
+   "tokens_out": 4,
+   "latency_ms": 5844,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E159": {
+   "answer": "1",
+   "tokens_in": 157,
+   "tokens_out": 26,
+   "latency_ms": 1929,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E160": {
+   "answer": "1",
+   "tokens_in": 147,
+   "tokens_out": 40,
+   "latency_ms": 2077,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E163": {
+   "answer": "1",
+   "tokens_in": 276,
+   "tokens_out": 4,
+   "latency_ms": 973,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E162": {
+   "answer": "1",
+   "tokens_in": 251,
+   "tokens_out": 27,
+   "latency_ms": 1559,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E164": {
+   "answer": "1",
+   "tokens_in": 149,
+   "tokens_out": 35,
+   "latency_ms": 1637,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E166": {
+   "answer": "1",
+   "tokens_in": 158,
+   "tokens_out": 25,
+   "latency_ms": 1369,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E161": {
+   "answer": "1",
+   "tokens_in": 153,
+   "tokens_out": 4,
+   "latency_ms": 4028,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E165": {
+   "answer": "1",
+   "tokens_in": 149,
+   "tokens_out": 26,
+   "latency_ms": 2081,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E167": {
+   "answer": "1",
+   "tokens_in": 297,
+   "tokens_out": 48,
+   "latency_ms": 1512,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E169": {
+   "answer": "1",
+   "tokens_in": 227,
+   "tokens_out": 4,
+   "latency_ms": 812,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E171": {
+   "answer": "1",
+   "tokens_in": 179,
+   "tokens_out": 4,
+   "latency_ms": 879,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E170": {
+   "answer": "1",
+   "tokens_in": 220,
+   "tokens_out": 4,
+   "latency_ms": 1538,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E172": {
+   "answer": "1",
+   "tokens_in": 171,
+   "tokens_out": 24,
+   "latency_ms": 984,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E175": {
+   "answer": "1",
+   "tokens_in": 147,
+   "tokens_out": 35,
+   "latency_ms": 1354,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E174": {
+   "answer": "1",
+   "tokens_in": 147,
+   "tokens_out": 35,
+   "latency_ms": 1512,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E173": {
+   "answer": "1",
+   "tokens_in": 147,
+   "tokens_out": 33,
+   "latency_ms": 2540,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E178": {
+   "answer": "1",
+   "tokens_in": 269,
+   "tokens_out": 4,
+   "latency_ms": 1423,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E179": {
+   "answer": "1",
+   "tokens_in": 233,
+   "tokens_out": 4,
+   "latency_ms": 856,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E168": {
+   "answer": "1",
+   "tokens_in": 201,
+   "tokens_out": 4,
+   "latency_ms": 7426,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E176": {
+   "answer": "1",
+   "tokens_in": 152,
+   "tokens_out": 32,
+   "latency_ms": 4189,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E180": {
+   "answer": "1",
+   "tokens_in": 185,
+   "tokens_out": 25,
+   "latency_ms": 1268,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E177": {
+   "answer": "1",
+   "tokens_in": 166,
+   "tokens_out": 35,
+   "latency_ms": 4483,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E183": {
+   "answer": "1",
+   "tokens_in": 190,
+   "tokens_out": 29,
+   "latency_ms": 1535,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E181": {
+   "answer": "2",
+   "tokens_in": 176,
+   "tokens_out": 45,
+   "latency_ms": 1993,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E184": {
+   "answer": "1",
+   "tokens_in": 190,
+   "tokens_out": 32,
+   "latency_ms": 1532,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E185": {
+   "answer": "1",
+   "tokens_in": 212,
+   "tokens_out": 4,
+   "latency_ms": 902,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E187": {
+   "answer": "1",
+   "tokens_in": 184,
+   "tokens_out": 27,
+   "latency_ms": 1183,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E188": {
+   "answer": "2",
+   "tokens_in": 181,
+   "tokens_out": 50,
+   "latency_ms": 2022,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E182": {
+   "answer": "2",
+   "tokens_in": 167,
+   "tokens_out": 28,
+   "latency_ms": 4576,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E186": {
+   "answer": "1",
+   "tokens_in": 190,
+   "tokens_out": 91,
+   "latency_ms": 3339,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E189": {
+   "answer": "2",
+   "tokens_in": 173,
+   "tokens_out": 48,
+   "latency_ms": 2091,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E190": {
+   "answer": "2",
+   "tokens_in": 179,
+   "tokens_out": 56,
+   "latency_ms": 1970,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E192": {
+   "answer": "2",
+   "tokens_in": 166,
+   "tokens_out": 41,
+   "latency_ms": 1580,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E195": {
+   "answer": "2",
+   "tokens_in": 182,
+   "tokens_out": 35,
+   "latency_ms": 1320,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E194": {
+   "answer": "2",
+   "tokens_in": 163,
+   "tokens_out": 29,
+   "latency_ms": 1630,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E191": {
+   "answer": "2",
+   "tokens_in": 172,
+   "tokens_out": 34,
+   "latency_ms": 4035,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E196": {
+   "answer": "2",
+   "tokens_in": 181,
+   "tokens_out": 27,
+   "latency_ms": 1124,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E199": {
+   "answer": "2",
+   "tokens_in": 165,
+   "tokens_out": 28,
+   "latency_ms": 1119,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E197": {
+   "answer": "2",
+   "tokens_in": 160,
+   "tokens_out": 34,
+   "latency_ms": 2122,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E198": {
+   "answer": "2",
+   "tokens_in": 155,
+   "tokens_out": 53,
+   "latency_ms": 1765,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E193": {
+   "answer": "2",
+   "tokens_in": 160,
+   "tokens_out": 47,
+   "latency_ms": 5961,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E202": {
+   "answer": "2",
+   "tokens_in": 207,
+   "tokens_out": 31,
+   "latency_ms": 1309,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E203": {
+   "answer": "2",
+   "tokens_in": 207,
+   "tokens_out": 29,
+   "latency_ms": 1152,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E204": {
+   "answer": "2",
+   "tokens_in": 167,
+   "tokens_out": 28,
+   "latency_ms": 1242,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E200": {
+   "answer": "2",
+   "tokens_in": 184,
+   "tokens_out": 27,
+   "latency_ms": 3756,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E201": {
+   "answer": "2",
+   "tokens_in": 163,
+   "tokens_out": 33,
+   "latency_ms": 3788,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E206": {
+   "answer": "2",
+   "tokens_in": 158,
+   "tokens_out": 53,
+   "latency_ms": 1655,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E209": {
+   "answer": "2",
+   "tokens_in": 257,
+   "tokens_out": 30,
+   "latency_ms": 1342,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E207": {
+   "answer": "2",
+   "tokens_in": 252,
+   "tokens_out": 28,
+   "latency_ms": 2117,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E205": {
+   "answer": "2",
+   "tokens_in": 165,
+   "tokens_out": 52,
+   "latency_ms": 4592,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E208": {
+   "answer": "2",
+   "tokens_in": 250,
+   "tokens_out": 30,
+   "latency_ms": 2784,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E211": {
+   "answer": "1",
+   "tokens_in": 188,
+   "tokens_out": 4,
+   "latency_ms": 902,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E213": {
+   "answer": "2",
+   "tokens_in": 217,
+   "tokens_out": 4,
+   "latency_ms": 973,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E212": {
+   "answer": "2",
+   "tokens_in": 341,
+   "tokens_out": 4,
+   "latency_ms": 1370,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E214": {
+   "answer": "2",
+   "tokens_in": 187,
+   "tokens_out": 26,
+   "latency_ms": 2401,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E216": {
+   "answer": "1",
+   "tokens_in": 190,
+   "tokens_out": 51,
+   "latency_ms": 1274,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E215": {
+   "answer": "2",
+   "tokens_in": 293,
+   "tokens_out": 60,
+   "latency_ms": 2421,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E217": {
+   "answer": "1",
+   "tokens_in": 243,
+   "tokens_out": 4,
+   "latency_ms": 904,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E218": {
+   "answer": "2",
+   "tokens_in": 199,
+   "tokens_out": 41,
+   "latency_ms": 1566,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E219": {
+   "answer": "2",
+   "tokens_in": 225,
+   "tokens_out": 4,
+   "latency_ms": 796,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E210": {
+   "answer": "2",
+   "tokens_in": 156,
+   "tokens_out": 51,
+   "latency_ms": 5416,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E223": {
+   "answer": "2",
+   "tokens_in": 187,
+   "tokens_out": 4,
+   "latency_ms": 1029,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E220": {
+   "answer": "1",
+   "tokens_in": 198,
+   "tokens_out": 93,
+   "latency_ms": 2604,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E221": {
+   "answer": "1",
+   "tokens_in": 193,
+   "tokens_out": 63,
+   "latency_ms": 2214,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E224": {
+   "answer": "2",
+   "tokens_in": 155,
+   "tokens_out": 32,
+   "latency_ms": 1287,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E226": {
+   "answer": "2",
+   "tokens_in": 272,
+   "tokens_out": 4,
+   "latency_ms": 1092,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E222": {
+   "answer": "2",
+   "tokens_in": 206,
+   "tokens_out": 29,
+   "latency_ms": 3309,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E229": {
+   "answer": "2",
+   "tokens_in": 154,
+   "tokens_out": 34,
+   "latency_ms": 1224,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E227": {
+   "answer": "1",
+   "tokens_in": 175,
+   "tokens_out": 33,
+   "latency_ms": 1936,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E225": {
+   "answer": "2",
+   "tokens_in": 272,
+   "tokens_out": 121,
+   "latency_ms": 3109,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E228": {
+   "answer": "1",
+   "tokens_in": 227,
+   "tokens_out": 39,
+   "latency_ms": 1712,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E233": {
+   "answer": "2",
+   "tokens_in": 243,
+   "tokens_out": 4,
+   "latency_ms": 2563,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E230": {
+   "answer": "2",
+   "tokens_in": 256,
+   "tokens_out": 4,
+   "latency_ms": 3531,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E234": {
+   "answer": "2",
+   "tokens_in": 213,
+   "tokens_out": 4,
+   "latency_ms": 847,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E231": {
+   "answer": "2",
+   "tokens_in": 238,
+   "tokens_out": 33,
+   "latency_ms": 3925,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E237": {
+   "answer": "1",
+   "tokens_in": 219,
+   "tokens_out": 4,
+   "latency_ms": 947,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E236": {
+   "answer": "2",
+   "tokens_in": 234,
+   "tokens_out": 4,
+   "latency_ms": 1045,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E232": {
+   "answer": "2",
+   "tokens_in": 238,
+   "tokens_out": 4,
+   "latency_ms": 4820,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E235": {
+   "answer": "2",
+   "tokens_in": 221,
+   "tokens_out": 29,
+   "latency_ms": 2235,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E239": {
+   "answer": "2",
+   "tokens_in": 156,
+   "tokens_out": 51,
+   "latency_ms": 2419,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E241": {
+   "answer": "1",
+   "tokens_in": 187,
+   "tokens_out": 34,
+   "latency_ms": 1746,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E238": {
+   "answer": "2",
+   "tokens_in": 258,
+   "tokens_out": 108,
+   "latency_ms": 3159,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E243": {
+   "answer": "1",
+   "tokens_in": 200,
+   "tokens_out": 4,
+   "latency_ms": 930,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E240": {
+   "answer": "2",
+   "tokens_in": 190,
+   "tokens_out": 4,
+   "latency_ms": 3540,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E242": {
+   "answer": "1",
+   "tokens_in": 196,
+   "tokens_out": 16,
+   "latency_ms": 1821,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E244": {
+   "answer": "2",
+   "tokens_in": 337,
+   "tokens_out": 32,
+   "latency_ms": 1325,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E246": {
+   "answer": "1",
+   "tokens_in": 221,
+   "tokens_out": 4,
+   "latency_ms": 964,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E247": {
+   "answer": "1",
+   "tokens_in": 223,
+   "tokens_out": 4,
+   "latency_ms": 927,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E248": {
+   "answer": "2",
+   "tokens_in": 276,
+   "tokens_out": 16,
+   "latency_ms": 1140,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E245": {
+   "answer": "2",
+   "tokens_in": 252,
+   "tokens_out": 31,
+   "latency_ms": 2338,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E252": {
+   "answer": "1",
+   "tokens_in": 217,
+   "tokens_out": 4,
+   "latency_ms": 823,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E250": {
+   "answer": "1",
+   "tokens_in": 199,
+   "tokens_out": 4,
+   "latency_ms": 1747,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E253": {
+   "answer": "1",
+   "tokens_in": 264,
+   "tokens_out": 28,
+   "latency_ms": 1255,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E249": {
+   "answer": "2",
+   "tokens_in": 266,
+   "tokens_out": 33,
+   "latency_ms": 4549,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E251": {
+   "answer": "1",
+   "tokens_in": 220,
+   "tokens_out": 31,
+   "latency_ms": 5105,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E256": {
+   "answer": "1",
+   "tokens_in": 189,
+   "tokens_out": 4,
+   "latency_ms": 1635,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E254": {
+   "answer": "1",
+   "tokens_in": 212,
+   "tokens_out": 28,
+   "latency_ms": 4722,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E258": {
+   "answer": "1",
+   "tokens_in": 234,
+   "tokens_out": 4,
+   "latency_ms": 965,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E257": {
+   "answer": "1",
+   "tokens_in": 175,
+   "tokens_out": 29,
+   "latency_ms": 1427,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E259": {
+   "answer": "1",
+   "tokens_in": 221,
+   "tokens_out": 4,
+   "latency_ms": 1134,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E261": {
+   "answer": "1",
+   "tokens_in": 243,
+   "tokens_out": 4,
+   "latency_ms": 901,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E255": {
+   "answer": "1",
+   "tokens_in": 284,
+   "tokens_out": 4,
+   "latency_ms": 5331,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E260": {
+   "answer": "1",
+   "tokens_in": 212,
+   "tokens_out": 57,
+   "latency_ms": 1397,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E262": {
+   "answer": "2",
+   "tokens_in": 193,
+   "tokens_out": 36,
+   "latency_ms": 1271,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E263": {
+   "answer": "?",
+   "tokens_in": 147,
+   "tokens_out": 40,
+   "latency_ms": 2067,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E266": {
+   "answer": "1",
+   "tokens_in": 261,
+   "tokens_out": 4,
+   "latency_ms": 1139,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E264": {
+   "answer": "2",
+   "tokens_in": 360,
+   "tokens_out": 35,
+   "latency_ms": 1999,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E267": {
+   "answer": "1",
+   "tokens_in": 261,
+   "tokens_out": 4,
+   "latency_ms": 1039,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E265": {
+   "answer": "2",
+   "tokens_in": 256,
+   "tokens_out": 161,
+   "latency_ms": 3865,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E271": {
+   "answer": "1",
+   "tokens_in": 154,
+   "tokens_out": 28,
+   "latency_ms": 1322,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E268": {
+   "answer": "1",
+   "tokens_in": 148,
+   "tokens_out": 73,
+   "latency_ms": 3866,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E269": {
+   "answer": "?",
+   "tokens_in": 148,
+   "tokens_out": 47,
+   "latency_ms": 4329,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E273": {
+   "answer": "1",
+   "tokens_in": 205,
+   "tokens_out": 4,
+   "latency_ms": 1115,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E274": {
+   "answer": "1",
+   "tokens_in": 199,
+   "tokens_out": 4,
+   "latency_ms": 1127,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E272": {
+   "answer": "1",
+   "tokens_in": 287,
+   "tokens_out": 4,
+   "latency_ms": 2208,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E275": {
+   "answer": "1",
+   "tokens_in": 174,
+   "tokens_out": 27,
+   "latency_ms": 1058,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E277": {
+   "answer": "1",
+   "tokens_in": 207,
+   "tokens_out": 4,
+   "latency_ms": 1696,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E276": {
+   "answer": "1",
+   "tokens_in": 265,
+   "tokens_out": 4,
+   "latency_ms": 1755,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E270": {
+   "answer": "?",
+   "tokens_in": 148,
+   "tokens_out": 83,
+   "latency_ms": 7408,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E281": {
+   "answer": "1",
+   "tokens_in": 206,
+   "tokens_out": 4,
+   "latency_ms": 897,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E279": {
+   "answer": "1",
+   "tokens_in": 181,
+   "tokens_out": 4,
+   "latency_ms": 2010,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E282": {
+   "answer": "1",
+   "tokens_in": 235,
+   "tokens_out": 4,
+   "latency_ms": 951,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E278": {
+   "answer": "1",
+   "tokens_in": 289,
+   "tokens_out": 4,
+   "latency_ms": 5004,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E283": {
+   "answer": "1",
+   "tokens_in": 336,
+   "tokens_out": 65,
+   "latency_ms": 2243,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E284": {
+   "answer": "1",
+   "tokens_in": 235,
+   "tokens_out": 4,
+   "latency_ms": 1454,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E280": {
+   "answer": "1",
+   "tokens_in": 246,
+   "tokens_out": 4,
+   "latency_ms": 5220,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E285": {
+   "answer": "1",
+   "tokens_in": 261,
+   "tokens_out": 48,
+   "latency_ms": 1563,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E286": {
+   "answer": "1",
+   "tokens_in": 185,
+   "tokens_out": 4,
+   "latency_ms": 1095,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E290": {
+   "answer": "1",
+   "tokens_in": 262,
+   "tokens_out": 18,
+   "latency_ms": 1075,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E289": {
+   "answer": "1",
+   "tokens_in": 178,
+   "tokens_out": 28,
+   "latency_ms": 1202,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E292": {
+   "answer": "1",
+   "tokens_in": 195,
+   "tokens_out": 4,
+   "latency_ms": 896,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E288": {
+   "answer": "1",
+   "tokens_in": 178,
+   "tokens_out": 24,
+   "latency_ms": 2435,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E293": {
+   "answer": "1",
+   "tokens_in": 172,
+   "tokens_out": 23,
+   "latency_ms": 1355,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E287": {
+   "answer": "1",
+   "tokens_in": 208,
+   "tokens_out": 4,
+   "latency_ms": 4629,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E294": {
+   "answer": "1",
+   "tokens_in": 238,
+   "tokens_out": 4,
+   "latency_ms": 1509,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E295": {
+   "answer": "1",
+   "tokens_in": 225,
+   "tokens_out": 4,
+   "latency_ms": 1519,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E291": {
+   "answer": "1",
+   "tokens_in": 155,
+   "tokens_out": 27,
+   "latency_ms": 3890,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E296": {
+   "answer": "1",
+   "tokens_in": 260,
+   "tokens_out": 4,
+   "latency_ms": 1602,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E299": {
+   "answer": "1",
+   "tokens_in": 251,
+   "tokens_out": 4,
+   "latency_ms": 1152,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E297": {
+   "answer": "1",
+   "tokens_in": 299,
+   "tokens_out": 4,
+   "latency_ms": 3210,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E300": {
+   "answer": "1",
+   "tokens_in": 172,
+   "tokens_out": 33,
+   "latency_ms": 1934,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E301": {
+   "answer": "2",
+   "tokens_in": 208,
+   "tokens_out": 27,
+   "latency_ms": 1433,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E302": {
+   "answer": "2",
+   "tokens_in": 224,
+   "tokens_out": 4,
+   "latency_ms": 773,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E298": {
+   "answer": "1",
+   "tokens_in": 177,
+   "tokens_out": 4,
+   "latency_ms": 3632,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E304": {
+   "answer": "2",
+   "tokens_in": 202,
+   "tokens_out": 30,
+   "latency_ms": 1131,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E307": {
+   "answer": "2",
+   "tokens_in": 236,
+   "tokens_out": 4,
+   "latency_ms": 1009,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E303": {
+   "answer": "2",
+   "tokens_in": 190,
+   "tokens_out": 4,
+   "latency_ms": 2858,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E306": {
+   "answer": "2",
+   "tokens_in": 249,
+   "tokens_out": 4,
+   "latency_ms": 1611,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E305": {
+   "answer": "2",
+   "tokens_in": 187,
+   "tokens_out": 28,
+   "latency_ms": 2725,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E308": {
+   "answer": "2",
+   "tokens_in": 236,
+   "tokens_out": 28,
+   "latency_ms": 1700,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E310": {
+   "answer": "2",
+   "tokens_in": 278,
+   "tokens_out": 4,
+   "latency_ms": 1229,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E309": {
+   "answer": "2",
+   "tokens_in": 264,
+   "tokens_out": 30,
+   "latency_ms": 1449,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E311": {
+   "answer": "2",
+   "tokens_in": 160,
+   "tokens_out": 27,
+   "latency_ms": 1133,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E313": {
+   "answer": "2",
+   "tokens_in": 163,
+   "tokens_out": 36,
+   "latency_ms": 1793,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E316": {
+   "answer": "2",
+   "tokens_in": 167,
+   "tokens_out": 27,
+   "latency_ms": 1005,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E312": {
+   "answer": "2",
+   "tokens_in": 176,
+   "tokens_out": 31,
+   "latency_ms": 4078,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E317": {
+   "answer": "2",
+   "tokens_in": 148,
+   "tokens_out": 34,
+   "latency_ms": 1388,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E314": {
+   "answer": "1",
+   "tokens_in": 319,
+   "tokens_out": 27,
+   "latency_ms": 4119,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E319": {
+   "answer": "2",
+   "tokens_in": 278,
+   "tokens_out": 4,
+   "latency_ms": 898,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E318": {
+   "answer": "2",
+   "tokens_in": 202,
+   "tokens_out": 4,
+   "latency_ms": 1505,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E315": {
+   "answer": "1",
+   "tokens_in": 319,
+   "tokens_out": 57,
+   "latency_ms": 5506,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E320": {
+   "answer": "2",
+   "tokens_in": 190,
+   "tokens_out": 28,
+   "latency_ms": 1638,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E322": {
+   "answer": "2",
+   "tokens_in": 273,
+   "tokens_out": 28,
+   "latency_ms": 1251,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E324": {
+   "answer": "2",
+   "tokens_in": 264,
+   "tokens_out": 29,
+   "latency_ms": 1651,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E323": {
+   "answer": "2",
+   "tokens_in": 227,
+   "tokens_out": 29,
+   "latency_ms": 1755,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E325": {
+   "answer": "2",
+   "tokens_in": 288,
+   "tokens_out": 28,
+   "latency_ms": 1273,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E321": {
+   "answer": "2",
+   "tokens_in": 279,
+   "tokens_out": 26,
+   "latency_ms": 3738,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E328": {
+   "answer": "1",
+   "tokens_in": 174,
+   "tokens_out": 4,
+   "latency_ms": 1086,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E329": {
+   "answer": "1",
+   "tokens_in": 160,
+   "tokens_out": 29,
+   "latency_ms": 1416,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E327": {
+   "answer": "1",
+   "tokens_in": 169,
+   "tokens_out": 87,
+   "latency_ms": 3019,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E331": {
+   "answer": "1",
+   "tokens_in": 185,
+   "tokens_out": 4,
+   "latency_ms": 763,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E326": {
+   "answer": "2",
+   "tokens_in": 194,
+   "tokens_out": 29,
+   "latency_ms": 3893,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E332": {
+   "answer": "1",
+   "tokens_in": 268,
+   "tokens_out": 4,
+   "latency_ms": 1305,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E335": {
+   "answer": "1",
+   "tokens_in": 365,
+   "tokens_out": 4,
+   "latency_ms": 1049,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E333": {
+   "answer": "1",
+   "tokens_in": 357,
+   "tokens_out": 30,
+   "latency_ms": 3696,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E330": {
+   "answer": "2",
+   "tokens_in": 186,
+   "tokens_out": 144,
+   "latency_ms": 6032,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E334": {
+   "answer": "1",
+   "tokens_in": 280,
+   "tokens_out": 4,
+   "latency_ms": 4195,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E339": {
+   "answer": "1",
+   "tokens_in": 171,
+   "tokens_out": 4,
+   "latency_ms": 660,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E337": {
+   "answer": "1",
+   "tokens_in": 353,
+   "tokens_out": 4,
+   "latency_ms": 2242,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E338": {
+   "answer": "1",
+   "tokens_in": 261,
+   "tokens_out": 4,
+   "latency_ms": 1844,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E336": {
+   "answer": "1",
+   "tokens_in": 381,
+   "tokens_out": 4,
+   "latency_ms": 4836,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E342": {
+   "answer": "1",
+   "tokens_in": 492,
+   "tokens_out": 4,
+   "latency_ms": 814,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E341": {
+   "answer": "1",
+   "tokens_in": 568,
+   "tokens_out": 4,
+   "latency_ms": 1087,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E340": {
+   "answer": "1",
+   "tokens_in": 171,
+   "tokens_out": 24,
+   "latency_ms": 2202,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E345": {
+   "answer": "1",
+   "tokens_in": 152,
+   "tokens_out": 38,
+   "latency_ms": 2068,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E347": {
+   "answer": "1",
+   "tokens_in": 190,
+   "tokens_out": 4,
+   "latency_ms": 1080,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E346": {
+   "answer": "1",
+   "tokens_in": 221,
+   "tokens_out": 4,
+   "latency_ms": 3255,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E343": {
+   "answer": "1",
+   "tokens_in": 282,
+   "tokens_out": 4,
+   "latency_ms": 4285,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E344": {
+   "answer": "?",
+   "tokens_in": 145,
+   "tokens_out": 29,
+   "latency_ms": 4299,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E348": {
+   "answer": "1",
+   "tokens_in": 236,
+   "tokens_out": 4,
+   "latency_ms": 990,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E349": {
+   "answer": "1",
+   "tokens_in": 193,
+   "tokens_out": 22,
+   "latency_ms": 1482,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E351": {
+   "answer": "1",
+   "tokens_in": 275,
+   "tokens_out": 4,
+   "latency_ms": 1047,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E350": {
+   "answer": "1",
+   "tokens_in": 372,
+   "tokens_out": 4,
+   "latency_ms": 1686,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E354": {
+   "answer": "1",
+   "tokens_in": 225,
+   "tokens_out": 4,
+   "latency_ms": 1109,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E353": {
+   "answer": "1",
+   "tokens_in": 348,
+   "tokens_out": 4,
+   "latency_ms": 1722,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E355": {
+   "answer": "1",
+   "tokens_in": 153,
+   "tokens_out": 42,
+   "latency_ms": 1331,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E356": {
+   "answer": "1",
+   "tokens_in": 153,
+   "tokens_out": 20,
+   "latency_ms": 1127,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E359": {
+   "answer": "1",
+   "tokens_in": 217,
+   "tokens_out": 4,
+   "latency_ms": 695,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E358": {
+   "answer": "1",
+   "tokens_in": 225,
+   "tokens_out": 4,
+   "latency_ms": 1260,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E360": {
+   "answer": "1",
+   "tokens_in": 187,
+   "tokens_out": 4,
+   "latency_ms": 758,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E361": {
+   "answer": "2",
+   "tokens_in": 176,
+   "tokens_out": 33,
+   "latency_ms": 1187,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E357": {
+   "answer": "1",
+   "tokens_in": 179,
+   "tokens_out": 4,
+   "latency_ms": 2872,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E352": {
+   "answer": "1",
+   "tokens_in": 281,
+   "tokens_out": 4,
+   "latency_ms": 6213,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E363": {
+   "answer": "2",
+   "tokens_in": 372,
+   "tokens_out": 4,
+   "latency_ms": 974,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E362": {
+   "answer": "2",
+   "tokens_in": 169,
+   "tokens_out": 35,
+   "latency_ms": 1629,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E367": {
+   "answer": "2",
+   "tokens_in": 171,
+   "tokens_out": 33,
+   "latency_ms": 1730,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E364": {
+   "answer": "2",
+   "tokens_in": 176,
+   "tokens_out": 67,
+   "latency_ms": 2830,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E366": {
+   "answer": "2",
+   "tokens_in": 179,
+   "tokens_out": 36,
+   "latency_ms": 2291,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E368": {
+   "answer": "2",
+   "tokens_in": 171,
+   "tokens_out": 31,
+   "latency_ms": 1562,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E370": {
+   "answer": "2",
+   "tokens_in": 177,
+   "tokens_out": 41,
+   "latency_ms": 1268,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E369": {
+   "answer": "2",
+   "tokens_in": 177,
+   "tokens_out": 41,
+   "latency_ms": 1478,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E365": {
+   "answer": "2",
+   "tokens_in": 173,
+   "tokens_out": 32,
+   "latency_ms": 4449,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E372": {
+   "answer": "2",
+   "tokens_in": 168,
+   "tokens_out": 35,
+   "latency_ms": 1775,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E371": {
+   "answer": "2",
+   "tokens_in": 177,
+   "tokens_out": 36,
+   "latency_ms": 1965,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E373": {
+   "answer": "2",
+   "tokens_in": 168,
+   "tokens_out": 65,
+   "latency_ms": 1985,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E376": {
+   "answer": "2",
+   "tokens_in": 166,
+   "tokens_out": 41,
+   "latency_ms": 1330,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E375": {
+   "answer": "2",
+   "tokens_in": 163,
+   "tokens_out": 32,
+   "latency_ms": 1482,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E377": {
+   "answer": "2",
+   "tokens_in": 166,
+   "tokens_out": 41,
+   "latency_ms": 1329,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E378": {
+   "answer": "2",
+   "tokens_in": 161,
+   "tokens_out": 34,
+   "latency_ms": 1418,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E379": {
+   "answer": "2",
+   "tokens_in": 160,
+   "tokens_out": 45,
+   "latency_ms": 1599,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E374": {
+   "answer": "2",
+   "tokens_in": 166,
+   "tokens_out": 34,
+   "latency_ms": 4383,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E381": {
+   "answer": "2",
+   "tokens_in": 161,
+   "tokens_out": 39,
+   "latency_ms": 2146,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E380": {
+   "answer": "2",
+   "tokens_in": 163,
+   "tokens_out": 26,
+   "latency_ms": 3808,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E382": {
+   "answer": "2",
+   "tokens_in": 159,
+   "tokens_out": 111,
+   "latency_ms": 2801,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E383": {
+   "answer": "2",
+   "tokens_in": 163,
+   "tokens_out": 40,
+   "latency_ms": 2987,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E386": {
+   "answer": "2",
+   "tokens_in": 173,
+   "tokens_out": 35,
+   "latency_ms": 1338,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E387": {
+   "answer": "2",
+   "tokens_in": 165,
+   "tokens_out": 31,
+   "latency_ms": 1363,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E385": {
+   "answer": "2",
+   "tokens_in": 160,
+   "tokens_out": 58,
+   "latency_ms": 2962,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E388": {
+   "answer": "2",
+   "tokens_in": 163,
+   "tokens_out": 40,
+   "latency_ms": 1591,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E384": {
+   "answer": "2",
+   "tokens_in": 179,
+   "tokens_out": 61,
+   "latency_ms": 4306,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E389": {
+   "answer": "2",
+   "tokens_in": 165,
+   "tokens_out": 49,
+   "latency_ms": 1474,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E391": {
+   "answer": "1",
+   "tokens_in": 313,
+   "tokens_out": 4,
+   "latency_ms": 991,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E390": {
+   "answer": "2",
+   "tokens_in": 200,
+   "tokens_out": 32,
+   "latency_ms": 1912,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E392": {
+   "answer": "1",
+   "tokens_in": 236,
+   "tokens_out": 24,
+   "latency_ms": 1301,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E393": {
+   "answer": "1",
+   "tokens_in": 149,
+   "tokens_out": 40,
+   "latency_ms": 1328,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E396": {
+   "answer": "1",
+   "tokens_in": 152,
+   "tokens_out": 40,
+   "latency_ms": 1395,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E397": {
+   "answer": "1",
+   "tokens_in": 152,
+   "tokens_out": 40,
+   "latency_ms": 1713,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E395": {
+   "answer": "1",
+   "tokens_in": 152,
+   "tokens_out": 60,
+   "latency_ms": 2368,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E398": {
+   "answer": "1",
+   "tokens_in": 152,
+   "tokens_out": 56,
+   "latency_ms": 1591,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E394": {
+   "answer": "1",
+   "tokens_in": 162,
+   "tokens_out": 35,
+   "latency_ms": 4148,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E400": {
+   "answer": "1",
+   "tokens_in": 152,
+   "tokens_out": 40,
+   "latency_ms": 1548,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E401": {
+   "answer": "1",
+   "tokens_in": 152,
+   "tokens_out": 40,
+   "latency_ms": 1503,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E402": {
+   "answer": "1",
+   "tokens_in": 152,
+   "tokens_out": 30,
+   "latency_ms": 1280,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E403": {
+   "answer": "1",
+   "tokens_in": 167,
+   "tokens_out": 28,
+   "latency_ms": 1322,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E404": {
+   "answer": "1",
+   "tokens_in": 176,
+   "tokens_out": 36,
+   "latency_ms": 1435,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E399": {
+   "answer": "1",
+   "tokens_in": 163,
+   "tokens_out": 38,
+   "latency_ms": 4227,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E405": {
+   "answer": "1",
+   "tokens_in": 162,
+   "tokens_out": 33,
+   "latency_ms": 1965,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E409": {
+   "answer": "1",
+   "tokens_in": 235,
+   "tokens_out": 4,
+   "latency_ms": 957,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E408": {
+   "answer": "1",
+   "tokens_in": 218,
+   "tokens_out": 4,
+   "latency_ms": 1806,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E406": {
+   "answer": "1",
+   "tokens_in": 164,
+   "tokens_out": 31,
+   "latency_ms": 3700,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E411": {
+   "answer": "1",
+   "tokens_in": 260,
+   "tokens_out": 4,
+   "latency_ms": 999,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E407": {
+   "answer": "1",
+   "tokens_in": 152,
+   "tokens_out": 29,
+   "latency_ms": 3067,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E412": {
+   "answer": "1",
+   "tokens_in": 260,
+   "tokens_out": 4,
+   "latency_ms": 965,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E410": {
+   "answer": "1",
+   "tokens_in": 176,
+   "tokens_out": 30,
+   "latency_ms": 2282,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E415": {
+   "answer": "1",
+   "tokens_in": 263,
+   "tokens_out": 4,
+   "latency_ms": 822,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E413": {
+   "answer": "1",
+   "tokens_in": 150,
+   "tokens_out": 38,
+   "latency_ms": 2130,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E416": {
+   "answer": "1",
+   "tokens_in": 150,
+   "tokens_out": 38,
+   "latency_ms": 1409,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E417": {
+   "answer": "1",
+   "tokens_in": 150,
+   "tokens_out": 46,
+   "latency_ms": 1478,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E418": {
+   "answer": "1",
+   "tokens_in": 150,
+   "tokens_out": 38,
+   "latency_ms": 1516,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E419": {
+   "answer": "1",
+   "tokens_in": 150,
+   "tokens_out": 38,
+   "latency_ms": 1549,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E421": {
+   "answer": "1",
+   "tokens_in": 162,
+   "tokens_out": 4,
+   "latency_ms": 743,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E420": {
+   "answer": "1",
+   "tokens_in": 159,
+   "tokens_out": 52,
+   "latency_ms": 1971,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E422": {
+   "answer": "1",
+   "tokens_in": 235,
+   "tokens_out": 4,
+   "latency_ms": 1193,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E414": {
+   "answer": "1",
+   "tokens_in": 149,
+   "tokens_out": 34,
+   "latency_ms": 5966,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E425": {
+   "answer": "1",
+   "tokens_in": 181,
+   "tokens_out": 4,
+   "latency_ms": 1035,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E427": {
+   "answer": "1",
+   "tokens_in": 240,
+   "tokens_out": 4,
+   "latency_ms": 879,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E426": {
+   "answer": "1",
+   "tokens_in": 182,
+   "tokens_out": 4,
+   "latency_ms": 1127,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E428": {
+   "answer": "1",
+   "tokens_in": 232,
+   "tokens_out": 4,
+   "latency_ms": 758,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E424": {
+   "answer": "1",
+   "tokens_in": 212,
+   "tokens_out": 4,
+   "latency_ms": 3289,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E423": {
+   "answer": "1",
+   "tokens_in": 243,
+   "tokens_out": 4,
+   "latency_ms": 4224,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E430": {
+   "answer": "1",
+   "tokens_in": 255,
+   "tokens_out": 4,
+   "latency_ms": 1060,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E431": {
+   "answer": "1",
+   "tokens_in": 207,
+   "tokens_out": 4,
+   "latency_ms": 895,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E432": {
+   "answer": "1",
+   "tokens_in": 262,
+   "tokens_out": 4,
+   "latency_ms": 905,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E433": {
+   "answer": "1",
+   "tokens_in": 238,
+   "tokens_out": 4,
+   "latency_ms": 937,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E434": {
+   "answer": "1",
+   "tokens_in": 253,
+   "tokens_out": 4,
+   "latency_ms": 978,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E436": {
+   "answer": "1",
+   "tokens_in": 219,
+   "tokens_out": 4,
+   "latency_ms": 913,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E437": {
+   "answer": "1",
+   "tokens_in": 235,
+   "tokens_out": 4,
+   "latency_ms": 862,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E438": {
+   "answer": "1",
+   "tokens_in": 229,
+   "tokens_out": 4,
+   "latency_ms": 947,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E439": {
+   "answer": "1",
+   "tokens_in": 270,
+   "tokens_out": 4,
+   "latency_ms": 1067,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E429": {
+   "answer": "1",
+   "tokens_in": 192,
+   "tokens_out": 4,
+   "latency_ms": 5167,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E440": {
+   "answer": "1",
+   "tokens_in": 225,
+   "tokens_out": 4,
+   "latency_ms": 920,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E441": {
+   "answer": "1",
+   "tokens_in": 201,
+   "tokens_out": 4,
+   "latency_ms": 942,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E443": {
+   "answer": "1",
+   "tokens_in": 243,
+   "tokens_out": 4,
+   "latency_ms": 908,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E444": {
+   "answer": "1",
+   "tokens_in": 169,
+   "tokens_out": 4,
+   "latency_ms": 819,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E435": {
+   "answer": "1",
+   "tokens_in": 205,
+   "tokens_out": 4,
+   "latency_ms": 4634,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E442": {
+   "answer": "1",
+   "tokens_in": 299,
+   "tokens_out": 4,
+   "latency_ms": 2078,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E445": {
+   "answer": "1",
+   "tokens_in": 182,
+   "tokens_out": 4,
+   "latency_ms": 890,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E446": {
+   "answer": "1",
+   "tokens_in": 243,
+   "tokens_out": 4,
+   "latency_ms": 976,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E447": {
+   "answer": "1",
+   "tokens_in": 294,
+   "tokens_out": 4,
+   "latency_ms": 1172,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E448": {
+   "answer": "1",
+   "tokens_in": 285,
+   "tokens_out": 4,
+   "latency_ms": 861,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E451": {
+   "answer": "1",
+   "tokens_in": 162,
+   "tokens_out": 4,
+   "latency_ms": 905,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E450": {
+   "answer": "1",
+   "tokens_in": 207,
+   "tokens_out": 4,
+   "latency_ms": 1420,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E452": {
+   "answer": "1",
+   "tokens_in": 203,
+   "tokens_out": 4,
+   "latency_ms": 1316,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E453": {
+   "answer": "1",
+   "tokens_in": 234,
+   "tokens_out": 4,
+   "latency_ms": 798,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E454": {
+   "answer": "1",
+   "tokens_in": 190,
+   "tokens_out": 4,
+   "latency_ms": 848,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E456": {
+   "answer": "1",
+   "tokens_in": 194,
+   "tokens_out": 4,
+   "latency_ms": 859,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E458": {
+   "answer": "1",
+   "tokens_in": 207,
+   "tokens_out": 4,
+   "latency_ms": 1424,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E449": {
+   "answer": "1",
+   "tokens_in": 172,
+   "tokens_out": 4,
+   "latency_ms": 4903,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E457": {
+   "answer": "1",
+   "tokens_in": 241,
+   "tokens_out": 4,
+   "latency_ms": 2209,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E459": {
+   "answer": "1",
+   "tokens_in": 214,
+   "tokens_out": 4,
+   "latency_ms": 947,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E460": {
+   "answer": "1",
+   "tokens_in": 196,
+   "tokens_out": 4,
+   "latency_ms": 990,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E455": {
+   "answer": "1",
+   "tokens_in": 237,
+   "tokens_out": 4,
+   "latency_ms": 3846,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E464": {
+   "answer": "1",
+   "tokens_in": 224,
+   "tokens_out": 4,
+   "latency_ms": 918,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E463": {
+   "answer": "1",
+   "tokens_in": 231,
+   "tokens_out": 4,
+   "latency_ms": 1087,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E462": {
+   "answer": "1",
+   "tokens_in": 231,
+   "tokens_out": 4,
+   "latency_ms": 1681,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E465": {
+   "answer": "1",
+   "tokens_in": 278,
+   "tokens_out": 4,
+   "latency_ms": 894,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E467": {
+   "answer": "1",
+   "tokens_in": 219,
+   "tokens_out": 4,
+   "latency_ms": 1088,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E468": {
+   "answer": "1",
+   "tokens_in": 170,
+   "tokens_out": 4,
+   "latency_ms": 862,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E469": {
+   "answer": "1",
+   "tokens_in": 197,
+   "tokens_out": 4,
+   "latency_ms": 912,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E466": {
+   "answer": "1",
+   "tokens_in": 161,
+   "tokens_out": 4,
+   "latency_ms": 3126,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E461": {
+   "answer": "1",
+   "tokens_in": 239,
+   "tokens_out": 4,
+   "latency_ms": 5621,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E470": {
+   "answer": "1",
+   "tokens_in": 193,
+   "tokens_out": 4,
+   "latency_ms": 2048,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E471": {
+   "answer": "1",
+   "tokens_in": 211,
+   "tokens_out": 4,
+   "latency_ms": 4295,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E474": {
+   "answer": "1",
+   "tokens_in": 228,
+   "tokens_out": 4,
+   "latency_ms": 3281,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E472": {
+   "answer": "1",
+   "tokens_in": 228,
+   "tokens_out": 4,
+   "latency_ms": 3915,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E473": {
+   "answer": "1",
+   "tokens_in": 220,
+   "tokens_out": 4,
+   "latency_ms": 3699,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E477": {
+   "answer": "1",
+   "tokens_in": 199,
+   "tokens_out": 4,
+   "latency_ms": 884,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E475": {
+   "answer": "1",
+   "tokens_in": 203,
+   "tokens_out": 4,
+   "latency_ms": 1488,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E479": {
+   "answer": "1",
+   "tokens_in": 210,
+   "tokens_out": 4,
+   "latency_ms": 970,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E478": {
+   "answer": "1",
+   "tokens_in": 216,
+   "tokens_out": 4,
+   "latency_ms": 1893,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E480": {
+   "answer": "1",
+   "tokens_in": 194,
+   "tokens_out": 4,
+   "latency_ms": 946,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E482": {
+   "answer": "1",
+   "tokens_in": 214,
+   "tokens_out": 4,
+   "latency_ms": 767,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E483": {
+   "answer": "1",
+   "tokens_in": 214,
+   "tokens_out": 4,
+   "latency_ms": 1072,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E481": {
+   "answer": "1",
+   "tokens_in": 214,
+   "tokens_out": 4,
+   "latency_ms": 1383,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E476": {
+   "answer": "1",
+   "tokens_in": 228,
+   "tokens_out": 4,
+   "latency_ms": 3907,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E486": {
+   "answer": "1",
+   "tokens_in": 249,
+   "tokens_out": 4,
+   "latency_ms": 913,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E484": {
+   "answer": "1",
+   "tokens_in": 214,
+   "tokens_out": 4,
+   "latency_ms": 1758,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E487": {
+   "answer": "1",
+   "tokens_in": 215,
+   "tokens_out": 4,
+   "latency_ms": 1008,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E488": {
+   "answer": "1",
+   "tokens_in": 190,
+   "tokens_out": 4,
+   "latency_ms": 1119,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E490": {
+   "answer": "1",
+   "tokens_in": 190,
+   "tokens_out": 4,
+   "latency_ms": 845,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E489": {
+   "answer": "1",
+   "tokens_in": 240,
+   "tokens_out": 4,
+   "latency_ms": 1229,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E491": {
+   "answer": "1",
+   "tokens_in": 190,
+   "tokens_out": 4,
+   "latency_ms": 887,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E485": {
+   "answer": "1",
+   "tokens_in": 249,
+   "tokens_out": 4,
+   "latency_ms": 3293,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E493": {
+   "answer": "1",
+   "tokens_in": 190,
+   "tokens_out": 4,
+   "latency_ms": 1050,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E494": {
+   "answer": "1",
+   "tokens_in": 190,
+   "tokens_out": 4,
+   "latency_ms": 895,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E492": {
+   "answer": "1",
+   "tokens_in": 190,
+   "tokens_out": 4,
+   "latency_ms": 1858,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E497": {
+   "answer": "1",
+   "tokens_in": 184,
+   "tokens_out": 4,
+   "latency_ms": 842,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E496": {
+   "answer": "1",
+   "tokens_in": 165,
+   "tokens_out": 4,
+   "latency_ms": 1046,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E495": {
+   "answer": "1",
+   "tokens_in": 146,
+   "tokens_out": 52,
+   "latency_ms": 1714,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E499": {
+   "answer": "1",
+   "tokens_in": 191,
+   "tokens_out": 4,
+   "latency_ms": 966,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E498": {
+   "answer": "1",
+   "tokens_in": 184,
+   "tokens_out": 4,
+   "latency_ms": 1798,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E501": {
+   "answer": "1",
+   "tokens_in": 195,
+   "tokens_out": 4,
+   "latency_ms": 1254,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E503": {
+   "answer": "1",
+   "tokens_in": 172,
+   "tokens_out": 4,
+   "latency_ms": 909,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E500": {
+   "answer": "1",
+   "tokens_in": 190,
+   "tokens_out": 4,
+   "latency_ms": 3901,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E505": {
+   "answer": "1",
+   "tokens_in": 195,
+   "tokens_out": 4,
+   "latency_ms": 2403,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E506": {
+   "answer": "1",
+   "tokens_in": 195,
+   "tokens_out": 4,
+   "latency_ms": 895,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E502": {
+   "answer": "1",
+   "tokens_in": 253,
+   "tokens_out": 4,
+   "latency_ms": 4029,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E507": {
+   "answer": "1",
+   "tokens_in": 171,
+   "tokens_out": 25,
+   "latency_ms": 1058,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E509": {
+   "answer": "1",
+   "tokens_in": 178,
+   "tokens_out": 23,
+   "latency_ms": 1149,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E508": {
+   "answer": "1",
+   "tokens_in": 184,
+   "tokens_out": 4,
+   "latency_ms": 1395,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E510": {
+   "answer": "1",
+   "tokens_in": 194,
+   "tokens_out": 4,
+   "latency_ms": 886,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E511": {
+   "answer": "1",
+   "tokens_in": 238,
+   "tokens_out": 4,
+   "latency_ms": 1035,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E512": {
+   "answer": "1",
+   "tokens_in": 165,
+   "tokens_out": 4,
+   "latency_ms": 941,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E513": {
+   "answer": "1",
+   "tokens_in": 211,
+   "tokens_out": 4,
+   "latency_ms": 772,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E516": {
+   "answer": "1",
+   "tokens_in": 222,
+   "tokens_out": 4,
+   "latency_ms": 1166,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E504": {
+   "answer": "1",
+   "tokens_in": 172,
+   "tokens_out": 4,
+   "latency_ms": 7738,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E514": {
+   "answer": "1",
+   "tokens_in": 239,
+   "tokens_out": 4,
+   "latency_ms": 3070,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E515": {
+   "answer": "1",
+   "tokens_in": 238,
+   "tokens_out": 4,
+   "latency_ms": 3082,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E518": {
+   "answer": "1",
+   "tokens_in": 255,
+   "tokens_out": 4,
+   "latency_ms": 1476,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E519": {
+   "answer": "1",
+   "tokens_in": 250,
+   "tokens_out": 4,
+   "latency_ms": 810,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E520": {
+   "answer": "1",
+   "tokens_in": 153,
+   "tokens_out": 23,
+   "latency_ms": 1317,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E517": {
+   "answer": "1",
+   "tokens_in": 218,
+   "tokens_out": 4,
+   "latency_ms": 3387,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E522": {
+   "answer": "1",
+   "tokens_in": 171,
+   "tokens_out": 4,
+   "latency_ms": 1162,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E523": {
+   "answer": "1",
+   "tokens_in": 190,
+   "tokens_out": 4,
+   "latency_ms": 933,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E521": {
+   "answer": "1",
+   "tokens_in": 184,
+   "tokens_out": 4,
+   "latency_ms": 2096,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E524": {
+   "answer": "1",
+   "tokens_in": 194,
+   "tokens_out": 4,
+   "latency_ms": 994,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E527": {
+   "answer": "1",
+   "tokens_in": 234,
+   "tokens_out": 4,
+   "latency_ms": 953,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E525": {
+   "answer": "1",
+   "tokens_in": 195,
+   "tokens_out": 4,
+   "latency_ms": 1734,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E528": {
+   "answer": "1",
+   "tokens_in": 161,
+   "tokens_out": 23,
+   "latency_ms": 1408,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E529": {
+   "answer": "1",
+   "tokens_in": 155,
+   "tokens_out": 4,
+   "latency_ms": 1642,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E531": {
+   "answer": "1",
+   "tokens_in": 266,
+   "tokens_out": 4,
+   "latency_ms": 1467,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E526": {
+   "answer": "1",
+   "tokens_in": 207,
+   "tokens_out": 4,
+   "latency_ms": 3643,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E532": {
+   "answer": "1",
+   "tokens_in": 248,
+   "tokens_out": 4,
+   "latency_ms": 1445,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E534": {
+   "answer": "1",
+   "tokens_in": 204,
+   "tokens_out": 4,
+   "latency_ms": 1008,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E535": {
+   "answer": "1",
+   "tokens_in": 246,
+   "tokens_out": 4,
+   "latency_ms": 1219,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E536": {
+   "answer": "1",
+   "tokens_in": 201,
+   "tokens_out": 4,
+   "latency_ms": 1195,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E530": {
+   "answer": "1",
+   "tokens_in": 325,
+   "tokens_out": 4,
+   "latency_ms": 4802,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E533": {
+   "answer": "1",
+   "tokens_in": 257,
+   "tokens_out": 4,
+   "latency_ms": 3457,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E539": {
+   "answer": "1",
+   "tokens_in": 186,
+   "tokens_out": 4,
+   "latency_ms": 1126,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E537": {
+   "answer": "1",
+   "tokens_in": 201,
+   "tokens_out": 4,
+   "latency_ms": 1873,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E540": {
+   "answer": "1",
+   "tokens_in": 153,
+   "tokens_out": 34,
+   "latency_ms": 1160,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E542": {
+   "answer": "2",
+   "tokens_in": 183,
+   "tokens_out": 27,
+   "latency_ms": 2171,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E538": {
+   "answer": "1",
+   "tokens_in": 207,
+   "tokens_out": 17,
+   "latency_ms": 3820,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E543": {
+   "answer": "2",
+   "tokens_in": 204,
+   "tokens_out": 27,
+   "latency_ms": 4065,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E545": {
+   "answer": "2",
+   "tokens_in": 204,
+   "tokens_out": 26,
+   "latency_ms": 3535,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E546": {
+   "answer": "2",
+   "tokens_in": 156,
+   "tokens_out": 28,
+   "latency_ms": 1188,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E544": {
+   "answer": "2",
+   "tokens_in": 204,
+   "tokens_out": 27,
+   "latency_ms": 4159,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E541": {
+   "answer": "1",
+   "tokens_in": 156,
+   "tokens_out": 29,
+   "latency_ms": 6500,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E548": {
+   "answer": "2",
+   "tokens_in": 429,
+   "tokens_out": 4,
+   "latency_ms": 788,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E547": {
+   "answer": "2",
+   "tokens_in": 183,
+   "tokens_out": 28,
+   "latency_ms": 1592,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E550": {
+   "answer": "2",
+   "tokens_in": 539,
+   "tokens_out": 4,
+   "latency_ms": 983,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E551": {
+   "answer": "2",
+   "tokens_in": 158,
+   "tokens_out": 29,
+   "latency_ms": 1385,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E553": {
+   "answer": "2",
+   "tokens_in": 159,
+   "tokens_out": 28,
+   "latency_ms": 1504,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E554": {
+   "answer": "2",
+   "tokens_in": 159,
+   "tokens_out": 31,
+   "latency_ms": 1247,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E556": {
+   "answer": "2",
+   "tokens_in": 369,
+   "tokens_out": 31,
+   "latency_ms": 1526,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E549": {
+   "answer": "2",
+   "tokens_in": 429,
+   "tokens_out": 25,
+   "latency_ms": 4590,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E552": {
+   "answer": "2",
+   "tokens_in": 156,
+   "tokens_out": 18,
+   "latency_ms": 3786,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E559": {
+   "answer": "1",
+   "tokens_in": 234,
+   "tokens_out": 4,
+   "latency_ms": 887,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E557": {
+   "answer": "1",
+   "tokens_in": 200,
+   "tokens_out": 60,
+   "latency_ms": 1937,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E555": {
+   "answer": "2",
+   "tokens_in": 251,
+   "tokens_out": 23,
+   "latency_ms": 3904,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E560": {
+   "answer": "1",
+   "tokens_in": 182,
+   "tokens_out": 4,
+   "latency_ms": 1116,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E558": {
+   "answer": "1",
+   "tokens_in": 201,
+   "tokens_out": 118,
+   "latency_ms": 2585,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E561": {
+   "answer": "1",
+   "tokens_in": 270,
+   "tokens_out": 4,
+   "latency_ms": 930,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E563": {
+   "answer": "1",
+   "tokens_in": 276,
+   "tokens_out": 34,
+   "latency_ms": 1270,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E562": {
+   "answer": "1",
+   "tokens_in": 276,
+   "tokens_out": 4,
+   "latency_ms": 1793,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E565": {
+   "answer": "1",
+   "tokens_in": 307,
+   "tokens_out": 33,
+   "latency_ms": 1476,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E566": {
+   "answer": "1",
+   "tokens_in": 304,
+   "tokens_out": 4,
+   "latency_ms": 899,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E569": {
+   "answer": "1",
+   "tokens_in": 304,
+   "tokens_out": 4,
+   "latency_ms": 920,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E568": {
+   "answer": "1",
+   "tokens_in": 304,
+   "tokens_out": 4,
+   "latency_ms": 1383,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E564": {
+   "answer": "1",
+   "tokens_in": 200,
+   "tokens_out": 39,
+   "latency_ms": 3560,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E567": {
+   "answer": "1",
+   "tokens_in": 223,
+   "tokens_out": 31,
+   "latency_ms": 2827,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E570": {
+   "answer": "1",
+   "tokens_in": 256,
+   "tokens_out": 32,
+   "latency_ms": 1304,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E571": {
+   "answer": "1",
+   "tokens_in": 243,
+   "tokens_out": 4,
+   "latency_ms": 1361,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E572": {
+   "answer": "1",
+   "tokens_in": 183,
+   "tokens_out": 63,
+   "latency_ms": 1991,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E574": {
+   "answer": "1",
+   "tokens_in": 290,
+   "tokens_out": 4,
+   "latency_ms": 1746,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E575": {
+   "answer": "1",
+   "tokens_in": 312,
+   "tokens_out": 41,
+   "latency_ms": 1720,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E576": {
+   "answer": "1",
+   "tokens_in": 209,
+   "tokens_out": 27,
+   "latency_ms": 1236,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E578": {
+   "answer": "1",
+   "tokens_in": 290,
+   "tokens_out": 4,
+   "latency_ms": 2289,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E579": {
+   "answer": "1",
+   "tokens_in": 416,
+   "tokens_out": 4,
+   "latency_ms": 1715,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E580": {
+   "answer": "1",
+   "tokens_in": 177,
+   "tokens_out": 36,
+   "latency_ms": 1556,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E581": {
+   "answer": "1",
+   "tokens_in": 328,
+   "tokens_out": 68,
+   "latency_ms": 2001,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E577": {
+   "answer": "1",
+   "tokens_in": 395,
+   "tokens_out": 77,
+   "latency_ms": 5396,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E573": {
+   "answer": "1",
+   "tokens_in": 329,
+   "tokens_out": 90,
+   "latency_ms": 7530,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E582": {
+   "answer": "1",
+   "tokens_in": 347,
+   "tokens_out": 42,
+   "latency_ms": 1763,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E584": {
+   "answer": "1",
+   "tokens_in": 521,
+   "tokens_out": 4,
+   "latency_ms": 930,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E587": {
+   "answer": "1",
+   "tokens_in": 346,
+   "tokens_out": 4,
+   "latency_ms": 1060,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E588": {
+   "answer": "1",
+   "tokens_in": 251,
+   "tokens_out": 4,
+   "latency_ms": 2146,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E583": {
+   "answer": "1",
+   "tokens_in": 343,
+   "tokens_out": 33,
+   "latency_ms": 4804,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E585": {
+   "answer": "1",
+   "tokens_in": 301,
+   "tokens_out": 4,
+   "latency_ms": 5179,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E591": {
+   "answer": "2",
+   "tokens_in": 155,
+   "tokens_out": 35,
+   "latency_ms": 1489,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E586": {
+   "answer": "1",
+   "tokens_in": 412,
+   "tokens_out": 4,
+   "latency_ms": 6734,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E592": {
+   "answer": "2",
+   "tokens_in": 633,
+   "tokens_out": 4,
+   "latency_ms": 1102,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E593": {
+   "answer": "2",
+   "tokens_in": 230,
+   "tokens_out": 40,
+   "latency_ms": 1745,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E590": {
+   "answer": "2",
+   "tokens_in": 216,
+   "tokens_out": 24,
+   "latency_ms": 5600,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E594": {
+   "answer": "2",
+   "tokens_in": 267,
+   "tokens_out": 22,
+   "latency_ms": 1979,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E597": {
+   "answer": "2",
+   "tokens_in": 256,
+   "tokens_out": 4,
+   "latency_ms": 981,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E596": {
+   "answer": "2",
+   "tokens_in": 281,
+   "tokens_out": 27,
+   "latency_ms": 1349,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E589": {
+   "answer": "2",
+   "tokens_in": 200,
+   "tokens_out": 31,
+   "latency_ms": 7266,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E599": {
+   "answer": "2",
+   "tokens_in": 325,
+   "tokens_out": 4,
+   "latency_ms": 925,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E600": {
+   "answer": "2",
+   "tokens_in": 493,
+   "tokens_out": 4,
+   "latency_ms": 1025,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E598": {
+   "answer": "2",
+   "tokens_in": 443,
+   "tokens_out": 31,
+   "latency_ms": 1838,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E602": {
+   "answer": "2",
+   "tokens_in": 212,
+   "tokens_out": 29,
+   "latency_ms": 1432,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E603": {
+   "answer": "2",
+   "tokens_in": 212,
+   "tokens_out": 4,
+   "latency_ms": 1552,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E604": {
+   "answer": "2",
+   "tokens_in": 446,
+   "tokens_out": 4,
+   "latency_ms": 1056,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E595": {
+   "answer": "1",
+   "tokens_in": 181,
+   "tokens_out": 102,
+   "latency_ms": 6620,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E605": {
+   "answer": "2",
+   "tokens_in": 446,
+   "tokens_out": 4,
+   "latency_ms": 1277,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E606": {
+   "answer": "2",
+   "tokens_in": 300,
+   "tokens_out": 4,
+   "latency_ms": 1478,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E607": {
+   "answer": "2",
+   "tokens_in": 207,
+   "tokens_out": 23,
+   "latency_ms": 1420,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E608": {
+   "answer": "2",
+   "tokens_in": 260,
+   "tokens_out": 29,
+   "latency_ms": 1625,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E601": {
+   "answer": "2",
+   "tokens_in": 247,
+   "tokens_out": 60,
+   "latency_ms": 5340,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E610": {
+   "answer": "2",
+   "tokens_in": 209,
+   "tokens_out": 4,
+   "latency_ms": 1039,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E611": {
+   "answer": "2",
+   "tokens_in": 193,
+   "tokens_out": 28,
+   "latency_ms": 1424,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E613": {
+   "answer": "2",
+   "tokens_in": 401,
+   "tokens_out": 4,
+   "latency_ms": 883,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E615": {
+   "answer": "2",
+   "tokens_in": 250,
+   "tokens_out": 4,
+   "latency_ms": 955,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E609": {
+   "answer": "2",
+   "tokens_in": 274,
+   "tokens_out": 26,
+   "latency_ms": 4695,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E616": {
+   "answer": "2",
+   "tokens_in": 420,
+   "tokens_out": 4,
+   "latency_ms": 2061,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E612": {
+   "answer": "2",
+   "tokens_in": 237,
+   "tokens_out": 110,
+   "latency_ms": 4913,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E618": {
+   "answer": "2",
+   "tokens_in": 282,
+   "tokens_out": 4,
+   "latency_ms": 896,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E617": {
+   "answer": "2",
+   "tokens_in": 346,
+   "tokens_out": 33,
+   "latency_ms": 1824,
+   "retries": 0,
+   "cost_usd": null
+  },
+  "E614": {
+   "answer": "2",
+   "tokens_in": 202,
+   "tokens_out": 27,
+   "latency_ms": 5300,
+   "retries": 0,
+   "cost_usd": null
+  }
+ }
+}

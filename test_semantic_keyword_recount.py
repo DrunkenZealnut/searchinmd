@@ -8,6 +8,7 @@ from openpyxl import Workbook, load_workbook
 import json
 import re
 from dataclasses import replace
+from unittest import mock
 
 import semantic_keyword_recount as SKR
 from semantic_keyword_recount import (
@@ -511,6 +512,38 @@ class OutputTests(unittest.TestCase):
         )
         self.assertTrue(all(len(value) == 64 for value in manifest.values()))
 
+    def test_report_has_ranked_keyword_statistics_per_corpus(self):
+        """말뭉치별 키워드 순위 통계 — 출현 내림차순, 비율·누적·등급3 비율·확장분. 교과서에 출현이 없는 키워드도 0 으로 남는다."""
+        sources = [KeywordSource("안전", 3, True), KeywordSource("위험", 1, True), KeywordSource("추락", 0, True)]
+        documents = [
+            Document("NCS", Path("a.md"), "반도체개발/LM1903060101_a/a.md", "<!-- page: 1 -->\n안전 위험 위험\n<!-- page: 2 -->\n안전 safety\n"),
+            Document("NCS", Path("b.md"), "반도체개발/LM1903060102_b/b.md", "<!-- page: 1 -->\n위험 위험\n"),
+            Document("교과서", Path("s.md"), "s.md", "<!-- page: 1 -->\n위험 위험\n"),
+        ]
+        rules = [ExpressionRule("안전", "안전", "exact", "기존 키워드"), ExpressionRule("안전", "safety", "equivalent", "영문"),
+                 ExpressionRule("위험", "위험", "exact", "기존 키워드"), ExpressionRule("추락", "추락", "exact", "기존 키워드")]
+        result = assign_match_grades(aggregate_matches(sources, documents, rules, []), {})
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "report.md"
+            write_report(result, path)
+            report = path.read_text(encoding="utf-8")
+        head, _, _ = report.partition("## 말뭉치별 확장 차이")
+        _, _, stats = head.partition("## 키워드 순위 통계")
+        self.assertTrue(stats, "키워드 순위 통계 절이 없다")
+        ncs, _, school = stats.partition("### 교과서")
+        self.assertIn("### NCS", ncs)
+        ncs_rows = [l for l in ncs.splitlines() if l.startswith("| ") and not l.startswith("| 순위")]
+        self.assertEqual(["위험", "안전", "추락"], [r.split(" | ")[1].strip("`") for r in ncs_rows[:3]])      # 4 > 3 > 0
+        self.assertIn("| 1 | `위험` | 4 | 57.1% | 57.1% |", ncs_rows[0])                                  # 4/7 누적 57.1
+        self.assertIn("| 2 | `안전` | 3 | 42.9% | 100.0% |", ncs_rows[1])
+        self.assertIn("| 3 | `추락` | 0 | 0.0% | 100.0% |", ncs_rows[2])
+        self.assertIn("| 합계 | | 7 | 100.0% |", ncs)
+        self.assertIn("2/2 (100.0%)", ncs_rows[0])                                                        # 위험: 파일 2/2
+        self.assertIn("| 1 | 33.3% |", ncs_rows[1])                                                       # 안전: 확장분 safety 1건 = 1/3
+        school_rows = [l for l in school.splitlines() if l.startswith("| ") and not l.startswith("| 순위")]
+        self.assertEqual(["위험", "안전", "추락"], [r.split(" | ")[1].strip("`") for r in school_rows[:3]])  # 동률 0 은 원본 키워드 순서
+        self.assertIn("| 합계 | | 2 | 100.0% |", school)
+
     def test_manifest_source_hash_includes_grade_workbook_lineage(self):
         base = self.sample_result()
         first = type(base)(
@@ -627,6 +660,129 @@ def _doc(corpus, rel, text):
     return Document(corpus, Path(rel), rel, text)
 
 
+class DictionaryVersionTests(unittest.TestCase):
+    """semantic-expression-review §3.1 — 사전 버전(v1/v1fix/v2), 결함 2건, 조건부 규칙, 비정본 버전의 경로 거부."""
+
+    def _scan(self, text, version, keywords=("안전", "PSM", "MSDS")):
+        rules = build_default_rules(list(keywords), version=version)
+        return scan_document(_doc("NCS", "반도체개발/LM1903060101_a/a.md", text), rules)
+
+    def test_dictionary_versions_and_default(self):
+        self.assertEqual(("v1", "v1fix", "v2"), SKR.DICTIONARY_VERSIONS)
+        self.assertEqual("v2", SKR.DEFAULT_DICTIONARY)          # 결정 3 (연구책임자 2026-09-14): v2 채택
+        self.assertEqual("v2", EXPECTED["dictionary"])
+        with self.assertRaises(ValueError):
+            build_default_rules(["안전"], version="v9")
+
+    def test_v1fix_english_exact_keywords_need_word_boundary(self):
+        text = "<!-- page: 1 -->\nEAPSM 마스크와 Htpsm 공정\nPSM 이행 점검\nMSDS 비치, MSDSX 아님\n"
+        v1 = [(r.expression, r.decision, r.line) for r in self._scan(text, "v1") if r.keyword in ("PSM", "MSDS")]
+        fix = [(r.expression, r.decision, r.line) for r in self._scan(text, "v1fix") if r.keyword in ("PSM", "MSDS")]
+        self.assertEqual(2, sum(1 for e, d, l in v1 if e == "PSM" and d == "included" and l == 2))   # v1: 부분 문자열 2건
+        self.assertEqual([], [x for x in fix if x[0] == "PSM" and x[2] == 2])                        # v1fix: 0건
+        self.assertEqual(1, sum(1 for e, d, l in fix if e == "PSM" and d == "included" and l == 3))
+        self.assertEqual(1, sum(1 for e, d, l in fix if e == "MSDS" and d == "included"))            # MSDSX 는 글자가 이어져 제외
+
+    def test_v1fix_excludes_held_expressions_inside_안전(self):
+        text = "<!-- page: 1 -->\n안전성 검토와 안전 마진 확보\n안전 보건 교육\n작업 안전 수칙\n"
+        v1 = [r for r in self._scan(text, "v1") if r.keyword == "안전"]
+        fix = [r for r in self._scan(text, "v1fix") if r.keyword == "안전"]
+        self.assertEqual(3, sum(1 for r in v1 if r.decision == "included"))        # v1: 안전성·안전 마진·작업 안전 (안전 보건은 기존 제외)
+        self.assertEqual(1, sum(1 for r in fix if r.decision == "included"))       # v1fix: 작업 안전 만
+        held = [r for r in fix if r.decision == "excluded" and r.reason == "보류 표현 내부"]
+        self.assertEqual([2, 2], sorted(r.line for r in held))
+        self.assertEqual(1, sum(1 for r in fix if r.decision == "excluded" and r.reason != "보류 표현 내부"))   # 안전 보건 은 기존 사유 유지
+
+    def test_v1_rule_content_digest_is_unchanged(self):
+        # 2026-09-09 사전의 규칙 내용 지문 — v1 이 은근히 바뀌면 영향표의 기준선이 무너진다
+        self.assertEqual(SKR.V1_RULE_CONTENT_SHA256, SKR.rule_content_sha256(build_default_rules(list(EXPECTED_KEYWORDS), version="v1")))
+
+    def test_require_patterns_exclude_without_companion_in_window(self):
+        rule = ExpressionRule("보호구", "방진복", "specific", "테스트", require_patterns=(r"착용", r"보호"))
+        doc = _doc("NCS", "x/LM1903060101_a/a.md", "<!-- page: 1 -->\n방진복 세탁 주기\n\n방진복 입장\n반드시 착용한다\n<!-- page: 2 -->\n보호 장비\n<!-- page: 3 -->\n방진복 규격\n")
+        got = {(r.line, r.decision, r.reason) for r in scan_document(doc, [rule])}
+        self.assertIn((2, "excluded", "안전 문맥 동반어 없음"), got)      # 같은 줄·앞뒤 줄에 동반어 없음
+        self.assertIn((4, "included", "테스트"), got)                     # 뒷줄 '착용'
+        self.assertIn((9, "excluded", "안전 문맥 동반어 없음"), got)      # 앞 블록(7행 '보호')은 페이지 경계 밖
+        before = _doc("NCS", "x/LM1903060101_a/a.md", "<!-- page: 1 -->\n반드시 착용한다\n방진복 입장\n")
+        self.assertIn((3, "included", "테스트"), {(r.line, r.decision, r.reason) for r in scan_document(before, [rule])})   # 앞줄의 동반어도 창 안
+
+    def test_v2_overrides_apply_held_and_require(self):
+        with mock.patch.dict(SKR._V2_OVERRIDES, {("보호구", "방진복"): {"require_patterns": (r"착용",)}, ("인화", "combustible"): {"decision": "held"}}, clear=True):
+            v2 = build_default_rules(["보호구", "인화"], version="v2")
+            fix = build_default_rules(["보호구", "인화"], version="v1fix")
+            v2_cands = default_candidate_decisions(version="v2")
+        self.assertEqual((r"착용",), next(r for r in v2 if r.expression == "방진복").require_patterns)
+        self.assertEqual((), next(r for r in fix if r.expression == "방진복").require_patterns)
+        self.assertFalse(any(r.expression == "combustible" for r in v2))
+        self.assertTrue(any(r.expression == "combustible" for r in fix))
+        self.assertEqual("held", next(c for c in v2_cands if c.expression == "combustible").decision)
+
+    def test_v2_decision_2_contents(self):
+        """결정 2 (연구책임자 2026-09-14, 계층별 처방): 뜻이 다른 표현만 고친다 — 보류 방진화·케미컬, 조건부 방진복·장갑·X선·PSM. 동의어·가연성·combustible 은 그대로."""
+        v2 = {(c.keyword, c.expression): c for c in default_candidate_decisions(version="v2")}
+        fix = {(c.keyword, c.expression): c for c in default_candidate_decisions(version="v1fix")}
+        self.assertEqual("held", v2[("보호구", "방진화")].decision); self.assertEqual("included", fix[("보호구", "방진화")].decision)
+        self.assertEqual("held", v2[("화학물질", "케미컬")].decision)
+        for key in (("보호구", "방진복"), ("보호구", "장갑"), ("방사선", "X선")):
+            self.assertEqual(SKR.SAFETY_COMPANIONS, v2[key].require_patterns, key); self.assertEqual((), fix[key].require_patterns, key)
+        for key in (("화학물질", "화학약품"), ("화학물질", "화학 물질"), ("누출", "누설"), ("작업환경", "작업 환경"), ("인화", "가연성"), ("인화", "combustible")):
+            self.assertEqual(fix[key], v2[key], key)
+        self.assertEqual("held", v2[("방사선", "자외선")].decision)
+        rules = {r.expression: r for r in build_default_rules(["PSM", "보호구"], version="v2")}
+        self.assertEqual(SKR.SAFETY_COMPANIONS, rules["PSM"].require_patterns)                   # 정확 키워드에도 조건부가 걸린다
+        self.assertEqual((), next(r for r in build_default_rules(["PSM"], version="v1fix") if r.expression == "PSM").require_patterns)
+        self.assertNotEqual(SKR.rule_content_sha256(build_default_rules(list(SKR.EXPECTED_KEYWORDS), "v1fix")), SKR.rule_content_sha256(build_default_rules(list(SKR.EXPECTED_KEYWORDS), "v2")))
+
+    def test_v2_exact_psm_counts_only_with_companion(self):
+        text = "<!-- page: 1 -->\nPSM(phase shift mask) 종류\n감광제 종류\n\nPSM 이행 점검\n위험성 평가 기록\n"
+        v2 = [r for r in self._scan(text, "v2", keywords=("PSM",)) if r.keyword == "PSM"]
+        self.assertEqual([(2, "excluded", SKR.NO_COMPANION_REASON), (5, "included", "기존 키워드의 정확 문자열")], [(r.line, r.decision, r.reason) for r in v2])
+        fix = [r for r in self._scan(text, "v1fix", keywords=("PSM",)) if r.keyword == "PSM"]
+        self.assertEqual(2, sum(1 for r in fix if r.decision == "included"))
+
+    def test_non_default_dictionary_refuses_tracked_outputs_and_records_mismatch(self):
+        # 거부 경로는 실제 저장소가 아니라 임시 디렉터리 안의 "같은 모양" 경로로 만든다 (HERE 를 임시로 바꿈).
+        # 2026-09-14 에 이 테스트가 실제 data/semantic_keyword_recount_20260914.xlsx 를 fixture 로 덮어쓴 적이 있다 —
+        # 거부가 실패하면 테스트가 실패해야지, 정본 산출물이 지워지면 안 된다.
+        with tempfile.TemporaryDirectory() as td, mock.patch.object(SKR, "HERE", Path(td)):
+            kw = census_fixture(Path(td))
+            (Path(td) / "docs/03-analysis/data").mkdir(parents=True)
+            with self.assertRaises(ValueError) as ctx:
+                run_census(**dict(kw, summary_out=Path(td) / "docs/03-analysis/data/semantic_summary.json"),
+                           dictionary="v1", expected={"documents": {"NCS": 86, "교과서": 9}}, git={"commit": "x", "dirty": False}, argv=["x"])
+            self.assertIn("v1", str(ctx.exception))
+            self.assertFalse((Path(td) / "docs/03-analysis/data/semantic_summary.json").exists())
+            with self.assertRaises(ValueError):
+                run_census(**dict(kw, xlsx_out=Path(td) / "semantic_keyword_recount_20260914.xlsx"), dictionary="v1fix",
+                           expected={"documents": {"NCS": 86, "교과서": 9}}, git={"commit": "x", "dirty": False}, argv=["x"])
+            self.assertFalse((Path(td) / "semantic_keyword_recount_20260914.xlsx").exists())
+            run_census(**kw, dictionary="v1", summary_out=Path(td) / "s.json",
+                       expected={"documents": {"NCS": 86, "교과서": 9}, "totals": {"NCS": 999, "교과서": 0}},
+                       git={"commit": "x", "dirty": False}, argv=["x"])
+            summary = json.loads((Path(td) / "s.json").read_text(encoding="utf-8"))
+        self.assertEqual("v1", summary["meta"]["run"]["dictionary"])
+        self.assertIsNone(summary["meta"]["run"]["expected"])                    # 비정본 버전: 불일치는 기록만
+        self.assertEqual((False, True), (summary["meta"]["run"]["force"], summary["meta"]["run"]["variant"]))   # --force 를 준 적 없다 — 변형 실행이라 기록만 한 것 (적대적 리뷰 F12)
+        self.assertTrue(any(m.startswith("totals.NCS") for m in summary["meta"]["run"]["expected_mismatch"]))
+
+
+def graded_result(text="<!-- page: 1 -->\n안전 안전\n", corpus="NCS", rel="반도체개발/LM1903060101_a/a.md"):
+    """등급까지 붙은 최소 결과 — 여러 테스트 클래스가 공유하는 fixture (RemediationTests._graded_result 와 같다)."""
+    result = aggregate_matches(
+        [KeywordSource("안전", 1, True)],
+        [_doc(corpus, rel, text)],
+        [ExpressionRule("안전", "안전", "exact", "기존 키워드")],
+        [CandidateDecision("안전", "안전성", "held", "equivalent", "문맥 혼재")],
+    )
+    return assign_match_grades(result, {})
+
+
+def census_fixture(root, ncs_body="<!-- page: 1 -->\n안전 안내\n"):
+    """run_census 용 임시 말뭉치·워크북 kwargs — RemediationTests._census_fixture 의 모듈 수준 이름."""
+    return RemediationTests._census_fixture(RemediationTests(), root, ncs_body)
+
+
 class RemediationTests(unittest.TestCase):
     """2026-09-13 외부감사 시정(semantic-recount-remediation) — 코퍼스 규칙·가드·manifest·산출물."""
 
@@ -675,13 +831,7 @@ class RemediationTests(unittest.TestCase):
         self.assertNotIn(None, list(leaves(EXPECTED)))
 
     def _graded_result(self, text="<!-- page: 1 -->\n안전 안전\n", corpus="NCS", rel="반도체개발/LM1903060101_a/a.md"):
-        result = aggregate_matches(
-            [KeywordSource("안전", 1, True)],
-            [_doc(corpus, rel, text)],
-            [ExpressionRule("안전", "안전", "exact", "기존 키워드")],
-            [CandidateDecision("안전", "안전성", "held", "equivalent", "문맥 혼재")],
-        )
-        return assign_match_grades(result, {})
+        return graded_result(text, corpus, rel)
 
     def test_summary_metrics_and_check_expected_list_every_mismatch_and_skip_none(self):
         result = self._graded_result()
@@ -792,7 +942,10 @@ class RemediationTests(unittest.TestCase):
         self.assertRegex(run["python"], r"^\d+\.\d+")
         self.assertRegex(run["openpyxl"], r"^\d+\.\d+")
         self.assertTrue(run["expected"])
+        self.assertEqual((False, False), (run["force"], run["variant"]))
         self.assertEqual([{"code": "LM1", "kept": "k.md", "dropped": ["d.md"]}], run["dedup"])
+        variant = run_manifest(result, argv=["x"], force=False, expected_mismatch=["totals.NCS: 1 != 2"], git={"commit": "abc1234", "dirty": True}, variant=True)
+        self.assertEqual((None, False, True), (variant["expected"], variant["force"], variant["variant"]))
         self.assertRegex(run["generated_at"], r"^\d{4}-\d{2}-\d{2}T")
         self.assertTrue(all("sha256" in item and "count" in item and "kind" in item for item in run["inputs"]))
 
@@ -871,6 +1024,7 @@ class RemediationTests(unittest.TestCase):
         S = json.loads((Path(SKR.__file__).parent / "docs/03-analysis/data/semantic_summary.json").read_text(encoding="utf-8"))
         C = ("NCS", "교과서")
         metrics = {
+            "dictionary": S["meta"]["run"]["dictionary"],
             "documents": {c: S["corpora"][c]["documents"] for c in C},
             "totals": {c: S["corpora"][c]["total"] for c in C},
             "grades": {c: S["corpora"][c]["grades"] for c in C},
@@ -924,6 +1078,26 @@ class RemediationTests(unittest.TestCase):
         self.assertIsNotNone(SKR._NCS_CODE_RE.search("반도체개발/LM1903060101_x/x.md"))
         kept, dedup = select_ncs_documents([_doc("NCS", "x/lm1903060101_a/a.md", "<!-- page: 1 -->\n"), _doc("NCS", "x/LM1903060101_b/b.md", "")])
         self.assertEqual(1, len(kept)); self.assertEqual("LM1903060101", dedup[0].code)
+
+    def test_summary_payload_has_keyword_groups_and_group_pages(self):
+        """hwpx-ncs-section-refresh D1·D2 — 키워드×그룹 총계·등급, 그룹의 교재 실제 쪽수(마커 최대값 합)."""
+        docs = [_doc("NCS", "반도체개발/LM1903060101_a/a.md", "<!-- page: 1 -->\n안전 위험\n<!-- page: 3 -->\n안전\n"),
+                _doc("NCS", "반도체장비/LM1903060301_b/b.md", "<!-- page: 1 -->\n위험\n<!-- page: 2 -->\n\n"),
+                _doc("NCS", "반도체장비/LM1903060302_c/c.md", "안전\n")]          # 마커 없음 → 0쪽, 미확정 출현
+        result = assign_match_grades(aggregate_matches([KeywordSource("안전", 1, True), KeywordSource("위험", 1, True)], docs,
+                                                       [ExpressionRule("안전", "안전", "exact", "기존"), ExpressionRule("위험", "위험", "exact", "기존")], []), {})
+        payload = summary_payload(result)
+        groups = {g["name"]: g for g in payload["corpora"]["NCS"]["groups"]}
+        self.assertEqual({"반도체개발": 3, "반도체장비": 2}, {n: g["pages"] for n, g in groups.items()})          # max marker 3 / 2 + 0
+        kw = {k["name"]: k["corpora"]["NCS"] for k in payload["keywords"]}
+        self.assertEqual([("반도체개발", 2), ("반도체장비", 1)], [(g["name"], g["total"]) for g in kw["안전"]["groups"]])
+        self.assertEqual([("반도체개발", 1), ("반도체장비", 1)], [(g["name"], g["total"]) for g in kw["위험"]["groups"]])
+        for name, c in kw.items():
+            self.assertEqual(c["total"], sum(g["total"] for g in c["groups"]), name)
+            for grade in ("1", "2", "3", "unpaged"):
+                self.assertEqual(c["grades"][grade], sum(g["grades"][grade] for g in c["groups"]), (name, grade))
+        self.assertEqual(1, kw["안전"]["groups"][1]["grades"]["unpaged"] + kw["안전"]["groups"][1]["grades"]["1"])   # c.md 의 안전 1건 (unpaged-context 또는 등급1)
+        self.assertEqual([g["name"] for g in payload["corpora"]["NCS"]["groups"]], [g["name"] for g in kw["안전"]["groups"]])   # 그룹 순서 동일
 
     def test_analysis_pages_escape_document_text_and_have_scroll_regions(self):
         result = self._graded_result(text="<!-- page: 1 -->\n안전 <script>&\"x\"\n")
@@ -985,6 +1159,93 @@ class RemediationTests(unittest.TestCase):
         self.assertIn("NCS 교재 1권", index)
         self.assertIn("검색결과 전체: <strong>2건</strong>", ncs)
         self.assertNotIn("report", index)
+
+
+class DictionaryVersionAuditTests(unittest.TestCase):
+    """ship 커버리지 감사(2026-09-14) — 사전 버전 경로에서 아직 안 짚인 가지: main() 의 --dictionary 전달, 잘못된 버전의 조기 거부,
+    변형 거부의 나머지 두 라벨(report_out 기본 이름·analysis_dir 추적 경로), EXPECTED.dictionary 불일치, v1≡v1fix 후보 목록, 빈 문서의 그룹 쪽수."""
+
+    def _main_with(self, argv_tail):
+        import io, contextlib
+        seen = {}
+        def fake_run_census(*args, **kwargs):
+            seen.update(kwargs); return graded_result()
+        argv = ["semantic_keyword_recount.py", "--source-workbook", "s.xlsx", "--ncs-root", "n", "--school-root", "t",
+                "--xlsx-out", "o.xlsx", "--report-out", "r.md"] + argv_tail
+        out = io.StringIO()
+        with mock.patch.object(SKR, "run_census", fake_run_census), mock.patch.object(SKR.sys, "argv", argv), \
+                contextlib.redirect_stdout(out), contextlib.redirect_stderr(io.StringIO()):
+            SKR.main()
+        self.assertIn(f'"dictionary": "{seen["dictionary"]}"', out.getvalue())      # 측정값 블록도 실제 돌린 사전을 적는다 (ship 리뷰)
+        return seen["dictionary"]
+
+    def test_main_passes_dictionary_to_run_census_and_rejects_unknown_choice(self):
+        """--dictionary 는 run_census 로 그대로 간다; 생략하면 정본(v2); 목록 밖 값은 argparse 가 막는다."""
+        self.assertEqual("v1fix", self._main_with(["--dictionary", "v1fix"]))
+        self.assertEqual(SKR.DEFAULT_DICTIONARY, self._main_with([]))
+        with self.assertRaises(SystemExit):
+            self._main_with(["--dictionary", "v9"])
+
+    def test_run_census_rejects_unknown_version_before_reading_inputs(self):
+        """버전 검사가 파일 검사보다 앞이다 — 존재하지 않는 입력으로도 ValueError(버전) 가 먼저 난다."""
+        with self.assertRaises(ValueError) as ctx:
+            run_census(Path("없는.xlsx"), Path("없는-ncs"), Path("없는-school"), Path("o.xlsx"), Path("r.md"), dictionary="v9")
+        self.assertIn("v9", str(ctx.exception))
+        with self.assertRaises(ValueError):
+            default_candidate_decisions(version="v9")
+
+    def test_variant_refuses_report_default_name_and_analysis_dir_under_docs(self):
+        """변형 실행이 거부하는 나머지 두 자리 — report_out 의 정본 기본 이름, analysis_dir 의 docs/ 하위. 거부 뒤에는 아무것도 쓰지 않는다."""
+        with tempfile.TemporaryDirectory() as td, mock.patch.object(SKR, "HERE", Path(td)):
+            kw = census_fixture(Path(td))
+            expected = {"documents": {"NCS": 86, "교과서": 9}}
+            with self.assertRaises(ValueError) as ctx:
+                run_census(**dict(kw, report_out=Path(td) / "semantic_keyword_recount_20260914_report.md"), dictionary="v1fix",
+                           expected=expected, git={"commit": "x", "dirty": False}, argv=["x"])
+            self.assertIn("report_out", str(ctx.exception))
+            self.assertFalse((Path(td) / "semantic_keyword_recount_20260914_report.md").exists())
+            self.assertFalse(kw["xlsx_out"].exists())
+            (Path(td) / "docs").mkdir()
+            with self.assertRaises(ValueError) as ctx:
+                run_census(**kw, dictionary="v1", analysis_dir=Path(td) / "docs" / "pages", expected=expected, git={"commit": "x", "dirty": False}, argv=["x"])
+            self.assertIn("analysis_dir", str(ctx.exception))
+            self.assertEqual([], list((Path(td) / "docs").iterdir()))
+            self.assertFalse(kw["xlsx_out"].exists())
+
+    def test_check_expected_catches_dictionary_mismatch(self):
+        """summary_metrics 의 dictionary 는 EXPECTED 와 글자 그대로 비교된다 — v1fix 실행을 v2 정본으로 굳힐 수 없다."""
+        result = graded_result()
+        metrics = summary_metrics(result, artifact_manifest(result), dictionary="v1fix")
+        self.assertEqual("v1fix", metrics["dictionary"])
+        self.assertIn("dictionary: v1fix != v2", check_expected(metrics, {"dictionary": "v2"}))
+        self.assertEqual([], check_expected(summary_metrics(result, artifact_manifest(result)), {"dictionary": SKR.DEFAULT_DICTIONARY}))
+
+    def test_v1_and_v1fix_share_candidate_decisions_and_v2_differs_only_in_overrides(self):
+        """결함 2건(v1fix)은 정확 규칙 쪽이라 후보 목록은 v1 과 같다; v2 는 _V2_OVERRIDES 의 키에서만 다르다."""
+        v1, fix, v2 = (default_candidate_decisions(version=v) for v in ("v1", "v1fix", "v2"))
+        self.assertEqual(v1, fix)
+        self.assertEqual(len(v1), len(v2))
+        changed = {(a.keyword, a.expression) for a, b in zip(fix, v2) if a != b}
+        self.assertEqual({(k, e) for k, e in SKR._V2_OVERRIDES if k != e}, changed)      # 키워드==표현(PSM) 은 정확 규칙 쪽에 적용된다
+        self.assertTrue(all((c.keyword, c.expression) in SKR._V2_OVERRIDES or c.require_patterns == () for c in v2))
+
+    def test_group_pages_zero_for_empty_document_and_max_marker_otherwise(self):
+        """그룹 쪽수는 문서별 마커 최댓값의 합 — 본문이 빈 문서는 0 이고 max(()) 로 죽지 않는다; 마커가 역행해도 최댓값을 쓴다."""
+        docs = [_doc("NCS", "반도체재료/LM1903060401_a/a.md", ""),
+                _doc("NCS", "반도체재료/LM1903060402_b/b.md", "<!-- page: 5 -->\n안전\n<!-- page: 2 -->\n안전\n"),
+                _doc("NCS", "반도체제조/LM1903060201_c/c.md", "   \n")]
+        result = assign_match_grades(aggregate_matches([KeywordSource("안전", 1, True)], docs, [ExpressionRule("안전", "안전", "exact", "기존")], []), {})
+        payload = summary_payload(result)
+        groups = {g["name"]: g for g in payload["corpora"]["NCS"]["groups"]}
+        self.assertEqual(5, groups["반도체재료"]["pages"])
+        self.assertEqual(2, groups["반도체재료"]["documents"])
+        self.assertEqual({"documents": 1, "pages": 0, "total": 0}, {k: groups["반도체제조"][k] for k in ("documents", "pages", "total")})   # 출현이 없는 그룹도 문서·쪽수 분모에 남는다 (Codex 적대적 리뷰)
+        trailing = _doc("NCS", "반도체개발/LM1903060101_d/d.md", "<!-- page: 1 -->\n안전\n<!-- page: 100 -->\n")
+        payload = summary_payload(assign_match_grades(aggregate_matches([KeywordSource("안전", 1, True)], [trailing], [ExpressionRule("안전", "안전", "exact", "기존")], []), {}))
+        self.assertEqual(100, payload["corpora"]["NCS"]["groups"][0]["pages"])   # 본문 없는 마지막 마커도 쪽수에 든다
+        marker_only = _doc("NCS", "반도체개발/LM1903060102_e/e.md", "<!-- page: 3 -->\n")
+        payload = summary_payload(assign_match_grades(aggregate_matches([KeywordSource("안전", 1, True)], [marker_only], [ExpressionRule("안전", "안전", "exact", "기존")], []), {}))
+        self.assertEqual(3, payload["corpora"]["NCS"]["groups"][0]["pages"])     # 마커만 있는 문서도 죽지 않는다
 
 
 if __name__ == "__main__":

@@ -104,8 +104,19 @@ for (const [name, c] of [['NCS', N], ['교과서', T]]) {
   check('S3d ' + name + ' 그룹 합 == corpus total, 그룹 문서 합 == documents', c.groups.reduce((a, g) => a + g.total, 0) === c.total && c.groups.reduce((a, g) => a + g.documents, 0) === c.documents);
 }
 check('S3e 문서 수 NCS 86 / 교과서 9', N.documents === 86 && T.documents === 9, N.documents + '/' + T.documents);
-check('S3f 후보 판정 합 100, 포함 75', Object.values(S.status).reduce((a, b) => a + b, 0) === 100 && S.status.included === 75, JSON.stringify(S.status));
+check('S3f 후보 판정 합 100, 포함 73 / 보류 21 (사전 v2: 방진화·케미컬 보류 전환)', Object.values(S.status).reduce((a, b) => a + b, 0) === 100 && S.status.included === 73 && S.status.held === 21, JSON.stringify(S.status));
 check('S3g 등급 출처(existing/new/unpaged-*) 합 == total, 강제 배정 ≤ 5건', [N, T].every((c) => Object.values(c.grade_sources).reduce((a, b) => a + b, 0) === c.total && (c.grade_sources['unpaged-context'] + c.grade_sources['unpaged-fallback']) <= 5), JSON.stringify([N.grade_sources, T.grade_sources]));
+// hwpx-ncs-section-refresh D1·D2 — 키워드×그룹 합 == 키워드 총계·등급, 그룹 pages(마커 최대값 합): 교과서 9권 합 == recount summary.json 의 total_pages
+const RC = JSON.parse(read('docs/03-analysis/data/summary.json'));
+const kwGroupErrors = [];
+for (const k of S.keywords) for (const corpus of ['NCS', '교과서']) {
+  const c = k.corpora[corpus]; const names = S.corpora[corpus].groups.map(g => g.name);
+  if (!c.groups || c.groups.map(g => g.name).join('|') !== names.join('|')) { kwGroupErrors.push(k.name + ' ' + corpus + ' groups'); continue; }
+  if (c.groups.reduce((a, g) => a + g.total, 0) !== c.total) kwGroupErrors.push(k.name + ' ' + corpus + ' total');
+  for (const g of ['1', '2', '3', 'unpaged']) if (c.groups.reduce((a, x) => a + x.grades[g], 0) !== c.grades[g]) kwGroupErrors.push(k.name + ' ' + corpus + ' g' + g);
+}
+check('S3l 키워드×그룹 합 == 키워드 총계·등급 (NCS 4그룹 · 교과서 9그룹)', kwGroupErrors.length === 0, kwGroupErrors.slice(0, 3).join('; '));
+check('S3m 그룹 pages: NCS 4그룹 > 0, 교과서 9그룹 합 == recount total_pages (2,055)', N.groups.every(g => g.pages > 0) && T.groups.reduce((a, g) => a + g.pages, 0) === RC.textbook.total_pages, T.groups.reduce((a, g) => a + g.pages, 0) + ' vs ' + RC.textbook.total_pages);
 check('S3h 중복 제거 1건 기록 (LM1903060205)', S.meta.run.dedup.length === 1 && S.meta.run.dedup[0].code === 'LM1903060205' && S.meta.run.dedup[0].dropped.length === 1);
 check('S3i 절대 경로·홈·본문 필드 없음', !/\/Users\/|\/home\/|relative_path|"context"/.test(JSON.stringify(S)));
 check('S3j manifest 4종 해시 + 입력 6종(워크북 3·마크다운 2·이전 기준) sha256, 비단조 마커 경고는 레거시 1권뿐', ['source_sha256', 'rule_sha256', 'detail_sha256', 'summary_sha256'].every((k) => /^[0-9a-f]{64}$/.test(S.meta.manifest[k])) && S.meta.run.inputs.length === 6 && S.meta.run.inputs.some((i) => i.kind === '이전 기준') && S.meta.run.inputs.every((i) => /^[0-9a-f]{64}$/.test(i.sha256)) && S.meta.run.marker_nonmonotone.length === 1 && S.meta.run.marker_nonmonotone[0].includes('LM1903060113'), JSON.stringify(S.meta.run.marker_nonmonotone));
@@ -152,6 +163,27 @@ check('S7b "이전 기준" 문장 == reseg (145/2,189, 6.6%)', readme.includes('
 check('S7c 구 문구 없음 (85개 자료, report 제외) · 교재 86권', !readme.includes('85개') && !readme.includes('report 자료') && readme.includes('86권'));
 check('S7d 재생성 절에 정본 명령·shift_page_markers·data_source', readme.includes('semantic_keyword_recount.py') && readme.includes('--ncs-root data_source/markdown/ncs') && readme.includes('shift_page_markers.py') && readme.includes('data_source'));
 check('S7e 의미 출현 총계 == summary', readme.includes(fmt(N.total) + '건') && readme.includes(fmt(T.total) + '건'));
+const readLine = readme.split('\n').find((l) => l.startsWith('그래서 ') && l.includes('이렇게까지만')) || '';
+check('S7g "이렇게까지만 읽어야" 문장의 등급3 비율 == summary·reseg (구 20.8% 아님)', readLine.includes(pct(N.grades['3'], N.graded) + '%(이전 기준 ' + pct(R.page_g['3'], R.pages) + '%)') && !readme.includes('20.8%(이전 기준'));
+// 추적 분석 문서의 말뭉치별 키워드 순위표 — 30행 × 2, 순위·출현·정확/동등/구체·등급1/2/3 전부 summary.keywords 와 같아야 한다
+const skr = read('docs/03-analysis/semantic-keyword-recount.analysis.md');
+const rankBlock = skr.split('## Keyword ranking by corpus')[1] || '';
+const rankErrors = [];
+for (const corpus of ['NCS', '교과서']) {
+  const part = (rankBlock.split('### ' + corpus)[1] || '').split('### ')[0];
+  const rows = part.split('\n').filter(l => /^\| \d+ \| `/.test(l)).map(l => l.split('|').map(c => c.trim()));
+  const want = S.keywords.map(k => ({ name: k.name, c: k.corpora[corpus] })).sort((a, b) => b.c.total - a.c.total || S.keywords.findIndex(k => k.name === a.name) - S.keywords.findIndex(k => k.name === b.name));
+  if (rows.length !== want.length) rankErrors.push(corpus + ' rows ' + rows.length);
+  rows.forEach((r, i) => {
+    const w = want[i]; if (!w) return;
+    const got = [r[1], r[2].replace(/`/g, ''), r[3], r[6], r[7], r[8], r[9], r[10], r[11]].join('|');
+    const exp = [String(i + 1), w.name, fmt(w.c.total), fmt(w.c.exact), fmt(w.c.equivalent), fmt(w.c.specific), fmt(w.c.grades['1']), fmt(w.c.grades['2']), fmt(w.c.grades['3'])].join('|');
+    if (got !== exp) rankErrors.push(corpus + ' ' + got + ' != ' + exp);
+  });
+  const total = part.match(/\| 합계 \| \| ([\d,]+) \|/);
+  if (!total || total[1] !== fmt(S.corpora[corpus].total)) rankErrors.push(corpus + ' 합계 ' + (total && total[1]));
+}
+check('S7f semantic-keyword-recount.analysis.md 키워드 순위표 (NCS·교과서 30행) == summary.keywords', rankErrors.length === 0, rankErrors.slice(0, 3).join('; '));
 
 // ================================================================ S8 CLAUDE.md
 console.log('\n[S8] CLAUDE.md');

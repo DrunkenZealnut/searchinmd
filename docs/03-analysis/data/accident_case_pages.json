@@ -1,0 +1,142 @@
+{
+  "source": "docs/03-analysis/resegment-results.analysis.md §3.4 (원문 확인 판정, 2026-09-06) · docs/03-analysis/data/ncs_pages_reseg.csv 사고사례=예 13쪽",
+  "date": "2026-09-06",
+  "unit": "재세그먼트 실제 PDF 쪽 (old_label 은 2026-04 워크북 라벨)",
+  "verdicts": {
+    "case": "실제 사고 서술 — 반도체 산업재해",
+    "case_other": "실제 사고 서술 — 반도체 산업재해 아님",
+    "false_positive": "오탐 — 자동 판정(사고사례여부=예)이 잡았으나 원문은 지침·정의·물성"
+  },
+  "pages": [
+    {
+      "book": "LM1903060329_19v1_반도체_장비_안전관리",
+      "title": "반도체 장비 안전관리",
+      "area": "장비",
+      "page": 33,
+      "old_label": "46",
+      "gist": "구미 H사 불산 가스 누출 (사망·부상)",
+      "verdict": "case",
+      "event": "gumi-hf-2012"
+    },
+    {
+      "book": "LM1903060411_23v3_반도체_재료_안전관리",
+      "title": "반도체 재료 안전관리",
+      "area": "재료",
+      "page": 27,
+      "old_label": "28",
+      "gist": "구미 불산 누출 — 같은 사건 중복 게재",
+      "verdict": "case",
+      "event": "gumi-hf-2012"
+    },
+    {
+      "book": "LM1903060411_23v3_반도체_재료_안전관리",
+      "title": "반도체 재료 안전관리",
+      "area": "재료",
+      "page": 33,
+      "old_label": "33",
+      "gist": "2014년 공연장 환풍구 붕괴 (반도체 산업재해 아님)",
+      "verdict": "case_other",
+      "event": "pangyo-vent-2014"
+    },
+    {
+      "book": "LM1903060329_19v1_반도체_장비_안전관리",
+      "title": "반도체 장비 안전관리",
+      "area": "장비",
+      "page": 53,
+      "old_label": "142·143",
+      "gist": "무재해운동 정의",
+      "verdict": "false_positive",
+      "kind": "definition"
+    },
+    {
+      "book": "LM1903060329_19v1_반도체_장비_안전관리",
+      "title": "반도체 장비 안전관리",
+      "area": "장비",
+      "page": 97,
+      "old_label": "154",
+      "gist": "보호구 착용 지침",
+      "verdict": "false_positive",
+      "kind": "guideline"
+    },
+    {
+      "book": "LM1903060329_19v1_반도체_장비_안전관리",
+      "title": "반도체 장비 안전관리",
+      "area": "장비",
+      "page": 103,
+      "old_label": "154",
+      "gist": "보호구 착용 지침",
+      "verdict": "false_positive",
+      "kind": "guideline"
+    },
+    {
+      "book": "LM1903060329_19v1_반도체_장비_안전관리",
+      "title": "반도체 장비 안전관리",
+      "area": "장비",
+      "page": 105,
+      "old_label": "154",
+      "gist": "보호구 착용 지침",
+      "verdict": "false_positive",
+      "kind": "guideline"
+    },
+    {
+      "book": "LM1903060329_19v1_반도체_장비_안전관리",
+      "title": "반도체 장비 안전관리",
+      "area": "장비",
+      "page": 107,
+      "old_label": "154",
+      "gist": "보호구 착용 지침",
+      "verdict": "false_positive",
+      "kind": "guideline"
+    },
+    {
+      "book": "LM1903060329_19v1_반도체_장비_안전관리",
+      "title": "반도체 장비 안전관리",
+      "area": "장비",
+      "page": 110,
+      "old_label": "154",
+      "gist": "보호구 착용 지침",
+      "verdict": "false_positive",
+      "kind": "guideline"
+    },
+    {
+      "book": "LM1903060329_19v1_반도체_장비_안전관리",
+      "title": "반도체 장비 안전관리",
+      "area": "장비",
+      "page": 112,
+      "old_label": "154",
+      "gist": "보호구 착용 지침",
+      "verdict": "false_positive",
+      "kind": "guideline"
+    },
+    {
+      "book": "LM1903060402_14v1_반도체용_리소그래피_재료_제조",
+      "title": "반도체용 리소그래피 재료 제조",
+      "area": "재료",
+      "page": 69,
+      "old_label": "91",
+      "gist": "톨루엔 물성",
+      "verdict": "false_positive",
+      "kind": "property"
+    },
+    {
+      "book": "LM1903060421_23v3_반도체용_포토_공정_재료_제조",
+      "title": "반도체용 포토 공정 재료 제조",
+      "area": "재료",
+      "page": 67,
+      "old_label": "68",
+      "gist": "톨루엔 유해성",
+      "verdict": "false_positive",
+      "kind": "property"
+    },
+    {
+      "book": "LM1903060422_23v3_반도체용_트랙_공정_재료_제조",
+      "title": "반도체용 트랙 공정 재료 제조",
+      "area": "재료",
+      "page": 78,
+      "old_label": "78",
+      "gist": "톨루엔 인화성",
+      "verdict": "false_positive",
+      "kind": "property"
+    }
+  ]
+}

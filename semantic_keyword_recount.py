@@ -33,24 +33,48 @@ PAGE_MARKER_RE = re.compile(r"^\s*" + _MARKER_ANYWHERE_RE.pattern + r"\s*$", re.
 # (resegment.py·recount_grades.py 의 EXPECTED 와 같은 규약). None 은 아직 고정 전 — 비교하지 않는다.
 # documents 는 --force 로도 우회하지 않는다: 코퍼스가 다르면 정본이 아니다. grades.*.unpaged 0 은
 # 연구책임자 결정(2026-09-13, 미배정을 두지 않는다)을 코드가 지키는 자리다.
+DEFAULT_SCHOOL_GRADE_WORKBOOK_NAME = "ncs_keywords_in_markdown_results_교과서_results_20260415.xlsx"   # --source-workbook 과 같은 폴더에서 찾는다
+DICTIONARY_VERSIONS = ("v1", "v1fix", "v2")      # 사전 버전 — v1 2026-09-09 원본, v1fix 결함 2건 수정, v2 도메인 점검 반영(정본)
+DEFAULT_DICTIONARY = "v2"                          # 연구책임자 결정 3 (2026-09-14): 표현 점검(expression-review.analysis.md) 결과 v2 채택 — v1fix 는 결정 1(결함 2건 반영)의 중간 정본
+V1_RULE_CONTENT_SHA256 = "6fc926de45d9ca584d3c470e77caca316f65d3d83d45da10cf3322f487b857e3"   # v1(2026-09-09) 규칙 내용 지문 — 영향표의 기준선이 은근히 바뀌지 않게
+SAFETY_COMPANIONS = (r"착용", r"보호", r"노출", r"피폭", r"화상", r"부상", r"위험", r"유해", r"안전", r"보건", r"재해", r"사고")   # 조건부 포함의 동반어 초기 가설 — 점검 결과로 귀납·갱신
+# (키워드, 표현) → {"decision": "held"} 또는 {"require_patterns": (...)}. 점검 결과(expression_review_scores.json)를 보고 손으로 채운다.
+# 결정 2 (연구책임자 2026-09-14, 계층별 처방): 정밀도 하한 < 0.8 후보 13개 중 **뜻이 키워드와 다른** 표현만 고친다 —
+# 오염관리 장비어(방진복 5/30·방진화 0/30·장갑 22/30), 계측(X선 5/30), 설비명(케미컬 1/30), 마스크(PSM 1/16).
+# 조건부로도 살릴 것이 없는 방진화(0/2)·케미컬(1/7)은 보류, 동반어 창이 O 를 지키는 방진복(5/10)·장갑(22/23)·X선(4/5)·PSM(1/2)은 조건부.
+# 동의어(화학약품·화학 물질·누설·작업 환경)는 정확 키워드에도 같은 공정 문맥이 있어 그대로 둔다(analysis §5); 가연성(28/30 경계)·combustible(n=2)도 유지.
+# 키워드 == 표현 인 항목은 정확 규칙(build_default_rules)에 적용된다.
+_V2_OVERRIDES: dict[tuple[str, str], dict[str, object]] = {
+    ("보호구", "방진화"): {"decision": "held"},
+    ("화학물질", "케미컬"): {"decision": "held"},
+    ("보호구", "방진복"): {"require_patterns": SAFETY_COMPANIONS},
+    ("보호구", "장갑"): {"require_patterns": SAFETY_COMPANIONS},
+    ("방사선", "X선"): {"require_patterns": SAFETY_COMPANIONS},
+    ("PSM", "PSM"): {"require_patterns": SAFETY_COMPANIONS},
+}
+HOMONYM_REASON = "동음이의 또는 비대상 문맥 제외"
+HELD_INSIDE_REASON = "보류 표현 내부"
+NO_COMPANION_REASON = "안전 문맥 동반어 없음"
+
 GRADE_SOURCES = ("existing", "new", "unpaged-context", "unpaged-fallback")   # 등급 출처 — EXPECTED·payload·워크북 라벨·하니스가 같은 집합을 쓴다
 GRADE_SOURCE_LABEL = {"existing": "기존 판정", "new": "신규 판정", "unpaged-context": "문맥 판정(마커 없음)", "unpaged-fallback": "등급1 배정(본문 없음)"}
 STRICT_GROUPS = ("documents", "grade_sources", "candidates", "dedup")         # 이 그룹은 EXPECTED 에 없는 키가 실측에 끼어들어도 불일치다 (적대적 리뷰)
 
 EXPECTED = {
+    "dictionary": DEFAULT_DICTIONARY,                                                     # v2 (2026-09-14, 결정 3): v1fix(12,310/1,272)에서 NCS −793·교과서 −65 — 보류 방진화·케미컬, 조건부 방진복·장갑·X선·PSM
     "documents": {"NCS": 86, "교과서": 9},
-    "totals": {"NCS": 12506, "교과서": 1293},
+    "totals": {"NCS": 11517, "교과서": 1207},
     "grades": {
-        "NCS": {"1": 5057, "2": 4854, "3": 2595, "unpaged": 0},
-        "교과서": {"1": 705, "2": 468, "3": 120, "unpaged": 0},
+        "NCS": {"1": 4378, "2": 4614, "3": 2525, "unpaged": 0},
+        "교과서": {"1": 633, "2": 459, "3": 115, "unpaged": 0},
     },
-    "grade_sources": {"existing": 7901, "new": 5897, "unpaged-context": 1, "unpaged-fallback": 0},
-    "candidates": {"included": 75, "held": 19, "excluded": 2, "not-found": 4},
+    "grade_sources": {"existing": 7441, "new": 5283, "unpaged-context": 0, "unpaged-fallback": 0},
+    "candidates": {"included": 73, "held": 21, "excluded": 2, "not-found": 4},                   # v2: 방진화·케미컬 보류 전환
     "dedup": {"LM1903060205": 1},                                                        # MI 장비 운영 공백 경로(마커 0) 1개를 버린다
-    "rule_sha256": "2da5dbf4b4c5cc4959de620f130b4745dd74c5da8da3864deba0639a386784cf",    # 2026-09-09 이후 불변 — 사전이 바뀌면 여기서 잡힌다
-    "source_sha256": "2721f0f98f799272a0e411cfea5e0cfc0e48858763b8b1a58fe282f732d2fae5",  # 워크북 3종 + 마크다운 95개(86+9) 본문
-    "detail_sha256": "36d6c0223ef58f7d62a898c14cd1339fff29e8fe90f2c419ab859dabfc082cb1",  # 상세 15,069행 전체의 지문 — 총계가 같아도 재배정을 잡는다
-    "summary_sha256": "0d2a3ef6c0f9b2bbfbedda228f98543b31fba4cac50c768bea6e714f40acb605",
+    "rule_sha256": "c08e6353ebf0f91e24da92009f786972bf739b0fae5a38f720976edf8b9cf302",    # v2 — 결정 2 처방 (v1fix: 1ffd26c6…, v1: 2da5dbf4…)
+    "source_sha256": "2721f0f98f799272a0e411cfea5e0cfc0e48858763b8b1a58fe282f732d2fae5",  # 워크북 3종 + 마크다운 95개(86+9) 본문 — 사전과 무관, 불변
+    "detail_sha256": "9acd59626142d30dfc2cb811d14fe47eebc6b348a0fdb822604c42ebba41a0c7",  # 상세 전체의 지문 — 총계가 같아도 재배정을 잡는다
+    "summary_sha256": "834a8aa5e492529ad178059a4c458675b0c95f697b09ead3257eb846f71b3aac",
 }
 HEADER_NAMES = {
     "number",
@@ -141,6 +165,8 @@ class ExpressionRule:
     rationale: str
     pattern: str | None = None
     exclude_patterns: tuple[str, ...] = ()
+    held_patterns: tuple[str, ...] = ()        # 보류 표현이 이 규칙 안에서 계수되지 않게 — 겹치면 excluded(보류 표현 내부)
+    require_patterns: tuple[str, ...] = ()     # 조건부 포함 — 같은 줄·앞뒤 1줄(블록 안)에 하나라도 없으면 excluded(동반어 없음)
 
 
 @dataclass(frozen=True)
@@ -179,6 +205,7 @@ class CandidateDecision:
     rationale: str
     pattern: str | None = None
     exclude_patterns: tuple[str, ...] = ()
+    require_patterns: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -589,14 +616,19 @@ def _compile_rule(rule: ExpressionRule) -> re.Pattern[str]:
     return re.compile(source, re.IGNORECASE)
 
 
+def _compile_companions(rule: ExpressionRule) -> re.Pattern[str] | None:
+    """조건부 동반어를 한 패턴으로 — 창(같은 줄 ±1줄)에 하나라도 있으면 매칭."""
+    return re.compile("|".join(f"(?:{req})" for req in rule.require_patterns), re.IGNORECASE) if rule.require_patterns else None
+
+
 def _overlaps(left: tuple[int, int], right: tuple[int, int]) -> bool:
     return left[0] < right[1] and right[0] < left[1]
 
 
 def scan_document(document: Document, rules: list[ExpressionRule]) -> list[MatchRecord]:
-    by_keyword: dict[str, list[tuple[int, ExpressionRule, re.Pattern[str]]]] = defaultdict(list)
+    by_keyword: dict[str, list[tuple[int, ExpressionRule, re.Pattern[str], re.Pattern[str] | None]]] = defaultdict(list)
     for index, rule in enumerate(rules):
-        by_keyword[rule.keyword].append((index, rule, _compile_rule(rule)))
+        by_keyword[rule.keyword].append((index, rule, _compile_rule(rule), _compile_companions(rule)))
 
     records: list[MatchRecord] = []
     for block in split_pages(document):
@@ -605,20 +637,31 @@ def scan_document(document: Document, rules: list[ExpressionRule]) -> list[Match
                 continue
             line_number = block.start_line + line_offset
             context = line.strip()
+            window = "\n".join(block.lines[max(0, line_offset - 1):line_offset + 2])   # 같은 줄 ± 1줄, 페이지 블록 안
             for keyword, compiled_rules in by_keyword.items():
                 included_candidates = []
-                excluded_candidates = []
-                for rule_index, rule, pattern in compiled_rules:
+                excluded_candidates = []          # (start, end, index, rule, text, reason)
+                for rule_index, rule, pattern, companions in compiled_rules:
+                    matches_on_line = list(pattern.finditer(line))
+                    if not matches_on_line:
+                        continue                              # 제외·보류·동반어 검사는 규칙이 이 줄에 맞을 때만 (전체 스캔의 16% 절감, 결과 동일)
                     exclusion_spans = []
                     for exclusion in rule.exclude_patterns:
                         exclusion_spans.extend(
                             (match.start(), match.end())
                             for match in re.finditer(exclusion, line, re.IGNORECASE)
                         )
-                    for match in pattern.finditer(line):
+                    held_spans = [(m.start(), m.end()) for held in rule.held_patterns for m in re.finditer(held, line, re.IGNORECASE)]
+                    companion = companions is None or companions.search(window) is not None
+                    for match in matches_on_line:
                         item = (match.start(), match.end(), rule_index, rule, match.group(0))
-                        if any(_overlaps((match.start(), match.end()), span) for span in exclusion_spans):
-                            excluded_candidates.append(item)
+                        span = (match.start(), match.end())
+                        if any(_overlaps(span, held) for held in held_spans):
+                            excluded_candidates.append(item + (HELD_INSIDE_REASON,))
+                        elif any(_overlaps(span, ex) for ex in exclusion_spans):
+                            excluded_candidates.append(item + (HOMONYM_REASON,))
+                        elif not companion:
+                            excluded_candidates.append(item + (NO_COMPANION_REASON,))
                         else:
                             included_candidates.append(item)
 
@@ -646,7 +689,7 @@ def scan_document(document: Document, rules: list[ExpressionRule]) -> list[Match
                     )
                     cursor = end
 
-                for start, end, _, rule, matched_text in sorted(excluded_candidates):
+                for start, end, _, rule, matched_text, reason in sorted(excluded_candidates, key=lambda item: item[:3]):
                     records.append(
                         MatchRecord(
                             corpus=document.corpus,
@@ -659,7 +702,7 @@ def scan_document(document: Document, rules: list[ExpressionRule]) -> list[Match
                             page=block.page,
                             context=context,
                             decision="excluded",
-                            reason="동음이의 또는 비대상 문맥 제외",
+                            reason=reason,
                         )
                     )
     records.sort(
@@ -679,7 +722,26 @@ def _ascii_term(term: str) -> str:
     return rf"(?<![A-Za-z]){re.escape(term)}(?![A-Za-z])"
 
 
-def default_candidate_decisions() -> list[CandidateDecision]:
+def _check_version(version: str) -> str:
+    if version not in DICTIONARY_VERSIONS:
+        raise ValueError(f"사전 버전은 {DICTIONARY_VERSIONS} 중 하나여야 합니다: {version}")
+    return version
+
+
+def default_candidate_decisions(version: str = DEFAULT_DICTIONARY) -> list[CandidateDecision]:
+    """후보 100개의 판정. v1·v1fix 는 같은 목록(결함은 정확 규칙 쪽), v2 는 _V2_OVERRIDES 를 덧씌운다."""
+    _check_version(version)
+    decisions = _v1_candidate_decisions()
+    if version != "v2":
+        return decisions
+    out = []
+    for candidate in decisions:
+        override = _V2_OVERRIDES.get((candidate.keyword, candidate.expression))
+        out.append(replace(candidate, **override) if override else candidate)
+    return out
+
+
+def _v1_candidate_decisions() -> list[CandidateDecision]:
     """Return the reviewed, corpus-derived expression registry.
 
     Included expressions become matching rules. Held, excluded, and not-found
@@ -865,7 +927,21 @@ def default_candidate_decisions() -> list[CandidateDecision]:
     return candidates
 
 
-def build_default_rules(keywords: list[str]) -> list[ExpressionRule]:
+HELD_INSIDE_LABELS = {"안전": ("안전성", "안전_마진류")}       # _HELD_INSIDE 패턴과 같은 순서 — 영향표(excluded_by_fix)가 이 이름으로 나눈다
+_HELD_INSIDE = {                                   # 보류 표현이 정확 규칙 내부에서 세어지던 결함 (감사 M1(b)) — v1fix 부터
+    "안전": (r"안전성", r"안전\s*(?:마진|여유|재고|율|계수)"),
+}
+
+
+def rule_content_sha256(rules: list[ExpressionRule]) -> str:
+    """규칙 '내용'의 지문 — 필드가 늘어도 값이 같으면 같은 사전이다 (rule_sha256 은 asdict 라 필드 추가에 바뀐다)."""
+    payload = [(r.keyword, r.expression, r.tier, r.pattern, list(r.exclude_patterns), list(r.held_patterns), list(r.require_patterns)) for r in rules]
+    return _canonical_hash(payload)
+
+
+def build_default_rules(keywords: list[str], version: str = DEFAULT_DICTIONARY) -> list[ExpressionRule]:
+    _check_version(version)
+    fixed = version in ("v1fix", "v2")
     exclusions = {
         "부상": (r"부상(?:하|했|해|하여|하고|하는|한|할|했다|한다)",),
         "진동": (
@@ -896,7 +972,11 @@ def build_default_rules(keywords: list[str]) -> list[ExpressionRule]:
             expression=keyword,
             tier="exact",
             rationale="기존 키워드의 정확 문자열",
+            # (a) 영문 정확 키워드(PSM·MSDS)는 단어 경계 — EAPSM·Htpsm 내부 문자열을 세지 않는다 (감사 M1(a)), v1fix 부터
+            pattern=_ascii_term(keyword) if fixed and re.fullmatch(r"[A-Za-z0-9 ]+", keyword) else None,
             exclude_patterns=exclusions.get(keyword, ()),
+            held_patterns=_HELD_INSIDE.get(keyword, ()) if fixed else (),
+            require_patterns=tuple(_V2_OVERRIDES.get((keyword, keyword), {}).get("require_patterns", ())) if version == "v2" else (),
         )
         for keyword in keywords
     ]
@@ -909,8 +989,9 @@ def build_default_rules(keywords: list[str]) -> list[ExpressionRule]:
             rationale=candidate.rationale,
             pattern=candidate.pattern,
             exclude_patterns=candidate.exclude_patterns,
+            require_patterns=candidate.require_patterns,
         )
-        for candidate in default_candidate_decisions()
+        for candidate in default_candidate_decisions(version)
         if candidate.decision == "included" and candidate.keyword in selected
     )
     validate_rules(keywords, rules)
@@ -934,10 +1015,14 @@ def aggregate_matches(
     rules: list[ExpressionRule],
     candidates: list[CandidateDecision],
     input_artifacts: list[InputArtifact] | None = None,
+    with_summary: bool = True,
 ) -> AnalysisResult:
+    """매칭 전수 + 키워드별 요약. with_summary=False 는 매칭만 필요할 때(영향표) — 요약의 _raw_exact_count 가 실행 시간의 40% 를 차지한다."""
     keywords = [source.keyword for source in sources]
     validate_rules(keywords, rules)
     matches = [record for document in documents for record in scan_document(document, rules)]
+    if not with_summary:
+        return AnalysisResult(tuple(sources), tuple(documents), tuple(rules), tuple(candidates), tuple(matches), (), tuple(input_artifacts or ()))
     source_rows = {source.keyword: source.search_rows for source in sources}
     corpora = []
     for preferred in ("NCS", "교과서"):
@@ -1140,8 +1225,11 @@ def run_manifest(
     xlsx_out: Path | None = None,
     extra_inputs: list[dict[str, object]] | None = None,
     marker_nonmonotone: list[str] | None = None,
+    variant: bool = False,
 ) -> dict[str, object]:
     """실행 정보 — 어느 실행이 정본인지 저장소가 답하게 하는 블록. 경로는 public_path 로만.
+
+    `force` 는 --force 를 실제로 준 실행만 true 다; 비정본 사전의 변형 실행은 `variant` 로 따로 적는다 (둘 다 `expected` 를 null 로 만든다).
 
     `git_commit` 은 실행이 올라탄 커밋이고 `git_dirty` 는 그 위에 미커밋 변경이 있었는지다. 산출물은 실행 뒤에 커밋되므로
     커밋된 정본 산출물의 manifest 는 언제나 "부모 커밋 + dirty" 를 가리킨다 — 재현은 커밋 뒤 같은 명령을 다시 돌려 가드가 통과하는 것으로 확인한다.
@@ -1158,18 +1246,20 @@ def run_manifest(
         "inputs": [{"kind": a.kind, "count": a.file_count, "sha256": a.sha256} for a in result.input_artifacts] + list(extra_inputs or []),
         "dedup": [{"code": d.code, "kept": d.kept, "dropped": list(d.dropped)} for d in result.dedup],
         "marker_nonmonotone": list(marker_nonmonotone or []),
-        "expected": None if force else True,
+        "expected": None if (force or variant) else True,
         "expected_mismatch": list(expected_mismatch),
         "force": force,
+        "variant": variant,
     }
 
 
-def summary_metrics(result: AnalysisResult, manifest: dict[str, str]) -> dict[str, object]:
-    """EXPECTED 와 견주는 수치 — 문서 수·총계·등급·등급 출처·후보 판정·중복 제거·해시 4종."""
+def summary_metrics(result: AnalysisResult, manifest: dict[str, str], dictionary: str = DEFAULT_DICTIONARY) -> dict[str, object]:
+    """EXPECTED 와 견주는 수치 — 사전 버전·문서 수·총계·등급·등급 출처·후보 판정·중복 제거·해시 4종."""
     rows = [row for row in result.summary if row.corpus in ("NCS", "교과서")]
     included = [record for record in result.matches if record.decision == "included"]
     sources = Counter(record.grade_source for record in included)
     metrics: dict[str, object] = {
+        "dictionary": dictionary,
         "documents": {corpus: sum(1 for d in result.documents if d.corpus == corpus) for corpus in ("NCS", "교과서")},
         "totals": {corpus: sum(row.semantic_total for row in rows if row.corpus == corpus) for corpus in ("NCS", "교과서")},
         "grades": {
@@ -1418,6 +1508,11 @@ _TEXTBOOK_DISPLAY_NAMES = (
 )
 
 
+def _grade_counts(records) -> dict[str, int]:
+    counts = Counter(record.grade for record in records)
+    return {"1": counts[1], "2": counts[2], "3": counts[3], "unpaged": counts[None]}
+
+
 def _dashboard_group(corpus: str, relative_path: str) -> str:
     normalized = unicodedata.normalize("NFC", relative_path)
     if corpus == "NCS":
@@ -1478,21 +1573,36 @@ def dashboard_payload(result: AnalysisResult) -> dict[str, object]:
             if record.corpus == corpus:
                 group_records[_dashboard_group(corpus, record.relative_path)].append(record)
         documents_by_group = defaultdict(set)
+        pages_by_group: dict[str, int] = defaultdict(int)          # 교재 실제 쪽수 = 문서별 마커 최대값의 합 (hwpx-ncs-section-refresh D2)
         for document in result.documents:
             if document.corpus == corpus:
-                documents_by_group[_dashboard_group(corpus, document.relative_path)].add(document.relative_path)
+                group = _dashboard_group(corpus, document.relative_path)
+                documents_by_group[group].add(document.relative_path)
+                markers = [int(m.group(1)) for m in (PAGE_MARKER_RE.match(line) for line in document.text.splitlines()) if m]
+                pages_by_group[group] += max(markers) if markers else 0             # 마커 줄의 최댓값 — 빈 마지막 쪽 블록도 센다
         groups = []
-        for name in sorted(group_records):
-            records = group_records[name]
-            counts = Counter(record.grade for record in records)
+        for name in sorted(set(group_records) | set(documents_by_group)):          # 매칭이 하나도 없는 그룹도 문서·쪽수 분모에 남는다
+            records = group_records.get(name, [])
             groups.append(
                 {
                     "name": name,
                     "documents": len(documents_by_group[name]),
+                    "pages": pages_by_group[name],
                     "total": len(records),
-                    "grades": {"1": counts[1], "2": counts[2], "3": counts[3], "unpaged": counts[None]},
+                    "grades": _grade_counts(records),
                 }
             )
+        # 키워드 × 그룹 (D1) — 그룹 순서는 위와 같다
+        group_names = [group["name"] for group in groups]
+        per_keyword_group: dict[str, dict[str, list]] = defaultdict(lambda: defaultdict(list))
+        for name, records in group_records.items():
+            for record in records:
+                per_keyword_group[record.keyword][name].append(record)
+        for item in keywords:
+            item["corpora"][corpus]["groups"] = [
+                {"name": name, "total": len(per_keyword_group[item["name"]][name]), "grades": _grade_counts(per_keyword_group[item["name"]][name])}
+                for name in group_names
+            ]
         source_counts = Counter(record.grade_source for record in included if record.corpus == corpus)
         corpora[corpus] = {
             "documents": sum(1 for document in result.documents if document.corpus == corpus),
@@ -1730,6 +1840,52 @@ def _markdown_cell(value: object, limit: int = 180) -> str:
     return str(value).replace("\n", " ").replace("|", "\\|")[:limit]
 
 
+def _pct(part: int, whole: int) -> str:
+    return f"{part / whole:.1%}" if whole else "—"
+
+
+def _ranked_keyword_statistics(result: AnalysisResult) -> list[str]:
+    """말뭉치(NCS·교과서)별 키워드 순위표 — 최종 의미 출현 내림차순(동률은 원본 키워드 순서).
+    비율은 그 말뭉치의 출현 총계(키워드-표현 매칭 레코드 합계) 대비, 파일 비율은 그 말뭉치의 조사 문서 수 대비, 등급3 비율은 그 키워드의 등급 확정 출현 대비."""
+    lines = [
+        "말뭉치별로 키워드를 최종 의미 출현 내림차순으로 세웠다. 비율의 분모는 그 말뭉치의 출현 총계(키워드-표현 매칭 레코드 합계, 고유 문장·쪽 수 아님)이고, "
+        "파일은 `검출 파일 수/조사 문서 수`, 등급3 비율은 그 키워드의 등급 확정 출현 대비, 확장분은 동등+구체 표현 출현이다. 두 말뭉치는 크기가 다르므로 절대 건수를 서로 비교하지 않는다.",
+        "",
+    ]
+    order = {source.keyword: i for i, source in enumerate(result.sources)}
+    for corpus in ("NCS", "교과서"):
+        rows = [row for row in result.summary if row.corpus == corpus]
+        rows.sort(key=lambda row: (-row.semantic_total, order.get(row.keyword, len(order))))
+        total = sum(row.semantic_total for row in rows)
+        documents = sum(1 for d in result.documents if d.corpus == corpus)
+        lines.extend([
+            f"### {corpus}",
+            "",
+            f"출현 총계 {total:,}건 · 조사 문서 {documents}개 · 키워드 {len(rows)}개 (출현 0 인 키워드 {sum(1 for row in rows if row.semantic_total == 0)}개)",
+            "",
+            "| 순위 | 키워드 | 최종 의미 출현 | 비율 | 누적 | 파일 | 페이지 | 등급1 | 등급2 | 등급3 | 등급3 비율 | 확장분 | 확장 비율 |",
+            "|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        ])
+        cumulative = 0
+        for rank, row in enumerate(rows, 1):
+            cumulative += row.semantic_total
+            graded = row.grade_1 + row.grade_2 + row.grade_3
+            expanded = row.equivalent_added + row.specific_added
+            lines.append(
+                f"| {rank} | `{row.keyword}` | {row.semantic_total} | {_pct(row.semantic_total, total)} | {_pct(cumulative, total)} "
+                f"| {row.file_count}/{documents} ({_pct(row.file_count, documents)}) | {row.page_count} "
+                f"| {row.grade_1} | {row.grade_2} | {row.grade_3} | {_pct(row.grade_3, graded)} "
+                f"| {expanded} | {_pct(expanded, row.semantic_total)} |"
+            )
+        g = [sum(getattr(row, f"grade_{i}") for row in rows) for i in (1, 2, 3)]
+        expanded_total = sum(row.equivalent_added + row.specific_added for row in rows)
+        lines.append(
+            f"| 합계 | | {total} | 100.0% | | | | {g[0]} | {g[1]} | {g[2]} | {_pct(g[2], sum(g))} | {expanded_total} | {_pct(expanded_total, total)} |"
+        )
+        lines.append("")
+    return lines
+
+
 def write_report(result: AnalysisResult, path: Path, run: dict[str, object] | None = None, audits: list[CandidateAudit] | None = None) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -1784,6 +1940,9 @@ def write_report(result: AnalysisResult, path: Path, run: dict[str, object] | No
                 )
             ) + " |"
         )
+
+    lines.extend(["", "## 키워드 순위 통계", ""])
+    lines.extend(_ranked_keyword_statistics(result))
 
     lines.extend(["", "## 말뭉치별 확장 차이", ""])
     for corpus in ("NCS", "교과서"):
@@ -1890,9 +2049,26 @@ def run_census(
     expected: dict[str, object] | None = None,
     argv: list[str] | None = None,
     git: dict[str, object] | None = None,
+    dictionary: str = DEFAULT_DICTIONARY,
 ) -> AnalysisResult:
-    """정본 실행 — 산출물 전부를 한 번에 쓴다. EXPECTED 와 어긋나면 force 없이는 아무것도 쓰지 않는다."""
+    """정본 실행 — 산출물 전부를 한 번에 쓴다. EXPECTED 와 어긋나면 force 없이는 아무것도 쓰지 않는다.
+
+    정본이 아닌 사전 버전(--dictionary v1|v2)은 변형 실행이다: 추적 산출물·기본 이름 경로를 거부하고,
+    EXPECTED 불일치는 기록만 한다(resegment --marker-correct 규약).
+    """
+    _check_version(dictionary)
     expected = EXPECTED if expected is None else expected
+    variant = dictionary != DEFAULT_DICTIONARY
+    if variant:
+        for label, out in (("xlsx_out", xlsx_out), ("report_out", report_out), ("dashboard_data_out", dashboard_data_out), ("summary_out", summary_out), ("analysis_dir", analysis_dir)):
+            if out is None:
+                continue
+            rp = os.path.realpath(str(out))
+            docs_root = os.path.realpath(str(HERE / "docs"))
+            under_docs = rp == docs_root or rp.startswith(docs_root + os.sep)          # docs 자체도 거부 (--analysis-dir docs)
+            default_name = re.fullmatch(r"semantic_keyword_recount_\d{8}(?:_report)?\.(?:xlsx|md)", os.path.basename(rp)) is not None
+            if under_docs or default_name:
+                raise ValueError(f"사전 변형({dictionary})은 추적 산출물·정본 기본 이름 경로에 쓸 수 없습니다: {label}={public_path(out)}")
     source_workbook, ncs_root, school_root = Path(source_workbook), Path(ncs_root), Path(school_root)
     if not source_workbook.is_file():
         raise FileNotFoundError(f"키워드 등록 워크북을 찾을 수 없습니다: {public_path(source_workbook)}")
@@ -1902,7 +2078,7 @@ def run_census(
     ncs_grade_workbook = Path(ncs_grade_workbook or source_workbook)
     school_grade_workbook = Path(
         school_grade_workbook
-        or Path(source_workbook).parent / "ncs_keywords_in_markdown_results_교과서_results_20260415.xlsx"
+        or Path(source_workbook).parent / DEFAULT_SCHOOL_GRADE_WORKBOOK_NAME
     )
     if not school_grade_workbook.is_file():
         raise FileNotFoundError(f"교과서 등급 워크북을 찾을 수 없습니다: {public_path(school_grade_workbook)}")
@@ -1921,8 +2097,8 @@ def run_census(
             f"입력 Markdown 수가 정본 코퍼스와 다릅니다: NCS={len(ncs_documents)}, 교과서={len(school_documents)} (기대 {want_docs})"
         )
     documents = ncs_documents + school_documents
-    rules = build_default_rules(keywords)
-    candidates = default_candidate_decisions()
+    rules = build_default_rules(keywords, version=dictionary)
+    candidates = default_candidate_decisions(version=dictionary)
     artifacts = [
         InputArtifact("키워드 등록 워크북", public_path(source_workbook), 1, _file_sha256(source_workbook)),
         InputArtifact("NCS 등급 워크북", public_path(ncs_grade_workbook), 1, _file_sha256(ncs_grade_workbook)),
@@ -1937,8 +2113,8 @@ def run_census(
     )
     result = replace(result, dedup=tuple(dedup))
     manifest = artifact_manifest(result)
-    mismatch = check_expected(summary_metrics(result, manifest), expected)
-    if mismatch and not force:
+    mismatch = check_expected(summary_metrics(result, manifest, dictionary=dictionary), expected)
+    if mismatch and not force and not variant:
         print("EXPECTED 불일치 — 산출물을 쓰지 않습니다 (--force 로 강제, 그 뒤 EXPECTED 를 갱신):", file=sys.stderr)
         for line in mismatch:
             print("  " + line, file=sys.stderr)
@@ -1947,8 +2123,9 @@ def run_census(
     extra_inputs = [{"kind": "이전 기준", "count": 1, "sha256": _file_sha256(previous_basis)}] if previous_basis is not None else []
     run = run_manifest(
         result, argv if argv is not None else sys.argv, force, mismatch, git=git, xlsx_out=xlsx_out,
-        extra_inputs=extra_inputs, marker_nonmonotone=nonmonotone_markers(documents),
+        extra_inputs=extra_inputs, marker_nonmonotone=nonmonotone_markers(documents), variant=variant,
     )
+    run["dictionary"] = dictionary
     payload = summary_payload(result, run=run, previous_basis=basis)
     audits = audit_candidates(result)
     write_workbook(result, xlsx_out, run=run, audits=audits)
@@ -1976,6 +2153,7 @@ def main() -> None:
     parser.add_argument("--analysis-dir", type=Path, help="분리 분석 HTML 3건을 쓸 폴더 (docs)")
     parser.add_argument("--previous-basis", type=Path, help="이전 기준 reseg_summary.json — payload 에 복사해 브리지 표를 그린다")
     parser.add_argument("--force", action="store_true", help="EXPECTED 불일치여도 쓴다 (manifest 에 기록됨; 그 뒤 EXPECTED 를 갱신할 것)")
+    parser.add_argument("--dictionary", choices=DICTIONARY_VERSIONS, default=DEFAULT_DICTIONARY, help="사전 버전 — 정본이 아니면 변형 실행(추적 경로 거부)")
     args = parser.parse_args()
     result = run_census(
         args.source_workbook,
@@ -1990,9 +2168,10 @@ def main() -> None:
         analysis_dir=args.analysis_dir,
         previous_basis=args.previous_basis,
         force=args.force,
+        dictionary=args.dictionary,
     )
     manifest = artifact_manifest(result)
-    metrics = summary_metrics(result, manifest)
+    metrics = summary_metrics(result, manifest, dictionary=args.dictionary)
     print(f"완료: 키워드 {len(result.sources)}개, 문서 {len(result.documents)}개, 상세 {len(result.matches)}건")
     print("측정값 (EXPECTED 고정용):")
     print(json.dumps(metrics, ensure_ascii=False, indent=2))
