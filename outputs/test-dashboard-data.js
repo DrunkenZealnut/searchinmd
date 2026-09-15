@@ -64,6 +64,7 @@ const common = ['전체 등급 분포', '키워드별 상세', '문제점과 시
 check('S1a 출현건수가 등급 분모', D.meta.denominator === 'occurrences');
 check('S1b 30개 독립 키워드', D.keywords.length === 30);
 check('S1c NCS 가 교과서와 같은 등급1~3 흐름', common.every((x) => headings(ncs).includes(x)) && ncs.includes('NCS 영역별 현황'));
+check('S1e 브리지 절이 실제 쪽 기준·결속(공유 쪽 등급 일치)을 말한다 (occurrence-real-pages)', D.meta.page_basis.NCS === 'real' && ncs.includes('같은 실제 PDF 쪽') && ncs.includes('공유 쪽 ' + fmt(S.meta.run.reseg_agreement.pages) + '개의 등급 일치 ' + fmt(S.meta.run.reseg_agreement.agree) + '개'));
 check('S1d 교과서도 같은 분석 흐름', common.every((x) => headings(school).includes(x)) && school.includes('교과서별 현황'));
 check('S1e 공통 섹션의 상대 순서 일치 (NCS 만 브리지 절을 더 가진다)', JSON.stringify(headings(ncs).filter((h) => common.includes(h))) === JSON.stringify(headings(school).filter((h) => common.includes(h))), headings(ncs).join(' | '));
 check('S1f NCS 출현건수 KPI == summary', [N.grades['1'], N.grades['2'], N.grades['3']].every((v) => ncs.includes(fmt(v))));
@@ -94,6 +95,7 @@ console.log('\n[S2] semantic_recount_data.js ≡ semantic_summary.json');
 check('S2a JSON deep-equal', JSON.stringify(D) === JSON.stringify(S), 'data.js 와 summary.json 이 다르다 — 같은 실행에서 다시 생성할 것');
 check('S2b 가드 통과 실행 (meta.run.expected true, force false, mismatch 없음)', S.meta.run.expected === true && S.meta.run.force === false && S.meta.run.expected_mismatch.length === 0, JSON.stringify(S.meta.run.expected_mismatch));
 check('S2c data.js 첫 줄이 실행 manifest 를 인용하고 옛 파일명을 안 쓴다', dataJs.split('\n')[0].includes(S.meta.run.git_commit) && !dataJs.includes('20260909'));
+check('S2d 실제 쪽 실행 — page_maps 84권 지문, reseg_agreement 100%, NCS 등급 출처 전부 real-page', S.meta.run.page_maps && S.meta.run.page_maps.files === 84 && /^[0-9a-f]{64}$/.test(S.meta.run.page_maps.sha256) && S.meta.run.reseg_agreement.pages > 2000 && S.meta.run.reseg_agreement.agree === S.meta.run.reseg_agreement.pages && N.grade_sources['real-page'] === N.total && N.grade_sources.existing === 0 && N.grade_sources.new === 0 && !dataJs.includes('/Users/'), JSON.stringify(S.meta.run.reseg_agreement));
 
 // ================================================================ S3 summary 자체 정합
 console.log('\n[S3] semantic_summary.json 자체 정합');
@@ -117,6 +119,7 @@ for (const k of S.keywords) for (const corpus of ['NCS', '교과서']) {
 }
 check('S3l 키워드×그룹 합 == 키워드 총계·등급 (NCS 4그룹 · 교과서 9그룹)', kwGroupErrors.length === 0, kwGroupErrors.slice(0, 3).join('; '));
 check('S3m 그룹 pages: NCS 4그룹 > 0, 교과서 9그룹 합 == recount total_pages (2,055)', N.groups.every(g => g.pages > 0) && T.groups.reduce((a, g) => a + g.pages, 0) === RC.textbook.total_pages, T.groups.reduce((a, g) => a + g.pages, 0) + ' vs ' + RC.textbook.total_pages);
+check('S3n NCS 그룹 pages 합 == reseg per_book.pdf_pages 합(84권) + 대응 없는 2권의 표식 최댓값 (D4)', N.groups.reduce((a, g) => a + g.pages, 0) === Object.values(R.per_book).reduce((a, b) => a + (b.pdf_pages || 0), 0) + 239 && S.meta.page_basis.NCS === 'real' && S.meta.page_basis['교과서'] === 'marker', N.groups.reduce((a, g) => a + g.pages, 0));
 check('S3h 중복 제거 1건 기록 (LM1903060205)', S.meta.run.dedup.length === 1 && S.meta.run.dedup[0].code === 'LM1903060205' && S.meta.run.dedup[0].dropped.length === 1);
 check('S3i 절대 경로·홈·본문 필드 없음', !/\/Users\/|\/home\/|relative_path|"context"/.test(JSON.stringify(S)));
 check('S3j manifest 4종 해시 + 입력 6종(워크북 3·마크다운 2·이전 기준) sha256, 비단조 마커 경고는 레거시 1권뿐', ['source_sha256', 'rule_sha256', 'detail_sha256', 'summary_sha256'].every((k) => /^[0-9a-f]{64}$/.test(S.meta.manifest[k])) && S.meta.run.inputs.length === 6 && S.meta.run.inputs.some((i) => i.kind === '이전 기준') && S.meta.run.inputs.every((i) => /^[0-9a-f]{64}$/.test(i.sha256)) && S.meta.run.marker_nonmonotone.length === 1 && S.meta.run.marker_nonmonotone[0].includes('LM1903060113'), JSON.stringify(S.meta.run.marker_nonmonotone));

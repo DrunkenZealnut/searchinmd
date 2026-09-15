@@ -35,8 +35,10 @@
   function bridge(name){
     var P=D.meta.previous_basis;if(name!=='NCS'||!P)return '';
     var g=corpusData(name).grades,known=gradedTotal(g),pg=P.page_g,ps=P.pages,unres=P.unresolved_pages;
+    var basis=(D.meta.page_basis||{})[name],agree=(D.meta.run||{}).reseg_agreement;
+    var realNote=basis==='real'?' 2026-09-15 부터 NCS 출현은 줄→쪽 대응으로 <strong>이전 기준과 같은 실제 PDF 쪽</strong>에 놓이고 그 쪽 본문에 규칙 하나로 판정된다'+(agree?'(공유 쪽 '+n(agree.pages)+'개의 등급 일치 '+n(agree.agree)+'개)':'')+' — 두 수치의 차이는 분모(출현건수 vs 쪽)뿐이다.':'';
     return '<section style="margin-bottom:48px"><h2>이전 기준(페이지 단위)과의 관계</h2>'+
-      '<p class="bridge-note" style="margin-bottom:16px;max-width:860px;line-height:1.8">2026-09-13 부터 공식 KPI 는 <strong>출현건수</strong> 분모다(연구책임자 결정). 그 전까지 발표한 <strong>이전 기준</strong>은 '+esc(P.date||'')+' 재세그먼트의 실제 쪽 단위 — 검출 '+n(P.pages)+'쪽 · 등급3 '+n(pg['3'])+'쪽('+pct(pg['3'],P.pages)+'%) — 이며 <code>'+esc(P.source)+'</code> 에 그대로 남아 있다.</p>'+
+      '<p class="bridge-note" style="margin-bottom:16px;max-width:860px;line-height:1.8">2026-09-13 부터 공식 KPI 는 <strong>출현건수</strong> 분모다(연구책임자 결정). 그 전까지 발표한 <strong>이전 기준</strong>은 '+esc(P.date||'')+' 재세그먼트의 실제 쪽 단위 — 검출 '+n(P.pages)+'쪽 · 등급3 '+n(pg['3'])+'쪽('+pct(pg['3'],P.pages)+'%) — 이며 <code>'+esc(P.source)+'</code> 에 그대로 남아 있다.'+realNote+'</p>'+
       '<div class="card"><div class="scroll-x" tabindex="0" role="region" aria-label="출현건수 기준과 페이지 기준 브리지 표"><table class="tbl"><thead><tr><th>항목</th><th>출현건수 기준 (공식, 2026-09-13~)</th><th>페이지 기준 (이전 기준, '+esc(P.date||'')+')</th></tr></thead><tbody>'+
       '<tr><td><strong>분자</strong></td><td>등급 g 를 가진 포함 매칭 레코드 수</td><td>등급 g 인 고유 (교재, 실제 쪽) 수</td></tr>'+
       '<tr><td><strong>분모</strong></td><td>등급 확정 출현 '+n(known)+'건 (= 전체 출현, 미확정 '+n(g.unpaged)+')</td><td>키워드 검출 고유 쪽 '+n(P.pages)+'쪽</td></tr>'+
