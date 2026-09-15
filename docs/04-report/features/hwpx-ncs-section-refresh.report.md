@@ -104,7 +104,7 @@
 ### 산출물 4종
 
 1. **새 HWPX** (`data/반도체 기초보고서_20260914_정본.hwpx`, 비추적) — 원본 유지, 정본값만 포함
-2. **대조 JSON** (`docs/03-analysis/data/hwpx_results_refresh_20260914.json`, 추적) — 문단/셀/그림별 구 수치→새 수치→출처키, 조건 분기 결과, 감사 상태, 본문 없음
+2. **대조 JSON** (`docs/03-analysis/data/hwpx_results_refresh_20260914.json`, 추적) — 문단별 구/새 숫자 목록·출처 키·조건 분기 결과, 표별 바뀐 셀 수, 그림별 형식·크기·SVG/렌더 해시·비트 깊이(그림 수치는 담지 않음), 감사 상태·범위 밖 기록, 본문 없음
 3. **검토 HTML** (`docs/03-analysis/hwpx-results-refresh/review.html`, 추적) — 표 7~13 + 그림 3장(BMP→PNG data URI), 본문 없음
 4. **구/신 병기본** (`data/hwpx-results-refresh/review_text.html`, 비추적) — 문단별 구/신 문장 병기(본문 포함)
 
@@ -257,4 +257,4 @@ node outputs/test-dashboard-data.js                    # 68 — S3l·S3m 포함
 | 버전 | 날짜 | 변경 내용 | 작성자 |
 |---|---|---|---|
 | 1.0 | 2026-09-14 | 완료 보고 초안 (계획·설계·갭 분석 92% → Act-1 100%·실문서 실행 종합) | Claude (Opus 5, bkit report-generator) |
-| 1.1 | 2026-09-14 | 검수 — ship 리뷰(PR #16) 반영분으로 수치 정정: 테스트 39, 하니스 68, 숫자 토큰 723, 사고사례 3쪽·2건, 분야별 쪽수·‘안전’ 건수 구분, 허용 목록·감사 범위·불변 검사 문구, 이월 (a)~(c) 를 TODOS 5 와 일치 | Claude (Opus 5) |
+| 1.1 | 2026-09-14 | 검수 — ship 리뷰(PR #16) 반영분으로 수치 정정(1.2 2026-09-15: CodeRabbit — 대조 JSON 설명을 실제 스키마와 일치): 테스트 39, 하니스 68, 숫자 토큰 723, 사고사례 3쪽·2건, 분야별 쪽수·‘안전’ 건수 구분, 허용 목록·감사 범위·불변 검사 문구, 이월 (a)~(c) 를 TODOS 5 와 일치 | Claude (Opus 5) |

@@ -177,11 +177,15 @@ class ScoreTests(unittest.TestCase):
         items = ER.build_sample(records, TARGETS, seed=1, per_expression=3)
         sheet, key = ER.sheet_and_key(items, FIXTURE_DOCS)
         ids = [i["id"] for i in key["items"]]
-        a = {"grades": {i: 1 for i in ids}, "meta": {}, "sample_digest": key["sample_digest"]}; b = {"grades": {i: 1 for i in ids}, "meta": {}, "sample_digest": key["sample_digest"]}
+        import hashlib
+        meta = {"prompt_sha256": hashlib.sha256(ER.coder_prompt().encode("utf-8")).hexdigest()}
+        a = {"grades": {i: 1 for i in ids}, "meta": meta, "sample_digest": key["sample_digest"]}; b = {"grades": {i: 1 for i in ids}, "meta": meta, "sample_digest": key["sample_digest"]}
         texts = {i["id"]: i["text"] for i in sheet["items"]}
         ER.score(key, a, b, texts=texts)
         with self.assertRaisesRegex(ValueError, "sample_digest"):
-            ER.score(key, a, {"grades": {i: 1 for i in ids}, "meta": {}}, texts=texts)                        # 실제 키에는 digest 없는 코더 파일을 받지 않는다 (F13)
+            ER.score(key, a, {"grades": {i: 1 for i in ids}, "meta": meta}, texts=texts)                      # 실제 키에는 digest 없는 코더 파일을 받지 않는다 (F13)
+        with self.assertRaisesRegex(ValueError, "prompt_sha256"):
+            ER.score(key, a, {**b, "meta": {}}, texts=texts)                                                  # 실제 키에는 prompt_sha256 없는 코더 파일도 받지 않는다 (CodeRabbit PR #16)
         tampered = json.loads(json.dumps(key)); tampered["items"][0]["keyword"] = "건강"                    # digest 는 그대로 두고 항목만 바꿈
         with self.assertRaises(ValueError):
             ER.score(tampered, a, b)
@@ -340,8 +344,10 @@ class CliAndEdgeTests(unittest.TestCase):
         items = ER.build_sample(records, TARGETS, seed=1, per_expression=3)
         sheet, key = ER.sheet_and_key(items, FIXTURE_DOCS)
         ids = [i["id"] for i in key["items"]]
-        a = {"grades": {i: 1 for i in ids}, "meta": {"model": "claude-opus-5", "base_url": "claude-cli://anthropic"}, "sample_digest": key["sample_digest"]}
-        b = {"grades": {**{i: 1 for i in ids}, ids[0]: 2, ids[1]: "?"}, "meta": {"model": "gpt-5.6-sol", "base_url": "https://api.openai.com/v1"}, "sample_digest": key["sample_digest"]}
+        import hashlib
+        prompt = hashlib.sha256(ER.coder_prompt().encode("utf-8")).hexdigest()
+        a = {"grades": {i: 1 for i in ids}, "meta": {"model": "claude-opus-5", "base_url": "claude-cli://anthropic", "prompt_sha256": prompt}, "sample_digest": key["sample_digest"]}
+        b = {"grades": {**{i: 1 for i in ids}, ids[0]: 2, ids[1]: "?"}, "meta": {"model": "gpt-5.6-sol", "base_url": "https://api.openai.com/v1", "prompt_sha256": prompt}, "sample_digest": key["sample_digest"]}
         adj = {"sample_digest": key["sample_digest"], "labels": {ids[0]: 2}}
         paths = {}
         for name, doc in (("key", key), ("sheet", sheet), ("a", a), ("b", b), ("adj", adj)):

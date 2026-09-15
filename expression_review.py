@@ -344,11 +344,14 @@ def check_binding(key: dict, a: dict, b: dict, full_key: bool | None = None) -> 
         if coder.get("sample_digest") != key.get("sample_digest") and (full_key or coder.get("sample_digest") is not None):   # 실제 키에는 digest 없는 라벨 파일도 받지 않는다
             raise ValueError(f"코더 {name} 라벨의 sample_digest {coder.get('sample_digest')} 가 키 {key.get('sample_digest')} 와 다릅니다 — 다른 표본의 라벨")
     pa, pb = (a.get("meta") or {}).get("prompt_sha256"), (b.get("meta") or {}).get("prompt_sha256")
+    if full_key and not (pa and pb):
+        raise ValueError(f"코더 {'A' if not pa else 'B'} 라벨에 meta.prompt_sha256 이 없습니다 — 어떤 질문으로 판정했는지 모르는 라벨은 채점하지 않습니다")
     if pa and pb and pa != pb:
         raise ValueError("두 코더의 prompt_sha256 이 다릅니다 — 같은 질문으로 판정한 라벨만 채점합니다")
     want = hashlib.sha256(coder_prompt().encode("utf-8")).hexdigest()
-    if (pa or pb) and (pa or pb) != want:
-        raise ValueError(f"코더 라벨의 질문(prompt_sha256 {(pa or pb)[:16]}…)이 지금의 coder_prompt()({want[:16]}…)와 다릅니다 — 질문이 바뀌었으면 다시 판정하십시오")
+    for name, ph in (("A", pa), ("B", pb)):
+        if ph and ph != want:
+            raise ValueError(f"코더 {name} 라벨의 질문(prompt_sha256 {ph[:16]}…)이 지금의 coder_prompt()({want[:16]}…)와 다릅니다 — 질문이 바뀌었으면 다시 판정하십시오")
     check_complete(a, ids, "A"); check_complete(b, ids, "B")
 
 

@@ -2,7 +2,7 @@
 
 > **Feature**: semantic-expression-review
 > **Completed**: 2026-09-14
-> **갭 분석**: 96% → Act-1 반영 후 100%
+> **설계 항목 구현률 (Match Rate)**: 초기 96.0% → **Act-1 반영 후 100%** (부분 5 → 0)
 > **PR**: #16 (미머지, https://github.com/DrunkenZealnut/searchinmd/pull/16)
 > **승인**: 연구책임자
 
@@ -14,7 +14,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| **Feature** | 2026-09-13 외부감사(M1·m3) 지목 사항을 근거로, 의미 재검산 사전 v1(포함 75·보류 19·제외 2)의 27.9%(동등·구체 표현 2,417+1,507건)에 대한 도메인 정밀도 검증. 표현당 정밀도·95% 구간·κ를 측정하고 하한 < 0.8인 표현의 보류/조건부 처방을 정한다 — 사전 v2 변형·영향표·연구책임자 채택 결정을 담는다. |
+| **Feature** | 2026-09-13 외부감사(M1·m3) 지목 사항을 근거로, 의미 재검산 사전 v1(포함 75·보류 19·제외 2)의 28.4%(동등·구체 표현 2,417 + 1,507 = 3,924건 / 13,799건)에 대한 도메인 정밀도 검증. 표현당 정밀도·95% 구간·κ를 측정하고 하한 < 0.8인 표현의 보류/조건부 처방을 정한다 — 사전 v2 변형·영향표·연구책임자 채택 결정을 담는다. |
 | **기간** | 2026-09-14 |
 | **커밋** | 기능 12개(사전 버전·표본·라벨·재정·v2 구성·채택·갭 분석·순위 통계) + ship 리뷰 수정분 — PR #16 29 커밋 중 |
 | **변경 파일** | `semantic_keyword_recount.py` · `expression_review.py` · `test_semantic_keyword_recount.py` · `test_expression_review.py` · 데이터 6종 · 스펙 1건 · 분석 문서 2건 |
@@ -24,22 +24,22 @@
 | 항목 | 값 |
 |---|---|
 | **설계 항목** | 63개 (일치 58 / 부분 5 / 다름 0) |
-| **Match Rate** | 96.0% |
+| **Match Rate** | 초기 96.0% → Act-1 후 100% |
 | **갭(Check)** | 8건 (G-1~G-8) |
 | **Act-1 처리** | 8건 전부 닫힘 |
-| **표본** | 618건 (22개 표현 × 최대 30건 — `PSM` 16·`combustible` 2·`작업 환경` 25 는 전수, seed 20260914, 사전 v1fix 에서 추출) |
+| **표본** | 618건 (20개 표현 × 30건 + 전수 예외 `PSM` 16·`combustible` 2, seed 20260914, 사전 v1fix 에서 추출; `작업 환경` 은 30건 중 ? 5건이라 유효 25) |
 | **코더** | A `claude-opus-5`(claude-cli), B `gpt-5.6-sol`(OpenAI 계열) · 일치율 97.2% · κ 0.965 |
 | **재정** | 17건 (1: 8 · 2: 7 · ?: 2) |
-| **하니스** | unittest 133(이 기능 94 = `test_semantic_keyword_recount` 70 + `test_expression_review` 24) · test-dashboard-data 68 · test-recount-grades 390 · 모두 통과 |
+| **하니스** | unittest 137(이 기능 98 = `test_semantic_keyword_recount` 70 + `test_expression_review` 28) · test-dashboard-data 68 · test-recount-grades 390 · 모두 통과 |
 
 ### 1.3 Value Delivered — 4관점 가치 분석
 
 | 관점 | 내용 |
 |---|---|
-| **Problem** | 정본 13,799건 중 27.9%(동등·구체 표현 3,924건)는 LLM이 후보 결정한 값이고 검토·서명 기록이 없었다(감사 M1·m3 "점검 필요"). 표현별 정밀도를 재지 않은 채 14개 키워드가 혼합 문맥(사람 보호 vs 제품 오염관리·계측·설비)을 한 규칙으로 계산했다. |
+| **Problem** | 정본 13,799건 중 28.4%(동등·구체 표현 3,924건)는 LLM이 후보 결정한 값이고 검토·서명 기록이 없었다(감사 M1·m3 "점검 필요"). 표현별 정밀도를 재지 않은 채 14개 키워드가 혼합 문맥(사람 보호 vs 제품 오염관리·계측·설비)을 한 규칙으로 계산했다. |
 | **Solution** | 22개 표현의 618건 표본을 2계열 AI 코더가 판정("이 문맥이 노동자 안전·보건인가")하고 Clopper-Pearson 정확 이항 95% 구간으로 정밀도를 측정했다. 하한 < 0.8 표현 13개에 대해 계층별 처방(보류 2개 `방진화`·`케미컬`, 조건부 4개 `방진복`·`장갑`·`X선`·`PSM`, 동의어 4개와 `가연성`·`combustible` 은 유지, `자외선` 은 이미 보류)을 정해 사전 v2를 구성했다. 불일치 17건은 연구책임자 재정. |
-| **Function/UX Effect** | 포함 표현마다 정밀도·표본·판정자·근거(동반어 통계)가 남아 "왜 이 표현이 들어갔나"에 답할 수 있고, 대시보드 확장분(27.9%)이 검증된 값이 된다. 정본 사전이 v1→v1fix(결함 2건 수정)→v2(도메인 처방)로 진화한다. |
-| **Core Value** | 사전 채택의 주체가 LLM 단독에서 "정밀도 측정 + 연구책임자 결정"으로 바뀐다. 감사 M1·m3 종결. NCS 12,506 → 11,517(−4.8%, 등급3 비율 20.8 → 21.9% 구성 효과), 의미 단위 키워드 재검산의 세 번째 정본이 확정된다. |
+| **Function/UX Effect** | 포함 표현마다 정밀도·표본·판정자·근거(동반어 통계)가 남아 "왜 이 표현이 들어갔나"에 답할 수 있고, 대시보드 확장분(28.4%)이 검증된 값이 된다. 정본 사전이 v1→v1fix(결함 2건 수정)→v2(도메인 처방)로 진화한다. |
+| **Core Value** | 사전 채택의 주체가 LLM 단독에서 "정밀도 측정 + 연구책임자 결정"으로 바뀐다. 감사 M1·m3 종결. NCS 12,506 → 11,517(−989, −7.9%; v1fix 12,310 대비 −793, −6.4%. 등급3 비율 20.8 → 21.9% 는 구성 효과), 의미 단위 키워드 재검산의 세 번째 정본이 확정된다. |
 
 ---
 
@@ -120,8 +120,8 @@
 
 `test_semantic_keyword_recount.py` + `test_expression_review.py`:
 - **설계 항목 대응**: 63개 (일치 58 + 부분 5) — §5 갭 처리로 부분 5 → 0
-- **새 테스트**: `test_semantic_keyword_recount.py` 53 → 70(DictionaryVersionTests·DictionaryVersionAuditTests), `test_expression_review.py` 24 신규(Sample/Score/Impact/CommittedArtifacts/CliAndEdge)
-- **하니스 통과**: `unittest` 133/133(세 모듈) · `test-dashboard-data.js` 68/68 · `test-recount-grades.py` 390/390
+- **새 테스트**: `test_semantic_keyword_recount.py` 53 → 70(DictionaryVersionTests·DictionaryVersionAuditTests), `test_expression_review.py` 28 신규(Sample/Score/Impact/CommittedArtifacts/CliAndEdge)
+- **하니스 통과**: `unittest` 137/137(세 모듈) · `test-dashboard-data.js` 68/68 · `test-recount-grades.py` 390/390
 
 ---
 
@@ -142,7 +142,7 @@
 
 **읽는 법**:
 - v1fix − v1: 결함 2건 수정(영문 정확 키워드 단어 경계 + 보류 표현 정확 규칙 제외) — NCS −196(보류 표현 내부 190 + `PSM` 부분 문자열 6), 교과서 −21(17 + 4).
-- v2 − v1fix: 도메인 처방(보류 2개 −575건 + 동반어 창 −242건). v2가 걷어낸 출현의 72%(568/793)가 등급1이므로 등급3은 −44에 그친다.
+- v2 − v1fix (NCS): 도메인 처방 −793건 = 보류 2개 −551건 + 동반어 없음 −242건 (교과서 −65 = 24 + 41; 두 말뭉치 합 858). v2가 걷어낸 NCS 출현의 72%(568/793)가 등급1이므로 등급3은 −44에 그친다.
 - **등급3 비율이 20.9→21.9%로 오르는 것은 개선이 아니라 구성 효과**(분모 감소). CLAUDE.md 예외 문단 참고.
 
 ### 키워드별 변화
@@ -163,7 +163,7 @@
 | 항목 | 값 |
 |---|---|
 | **설계 항목** | 63개 (일치 58 / 부분 5 / 다름 0) |
-| **Match Rate** | 96.0% = (58 + 5×0.5) / 63 |
+| **Match Rate (초기)** | 96.0% = (58 + 5×0.5) / 63 → Act-1 후 100% |
 | **갭** | 8건 (설계 항목 갭 5 + 문서 정합 3) |
 
 ### Act-1 처리 (2026-09-14) — 8건 전부 닫힘
@@ -287,11 +287,11 @@ python3.13 semantic_keyword_recount.py --dictionary v2 ...   # 전체 옵션은 
 ### 7. 테스트
 
 ```bash
-python3.13 -m unittest test_semantic_keyword_recount test_expression_review
+python3.13 -m unittest test_semantic_keyword_recount test_expression_review test_hwpx_results_refresh
 node outputs/test-dashboard-data.js
 python3 outputs/test-recount-grades.py
 ```
-→ 94(70 + 24) + 68 + 390 OK 확인 (세 unittest 모듈을 함께 돌리면 133)
+→ 137(70 + 28 + 39) + 68 + 390 OK 확인 (이 기능 몫은 앞 두 모듈 98)
 
 ---
 
@@ -300,5 +300,6 @@ python3 outputs/test-recount-grades.py
 | 버전 | 날짜 | 변경 내용 | 작성자 |
 |---|---|---|---|
 | 1.0 | 2026-09-14 | 계획·설계·갭분석·Act-1 정리 | Claude (Opus 5, bkit report-generator) |
-| 1.1 | 2026-09-14 | 검수 — 재정 분포(1: 8·2: 7·?: 2), 결정 2 처방 수(보류 2·조건부 4), v1fix 영향(−196/−21), 하니스 수(133/68/390), ship 리뷰(PR #16) 반영 표를 실제 커밋 기준으로 정정 | Claude (Opus 5) |
+| 1.1 | 2026-09-14 | 검수 — 재정 분포(1: 8·2: 7·?: 2), 결정 2 처방 수(보류 2·조건부 4), v1fix 영향(−196/−21), 하니스 수, ship 리뷰(PR #16) 반영 표를 실제 커밋 기준으로 정정 | Claude (Opus 5) |
+| 1.2 | 2026-09-15 | CodeRabbit(PR #16) — 확장분 비율 28.4%(3,924/13,799), NCS 감소 −989(−7.9%), 표본 규칙(20×30 + 16 + 2), v2 제외 사유를 NCS 기준(551 + 242 = 793)으로, Match Rate 시점, 재현 명령에 세 번째 unittest 모듈 | Claude (Opus 5) |
 
