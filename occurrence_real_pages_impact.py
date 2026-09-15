@@ -122,6 +122,7 @@ def main() -> None:
     parser.add_argument("--school-root", type=Path, required=True)
     parser.add_argument("--school-grade-workbook", type=Path)
     parser.add_argument("--page-maps", type=Path, required=True)
+    parser.add_argument("--previous-basis", type=Path, default=SKR.HERE / SKR.PREVIOUS_BASIS_SOURCE, help="reseg_summary.json — 정렬 자기 검증 수치를 meta 에 병기")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args()
     sources = SKR.read_keyword_workbook(args.source_workbook)
@@ -138,8 +139,13 @@ def main() -> None:
         "inputs": {"source_workbook": SKR._file_sha256(args.source_workbook), "school_grade_workbook": SKR._file_sha256(school),
                    "ncs_markdown": SKR._document_set_sha256(ncs), "page_maps": {"dir": info.dir, "files": info.files, "sha256": info.sha256}},
     })
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(out, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    if args.previous_basis and Path(args.previous_basis).is_file():                       # 정렬 오차는 이전 기준과 같은 대응의 것 — 그 자기 검증 수치를 병기 (계획 §5)
+        reseg = json.loads(Path(args.previous_basis).read_text(encoding="utf-8"))
+        check = (reseg.get("alignment_check") or {}).get("overall") or {}
+        out["meta"]["alignment_self_check"] = {"source": SKR.public_path(args.previous_basis), "books": (reseg.get("alignment_check") or {}).get("books"),
+                                               **{k: check.get(k) for k in ("lines", "exact", "near", "all_lines", "all_exact", "all_near", "nogap_lines", "nogap_exact", "nogap_near")},
+                                               "hybrid_lines": reseg.get("hybrid_lines"), "note": "DP 후보 줄 exact/near(±1쪽) — 대응의 정확도, 이 영향표의 실제 쪽 배정도 같은 오차를 가진다"}
+    SKR._write_text_atomic(args.out, json.dumps(out, ensure_ascii=False, indent=1) + "\n")
     g = out["grades"]; t = out["transition"]
     print(f"NCS 블록 기준 {g['block']['NCS']} → 실제 쪽 기준 {g['real']['NCS']} · 등급3 비율 {out['grade3_share']['NCS']['block']}% → {out['grade3_share']['NCS']['real']}% · 이동 {t['moved']:,}건 {t['matrix']}")
     print(f"→ {SKR.public_path(args.out)}")

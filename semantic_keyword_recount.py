@@ -421,6 +421,23 @@ def _document_code(document: Document) -> str | None:
     return match.group(0).upper() if match else None
 
 
+def _to_matching_lines(text: str, line_pages: list[int]) -> tuple[int, ...]:
+    """대응(split("\n") 줄 규약)을 매칭 규약(splitlines — \x0c·\x1c 같은 구분자도 줄을 가른다)으로 옮긴다 (갭 분석 G-1).
+
+    split("\n") 의 한 줄이 splitlines 에서 k 줄이면 같은 쪽을 k 번 싣는다; 파일 끝 개행 뒤의 빈 원소는 splitlines 에 없으므로 뺀다.
+    """
+    nl_lines = text.split("\n")
+    if text.endswith("\n"):
+        nl_lines = nl_lines[:-1]
+    out: list[int] = []
+    for index, line in enumerate(nl_lines):
+        out.extend([line_pages[index]] * max(1, len(line.splitlines())))
+    expected = len(text.splitlines())
+    if len(out) != expected:
+        raise ValueError(f"줄 규약 변환이 어긋났습니다: {len(out)} ≠ splitlines {expected} — 알 수 없는 줄 구분자")
+    return tuple(out)
+
+
 def load_page_maps(directory: Path, documents: list[Document]) -> tuple[dict[str, tuple[int, ...]], PageMapsInfo]:
     """resegment.py 가 남긴 줄→실제 쪽 대응(`<LM코드>.pages.json`, `line_pages`)을 NCS 문서마다 읽고 검증한다 (occurrence-real-pages 설계 §3.1).
 
@@ -457,13 +474,15 @@ def load_page_maps(directory: Path, documents: list[Document]) -> tuple[dict[str
             raise ValueError(f"줄→쪽 대응 {path.name} 의 줄 수가 마크다운과 다릅니다: {len(line_pages) if isinstance(line_pages, list) else '?'} ≠ {len(lines)} — 다른 판의 대응이면 resegment.py 를 다시 돌리십시오")
         if any(not isinstance(value, int) or isinstance(value, bool) or value < 1 for value in line_pages):
             raise ValueError(f"줄→쪽 대응 {path.name} 에 1 이상의 정수가 아닌 쪽 값이 있습니다")
-        maps[document.relative_path] = tuple(line_pages)
+        maps[document.relative_path] = _to_matching_lines(document.text, line_pages)      # 매칭(record.line)과 같은 줄 규약으로
         digests.append((code, hashlib.sha256(path.read_bytes()).hexdigest()))
     info = PageMapsInfo(dir=public_path(directory), files=len(digests), sha256=hashlib.sha256(json.dumps(sorted(digests)).encode("utf-8")).hexdigest())
     return maps, info
 
 
 DEFAULT_RESEG_CSV_NAME = "ncs_pages_reseg.csv"
+DEFAULT_PAGE_MAPS_DIR = HERE / "data" / "markdown" / "ncs_paged"                          # resegment.py 의 --paged-dir 기본값과 같다
+DEFAULT_RESEG_CSV = HERE / "docs" / "03-analysis" / "data" / DEFAULT_RESEG_CSV_NAME
 
 
 def reseg_agreement(result: AnalysisResult, csv_path: Path, max_disagree: int = 20) -> dict[str, object]:
@@ -600,7 +619,7 @@ def assign_match_grades(
     for document in result.documents:
         line_pages = page_maps.get(document.relative_path) if document.corpus == "NCS" else None
         if line_pages is not None:
-            for line_number, line in enumerate(document.text.split("\n"), start=1):
+            for line_number, line in enumerate(document.text.splitlines(), start=1):     # 매칭·대응과 같은 줄 규약 (G-1)
                 if line_number <= len(line_pages) and not PAGE_MARKER_RE.match(line):
                     page_lines[(document.corpus, document.relative_path, line_pages[line_number - 1])].append(line)
             continue
@@ -2285,6 +2304,8 @@ def run_census(
     maps_info: PageMapsInfo | None = None
     pdf_pages: dict[str, int] | None = None
     if page_maps_dir is not None:
+        if not Path(page_maps_dir).is_dir():
+            raise FileNotFoundError(f"줄→쪽 대응 폴더가 없습니다: {public_path(page_maps_dir)} — resegment.py 가 만든 ncs_paged/ 가 필요합니다(정본은 대응 없이 만들 수 없다)")
         if previous_basis is None:
             raise ValueError("page_maps_dir 에는 previous_basis(reseg_summary.json) 가 필요합니다 — 분야 쪽수의 PDF 쪽수 출처")
         page_maps, maps_info = load_page_maps(Path(page_maps_dir), ncs_documents)
@@ -2303,6 +2324,9 @@ def run_census(
         print("EXPECTED 불일치 — 산출물을 쓰지 않습니다 (--force 로 강제, 그 뒤 EXPECTED 를 갱신):", file=sys.stderr)
         for line in mismatch:
             print("  " + line, file=sys.stderr)
+        if any(line.startswith("reseg_agreement") for line in mismatch):
+            print("  → 이전 기준과 등급이 다른 쪽이 생겼다: 줄→쪽 대응(page_maps)이 바뀌었거나 regrade 기준선이 바뀐 것 — 어느 쪽인지 확인한 뒤 EXPECTED 를 고칠 것"
+                  + (f" (예: {agreement['disagree'][:5]})" if agreement and agreement.get("disagree") else ""), file=sys.stderr)
         raise SystemExit(1)
     basis = load_previous_basis(previous_basis) if previous_basis is not None else None
     extra_inputs = [{"kind": "이전 기준", "count": 1, "sha256": _file_sha256(previous_basis)}] if previous_basis is not None else []
@@ -2340,8 +2364,8 @@ def main() -> None:
     parser.add_argument("--previous-basis", type=Path, help="이전 기준 reseg_summary.json — payload 에 복사해 브리지 표를 그린다")
     parser.add_argument("--force", action="store_true", help="EXPECTED 불일치여도 쓴다 (manifest 에 기록됨; 그 뒤 EXPECTED 를 갱신할 것)")
     parser.add_argument("--dictionary", choices=DICTIONARY_VERSIONS, default=DEFAULT_DICTIONARY, help="사전 버전 — 정본이 아니면 변형 실행(추적 경로 거부)")
-    parser.add_argument("--page-maps", type=Path, help="줄→실제 쪽 대응 폴더 (data/markdown/ncs_paged) — NCS 출현을 실제 PDF 쪽에 놓는다; --previous-basis 필요")
-    parser.add_argument("--reseg-csv", type=Path, help=f"이전 기준 쪽 등급 CSV ({DEFAULT_RESEG_CSV_NAME}) — 공유 쪽 등급 일치를 manifest 에 남긴다")
+    parser.add_argument("--page-maps", type=Path, default=DEFAULT_PAGE_MAPS_DIR, help="줄→실제 쪽 대응 폴더 — NCS 출현을 실제 PDF 쪽에 놓는다(정본은 대응 없이 만들 수 없다); --previous-basis 필요")
+    parser.add_argument("--reseg-csv", type=Path, default=DEFAULT_RESEG_CSV, help="이전 기준 쪽 등급 CSV — 공유 쪽 등급 일치를 manifest 에 남긴다")
     args = parser.parse_args()
     result = run_census(
         args.source_workbook,

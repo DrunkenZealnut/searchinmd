@@ -4,7 +4,7 @@
 > **Plan**: [occurrence-real-pages.plan.md](../../01-plan/features/occurrence-real-pages.plan.md) (Approved 2026-09-15 — D1~D6 전부 A)
 > **Author**: Claude (Opus 5)
 > **Date**: 2026-09-15
-> **Status**: Draft
+> **Status**: Implemented (Do 2026-09-15, Check 90.8% → Act-1 100%)
 > **Level**: Starter
 
 ---
@@ -32,7 +32,7 @@ run_census ─ load_documents ─ select_ncs_documents ─ aggregate_matches(sou
                                                          ▼
                               assign_match_grades(result, existing_grades, page_maps)
                                                          │  NCS 대응 문서: page_lines[(NCS, rel, 실제 쪽)] ← 대응된 줄들, grade_page 기준선, source "real-page"
-                                                         │  NCS 대응 없는 문서(REAL_PAGE_MARKER_BOOKS): 현행 블록 판정, source "new"/"existing"
+                                                         │  NCS 대응 없는 문서(REAL_PAGE_MARKER_BOOKS): 표식 블록(= 실제 쪽) 본문 판정, source "real-page" (워크북 라벨 없음)
                                                          │  교과서: 현행
                                                          ▼
                               reseg_agreement(result, ncs_pages_reseg.csv) ─ manifest ─ EXPECTED(check_expected) ─ 산출물
@@ -41,7 +41,7 @@ run_census ─ load_documents ─ select_ncs_documents ─ aggregate_matches(sou
 ```
 
 - `PageMaps` 는 `load_page_maps(dir, documents)` 가 만드는 `dict[relative_path, tuple[int, ...]]` — 문서마다 검증을 통과한 `line_pages` 만 담는다.
-- `hwpx_results_refresh.py` 는 `facts.run.page_basis` 로 2절·3절 문구를 분기한다(§3.8).
+- `hwpx_results_refresh.py` 는 `facts.page_basis`(`meta.page_basis`) 로 2절·3절 문구를 분기한다(§3.8).
 
 ---
 
@@ -58,7 +58,7 @@ def load_page_maps(directory: Path, documents: list[Document]) -> dict[str, tupl
 - NCS 문서마다 `_NCS_CODE_RE` 로 LM 코드를 뽑아 `directory/<코드>.pages.json` 을 찾는다.
 - 있으면 검증: (a) `md` == 문서 파일 이름(`Path(document.path).name`) — 다른 판·다른 쌍둥이 파일의 대응 거부, (b) `len(line_pages) == len(document.text.split("\n"))`, (c) 모든 값이 1 이상의 정수. 실패는 `ValueError`(어느 교재, 무엇이 어긋났는지).
 - 없으면 코드가 `REAL_PAGE_MARKER_BOOKS` 에 있어야 한다. 아니면 `ValueError("줄→쪽 대응이 없습니다 — resegment.py 로 만들거나 REAL_PAGE_MARKER_BOOKS 에 넣으십시오")`. 목록에 있는데 대응이 **있으면** 대응을 쓴다(목록은 예외 허용일 뿐).
-- 목록에 있는 문서는 표식이 실제 쪽이어야 하므로 `split_pages` 블록 수와 표식 최댓값이 같은지(빠진 쪽 없음)만 검사한다 — 어긋나면 오류.
+- 목록에 있는 문서는 표식이 실제 쪽이어야 하므로 표식 값이 1..N 으로 빠짐·중복 없이 이어지는지만 검사한다(빈 쪽은 블록이 없어도 된다) — 어긋나면 오류.
 - 반환값 외에 manifest 용 `page_maps_manifest = {"dir": public_path, "files": n, "sha256": sha256(정렬된 (코드, 파일 sha256) 목록)}` 를 같이 돌려준다(`PageMapsInfo` 데이터클래스).
 - 교과서 문서는 대응 대상이 아니다(무시).
 
@@ -76,7 +76,8 @@ def apply_page_maps(matches, page_maps) -> list[MatchRecord]:
 ### 3.3 등급 판정 분기 — FR-03 (`assign_match_grades(result, existing_grades, page_maps=None)`)
 
 - `page_lines` 를 만들 때 NCS 대응 문서는 `split_pages` 대신 대응으로 묶는다: 줄 i(1-based)의 본문을 `page_lines[(NCS, rel, line_pages[i-1])]` 에 넣되 표식 줄(`PAGE_MARKER_RE`)은 뺀다. 나머지 문서는 현행 블록 묶기.
-- 대응 문서의 레코드는 `existing_grades` 를 보지 않고 곧장 실제 쪽 본문 판정: `GradeAssignment(grade, GRADE_LABEL[grade], reason, "real-page")`; 본문이 비면 현행대로 `unpaged-fallback`(등급1) — 정본에서는 0건이어야 하고 `EXPECTED` 가 `unpaged` 0 을 고정한다.
+- 대응 문서의 레코드와 **목록 교재(`REAL_PAGE_MARKER_BOOKS`, 표식 = 실제 쪽)의 레코드**는 `existing_grades` 를 보지 않고 곧장 실제 쪽 본문 판정: `GradeAssignment(grade, GRADE_LABEL[grade], reason, "real-page")`(목록 교재는 표식 블록 본문); 본문이 비면 현행대로 `unpaged-fallback`(등급1) — 정본에서는 0건이어야 하고 `EXPECTED` 가 `unpaged` 0 을 고정한다. `page_maps` 가 비어 있으면(대응 없는 실행) 목록 교재도 현행(워크북 상속/블록 판정) 그대로다.
+- **줄 규약(갭 G-1)**: 매칭의 `record.line` 은 `text.splitlines()` 번호이고 대응 파일은 `text.split("\n")` 번호라, `\x0c` 같은 줄 구분자가 있는 파일(정본 코퍼스 1권 `LM1903060128` 430행)에서는 그 뒤가 한 줄씩 어긋난다. `load_page_maps` 가 `_to_matching_lines` 로 대응을 매칭 규약으로 옮겨 싣고(같은 쪽을 k 번, 파일 끝 개행 뒤 빈 원소는 뺌; 결과 길이 = `splitlines()` 길이가 아니면 오류), `page_lines` 도 `splitlines()` 로 묶는다. 길이 검사는 대응 규약(`split("\n")`) 그대로.
 - `GRADE_SOURCES` 에 `"real-page"` 추가, `GRADE_SOURCE_LABEL["real-page"] = "실제 쪽 판정"`. `STRICT_GROUPS` 의 `grade_sources` 는 새 키를 `EXPECTED` 에 적어야 통과한다(의도된 마찰).
 - 판정 캐시 `newly_graded[(corpus, rel, page)]` 는 그대로 — 같은 실제 쪽의 출현은 한 번만 판정.
 
@@ -86,9 +87,9 @@ def apply_page_maps(matches, page_maps) -> list[MatchRecord]:
 def reseg_agreement(result, csv_path) -> dict:   # {"pages": n, "agree": n, "disagree": [...최대 20건]}
 ```
 
-- `ncs_pages_reseg.csv`(추적)를 `utf-8-sig` 로 읽어 (LM 코드, 페이지) → 등급. 결과의 NCS 레코드 중 `grade_source == "real-page"` 인 (코드, 쪽) 집합과 교집합의 등급을 비교.
+- `ncs_pages_reseg.csv`(추적)를 `utf-8-sig` 로 읽어 (LM 코드, 페이지) → 등급 — `출처 == label` 행(마크다운이 없던 2권의 라벨 쪽, 실제 쪽이 아님)은 뺀다. 결과의 NCS 레코드 중 `grade_source == "real-page"` 인 (코드, 쪽) 집합과 교집합의 등급을 비교.
 - manifest `run["reseg_agreement"] = {"pages": …, "agree": …}`; `summary_metrics` 가 `reseg_agreement` 를 싣고 `EXPECTED["reseg_agreement"] = {"pages": 2035, "agree": 2035}`(정본 실행 값으로 고정 — 계획 §1.3 예측치, 실측으로 확정). 불일치는 `check_expected` 의 일반 규칙(값 비교)으로 잡힌다.
-- 결속 검사가 100% 가 아니면 원인은 둘뿐 — 대응 파일이 바뀌었거나 `regrade` 규칙이 바뀌었다 — 메시지에 그렇게 적는다.
+- 결속 검사가 100% 가 아니면 원인은 둘뿐 — 대응 파일이 바뀌었거나 `regrade` 규칙이 바뀌었다 — `run_census` 의 가드 출력이 `reseg_agreement` 불일치일 때 그 문장과 `disagree` 상위 5건을 덧붙인다.
 
 ### 3.5 분야별 쪽수 — FR-05 (D4)
 
@@ -106,7 +107,7 @@ def reseg_agreement(result, csv_path) -> dict:   # {"pages": n, "agree": n, "dis
 
 - 같은 코퍼스·같은 사전(v2)으로 두 번 집계: (A) 블록 기준 = `aggregate_matches` + `assign_match_grades` 를 대응 없이(현 정본 방식), (B) 실제 쪽 기준 = 대응 적용. 워크북 등급 상속은 (A) 에만 적용(현 정본 재현). 
 - 기록: `totals`(같아야 함), `grades`(A/B, 말뭉치별), `transition`(A→B 등급 이동 행렬 6칸 + 불변), `by_source`(A 의 `existing`/`new` 별 불변율), `by_book_kind`(실제 쪽/목차 블록 교재별), `keywords`(키워드별 A/B 등급), `groups`(분야별 A/B), `pages`(검출 쪽 수 A/B, 블록 폭 분포), `meta`(입력 sha256, 실행 시각, git). 본문·절대 경로 없음.
-- (A) 가 현 정본 `semantic_summary.json` 의 등급과 같은지 실행이 스스로 확인한다(계보 검증) — 다르면 멈춘다.
+- (A) 가 옛 정본(상수 `BLOCK_BASIS_V2` = 2026-09-14 정본의 등급 4,378/4,614/2,525 · 633/459/115)과 같은지 실행이 스스로 확인한다(계보 검증) — 다르면 멈춘다. 레코드 짝짓기는 같은 줄에 같은 표현이 여럿이라 (corpus, 파일, 줄, 키워드, 표현, 매칭 문자열) 순서 검증 뒤 위치로 한다. 추가 필드: `grade3_share`, 교재 3분류(`real-marker` / `toc-block` / `real-marker-nomap`, 블록 수 / 대응의 실제 쪽 수 ≥ 0.8), `meta.alignment_self_check`(`--previous-basis` 의 `alignment_check.overall`·`hybrid_lines` — 정렬 오차 병기), `--school-grade-workbook`; 쓰기는 `SKR._write_text_atomic`.
 
 ### 3.8 발표면 · HWPX — FR-08·09
 
@@ -116,7 +117,7 @@ def reseg_agreement(result, csv_path) -> dict:   # {"pages": n, "agree": n, "dis
 
 ### 3.9 CLI
 
-- `semantic_keyword_recount.py --page-maps DIR`(기본 `data/markdown/ncs_paged`; 디렉터리가 없으면 멈춘다 — 정본은 대응 없이 만들 수 없다), `--reseg-csv PATH`(기본 `docs/03-analysis/data/ncs_pages_reseg.csv`).
+- `semantic_keyword_recount.py --page-maps DIR`(기본 `DEFAULT_PAGE_MAPS_DIR` = `data/markdown/ncs_paged`; `run_census` 가 디렉터리 부재를 `FileNotFoundError` 로 멈춘다 — 정본은 대응 없이 만들 수 없다), `--reseg-csv PATH`(기본 `DEFAULT_RESEG_CSV` = `docs/03-analysis/data/ncs_pages_reseg.csv`). `run_census(page_maps_dir=None)` 은 라이브러리 호출(테스트·영향표)용 — 그 실행은 `page_basis` 가 `marker` 라 정본 `EXPECTED` 와 어긋난다.
 - `occurrence_real_pages_impact.py --source-workbook … --ncs-root … --school-root … --page-maps … --out docs/03-analysis/data/occurrence_real_pages_impact.json`.
 
 ---
@@ -161,6 +162,10 @@ def reseg_agreement(result, csv_path) -> dict:   # {"pages": n, "agree": n, "dis
 | 5 | 이전 기준 결속을 `EXPECTED` 에 고정 | "같은 규칙" 이 이 기능의 전제 — 규칙이나 대응이 바뀌면 실행이 멈춰야 한다 |
 | 6 | `expression_review_impact.json` 은 그대로(블록 기준, 역사) | 사전 점검 기능의 산출물 — 다시 만들지 않고 data README 에 기준 차이를 적는다 |
 | 7 | HWPX 산출물 날짜 접미를 정본 실행일에서 | 하드코딩 20260914 제거(ship 리뷰 D1 자문의 일부) |
+| 8 | 목록 교재(대응 없는 2권)도 `real-page` 출처 | 표식이 실제 쪽이므로 블록 라벨 상속은 모집단을 다시 섞는다 — 계획 §4 성공 기준 1 의 첫 선택지(갭 G-2) |
+| 9 | `reseg_agreement` 는 `label` 출처 쪽을 제외 | 라벨 쪽은 실제 쪽이 아니고, 그 2권은 지금 표식(실제 쪽)으로 판정된다(갭 G-3) |
+| 10 | 대응을 매칭 줄 규약(`splitlines`)으로 옮겨 싣는다 | `\x0c` 가 든 1권에서 줄 번호가 밀리는 잠재 결함(갭 G-1) — 정본 수치는 바뀌지 않았고(경계 줄 출현 0건) 규약만 통일 |
+| 11 | 설계 밖 추가: `AnalysisResult.run`(main 의 metrics 출력용 manifest 사본), `page is None` 레코드는 덧씌우지 않음, 표식 없는 NCS 문서는 대응 대상 아님, 2절 "주" 문단도 `page_basis` 분기, 목록 교재 표식은 1..N 이어야, `pdf_pages` 를 모르는 대응 교재는 오류, `Facts.page_basis` 별도 필드 | 갭 G-9 기록 |
 
 ---
 
@@ -169,3 +174,4 @@ def reseg_agreement(result, csv_path) -> dict:   # {"pages": n, "agree": n, "dis
 | 버전 | 날짜 | 변경 | 작성자 |
 |---|---|---|---|
 | 0.1 | 2026-09-15 | 초안 | Claude (Opus 5) |
+| 0.2 | 2026-09-15 | 갭 분석 Act-1 — G-1 줄 규약, G-2/G-3/G-9 결정 행 8~11, G-4 CLI 기본값, G-7 영향표 필드·원자적 쓰기, G-8 결속 안내, G-10 정렬 수치 병기 | Claude (Opus 5) |

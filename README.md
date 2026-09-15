@@ -6,7 +6,7 @@
 
 ## 대시보드 (GitHub Pages)
 
-최신 키워드 검색·등급분류 결과는 [분리 분석 페이지](https://drunkenzealnut.github.io/searchinmd/keyword-analysis.html)에서 확인할 수 있습니다. NCS 교재 86권·교과서 9권 기준이며, 정본 실행(2026-09-14, `semantic_keyword_recount_20260914.xlsx`)의 산출물 `docs/03-analysis/data/semantic_summary.json` 하나에서 대시보드·분리 분석 페이지·이 README 의 수치가 나옵니다.
+최신 키워드 검색·등급분류 결과는 [분리 분석 페이지](https://drunkenzealnut.github.io/searchinmd/keyword-analysis.html)에서 확인할 수 있습니다. NCS 교재 86권·교과서 9권 기준이며, 정본 실행(2026-09-15, `semantic_keyword_recount_20260915.xlsx` — NCS 출현을 실제 PDF 쪽에 놓은 실행)의 산출물 `docs/03-analysis/data/semantic_summary.json` 하나에서 대시보드·분리 분석 페이지·이 README 의 수치가 나옵니다.
 
 | 페이지 | 내용 |
 |---|---|
@@ -84,7 +84,7 @@ python3 semantic_keyword_recount.py \
 
 `--page-maps` 는 `resegment.py` 가 남긴 줄→실제 PDF 쪽 대응(`data/markdown/ncs_paged/<LM코드>.pages.json`, 84권, 비추적)입니다 — 2026-09-15 부터 NCS 출현은 목차 블록 표식이 아니라 이 대응으로 실제 쪽에 놓이고 그 쪽 본문에 규칙 하나로 등급이 판정됩니다(`occurrence-real-pages`; 대응이 없는 2권 `LM1903060408`·`LM1903060424` 는 표식이 실제 쪽이라 그대로, `REAL_PAGE_MARKER_BOOKS`). `--reseg-csv` 는 이전 기준 쪽 등급과의 일치(공유 쪽 2,035개 전부 일치)를 `meta.run.reseg_agreement` 에 남기고 `EXPECTED` 가 그 값을 고정합니다. 대응 없이 돌리면 `page_basis` 가 어긋나 정본으로 쓰이지 않습니다. 블록 기준(2026-09-14)과의 차이는 `python3 occurrence_real_pages_impact.py --source-workbook … --ncs-root … --school-root … --page-maps data/markdown/ncs_paged` 가 `docs/03-analysis/data/occurrence_real_pages_impact.json` 에 남깁니다(총계 불변, 등급 이동 4,016건). 교과서 등급 워크북(`ncs_keywords_in_markdown_results_교과서_results_20260415.xlsx`)은 `--source-workbook` 과 같은 폴더에서 자동으로 찾고, 없으면 멈춥니다(`--school-grade-workbook` 으로 따로 지정). 실행 명령·입력 파일별 sha256·git commit 은 `semantic_summary.json` 의 `meta.run` 에 남으므로, 수치가 어긋나면 어느 입력이 달라졌는지 거기서 추적합니다.
 
-정본이 아닌 사전(`--dictionary v1` 또는 `v1fix`)은 **변형 실행**이라 `docs/` 아래와 정본 기본 이름으로는 쓰지 못하고, `EXPECTED` 불일치를 `meta.run` 에 기록만 합니다. 사전을 v2 로 고른 근거인 **표현 점검**(`expression_review.py sample` → `code_pages.py` 코더 2계열 → `score` → `impact`)은 실행 순서와 결과가 [표현 점검 결과](docs/03-analysis/expression-review.analysis.md) §8 에 있고, 대시보드 수치를 바꾸지 않습니다. 기초보고서 **HWPX 재작성**(`python3 hwpx_results_refresh.py`, 원본 `data/반도체 기초보고서_20260911.hwpx` → 새 파일 `…_20260914_정본.hwpx`)은 숫자를 추적된 `semantic_summary.json`·`accident_case_pages.json`·`summary.json` 에서만 가져와 제3장 1~3절의 문단·표·그림을 다시 쓰며, 그림에 ImageMagick(`magick`)이 필요하고 `--no-render` 면 그림 없이 점검만 합니다. 다시 쓴 절의 숫자가 하나라도 정본 값이 아니면 아무것도 쓰지 않습니다.
+정본이 아닌 사전(`--dictionary v1` 또는 `v1fix`)은 **변형 실행**이라 `docs/` 아래와 정본 기본 이름으로는 쓰지 못하고, `EXPECTED` 불일치를 `meta.run` 에 기록만 합니다. 사전을 v2 로 고른 근거인 **표현 점검**(`expression_review.py sample` → `code_pages.py` 코더 2계열 → `score` → `impact`)은 실행 순서와 결과가 [표현 점검 결과](docs/03-analysis/expression-review.analysis.md) §8 에 있고, 대시보드 수치를 바꾸지 않습니다. 기초보고서 **HWPX 재작성**(`python3 hwpx_results_refresh.py`, 원본 `data/반도체 기초보고서_20260911.hwpx` → 새 파일 `…_{정본 실행일}_정본.hwpx`, 2026-09-15 정본이면 `…_20260915_정본.hwpx`)은 숫자를 추적된 `semantic_summary.json`·`accident_case_pages.json`·`summary.json` 에서만 가져와 제3장 1~3절의 문단·표·그림을 다시 쓰며, 그림에 ImageMagick(`magick`)이 필요하고 `--no-render` 면 그림 없이 점검만 합니다. 다시 쓴 절의 숫자가 하나라도 정본 값이 아니면 아무것도 쓰지 않습니다.
 
 원본 PDF 까지 있으면 **재세그먼트**(`resegment.py`)도 돌릴 수 있습니다 — 이전 기준(페이지 단위)의 정본이며, 2026-09-13 부터 대시보드 KPI 는 위 출현건수 기준이고 이 값은 병기됩니다. 2026-04 검색 당시 워크북의 '페이지' 라벨은 목차 단위라 여러 쪽을 한 라벨로 묶은 경우가 많았는데, 이 스크립트는 마크다운 줄을 PDF 쪽 텍스트에 정렬해 검출 행 7,769건을 실제 쪽에 다시 놓고 (교재, 쪽) 단위 등급을 다시 셉니다. 결과는 검출 1,847→2,189쪽, 등급3 108쪽(5.8%)→145쪽(6.6%)(2026-09-06 마커 결손 보정 후)이며 `docs/03-analysis/data/ncs_pages_reseg.csv`·`reseg_summary.json` 으로 커밋돼 있습니다. 2026-09-06~09-12 의 대시보드 KPI 는 이 산출물이었고, 지금은 "이전 기준"으로 병기됩니다([재세그먼트 결과](docs/03-analysis/resegment-results.analysis.md) §6).
 

@@ -16,9 +16,9 @@
    }
   },
   "book_kind_rule": "blocks / distinct real pages >= 0.8",
-  "generated_at": "2026-09-15T11:38:59+09:00",
+  "generated_at": "2026-09-15T12:37:24+09:00",
   "git": {
-   "commit": "f28d496",
+   "commit": "c5325df",
    "dirty": true
   },
   "inputs": {
@@ -30,6 +30,21 @@
     "files": 84,
     "sha256": "36de1bff377c09c730bd66fd00574b3546201175c8645b55be98ff2de11747da"
    }
+  },
+  "alignment_self_check": {
+   "source": "docs/03-analysis/data/reseg_summary.json",
+   "books": 23,
+   "lines": 21711,
+   "exact": 18142,
+   "near": 20613,
+   "all_lines": 32486,
+   "all_exact": 25219,
+   "all_near": 29329,
+   "nogap_lines": 19698,
+   "nogap_exact": 17456,
+   "nogap_near": 19397,
+   "hybrid_lines": 1575,
+   "note": "DP 후보 줄 exact/near(±1쪽) — 대응의 정확도, 이 영향표의 실제 쪽 배정도 같은 오차를 가진다"
   }
  },
  "totals": {

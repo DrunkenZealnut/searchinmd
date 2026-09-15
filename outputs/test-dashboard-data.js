@@ -64,7 +64,7 @@ const common = ['전체 등급 분포', '키워드별 상세', '문제점과 시
 check('S1a 출현건수가 등급 분모', D.meta.denominator === 'occurrences');
 check('S1b 30개 독립 키워드', D.keywords.length === 30);
 check('S1c NCS 가 교과서와 같은 등급1~3 흐름', common.every((x) => headings(ncs).includes(x)) && ncs.includes('NCS 영역별 현황'));
-check('S1e 브리지 절이 실제 쪽 기준·결속(공유 쪽 등급 일치)을 말한다 (occurrence-real-pages)', D.meta.page_basis.NCS === 'real' && ncs.includes('같은 실제 PDF 쪽') && ncs.includes('공유 쪽 ' + fmt(S.meta.run.reseg_agreement.pages) + '개의 등급 일치 ' + fmt(S.meta.run.reseg_agreement.agree) + '개'));
+check('S1f 브리지 절이 실제 쪽 기준·결속(공유 쪽 등급 일치)을 말한다 (occurrence-real-pages)', D.meta.page_basis.NCS === 'real' && ncs.includes('같은 실제 PDF 쪽') && ncs.includes('공유 쪽 ' + fmt(S.meta.run.reseg_agreement.pages) + '개의 등급 일치 ' + fmt(S.meta.run.reseg_agreement.agree) + '개'));
 check('S1d 교과서도 같은 분석 흐름', common.every((x) => headings(school).includes(x)) && school.includes('교과서별 현황'));
 check('S1e 공통 섹션의 상대 순서 일치 (NCS 만 브리지 절을 더 가진다)', JSON.stringify(headings(ncs).filter((h) => common.includes(h))) === JSON.stringify(headings(school).filter((h) => common.includes(h))), headings(ncs).join(' | '));
 check('S1f NCS 출현건수 KPI == summary', [N.grades['1'], N.grades['2'], N.grades['3']].every((v) => ncs.includes(fmt(v))));
