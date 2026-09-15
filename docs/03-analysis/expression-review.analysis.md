@@ -185,5 +185,5 @@ python3.13 code_pages.py --sheet data/expression_review_sheet.json --coder B --p
 python3.13 expression_review.py score --list-disagreements     # 재정 대상
 python3.13 expression_review.py score --adopted v2              # → expression_review_scores.json (시트가 있으면 동반어 근거 포함; --adopted 는 결정 3 기록)
 python3.13 expression_review.py impact --ncs-root data_source/markdown/ncs --school-root data_source/markdown/school-text --source-workbook data/ncs_keywords_in_markdown_results_20260402_재판정_20260414.xlsx   # → expression_review_impact.json (~70 s, 쓰기 없음)
-python3.13 -m unittest test_expression_review                   # 16 tests
+python3.13 -m unittest test_expression_review                   # 24 tests
 ```
