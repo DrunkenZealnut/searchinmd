@@ -89,7 +89,7 @@ NCS 86권의 모든 의미 출현(사전 v2 포함 레코드)에 **실제 PDF �
 | ID | 요구사항 | 근거 | 우선순위 | 상태 |
 |---|---|---|---|---|
 | FR-01 | `--page-maps DIR` 로 `<LM코드>.pages.json` 을 읽어 NCS 출현의 `page` 를 `line_pages[줄-1]` 로 놓는다; `line_pages` 길이가 문서 줄 수와 다르면 오류(대응이 다른 판의 마크다운) | §1.3 84권 일치 | High | 대기 |
-| FR-02 | 대응 없는 NCS 문서는 표식이 실제 쪽일 때만 허용(D2: 표식 수 ≥ PDF 쪽수 × 0.8 또는 명시 목록 `REAL_PAGE_MARKER_BOOKS`) — 아니면 실행 거부 | 새 2권 | High | 대기 |
+| FR-02 | 대응 없는 NCS 문서는 표식이 실제 쪽일 때만 허용(D2: 표식 수 ≥ PDF 쪽수 × 0.8 또는 명시 목록 `REAL_PAGE_MARKER_BOOKS`) — 아니면 실행 거부 | 새 2권 | High | 구현 — 명시 목록 + 표식 1..N 연속 검사만(0.8 자동 임계는 채택하지 않음, 설계 §6 결정 3; 0.8 은 영향표의 교재 분류에만) |
 | FR-03 | 실제 쪽의 본문 = 그 쪽에 대응된 줄 전부(표식 줄 제외); 등급 = `regrade.grade_page` 기준선; `grade_source = "real-page"`; NCS 에서 `existing` 상속을 쓰지 않는다 | D1 | High | 대기 |
 | FR-04 | `ncs_pages_reseg.csv` 와 공유 쪽의 등급 일치율을 계산해 manifest 에 기록, 100% 미만이면 `EXPECTED` 불일치 | §1.3 100% | High | 대기 |
 | FR-05 | `groups[].pages` = PDF 쪽수(`reseg_summary.json per_book.pdf_pages`), 대응 없는 교재는 표식 최댓값; manifest `page_basis` | D4 | High | 대기 |
@@ -103,7 +103,7 @@ NCS 86권의 모든 의미 출현(사전 v2 포함 레코드)에 **실제 PDF �
 
 - 대응 파일은 gitignore(줄 단위 대응은 본문이 아니지만 `resegment.py` 산출물 규약을 따른다); manifest 에는 파일 수와 sha256 합만.
 - 재실행 결정론: 같은 대응·같은 코퍼스 → 같은 해시(`test_two_runs_on_same_fixture_are_identical` 확장).
-- 실행 시간: 현재 ~8초에 대응 적용·쪽 본문 판정 추가 — 2배 이내.
+- 실행 시간: 대응 적용·쪽 본문 판정을 더해도 2배 이내 — 실측 34.7 s(대응) vs 34.8 s(대응 없음, 같은 입력·같은 기기; 갭 분석 Act-1 G-11).
 - 절대 경로·본문은 추적 산출물에 넣지 않는다(`public_path`).
 
 ---

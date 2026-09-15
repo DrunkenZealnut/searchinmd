@@ -64,7 +64,7 @@ const common = ['전체 등급 분포', '키워드별 상세', '문제점과 시
 check('S1a 출현건수가 등급 분모', D.meta.denominator === 'occurrences');
 check('S1b 30개 독립 키워드', D.keywords.length === 30);
 check('S1c NCS 가 교과서와 같은 등급1~3 흐름', common.every((x) => headings(ncs).includes(x)) && ncs.includes('NCS 영역별 현황'));
-check('S1f 브리지 절이 실제 쪽 기준·결속(공유 쪽 등급 일치)을 말한다 (occurrence-real-pages)', D.meta.page_basis.NCS === 'real' && ncs.includes('같은 실제 PDF 쪽') && ncs.includes('공유 쪽 ' + fmt(S.meta.run.reseg_agreement.pages) + '개의 등급 일치 ' + fmt(S.meta.run.reseg_agreement.agree) + '개'));
+check('S1t 브리지 절이 실제 쪽 기준·결속(공유 쪽 등급 일치)을 말한다 (occurrence-real-pages)', D.meta.page_basis.NCS === 'real' && ncs.includes('같은 실제 PDF 쪽') && ncs.includes('공유 쪽 ' + fmt(S.meta.run.reseg_agreement.pages) + '개의 등급 일치 ' + fmt(S.meta.run.reseg_agreement.agree) + '개'));
 check('S1d 교과서도 같은 분석 흐름', common.every((x) => headings(school).includes(x)) && school.includes('교과서별 현황'));
 check('S1e 공통 섹션의 상대 순서 일치 (NCS 만 브리지 절을 더 가진다)', JSON.stringify(headings(ncs).filter((h) => common.includes(h))) === JSON.stringify(headings(school).filter((h) => common.includes(h))), headings(ncs).join(' | '));
 check('S1f NCS 출현건수 KPI == summary', [N.grades['1'], N.grades['2'], N.grades['3']].every((v) => ncs.includes(fmt(v))));
@@ -88,6 +88,18 @@ check('S1q 교과서에는 NCS 브리지 표를 그리지 않는다', !school.in
   ctn.innerHTML = ''; ctx2.renderSemanticGradeDashboard('NCS'); const bare = ctn.innerHTML;
   check('S1r previous_basis·run 없는 payload — 브리지 절·데이터 문구·이전 기준 안내 없이 렌더', !bare.includes('이전 기준과의 관계') && !bare.includes('<strong>데이터</strong>') && !bare.includes('브리지 표를 보십시오') && bare.includes('전체 등급 분포'));
   ctn.innerHTML = '';
+}
+{ // S1u 브리지 문구의 실제 쪽 분기 (occurrence-real-pages, 렌더러 bridge()) — page_basis 가 marker 면 실제 쪽 문구 없음, real 인데 run.reseg_agreement 가 없으면 결속 괄호만 빠진다. 원본은 복사본이라 S2a 의 deep-equal 은 그대로.
+  const renderWith = (mutate) => {
+    const c = { document, console: ctx.console, JSON, Math, Object, Array, String, Number, Date, RegExp, Intl, parseInt, parseFloat, isNaN, setTimeout, clearTimeout, getComputedStyle: ctx.getComputedStyle, Chart };
+    c.window = c; c.globalThis = c; vm.createContext(c);
+    const P = JSON.parse(JSON.stringify(D)); mutate(P); c.SEMANTIC_RECOUNT = P;
+    vm.runInContext(renderer, c, { filename: 'docs/semantic_grade_dashboard.js' });
+    ctn.innerHTML = ''; c.renderSemanticGradeDashboard('NCS'); const html = ctn.innerHTML; ctn.innerHTML = ''; return html;
+  };
+  const marker = renderWith((P) => { P.meta.page_basis.NCS = 'marker'; });
+  const noAgree = renderWith((P) => { P.meta.run.reseg_agreement = null; });
+  check('S1u 브리지 문구는 데이터로만 갈린다 — marker: 실제 쪽 문구 없음 · real+결속 없음: 괄호 없음 · 원본 복사본: 동일 렌더', !marker.includes('같은 실제 PDF 쪽') && marker.includes('이전 기준과의 관계') && noAgree.includes('같은 실제 PDF 쪽') && !noAgree.includes('공유 쪽') && renderWith(() => {}) === ncs);
 }
 
 // ================================================================ S2 data ≡ summary

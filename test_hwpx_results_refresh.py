@@ -572,6 +572,24 @@ class RealPageBasisTests(unittest.TestCase):
         self.assertEqual(f"반도체 기초보고서_{day}_정본.hwpx", HR.default_out_path(f).name); self.assertEqual(f"hwpx_results_refresh_{day}.json", HR.default_diff_path(f).name)
         self.assertTrue(HR._under_tracked_docs(HR.default_diff_path(f))); self.assertFalse(HR._under_tracked_docs(HR.default_out_path(f)))
 
+    def test_load_facts_rejects_unknown_page_basis_and_marker_note_keeps_old_wording(self):
+        """출고 전 커버리지 감사 (2026-09-15): page_basis 가 dict 가 아니거나 NCS 값이 real/marker 밖이면 거부; marker 정본에서는 '주' 문단이 옛 문구, 조건 기록은 page_basis 값."""
+        summary = json.loads(HR.DEFAULT_SUMMARY.read_text(encoding="utf-8"))
+        with tempfile.TemporaryDirectory() as td:
+            for name, value in (("bogus", {"NCS": "pdf", "교과서": "marker"}), ("notdict", "real"), ("nokey", {"교과서": "marker"})):
+                broken = copy.deepcopy(summary); broken["meta"]["page_basis"] = value
+                (Path(td) / f"{name}.json").write_text(json.dumps(broken, ensure_ascii=False), encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "page_basis", msg=name):
+                    HR.load_facts(Path(td) / f"{name}.json", HR.DEFAULT_CASES, HR.DEFAULT_RECOUNT)
+            marker = copy.deepcopy(summary); marker["meta"]["page_basis"] = {"NCS": "marker", "교과서": "marker"}
+            (Path(td) / "marker.json").write_text(json.dumps(marker, ensure_ascii=False), encoding="utf-8")
+            g = HR.load_facts(Path(td) / "marker.json", HR.DEFAULT_CASES, HR.DEFAULT_RECOUNT)
+            ncs_m = {k: v for k, v, _ in HR.ncs_paragraphs(g)}
+            self.assertIn("등급은 출현이 놓인 페이지의 판정값을 출현별로 연결한 값임.", ncs_m["주: 단위: 건."]); self.assertNotIn("줄→쪽 대응", ncs_m["주: 단위: 건."])
+            self.assertEqual({"page_basis": "marker"}, next(c for k, _, c in HR.ncs_paragraphs(g) if k == "NCS 기반 반도체 자료를 대상으로"))
+            self.assertEqual({"page_basis": "real"}, next(c for k, _, c in HR.ncs_paragraphs(fixture_facts()) if k == "NCS 기반 반도체 자료를 대상으로"))
+            self.assertEqual(HR.run_day(fixture_facts()), HR.run_day(g))                                                        # 산출물 이름은 page_basis 와 무관 — 실행일만
+
 
 class EndToEndTests(unittest.TestCase):
     def _fixture(self, td):
