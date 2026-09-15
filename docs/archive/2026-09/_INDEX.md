@@ -1,6 +1,6 @@
 # Archive Index — 2026-09
 
-보관 산출물 목록. `coding-v1` 은 **폐기된 라벨의 기록**, `recoding`·`resegment`·`resegment-publish`·`marker-offset`·`semantic-recount-remediation`·`semantic-expression-review`·`hwpx-ncs-section-refresh` 는 완료된 PDCA 기능 문서다.
+보관 산출물 목록. `coding-v1` 은 **폐기된 라벨의 기록**, `recoding`·`resegment`·`resegment-publish`·`marker-offset`·`semantic-recount-remediation`·`semantic-expression-review`·`hwpx-ncs-section-refresh`·`occurrence-real-pages` 는 완료된 PDCA 기능 문서다.
 
 | Item | 종류 | 보관일 | 보관 파일 |
 |------|------|--------|-----------|
@@ -12,6 +12,7 @@
 | [semantic-recount-remediation](semantic-recount-remediation/) | PDCA 기능 (완료, Match Rate Act-0 96% → 100%; PR #15) | 2026-09-14 | plan · design · analysis(갭 + Act-1 + Act-2 ship 리뷰) · report |
 | [semantic-expression-review](semantic-expression-review/) | PDCA 기능 (완료, Match Rate 96% → Act-1 100%; PR #16 머지 `6f1fa1f`) | 2026-09-15 | plan · design · analysis(갭 + Act-1) · report |
 | [hwpx-ncs-section-refresh](hwpx-ncs-section-refresh/) | PDCA 기능 (완료, Match Rate 92% → Act-1 100%; PR #16 머지 `6f1fa1f`) | 2026-09-15 | plan · design · analysis(갭 + Act-1) · report |
+| [occurrence-real-pages](occurrence-real-pages/) | PDCA 기능 (완료, Match Rate 90.8% → Act-1 100%; PR #17, 보관 시점 미머지) | 2026-09-15 | plan · design · analysis(갭 + Act-1) · report |
 
 ## coding-v1
 
@@ -121,3 +122,19 @@
 - [Design](hwpx-ncs-section-refresh/hwpx-ncs-section-refresh.design.md)
 - [Analysis (갭 + Act-1)](hwpx-ncs-section-refresh/hwpx-ncs-section-refresh.analysis.md)
 - [Report](hwpx-ncs-section-refresh/hwpx-ncs-section-refresh.report.md)
+
+## occurrence-real-pages
+
+의미 출현을 실제 PDF 쪽에 얹기 — 페이지 단위 이질성 해소 — 2026-09-15, Plan(연구책임자 결정 D1~D6 전부 A) → Design → Do → Check(90.8%) → Act-1(G-1~G-11, 100%) → ship 리뷰(PR #17: 전문가 6·레드팀·Codex design voice, 적대적 Claude 12·Codex 구조 리뷰 P2 1, CodeRabbit 3) → Report → PR #17(보관 시점 미머지).
+
+- **Problem**: 정본 의미 재검산(NCS 11,517건)의 "페이지"는 마크다운 쪽 표식이었다 — 86권 중 23권만 실제 쪽이고 63권은 목차 유도 블록이라 한 "페이지"가 실제 1쪽이기도 41쪽이기도 했고(외부감사 M2), 등급도 2026-04 워크북 라벨 상속(6,292건)과 블록 텍스트 판정(5,225건)이 섞여 있었다.
+- **Solution**: `resegment.py`가 이미 만든 줄→실제 쪽 대응(84권, 정렬 자기 검증 ±1쪽 94.9%)을 `--page-maps`로 입력해 NCS 출현마다 실제 쪽을 붙이고, 등급은 실제 쪽 본문에 `regrade.grade_page` 기준선 하나로 판정(이전 기준과 공유 쪽 2,035개에서 100% 일치를 `EXPECTED`로 고정); 표식이 실제 쪽인 새 2권은 표식 그대로. 신규 영향표 `occurrence_real_pages_impact.py`가 블록 기준 vs 실제 쪽 기준을 나란히 집계.
+- **결과**: NCS 등급 3,788/5,227/2,502(21.9 → 21.7%, 구성 효과), 이동 4,016건(34.9%), `existing` 상속분 52.8%만 불변; 분야 쪽수 8,914(표식 최댓값) → 9,100(PDF 쪽수, D4); 대시보드 브리지 절이 "같은 실제 PDF 쪽 기준·같은 규칙, 검출 쪽 집합은 다르다(2,492 vs 2,189)"로 두 KPI 관계를 데이터에서 그린다. ship 리뷰 58건(critical 0) 반영으로 대응↔이전 기준 결속 검증(`check_page_maps_against_previous_basis`)·영향표 성능(21.7→14.0초)·영향표 교재 분류(`per_book.method` 기준, 23/61/2)·블록 폭 표 이중 계수 제거(CodeRabbit)까지 정본 밖 견고성도 확보. 테스트 unittest 137→175·하니스 68→79.
+- **이월**(`TODOS.md` ④·5(c)·⑥): `--marker-correct` 채택(D2-B, `NCS_PDF_ROOT` 확보로 로컬 재실행 가능해졌으나 채택은 연구책임자 결정), LM 코드 규약 통일·`resegment.py` 실행 id 결속(적대적 리뷰 INVESTIGATE), `run_census`/`main()` metrics 중복 계산 제거(단순화 자문, 보류), 한글(HWP) E2E 확인, F11(정본 워크북 `data/` 복귀로 재실행 가능).
+- **관련 자산**: 정본 `docs/03-analysis/data/semantic_summary.json`(`meta.page_basis`·`meta.run.reseg_agreement`·`corpora.*.detected_pages`), 영향표 `docs/03-analysis/data/occurrence_real_pages_impact.json`, HWPX 정본 `data/반도체 기초보고서_20260915_정본.hwpx`(비추적)·대조 JSON `docs/03-analysis/data/hwpx_results_refresh_20260915.json`, 규칙 `CLAUDE.md` "4. Semantic recount" 그룹 4·Safety Grading Scheme 예외 문단.
+
+보관 문서:
+- [Plan](occurrence-real-pages/occurrence-real-pages.plan.md)
+- [Design](occurrence-real-pages/occurrence-real-pages.design.md)
+- [Analysis (갭 + Act-1)](occurrence-real-pages/occurrence-real-pages.analysis.md)
+- [Report](occurrence-real-pages/occurrence-real-pages.report.md)
