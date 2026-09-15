@@ -174,6 +174,7 @@ class Facts:
         for p in c.pages:
             for year in re.findall(r"(\d{4})년", p["gist"]):
                 add(year, f"cases.pages[{p['book']}].gist(year)")
+        add(str(len(self.marker_books)), "run.real_page_marker_books(count)")       # 2절 "대응이 없는 N권" — 허용 토큰(등급 라벨 2)에 기대지 않고 출처를 댄다 (적대적 리뷰 7)
         return index
 
     def all_numbers(self) -> set[str]:

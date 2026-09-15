@@ -15,10 +15,10 @@
     "3": 115
    }
   },
-  "book_kind_rule": "blocks / distinct real pages >= 0.8",
-  "generated_at": "2026-09-15T12:37:24+09:00",
+  "book_kind_rule": "previous basis per_book.method (markers → real-marker, alignment → toc-block); fallback blocks / distinct real pages >= 0.8; no map → real-marker-nomap",
+  "generated_at": "2026-09-15T15:40:33+09:00",
   "git": {
-   "commit": "c5325df",
+   "commit": "f5a1c0d",
    "dirty": true
   },
   "inputs": {
@@ -113,17 +113,17 @@
  },
  "by_book_kind": {
   "real-marker": {
-   "books": 25,
-   "occurrences": 3821,
+   "books": 23,
+   "occurrences": 3586,
    "block": {
-    "1": 1356,
-    "2": 1547,
-    "3": 918
+    "1": 1250,
+    "2": 1506,
+    "3": 830
    },
    "real": {
-    "1": 1256,
-    "2": 1583,
-    "3": 982
+    "1": 1117,
+    "2": 1543,
+    "3": 926
    }
   },
   "real-marker-nomap": {
@@ -141,17 +141,17 @@
    }
   },
   "toc-block": {
-   "books": 59,
-   "occurrences": 7281,
+   "books": 61,
+   "occurrences": 7516,
    "block": {
-    "1": 2857,
-    "2": 2932,
-    "3": 1492
+    "1": 2963,
+    "2": 2973,
+    "3": 1580
    },
    "real": {
-    "1": 2392,
-    "2": 3459,
-    "3": 1430
+    "1": 2531,
+    "2": 3499,
+    "3": 1486
    }
   }
  },

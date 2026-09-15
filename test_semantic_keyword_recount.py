@@ -1423,6 +1423,9 @@ class RealPageTests(unittest.TestCase):
                 run_census(**dict(kw, xlsx_out=root / "o5.xlsx", report_out=root / "o5.md"), expected={"documents": {"NCS": 86, "교과서": 9}}, page_maps_dir=maps, previous_basis=reseg_bad,
                            git={"commit": "x", "dirty": False}, argv=["x"])
             # 대응의 쪽 값은 그 교재의 PDF 쪽수를 넘을 수 없다 (손으로 고친·다른 교재의 대응)
+            bad_csv = root / "reseg_bad.csv"; bad_csv.write_text("﻿영역,교재,페이지,등급\n반도체개발,LM1903060101_안전,10,x\n", encoding="utf-8")   # 정수가 아닌 등급 — 파일·행을 말하는 ValueError
+            with self.assertRaisesRegex(ValueError, r"reseg_bad\.csv.*페이지 '10'"):
+                SKR.reseg_agreement(graded_result(), bad_csv)
             bound["meta"].pop("md_corpus_sha256"); bound["per_book"]["LM1903060101_안전"]["pdf_pages"] = 12
             reseg_small = root / "reseg_small.json"; reseg_small.write_text(json.dumps(bound), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "PDF 쪽수.*13"):
@@ -1477,6 +1480,10 @@ class RealPageTests(unittest.TestCase):
                 SKR.load_page_maps(maps, [a])
             (maps / "LM1903060101.pages.json").write_text(json.dumps({"md": "LM1903060101_a.md", "line_pages": [10, 10, 12, 12, 13, 13], "marker_correct": None, "moved_markers": []}), encoding="utf-8")
             self.assertEqual(1, SKR.load_page_maps(maps, [a])[1].files)                            # 진단 실행(보정 없음)의 대응은 그대로 받는다
+            for broken, hint in (('{"md": ', "LM1903060101.pages.json"), ("[1, 2]", "객체"), ('{"md": "LM1903060101_a.md", "line_pages": [10, 10, 12, 12, 13, 13], "moved_markers": 3}', "moved_markers")):
+                (maps / "LM1903060101.pages.json").write_text(broken, encoding="utf-8")            # 깨진 JSON·목록 payload·이상한 moved_markers — 전부 파일 이름을 말하는 ValueError (적대적 리뷰 2·3)
+                with self.assertRaisesRegex(ValueError, hint):
+                    SKR.load_page_maps(maps, [a])
 
     def test_load_page_maps_rejects_non_list_bool_and_string_page_values(self):
         with tempfile.TemporaryDirectory() as td:
@@ -1650,7 +1657,9 @@ class ImpactScriptTests(unittest.TestCase):
             (maps / "LM1903060101.pages.json").write_text(json.dumps({"md": "LM1903060101_안전.md", "line_pages": [10, 10, 12, 12, 13, 13]}), encoding="utf-8")
             out = root / "impact.json"
             argv = ["occurrence_real_pages_impact.py", "--source-workbook", str(kw["source_workbook"]), "--ncs-root", str(kw["ncs_root"]), "--school-root", str(kw["school_root"]),
-                    "--school-grade-workbook", str(kw["school_grade_workbook"]), "--page-maps", str(maps), "--out", str(out)]
+                    "--school-grade-workbook", str(kw["school_grade_workbook"]), "--page-maps", str(maps), "--out", str(out),
+                    "--previous-basis", str(root / "reseg_min.json")]                                 # 기본값은 추적 정본 reseg — fixture 대응은 그 판에 묶이지 않으니 최소 이전 기준을 준다
+            (root / "reseg_min.json").write_text(json.dumps({"per_book": {}, "meta": {}}), encoding="utf-8")
             buf = io.StringIO()
             with mock.patch.object(IMP, "BLOCK_BASIS_V2", None), contextlib.redirect_stdout(buf):
                 IMP.main(argv[1:])
@@ -1668,6 +1677,13 @@ class ImpactScriptTests(unittest.TestCase):
         self.assertEqual("toc-block", IMP.book_kind(dense, {dense.relative_path: ()}))                                          # 실제 쪽 0 — 나눗셈 없이 toc-block
         self.assertEqual("real-marker-nomap", IMP.book_kind(dense, {}))
         self.assertEqual(0.8, IMP.REAL_MARKER_RATIO)
+        # 이전 기준이 그 교재의 대응을 어떻게 만들었는지(per_book.method) 알면 그것이 분류다 — 비율은 method 를 모르는 교재의 대체 규칙 (적대적 리뷰 1)
+        methods = {"LM1903060101": "alignment"}
+        self.assertEqual("toc-block", IMP.book_kind(dense, {dense.relative_path: (1, 1, 2, 2, 3, 3, 4, 4, 5, 6)}, methods))      # 비율은 0.83 이지만 DP 정렬로 만든 대응
+        self.assertEqual("real-marker", IMP.book_kind(dense, {dense.relative_path: (1, 2, 3, 4, 5, 6, 7, 8, 9, 10)}, {"LM1903060101": "markers"}))
+        self.assertEqual("real-marker-nomap", IMP.book_kind(dense, {}, methods))                                                # 대응 없음이 method 보다 앞선다
+        self.assertEqual({"LM1903060101": "alignment", "LM1903060102": "markers"},
+                         IMP.book_methods({"per_book": {"LM1903060101_a": {"method": "alignment"}, "반도체개발/LM1903060102_b": {"method": "markers"}, "LM1903060408_c": {"method": None}, "no code": {"method": "markers"}}}))
 
     def test_impact_refuses_when_the_map_changes_the_match_set(self):
         with tempfile.TemporaryDirectory() as td:
@@ -1711,7 +1727,11 @@ class ImpactScriptTests(unittest.TestCase):
             reseg.write_text(json.dumps({"alignment_check": {"books": 23, "overall": {"lines": 100, "exact": 0.9, "near": 0.95, "nogap_exact": 0.92}}, "hybrid_lines": 7}), encoding="utf-8")
             base = ["occurrence_real_pages_impact.py", "--source-workbook", str(kw["source_workbook"]), "--ncs-root", str(kw["ncs_root"]), "--school-root", str(kw["school_root"]),
                     "--school-grade-workbook", str(kw["school_grade_workbook"]), "--page-maps", str(maps)]
-            for tag, previous in (("with", reseg), ("without", root / "missing.json")):
+            bare = root / "reseg_bare.json"; bare.write_text(json.dumps({"per_book": {}, "meta": {}}), encoding="utf-8")   # 정렬 자기 검증이 없는 이전 기준
+            with mock.patch.object(IMP, "BLOCK_BASIS_V2", None), contextlib.redirect_stdout(io.StringIO()), self.assertRaises(FileNotFoundError):
+                IMP.main(base[1:] + ["--out", str(root / "none.json"), "--previous-basis", str(root / "missing.json")])          # 잘못 적은 경로가 결속을 조용히 건너뛰지 않는다 (적대적 리뷰 12)
+            self.assertFalse((root / "none.json").exists())
+            for tag, previous in (("with", reseg), ("without", bare)):
                 out = root / f"{tag}.json"
                 with mock.patch.object(IMP, "BLOCK_BASIS_V2", None), contextlib.redirect_stdout(io.StringIO()):
                     IMP.main(base[1:] + ["--out", str(out), "--previous-basis", str(previous)])
@@ -1721,7 +1741,16 @@ class ImpactScriptTests(unittest.TestCase):
                     self.assertEqual((23, 100, 0.9, 0.92, None, 7), (check["books"], check["lines"], check["exact"], check["nogap_exact"], check["all_lines"], check["hybrid_lines"]))   # 없는 키는 None 으로 병기
                     self.assertEqual("reseg_summary.json", Path(check["source"]).name); self.assertNotIn(str(root), json.dumps(meta))
                 else:
-                    self.assertNotIn("alignment_self_check", meta)                                                                # 이전 기준 파일이 없으면 병기하지 않는다
+                    self.assertNotIn("alignment_self_check", meta)                                                                # 이전 기준에 정렬 자기 검증이 없으면 병기하지 않는다
+            # 영향표도 정본과 같은 결속을 거친다 (Codex 구조 리뷰 P2): 대응의 쪽 값이 이전 기준 PDF 쪽수를 넘거나 마크다운 판 지문이 다르면 쓰지 않는다
+            bound = root / "reseg_bound.json"
+            bound.write_text(json.dumps({"per_book": {"LM1903060101_안전": {"pdf_pages": 11}}, "meta": {}}), encoding="utf-8")
+            with mock.patch.object(IMP, "BLOCK_BASIS_V2", None), contextlib.redirect_stdout(io.StringIO()), self.assertRaisesRegex(ValueError, "PDF 쪽수"):
+                IMP.main(base[1:] + ["--out", str(root / "bound.json"), "--previous-basis", str(bound)])
+            self.assertFalse((root / "bound.json").exists())
+            bound.write_text(json.dumps({"per_book": {"LM1903060101_안전": {"pdf_pages": 40}}, "meta": {"md_corpus_sha256": "0" * 64}}), encoding="utf-8")
+            with mock.patch.object(IMP, "BLOCK_BASIS_V2", None), contextlib.redirect_stdout(io.StringIO()), self.assertRaisesRegex(ValueError, "md_corpus_sha256"):
+                IMP.main(base[1:] + ["--out", str(root / "bound.json"), "--previous-basis", str(bound)])
 
 
 class CommittedImpactTests(unittest.TestCase):

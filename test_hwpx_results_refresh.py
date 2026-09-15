@@ -601,6 +601,7 @@ class RealPageBasisTests(unittest.TestCase):
         intro = {k: (v, c) for k, v, c in HR.ncs_paragraphs(f)}[intro_key]
         self.assertEqual([b["code"] for b in f.run["real_page_marker_books"]], f.marker_books); self.assertEqual(2, len(f.marker_books))
         self.assertIn("줄→쪽 대응이 없는 2권은 쪽 표식 기준", intro[0]); self.assertEqual(2, intro[1]["marker_books"])
+        self.assertIn("run.real_page_marker_books(count)", f.value_index()["2"])                                              # 감사가 허용 토큰 '2' 가 아니라 출처로 통과한다
         one = copy.deepcopy(f); one.run = dict(f.run, real_page_marker_books=f.run["real_page_marker_books"][:1])
         v1, c1 = {k: (v, c) for k, v, c in HR.ncs_paragraphs(one)}[intro_key]
         self.assertIn("줄→쪽 대응이 없는 1권은 쪽 표식 기준", v1); self.assertEqual(1, c1["marker_books"])

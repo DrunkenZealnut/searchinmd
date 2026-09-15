@@ -475,12 +475,20 @@ def load_page_maps(directory: Path, documents: list[Document]) -> tuple[dict[str
                 raise ValueError(f"REAL_PAGE_MARKER_BOOKS 교재의 표식이 실제 쪽처럼 이어지지 않습니다: {code} (표식 {len(markers)}개, 최댓값 {max(markers)})")
             marker_books.append((code, max(markers)))
             continue
-        payload = json.loads(path.read_text(encoding="utf-8"))
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (ValueError, UnicodeDecodeError) as exc:                                         # json.JSONDecodeError 도 ValueError — 파일 이름 없이 main() 의 한 줄 메시지로 새지 않게 (적대적 리뷰 2)
+            raise ValueError(f"줄→쪽 대응 {path.name} 을 읽을 수 없습니다: {exc}") from None
+        if not isinstance(payload, dict):
+            raise ValueError(f"줄→쪽 대응 {path.name} 은 객체(md·line_pages)가 아닙니다: {type(payload).__name__}")
         expected_name = Path(document.path).name
         if payload.get("md") != expected_name:
             raise ValueError(f"줄→쪽 대응 {path.name} 은 다른 파일의 것입니다: md={payload.get('md')!r} ≠ {expected_name!r}")
-        if payload.get("marker_correct") is not None or payload.get("moved_markers"):        # 연구 변형(--marker-correct)의 대응 — 채택 전에는 정본 입력이 아니다 (TODOS ④)
-            raise ValueError(f"줄→쪽 대응 {path.name} 은 마커 보정 변형(marker_correct={payload.get('marker_correct')!r}, moved_markers {len(payload.get('moved_markers') or [])}개)의 것입니다 — 진단 실행의 대응을 쓰십시오")
+        moved = payload.get("moved_markers") or []
+        if not isinstance(moved, list):
+            raise ValueError(f"줄→쪽 대응 {path.name} 의 moved_markers 가 목록이 아닙니다: {moved!r}")
+        if payload.get("marker_correct") is not None or moved:                                   # 연구 변형(--marker-correct)의 대응 — 채택 전에는 정본 입력이 아니다 (TODOS ④)
+            raise ValueError(f"줄→쪽 대응 {path.name} 은 마커 보정 변형(marker_correct={payload.get('marker_correct')!r}, moved_markers {len(moved)}개)의 것입니다 — 진단 실행의 대응을 쓰십시오")
         line_pages = payload.get("line_pages")
         lines = document.text.split("\n")
         if not isinstance(line_pages, list) or len(line_pages) != len(lines):
@@ -512,7 +520,10 @@ def reseg_agreement(result: AnalysisResult, csv_path: Path, max_disagree: int = 
             if (row.get("출처") or "text") == "label":                      # 마크다운이 없던 교재의 라벨 쪽 — 실제 쪽이 아니라 견주지 않는다
                 continue
             if match and row.get("페이지") and row.get("등급"):
-                reseg[(match.group(0).upper(), int(row["페이지"]))] = int(row["등급"])
+                try:
+                    reseg[(match.group(0).upper(), int(row["페이지"]))] = int(row["등급"])
+                except (TypeError, ValueError, KeyError) as exc:                                    # 열 이름·정수가 아닌 값 — 파일과 행을 말한다 (적대적 리뷰 2)
+                    raise ValueError(f"이전 기준 쪽 등급 CSV {Path(csv_path).name} 의 행을 읽을 수 없습니다 ({row.get('교재')!r}, 페이지 {row.get('페이지')!r}, 등급 {row.get('등급')!r}): {exc}") from None
     ours: dict[tuple[str, int], int] = {}
     for record in result.matches:
         if record.decision == "included" and record.grade_source == "real-page" and record.page is not None:

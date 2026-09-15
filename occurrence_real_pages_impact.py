@@ -43,18 +43,35 @@ def _grade_counts(records) -> dict[str, int]:
     return {"1": counts[1], "2": counts[2], "3": counts[3]}
 
 
-def book_kind(document: SKR.Document, page_maps: dict[str, tuple[int, ...]]) -> str:
-    """real-marker(표식이 실제 쪽) / toc-block(목차 블록) / real-marker-nomap(대응 없는 목록 교재)."""
+def book_methods(reseg: dict) -> dict[str, str]:
+    """이전 기준 per_book.method (markers / alignment) → {LM 코드: method} — 대응을 표식으로 만들었는지 DP 정렬로 만들었는지의 출처."""
+    out: dict[str, str] = {}
+    for name, info in (reseg.get("per_book") or {}).items():
+        match = SKR._NCS_CODE_RE.search(name)
+        method = (info or {}).get("method")
+        if match and isinstance(method, str):
+            out[match.group(0).upper()] = method
+    return out
+
+
+def book_kind(document: SKR.Document, page_maps: dict[str, tuple[int, ...]], methods: dict[str, str] | None = None) -> str:
+    """real-marker(표식이 실제 쪽) / toc-block(목차 블록) / real-marker-nomap(대응 없는 목록 교재).
+
+    대응을 만든 이전 기준이 그 교재의 방법(per_book.method: markers / alignment)을 말하면 그것이 분류다 — 비율(블록 수 / 대응의 실제 쪽 수 ≥ 0.8)은
+    method 를 모르는 교재의 대체 규칙 (적대적 리뷰 1: 비율은 DP 정렬 교재 2권을 "표식이 실제 쪽" 에 넣었다)."""
     line_pages = page_maps.get(document.relative_path)
     if line_pages is None:
         return "real-marker-nomap"
+    method = (methods or {}).get(SKR._document_code(document) or "")
+    if method in ("markers", "alignment"):
+        return "real-marker" if method == "markers" else "toc-block"
     blocks = sum(1 for block in SKR.split_pages(document) if block.page is not None)
     real_pages = len(set(line_pages))
     return "real-marker" if real_pages and blocks / real_pages >= REAL_MARKER_RATIO else "toc-block"
 
 
 def compute_impact(documents: list[SKR.Document], keywords: list[str], existing_grades: dict, page_maps: dict[str, tuple[int, ...]],
-                   block_reference: dict | None = BLOCK_BASIS_V2, dictionary: str = SKR.DEFAULT_DICTIONARY) -> dict:
+                   block_reference: dict | None = BLOCK_BASIS_V2, dictionary: str = SKR.DEFAULT_DICTIONARY, methods: dict[str, str] | None = None) -> dict:
     sources = [SKR.KeywordSource(k, 0, True) for k in keywords]
     rules = SKR.build_default_rules(keywords, version=dictionary)
     candidates = SKR.default_candidate_decisions(version=dictionary)
@@ -72,7 +89,7 @@ def compute_impact(documents: list[SKR.Document], keywords: list[str], existing_
         bad = [c for c in corpora if grades_a[c] != block_reference[c]]
         if bad:
             raise ValueError(f"블록 기준 집계가 옛 정본과 다릅니다({', '.join(bad)}): {grades_a} ≠ {block_reference} — 계보가 끊겼다(사전·코퍼스·워크북을 확인)")
-    kinds = {d.relative_path: book_kind(d, page_maps) for d in documents if d.corpus == "NCS"}
+    kinds = {d.relative_path: book_kind(d, page_maps, methods) for d in documents if d.corpus == "NCS"}
     transition = Counter(); by_source = defaultdict(Counter); by_kind = defaultdict(lambda: {"block": Counter(), "real": Counter(), "occurrences": 0})
     per_keyword = defaultdict(lambda: {"block": Counter(), "real": Counter()}); per_group = defaultdict(lambda: {"block": Counter(), "real": Counter()})
     pages_a, pages_b = set(), set()
@@ -105,7 +122,8 @@ def compute_impact(documents: list[SKR.Document], keywords: list[str], existing_
     moved = sum(v for (x, y), v in transition.items() if x != y)
     return {
         "meta": {"dictionary": dictionary, "unit": "occurrences", "corpus_note": "NCS 만 이동 — 교과서는 표식이 실제 쪽이라 불변",
-                 "block_reference": block_reference, "book_kind_rule": f"blocks / distinct real pages >= {REAL_MARKER_RATIO}"},
+                 "block_reference": block_reference,
+                 "book_kind_rule": f"previous basis per_book.method (markers → real-marker, alignment → toc-block); fallback blocks / distinct real pages >= {REAL_MARKER_RATIO}; no map → real-marker-nomap"},
         "totals": {c: sum(grades_b[c].values()) for c in corpora},
         "grades": {"block": grades_a, "real": grades_b},
         "grade3_share": {c: {"block": round(100 * grades_a[c]["3"] / max(1, sum(grades_a[c].values())), 1), "real": round(100 * grades_b[c]["3"] / max(1, sum(grades_b[c].values())), 1)} for c in corpora},
@@ -126,7 +144,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--school-root", type=Path, required=True)
     parser.add_argument("--school-grade-workbook", type=Path)
     parser.add_argument("--page-maps", type=Path, required=True)
-    parser.add_argument("--previous-basis", type=Path, default=SKR.HERE / SKR.PREVIOUS_BASIS_SOURCE, help="reseg_summary.json — 정렬 자기 검증 수치를 meta 에 병기")
+    parser.add_argument("--previous-basis", type=Path, default=SKR.HERE / SKR.PREVIOUS_BASIS_SOURCE, help="reseg_summary.json — 대응의 결속(마크다운 판·PDF 쪽수)·교재 분류(per_book.method)·정렬 자기 검증 수치의 출처 (기본: 추적 파일)")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args(argv)
     sources = SKR.read_keyword_workbook(args.source_workbook)
@@ -136,15 +154,18 @@ def main(argv: list[str] | None = None) -> None:
     school = args.school_grade_workbook or args.source_workbook.parent / SKR.DEFAULT_SCHOOL_GRADE_WORKBOOK_NAME
     existing = SKR.load_existing_grades(args.source_workbook, school)
     page_maps, info = SKR.load_page_maps(args.page_maps, ncs)
-    out = compute_impact(documents, keywords, existing, page_maps, block_reference=BLOCK_BASIS_V2)
+    if not Path(args.previous_basis).is_file():                                            # 잘못 적은 경로가 결속을 조용히 건너뛰지 않는다 (적대적 리뷰 12)
+        raise FileNotFoundError(f"이전 기준 reseg_summary.json 이 없습니다: {SKR.public_path(args.previous_basis)} — 대응의 결속·교재 분류·정렬 자기 검증의 출처")
+    reseg = json.loads(Path(args.previous_basis).read_text(encoding="utf-8"))
+    SKR.check_page_maps_against_previous_basis(Path(args.previous_basis), ncs, page_maps, SKR.pdf_pages_from_previous_basis(Path(args.previous_basis)))   # 정본 실행과 같은 결속 (Codex 구조 리뷰 P2)
+    out = compute_impact(documents, keywords, existing, page_maps, block_reference=BLOCK_BASIS_V2, methods=book_methods(reseg))
     out["meta"].update({
         "generated_at": datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds"),
         "git": SKR._git_info(),
         "inputs": {"source_workbook": SKR._file_sha256(args.source_workbook), "school_grade_workbook": SKR._file_sha256(school),
                    "ncs_markdown": SKR._document_set_sha256(ncs), "page_maps": info.as_manifest()},
     })
-    if args.previous_basis and Path(args.previous_basis).is_file():                       # 정렬 오차는 이전 기준과 같은 대응의 것 — 그 자기 검증 수치를 병기 (계획 §5)
-        reseg = json.loads(Path(args.previous_basis).read_text(encoding="utf-8"))
+    if reseg.get("alignment_check"):                                                       # 정렬 오차는 이전 기준과 같은 대응의 것 — 그 자기 검증 수치를 병기 (계획 §5)
         check = (reseg.get("alignment_check") or {}).get("overall") or {}
         out["meta"]["alignment_self_check"] = {"source": SKR.public_path(args.previous_basis), "books": (reseg.get("alignment_check") or {}).get("books"),
                                                **{k: check.get(k) for k in ("lines", "exact", "near", "all_lines", "all_exact", "all_near", "nogap_lines", "nogap_exact", "nogap_near")},
