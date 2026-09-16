@@ -30,6 +30,12 @@ BRIDGE_HEADING = " 4) 집계 기준의 변경과 이전 결과와의 관계"
 CONCLUSION_HEADING_OLD, CONCLUSION_HEADING_NEW = " 4) 소결", " 5) 소결"
 NCS_GROUP_TO_AREA = {"반도체개발": "개발", "반도체제조": "제조", "반도체장비": "장비", "반도체재료": "재료"}   # 정본 그룹명 → 보고서 분야명 (hwpx_results_refresh 가 여기서 가져간다 — 한 정의)
 NCS_GROUP_ORDER = tuple(NCS_GROUP_TO_AREA)                  # 보고서의 분야 순서 = 대응표의 삽입 순서
+
+IMPACT_INPUT_KINDS = {                                              # 영향표 meta.inputs 키 → 정본 semantic_summary.json meta.run.inputs 의 kind (CodeRabbit PR #18)
+    "source_workbook": "키워드 등록 워크북", "school_grade_workbook": "교과서 등급 워크북",
+    "ncs_markdown": "NCS Markdown", "school_markdown": "교과서 Markdown",
+}
+
 KOREAN_COUNT = {1: "한", 2: "두", 3: "세", 4: "네", 5: "다섯"}   # "N 차례" 의 우리말 수사 (그 밖은 숫자)
 
 
@@ -295,6 +301,19 @@ def load_bridge_facts(paths: MethodsPaths = MethodsPaths(), summary: dict | None
         raise ValueError("영향표 grades.real.NCS 가 정본 corpora.NCS.grades 와 다릅니다")
     if _get(impact, "meta.inputs.page_maps.sha256", paths.impact) != _get(run, "page_maps.sha256", paths.summary):
         raise ValueError("영향표의 대응표 지문(meta.inputs.page_maps.sha256)이 정본 run.page_maps.sha256 과 다릅니다")
+    # 입력 계보 전체 — 대응표만 같고 워크북·마크다운이 다른 실행의 영향표(같은 총계·같은 출현 등급, 다른 쪽 등급 분포)를 거른다 (CodeRabbit PR #18)
+    run_inputs = {str(i.get("kind")): str(i.get("sha256")) for i in _get(run, "inputs", paths.summary)}
+    for key, kind in IMPACT_INPUT_KINDS.items():
+        if kind not in run_inputs:
+            raise ValueError(f"정본 run.inputs 에 '{kind}' 항목이 없습니다 ({paths.summary})")
+        if _get(impact, f"meta.inputs.{key}", paths.impact, f" — 영향표를 2026-09-16 이후 스크립트로 다시 만드십시오({key} 는 정본 run.inputs '{kind}' 와 결속하는 지문)") != run_inputs[kind]:
+            raise ValueError(f"영향표 meta.inputs.{key} 가 정본 run.inputs '{kind}' 의 sha256 과 다릅니다 — 같은 실행의 파일이 아닙니다")
+    if _get(impact, "meta.dictionary", paths.impact) != _get(run, "dictionary", paths.summary):
+        raise ValueError(f"영향표 meta.dictionary({impact['meta'].get('dictionary')}) ≠ 정본 run.dictionary({run.get('dictionary')})")
+    if int(_get(impact, "totals.교과서", paths.impact)) != int(school["total"]):
+        raise ValueError(f"영향표 totals.교과서({impact['totals']['교과서']}) ≠ 정본 corpora.교과서.total({school['total']})")
+    if _grades(impact, paths.impact, "grades.real.교과서") != {k: int(school["grades"][str(k)]) for k in (1, 2, 3)}:
+        raise ValueError("영향표 grades.real.교과서 가 정본 corpora.교과서.grades 와 다릅니다")
     if int(_get(impact, "pages.real_pages", paths.impact)) != int(_get(ncs, "detected_pages", paths.summary)):
         raise ValueError("영향표 pages.real_pages 가 정본 corpora.NCS.detected_pages 와 다릅니다")
     if int(_get(impact, "pages.교과서.detected_pages", paths.impact)) != int(_get(school, "detected_pages", paths.summary)):

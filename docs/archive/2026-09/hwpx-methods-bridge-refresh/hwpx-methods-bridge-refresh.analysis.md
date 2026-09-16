@@ -28,7 +28,7 @@
 | §3.6·§3.7 B3 절차·템플릿 | 11 | 0 | 0 | 피스 15개 순서, 동사 ±0.5pp, 표 12-1·12-2 4열×6행(+헤더), 소결 5), ctrl 문단 뒤 새 문단(+빈 문단) |
 | §3.8 감사 | 5 | 0 | 0 | STRIP 확장, 감사 범위(1~3절 재탐지 + 5절 + 표 4 + 목차), `out_of_scope` 제거 |
 | §3.9 대조 JSON·검토 HTML | 5 | 0 | 0 | 스키마 일치(+`table_id`·`caption_changed`·`real_pages_vs_block` 추가) |
-| §3.10 출력·백업 | 2 | 0 | 0 | `.<sha8>.bak`, `--no-render` 무백업 |
+| §3.10 출력·백업 | 2 | 0 | 0 | `.<sha8>.bak`(분석 시점; ship 리뷰 뒤 `.<sha16>.bak`), `--no-render` 무백업 |
 | §3.11 문서 | 4 | 0 | 0 | data README·CLAUDE.md·README·TODOS |
 | §4 테스트 설계 | 12 | 3 | 0 | 계보 불일치 3종 테스트 없음(G2), 목차 8개 오류 테스트 없음(G1), 감사 심기 1종·STRIP 직접 단언 없음(G3) |
 | FR-01~14 | 14 | 0 | 0 | |
@@ -49,7 +49,7 @@
 | G8 | Low | §6 결정 기록 미보강(삭제 범위 방식·표 4 셀 탐지·58 산출 규칙), 일부 키 접근이 KeyError | 설계 §6 에 9행 추가; `groups`·`precision/recall`·`keywords[].name` 접근을 `_get` 경유로 |
 | G9 | Low | README 인라인 명령 `--force` 누락, docstring·argparse·검토 HTML 제목이 "제3장" 만 언급, `test.yml` 주석 "3종" | 문구 갱신(README `--force`·`.bak`, docstring 2단계, argparse, review/text 제목, 주석 4종) |
 
-재평가: 부분 일치 4건이 모두 일치로 바뀌어 **109/109 = 100 %**. 검증: `test_hwpx_methods_bridge`(36; ship 리뷰 뒤 49) · `test_hwpx_results_refresh`(44) · `test_semantic_keyword_recount` · `test_expression_review` OK; 정본 원본 점검 실행(`--no-render`) 문단 45·표 12·그림 3·토큰 1,048·미일치 0; `--force` 재실행 산출 HWPX 바이트 동일.
+재평가: 부분 일치 4건이 모두 일치로 바뀌어 **109/109 = 100 %**. 검증: `test_hwpx_methods_bridge`(36; ship 리뷰 뒤 49) · `test_hwpx_results_refresh`(44) · `test_semantic_keyword_recount` · `test_expression_review` OK; 정본 원본 점검 실행(`--no-render`, Act-1 시점) 문단 45·표 12·그림 3·토큰 1,048(최종 1,052)·미일치 0; `--force` 재실행 산출 HWPX 바이트 동일.
 
 ## 4. 설계 외 구현·의도적 차이 (기록)
 

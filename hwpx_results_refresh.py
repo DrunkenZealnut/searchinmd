@@ -1562,7 +1562,9 @@ def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_d
             entry = next((n for n in names if n.startswith("BinData/") and Path(n).stem == item), None)
             if entry is None:
                 raise ValueError(f"BinData/{item}.* 항목이 HWPX 에 없습니다 (binaryItemIDRef={item})")
-            width, height, kind = image_dimensions(z.read(entry))
+            info = z.getinfo(entry)
+            _check_entry(info)                                         # 그림 항목도 section0.xml 처럼 압축 해제 전에 크기·비율 상한 (CodeRabbit PR #18)
+            width, height, kind = image_dimensions(z.read(info))
             svg = spec["svg"](width, height)
             record = {"label": spec["label"], "caption": spec["caption"], "item": item, "entry": entry, "format": kind, "width": width, "height": height, "svg_sha256": sha256(svg.encode("utf-8")), "rendered": render}
             if render:

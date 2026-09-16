@@ -49,8 +49,8 @@ page_utils.EXCEL_MAX_CHARS                                                      
 `compute_impact` 의 `pages` 블록에 두 필드를 더한다.
 
 ```python
-real_page_grades = Counter()                       # NCS: (교재, 실제 쪽) → 그 쪽 출현의 최소 등급 (등급은 쪽 속성 — 같은 쪽 출현은 같은 등급, 최소값은 방어)
-school_pages: dict[tuple, int] = {}                # 교과서: (교재, 쪽) → 최소 등급 (page None 은 제외 — 정본은 0건)
+real_page_grades = Counter()                       # NCS: (교재, 실제 쪽) → 그 쪽 등급 (등급은 쪽 속성 — 같은 쪽 출현이 다른 등급을 들고 오면 `_fold_page_grade` 가 ValueError 로 멈춘다, 최솟값 병합 없음 — ship 리뷰 반영)
+school_pages: dict[tuple, int] = {}                # 교과서: (교재, 쪽) → 그 쪽 등급 (충돌은 같은 ValueError; page None 은 제외 — 정본은 0건)
 ...
 "pages": {"block_pages": ..., "real_pages": ..., "real_page_grades": {"1": 1825, "2": 524, "3": 143},
           "교과서": {"detected_pages": 388, "page_grades": {"1": 335, "2": 45, "3": 8}},
@@ -219,7 +219,7 @@ class BridgeFacts:             # 제3장 2절 4)
 
 ### 3.10 출력·백업 — FR-10 (D1)
 
-`write_hwpx(src, out, …, force)`: `out` 이 있고 `force` 면 먼저 `out` 을 `out.with_name(out.name + f".{sha256(out)[:8]}.bak")` 로 복사(같은 내용이면 같은 이름 — 재실행에 안전), 대조 JSON `source.backup`·`source.previous_hwpx_sha256` 에 기록. `.bak` 은 `data/`(비추적). `--no-render` 점검 실행은 백업도 만들지 않는다.
+`write_hwpx(src, out, …, force)`: `out` 이 있고 `force` 면 먼저 `out` 을 `out.with_name(out.name + f".{sha256(out)[:16]}.bak")` 로 복사(같은 내용이면 같은 이름 — 재실행에 안전; 설계 시점은 8자리였고 ship 리뷰에서 16자리로), 대조 JSON `source.backup`·`source.previous_hwpx_sha256` 에 기록. `.bak` 은 `data/`(비추적). `--no-render` 점검 실행은 백업도 만들지 않는다.
 
 ### 3.11 문서·데이터 계보
 
@@ -242,7 +242,7 @@ fixture: `build_fixture_hwpx(path, body, chapter2=True)` 확장 — 목차(제2�
 | B3 절차 | 삽입 15(H·Q2·C2·T2·N2·B5)·표 id 고유·소결 " 5) 소결"·목차 재작성 1+삽입 1·S1 이 마지막 문단 **뒤**에(ctrl 문단 불변)·1절 문장(page_basis real 에서만) |
 | B3 템플릿 | 동사 분기(±0.5pp 경계·연결형/종결형), 늘었/줄었(블록→쪽), 공유 쪽 모두/일부, 몫 문장, S1 같은 수준/차이(1.0pp 경계), 분야 문자열 순서, 표 12-1 차이 부호·합 0, 표 12-2 행·열, 주 문장 6종 합 = moved |
 | 감사 | 5절·표 4·삽입 문단·표 셀이 감사 범위에 들고 모두 통과; 5절에 "12,875"·"85종"·"813" 을 심으면 실패하고 HWPX 를 쓰지 않는다; STRIP 확장(표 12-1·2026-04·v1fix·3-gram·±1쪽) |
-| E2E | fixture 전체 실행: 문단·표·그림 수, `diff["methods"]`·`diff["bridge"]` 스키마, `review.html` 에 표 5·6·12-1·12-2, `review_text.html` 에 methods/bridge 절, ZIP 항목 동일, `--no-render` 는 HWPX·백업 없음, `--force` 로 덮어쓸 때 `.bak`(sha8) 생성·`source.backup` 기록, 정본 파일을 입력으로 주면(첫 단어 불일치) 명시적 오류 |
+| E2E | fixture 전체 실행: 문단·표·그림 수, `diff["methods"]`·`diff["bridge"]` 스키마, `review.html` 에 표 5·6·12-1·12-2, `review_text.html` 에 methods/bridge 절, ZIP 항목 동일, `--no-render` 는 HWPX·백업 없음, `--force` 로 덮어쓸 때 `.bak`(설계 시점 sha8, 최종 sha16) 생성·`source.backup` 기록(최종: 화면 출력만, 추적 JSON 제외), 정본 파일을 입력으로 주면(첫 단어 불일치) 명시적 오류 |
 | 영향표 | `ImpactScriptTests`: `pages.real_page_grades` 합 = `real_pages`, `pages.교과서.page_grades` 합 = `detected_pages`; 하니스 `S3o` 확장 |
 | 커밋 산출물 | `CommittedDiffTests`: 추적 대조 JSON 에 `methods`·`bridge` 가 있고 `audit.status == "ok"`, 인용 수치가 정본 파일과 같다 |
 
@@ -268,7 +268,7 @@ fixture: `build_fixture_hwpx(path, body, chapter2=True)` 확장 — 목차(제2�
 | 날짜 | ISO(`2026-04`, `2026-09-15`, `2026-09-06`)만 — 정본 `generated_at`·`previous_basis.date` 에서; 사전 개정 날짜·"4건"·"출현 50건 이상" 은 문장에서 뺌 |
 | 소결 문장 | 새 문단(마지막 소결 문단에 `ctrl` run) |
 | 1절 문장 | 1단계 템플릿에 `page_basis` 분기로 |
-| 백업 이름 | `<out>.<sha8>.bak` — 같은 내용이면 같은 이름 |
+| 백업 이름 | `<out>.<sha16>.bak` — 같은 내용이면 같은 이름 (설계 v1.0 은 `<sha8>`, ship 리뷰에서 16자리로) |
 | 표 12-2 4열 | 이전 기준 쪽 / 정본 쪽 / 정본 출현 — 세 분모를 한 표에 |
 | 빈 문단 | 삽입 문단 사이에 그 절의 빈 문단 원형을 끼운다(문서의 간격 규칙 유지); 소결 문장 S1 앞에도 빈 문단 하나 |
 | 5절 삭제 범위 (Act-1 기록) | 첫 locator("분석 자료는 반도체고등학교 교과서와")~끝 locator("검색 결과는 단순히") 사이의 연속 최상위 문단 전부(빈 문단 포함, 6개) — "각 문단 뒤 빈 문단" 규칙과 결과가 같고 구현이 단순 |

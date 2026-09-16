@@ -176,7 +176,8 @@ def main(argv: list[str] | None = None) -> None:
     sources = SKR.read_keyword_workbook(args.source_workbook)
     keywords = [s.keyword for s in sources]
     ncs, _ = SKR.select_ncs_documents(SKR.load_documents(args.ncs_root, "NCS"))
-    documents = ncs + SKR.load_documents(args.school_root, "교과서")
+    school_docs = SKR.load_documents(args.school_root, "교과서")
+    documents = ncs + school_docs
     school = args.school_grade_workbook or args.source_workbook.parent / SKR.DEFAULT_SCHOOL_GRADE_WORKBOOK_NAME
     existing = SKR.load_existing_grades(args.source_workbook, school)
     page_maps, info = SKR.load_page_maps(args.page_maps, ncs)
@@ -189,7 +190,8 @@ def main(argv: list[str] | None = None) -> None:
         "generated_at": datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds"),
         "git": SKR._git_info(),
         "inputs": {"source_workbook": SKR._file_sha256(args.source_workbook), "school_grade_workbook": SKR._file_sha256(school),
-                   "ncs_markdown": SKR._document_set_sha256(ncs), "page_maps": info.as_manifest()},
+                   "ncs_markdown": SKR._document_set_sha256(ncs), "school_markdown": SKR._document_set_sha256(school_docs),   # 정본 run.inputs 와 같은 지문 4종 — hwpx_methods_bridge 가 결속 (CodeRabbit PR #18)
+                   "page_maps": info.as_manifest()},
     })
     if reseg.get("alignment_check"):                                                       # 정렬 오차는 이전 기준과 같은 대응의 것 — 그 자기 검증 수치를 병기 (계획 §5)
         check = (reseg.get("alignment_check") or {}).get("overall") or {}

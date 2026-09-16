@@ -1645,7 +1645,7 @@ class ImpactScriptTests(unittest.TestCase):
             self.assertEqual({"detected_pages": 0, "page_grades": {"1": 0, "2": 0, "3": 0}}, out["pages"]["교과서"])
 
     def test_impact_counts_textbook_pages_with_their_page_grade(self):
-        """교과서 쪽도 센다 — 쪽 1(안전 7건·조치 없음 → 등급 2)·쪽 2(안전 1건 → 등급 1); 등급은 쪽 속성이라 같은 쪽 출현은 한 등급이고, 갈릴 때의 최솟값 규칙은 방어용이다."""
+        """교과서 쪽도 센다 — 쪽 1(안전 7건·조치 없음 → 등급 2)·쪽 2(안전 1건 → 등급 1); 등급은 쪽 속성이라 같은 쪽 출현은 한 등급이고, 갈리면 최솟값을 취하지 않고 멈춘다(아래 test_impact_refuses_conflicting_grades_on_one_page)."""
         with tempfile.TemporaryDirectory() as td:
             IMP, docs, page_maps, existing = self._setup(td)
             root = Path(td) / "school" / "교재A"; root.mkdir(parents=True)
@@ -1702,6 +1702,10 @@ class ImpactScriptTests(unittest.TestCase):
             self.assertNotIn(str(root), text); self.assertNotIn("/Users/", text)
             self.assertEqual(1, data["meta"]["inputs"]["page_maps"]["files"]); self.assertEqual(data["totals"]["NCS"], sum(data["grades"]["real"]["NCS"].values()))
             self.assertIn("이동", buf.getvalue())
+            # 입력 계보 — 정본 run.inputs 와 같은 지문 4종 (워크북 2·마크다운 2) + 사전 (CodeRabbit PR #18): hwpx_methods_bridge.load_bridge_facts 가 이것으로 다른 실행의 영향표를 거른다
+            school_docs = SKR.load_documents(kw["school_root"], "교과서")
+            self.assertEqual(SKR._document_set_sha256(school_docs), data["meta"]["inputs"]["school_markdown"])
+            self.assertEqual(SKR._file_sha256(kw["source_workbook"]), data["meta"]["inputs"]["source_workbook"]); self.assertEqual("v2", data["meta"]["dictionary"])
 
     # ---- 출고 전 커버리지 감사 (2026-09-15): book_kind 의 세 값, 짝짓기 거부, 폭 구간 4-9·10+, 교과서 레코드, 정렬 자기 검증 병기
     def test_book_kind_real_marker_and_empty_map(self):

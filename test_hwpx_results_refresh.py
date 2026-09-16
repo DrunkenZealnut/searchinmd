@@ -756,6 +756,27 @@ class EndToEndTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 HR.write_hwpx(src, src, b"", {})
 
+    def test_oversized_figure_entry_is_refused_before_decompression(self):
+        """그림 BinData 항목도 section0.xml 처럼 읽기 전에 크기·압축 비율 상한을 검사한다 (CodeRabbit PR #18)."""
+        with tempfile.TemporaryDirectory() as td:
+            src, f = self._fixture(td)
+            bomb = Path(td) / "bomb.hwpx"
+            with zipfile.ZipFile(src) as a, zipfile.ZipFile(bomb, "w") as b:
+                for info in a.infolist():
+                    if info.filename == "BinData/image1.PNG":
+                        b.writestr(info.filename, png_bytes(70, 39) + b"\x00" * (2 * 1024 * 1024), compress_type=zipfile.ZIP_DEFLATED)   # 머리는 멀쩡, 몸통은 비율 수천 배
+                    else:
+                        b.writestr(info, a.read(info.filename))
+            from unittest import mock
+            original_read = zipfile.ZipFile.read
+            def guarded_read(zf, name, *args, **kwargs):                                                           # 폭탄 항목이 압축 해제되면 그 자체가 실패
+                if getattr(name, "filename", name) == "BinData/image1.PNG":
+                    raise AssertionError("BinData/image1.PNG 을 상한 검사 전에 읽었다")
+                return original_read(zf, name, *args, **kwargs)
+            with mock.patch.object(zipfile.ZipFile, "read", guarded_read), self.assertRaisesRegex(ValueError, r"BinData/image1\.PNG.*압축 비율"):
+                HR.refresh(bomb, f, Path(td) / "out.hwpx", Path(td) / "diff.json", None, render=False, text_review_dir=Path(td) / "text")
+            self.assertFalse((Path(td) / "out.hwpx").exists()); self.assertFalse((Path(td) / "diff.json").exists())
+
     def test_no_render_never_writes_the_tracked_diff(self):
         with tempfile.TemporaryDirectory() as td:
             src, f = self._fixture(td)

@@ -16,15 +16,16 @@
    }
   },
   "book_kind_rule": "previous basis per_book.method (markers → real-marker, alignment → toc-block); fallback blocks / distinct real pages >= 0.8; no map → real-marker-nomap",
-  "generated_at": "2026-09-16T15:24:03+09:00",
+  "generated_at": "2026-09-16T22:11:13+09:00",
   "git": {
-   "commit": "7b3f590",
+   "commit": "c085eda",
    "dirty": true
   },
   "inputs": {
    "source_workbook": "80fdd14bce1d882a4aaea3988f6558d5295cc9d974d658a1ea38d23f631b3908",
    "school_grade_workbook": "b47a44059b1b5a6685dc83a0e711877dd6fecf4f81dc61153942c1b0771ce01f",
    "ncs_markdown": "aa5c5e06c01d44705f99e766536b8247e44d61948746526cfc84efbc32162d0b",
+   "school_markdown": "66b1eaa029a27823cfc11e4271c05a6de0ce142b476a415704fed16c49f5d763",
    "page_maps": {
     "dir": "data/markdown/ncs_paged",
     "files": 84,

@@ -602,6 +602,26 @@ class ReviewGuardTests(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, "reseg_agreement"):
                         MB.load_bridge_facts(MB.MethodsPaths(), summary=summary)
 
+    def test_impact_input_lineage_and_textbook_totals_are_bound_to_the_canonical_run(self):
+        """영향표는 대응표 지문만이 아니라 정본 run.inputs 의 지문 4종(워크북 2·마크다운 2)·사전, 그리고 교과서 총계·등급까지 정본과 같아야 한다 (CodeRabbit PR #18)."""
+        impact = json.loads((DATA / "occurrence_real_pages_impact.json").read_text(encoding="utf-8"))
+        cases = {"meta.inputs.source_workbook": lambda d: d["meta"]["inputs"].__setitem__("source_workbook", "0" * 64),
+                 "meta.inputs.school_grade_workbook": lambda d: d["meta"]["inputs"].__setitem__("school_grade_workbook", "0" * 64),
+                 "meta.inputs.ncs_markdown": lambda d: d["meta"]["inputs"].__setitem__("ncs_markdown", "0" * 64),
+                 "meta.inputs.school_markdown": lambda d: d["meta"]["inputs"].__setitem__("school_markdown", "0" * 64),
+                 "meta.inputs.school_markdown 이 없습니다": lambda d: d["meta"]["inputs"].__delitem__("school_markdown"),
+                 "meta.dictionary": lambda d: d["meta"].__setitem__("dictionary", "v1fix"),
+                 "totals.교과서": lambda d: d["totals"].__setitem__("교과서", d["totals"]["교과서"] + 1),
+                 "grades.real.교과서": lambda d: (d["grades"]["real"]["교과서"].__setitem__("1", d["grades"]["real"]["교과서"]["1"] - 1), d["grades"]["real"]["교과서"].__setitem__("2", d["grades"]["real"]["교과서"]["2"] + 1))}
+        with tempfile.TemporaryDirectory() as td:
+            for name, mutate in cases.items():
+                with self.subTest(name=name):
+                    bad = json.loads(json.dumps(impact)); mutate(bad)
+                    other = Path(td) / "impact.json"; other.write_text(json.dumps(bad, ensure_ascii=False), encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, name.split(" ")[0]):
+                        MB.load_bridge_facts(dataclasses.replace(MB.MethodsPaths(), impact=other))
+        MB.load_bridge_facts()                                                                                        # 정본 파일끼리는 통과
+
     def test_impact_invariants_and_coding_key_digest_guards(self):
         impact = json.loads((DATA / "occurrence_real_pages_impact.json").read_text(encoding="utf-8"))
         cases = {"등급 합": lambda d: d["grades"]["real"]["NCS"].__setitem__("2", 5228), "transition": lambda d: d["transition"].__setitem__("moved", 4015), "groups": lambda d: d["groups"]["반도체개발"]["real"].__setitem__("3", 121)}
