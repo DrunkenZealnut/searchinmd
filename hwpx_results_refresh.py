@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
-"""hwpx_results_refresh.py — 기초보고서(HWPX) 제3장 연구 결과 1~3절을 정본 수치로 다시 쓴다.
+"""hwpx_results_refresh.py — 기초보고서(HWPX) 제3장 연구 결과 1~3절을 정본 수치로 다시 쓰고(1단계), 제2장 5절 연구 방법·표 4·목차와 제3장 2절 " 4) 집계 기준의 변경과 이전 결과와의 관계" 를 데이터에서 만든다(2단계, hwpx-methods-bridge-refresh 2026-09-16 — 사실·문장은 hwpx_methods_bridge.py).
 
-기능 hwpx-ncs-section-refresh (2026-09-14, 연구책임자 결정 D1~D5). 숫자는 전부 추적 파일에서 온다:
-  docs/03-analysis/data/semantic_summary.json   — 총계·등급·분야(groups, pages)·키워드(×그룹)   (정본 실행, 사전 v2)
+1단계 — 기능 hwpx-ncs-section-refresh (2026-09-14, 연구책임자 결정 D1~D5). 숫자는 전부 추적 파일에서 온다:
+  docs/03-analysis/data/semantic_summary.json   — 총계·등급·분야(groups, pages)·키워드(×그룹)·grade_sources·detected_pages   (정본 실행, 사전 v2)
   docs/03-analysis/data/accident_case_pages.json — 사고사례 자동 판정 13쪽과 원문 확인 판정
-  docs/03-analysis/data/summary.json             — 교과서 사고사례 쪽 수(0)만 (recount_grades)
-스크립트 상수는 문장 틀과 교과서→분야 대응표뿐이다.
+  docs/03-analysis/data/summary.json             — 교과서 사고사례 쪽 수(0)·NCS 절단 16쪽 (recount_grades)
+2단계 — 기능 hwpx-methods-bridge-refresh (2026-09-16, D1~D6 (a)): 제2장 5절(연구 방법)·표 4·목차와 제3장 2절 " 4) 집계 기준의 변경과 이전 결과와의 관계".
+  사실·문장은 hwpx_methods_bridge.py (MethodsPaths 의 추적 파일 8종 + page_utils.EXCEL_MAX_CHARS; 계보 가드로 다른 실행의 파일을 섞지 않는다).
+스크립트 상수는 문장 틀, 제목·첫머리 locator, 원본 목차의 구고 소제목 수(OLD_METHODS_TOC_ENTRIES)뿐이다.
 
 동작: 절은 제목 텍스트로 찾고(목차의 같은 제목은 건너뛴다), 문단은 원문 첫머리로 찾아 템플릿으로 다시 쓰며(서술 조건은 데이터로
 분기), 표 7~12 는 셀 텍스트만 바꾸고(표 13 만 행 증감), 그림 2~4 는 SVG → 원본 형식·크기로 다시 그려 BinData 바이트를 바꾼다.
-1~3절 밖의 문단은 구조·값 그대로(ET 직렬화라 빈 태그 표기 `<x/>`→`<x />` 만 바뀔 수 있다 — 쓰기 전 문단 단위로 검사), 나머지 ZIP 항목은 바이트 그대로.
-원본은 읽기만 하고 새 파일로 쓴다. 산출물에 다시 실행할 수는 없다 — 문단을 원본(2026-09-11) 첫머리로 찾으므로 수치가 바뀌면 언제나 원본에서 다시 만든다.
-산출물: 새 HWPX(data/, 비추적), 변경 대조 JSON(추적, 본문 문장 없음), 검토 HTML(표·그림만, 추적), 구/신 문장 병기본 review_text.html(본문 포함 — data/, 비추적).
-숫자 감사: 다시 쓴 1~3절의 모든 숫자 토큰이 정본 값·비율·쪽 번호 중 하나여야 한다 — 아니면 exit 1.
+2단계는 같은 트리에서 문단을 원형 복제로 넣고 빼며(clone_paragraph·insert_after·remove_paragraphs), 표 12-1·12-2 는 표 12 를 복제해 고유 id 를 준다.
+손대지 않은 문단은 구조·값 그대로 — 편집 전 스냅샷과 손댄 집합 장부(touched·inserted·removed)로 검사한다(check_untouched); 나머지 ZIP 항목은 바이트 그대로.
+원본은 읽기만 하고 새 파일로 쓴다(기존 출력은 --force 로만 덮어쓰고 <이름>.<sha8>.bak 로 보존). 산출물에 다시 실행할 수는 없다 — 문단을 원본(2026-09-11)
+첫머리로 찾고, 5절 소제목이 이미 있는 파일은 처음부터 거부한다: 수치가 바뀌면 언제나 원본에서 다시 만든다.
+산출물: 새 HWPX(data/, 비추적), 변경 대조 JSON(추적, 본문 문장·실행 환경 없음), 검토 HTML(표·그림만, 추적), 구/신 문장 병기본 review_text.html(본문 포함 — data/, 비추적).
+숫자 감사: 다시 쓴 제3장 1~3절·제2장 1절(표 4)·5절·목차 항목의 모든 숫자 토큰이 정본 값·비율·쪽 번호 중 하나여야 한다 — 아니면 exit 1.
 """
 
 from __future__ import annotations
@@ -30,10 +34,13 @@ import sys
 import tempfile
 import zipfile
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 import xml.etree.ElementTree as ET
 from xml.sax.saxutils import escape
+
+import hwpx_methods_bridge as MB
+from hwpx_methods_bridge import fmt, pct, NCS_GROUP_TO_AREA   # 콤마·소수 1자리 %·정본 그룹→분야 대응표 — 2단계 모듈과 한 정의 (hwpx-methods-bridge-refresh)
 
 HERE = Path(__file__).resolve().parent
 HP = "{http://www.hancom.co.kr/hwpml/2011/paragraph}"
@@ -58,7 +65,6 @@ HEADINGS = {                                   # 절 이름 → (시작 제목, 
     "cases": ("3. NCS 반도체 교과서의 사고, 부상, 질병 사례 분석", "4. 학생 대상 화학물질·안전보건 교육의 필요성과 효과"),
 }
 AREA_ORDER = ("개발", "제조", "장비", "재료")
-NCS_GROUP_TO_AREA = {"반도체개발": "개발", "반도체제조": "제조", "반도체장비": "장비", "반도체재료": "재료"}
 # 교과서 4개 분야는 연구상 분류 (보고서 1절 2) 의 설명) — 교재(그룹 이름) → 분야
 TEXTBOOK_AREA = {
     "반도체 기초기술 1": "개발", "반도체 기초기술 2": "개발", "반도체 기초": "개발",
@@ -85,6 +91,8 @@ class CorpusFacts:
     areas: dict[str, dict]                  # 분야 → {"documents", "pages", "total", "grades"}
     keywords: dict[str, dict]               # 키워드 → {"total", "grades", "areas": {분야: {"total", "grades"}}}
     order: list[str]                        # 원본 키워드 순서
+    detected_pages: int = 0                 # corpora.*.detected_pages — 출현이 놓인 (교재, 쪽) 수 (2026-09-14~; 1절 교과서 문장·2절 4) 가 쓴다)
+    grade_sources: dict = field(default_factory=dict)   # corpora.*.grade_sources — real-page / existing / new / unpaged-* 건수 (제2장 5절 4) 의 교과서 승계 1,149 / 규칙 58)
 
     def ranked(self) -> list[tuple[str, dict]]:
         return sorted(self.keywords.items(), key=lambda kv: (-kv[1]["total"], self.order.index(kv[0])))
@@ -117,6 +125,9 @@ class Facts:
     run: dict = field(default_factory=dict)
     cases_date: str | None = None
     page_basis: dict = field(default_factory=dict)      # meta.page_basis — NCS "real"(실제 PDF 쪽, 2026-09-15~) / "marker"(표식 블록); 교과서는 "marker"(= 실제 쪽)
+    methods: MB.MethodsFacts | None = None              # 2단계 — 제2장 5절 사실 (hwpx_methods_bridge.load_methods_facts)
+    bridge: MB.BridgeFacts | None = None                # 2단계 — 제3장 2절 4) 사실 (hwpx_methods_bridge.load_bridge_facts)
+    _index: dict | None = field(default=None, init=False, repr=False, compare=False)   # value_index() 캐시 — 사실은 불변이라 한 번만 만든다 (성능 리뷰); init=False 라 dataclasses.replace() 로 만든 새 Facts 는 캐시를 물려받지 않는다
 
     @property
     def ncs_real_pages(self) -> bool:
@@ -129,7 +140,9 @@ class Facts:
         return [b["code"] for b in (self.run.get("real_page_marker_books") or [])]
 
     def value_index(self) -> dict[str, set[str]]:
-        """정본 값(콤마·소수 1자리 % 문자열) → 그 값이 나오는 정본 키 경로들. 숫자 감사의 허용 집합이자 대조 JSON 의 출처(keys) 근거."""
+        """정본 값(콤마·소수 1자리 % 문자열) → 그 값이 나오는 정본 키 경로들. 숫자 감사의 허용 집합이자 대조 JSON 의 출처(keys) 근거. 인스턴스마다 한 번 계산(캐시)."""
+        if self._index is not None:
+            return self._index
         index: dict[str, set[str]] = {}
 
         def add(value: str, key: str) -> None:
@@ -175,6 +188,15 @@ class Facts:
             for year in re.findall(r"(\d{4})년", p["gist"]):
                 add(year, f"cases.pages[{p['book']}].gist(year)")
         add(str(len(self.marker_books)), "run.real_page_marker_books(count)")       # 2절 "대응이 없는 N권" — 허용 토큰(등급 라벨 2)에 기대지 않고 출처를 댄다 (적대적 리뷰 7)
+        for label, corpus in (("NCS", self.ncs), ("교과서", self.school)):
+            add(fmt(corpus.detected_pages), f"corpora.{label}.detected_pages")
+            for source, count in corpus.grade_sources.items():
+                add(fmt(count), f"corpora.{label}.grade_sources.{source}")
+        for facts in (self.methods, self.bridge):                                    # 2단계 사실 — 방법론·연결 소절의 숫자 40여 개 (hwpx_methods_bridge)
+            if facts is not None:
+                for value, key in facts.value_pairs():
+                    add(value, key)
+        self._index = index
         return index
 
     def all_numbers(self) -> set[str]:
@@ -192,15 +214,9 @@ class Facts:
         return sorted(keys)
 
 
-def fmt(n: int) -> str:
-    return f"{n:,}"
-
-
-def pct(part: int, whole: int) -> str:
-    return f"{100 * part / whole:.1f}%" if whole else "0.0%"
-
-
-def load_facts(summary_path: Path = DEFAULT_SUMMARY, cases_path: Path = DEFAULT_CASES, recount_path: Path | None = DEFAULT_RECOUNT) -> Facts:
+def load_facts(summary_path: Path = DEFAULT_SUMMARY, cases_path: Path = DEFAULT_CASES, recount_path: Path | None = DEFAULT_RECOUNT,
+               methods_paths: MB.MethodsPaths | None = None) -> Facts:
+    """methods_paths 는 2단계 사실의 파일 묶음(기본: 추적 파일; summary/recount 경로는 여기 인자를 따른다)."""
     summary = json.loads(Path(summary_path).read_text(encoding="utf-8"))
     run = summary.get("meta", {}).get("run") or {}
     if run.get("expected") is not True:
@@ -246,8 +262,14 @@ def load_facts(summary_path: Path = DEFAULT_SUMMARY, cases_path: Path = DEFAULT_
                 for grade in (1, 2, 3):
                     kw_areas[area]["grades"][grade] += g["grades"][str(grade)]
             keywords[k["name"]] = {"total": kc["total"], "grades": {1: kc["grades"]["1"], 2: kc["grades"]["2"], 3: kc["grades"]["3"]}, "areas": kw_areas}
+        if "detected_pages" not in c:
+            raise ValueError(f"semantic_summary.json 의 corpora.{corpus} 에 detected_pages 가 없습니다 — 2026-09-14 이후 정본이 필요합니다")
+        if not isinstance(c.get("grade_sources"), dict) or not {"existing", "new"} <= set(c["grade_sources"]):
+            raise ValueError(f"semantic_summary.json 의 corpora.{corpus} 에 grade_sources(existing·new) 가 없습니다 — 2단계 4) 의 승계/규칙 건수 출처라 0 으로 채우지 않는다")
+        if any(int(v) for k, v in c["grade_sources"].items() if k.startswith("unpaged")):
+            raise ValueError(f"semantic_summary.json 의 corpora.{corpus} 에 쪽 없는 출현(unpaged-*)이 있습니다 — 5절 4) 의 승계/규칙 건수가 총계와 어긋난다 (EXPECTED 는 0 으로 고정)")
         return CorpusFacts(documents=c["documents"], total=c["total"], grades={1: c["grades"]["1"], 2: c["grades"]["2"], 3: c["grades"]["3"]},
-                           areas=areas, keywords=keywords, order=order)
+                           areas=areas, keywords=keywords, order=order, detected_pages=int(c["detected_pages"]), grade_sources={k: int(v) for k, v in (c.get("grade_sources") or {}).items()})
 
     ncs = corpus_facts("NCS", NCS_GROUP_TO_AREA.get)
     school = corpus_facts("교과서", TEXTBOOK_AREA.get)
@@ -269,7 +291,12 @@ def load_facts(summary_path: Path = DEFAULT_SUMMARY, cases_path: Path = DEFAULT_
         fp_kinds=Counter(p["kind"] for p in pages if p["verdict"] == "false_positive"),
         by_area_flagged=Counter(p["area"] for p in pages), textbook_cases=textbook_cases,
     )
-    return Facts(ncs=ncs, school=school, cases=case_facts, run=summary.get("meta", {}).get("run", {}), cases_date=cases.get("date"), page_basis=dict(page_basis))
+    mp = methods_paths or MB.MethodsPaths()
+    mp = replace(mp, summary=Path(summary_path), recount_summary=Path(recount_path))
+    methods = MB.load_methods_facts(mp, summary=summary)
+    bridge = MB.load_bridge_facts(mp, summary=summary)
+    return Facts(ncs=ncs, school=school, cases=case_facts, run=summary.get("meta", {}).get("run", {}), cases_date=cases.get("date"), page_basis=dict(page_basis),
+                 methods=methods, bridge=bridge)
 
 
 def run_day(f: Facts) -> str:
@@ -286,7 +313,8 @@ def default_diff_path(f: Facts) -> Path:
 
 # ---------------------------------------------------------------- XML 도우미
 def direct_text(p: ET.Element) -> str:
-    return "".join(t.text or "" for run in p.findall(HP + "run") for t in run.findall(HP + "t"))
+    """문단의 글 — 각 hp:t 의 글과 그 안에 든 요소(hp:tab 등)의 꼬리 글까지(itertext). 탭 뒤의 쪽 번호가 감사·locator 에서 사라지지 않게 (레드팀)."""
+    return "".join("".join(t.itertext()) for run in p.findall(HP + "run") for t in run.findall(HP + "t"))
 
 
 def set_text(p: ET.Element, text: str) -> dict:
@@ -295,6 +323,8 @@ def set_text(p: ET.Element, text: str) -> dict:
     if not runs:
         raise ValueError("run 이 없는 문단에는 글을 쓸 수 없습니다")
     text_runs = [r for r in runs if any(c.tag == HP + "t" for c in r) and all(c.tag == HP + "t" for c in r)]
+    if any(len(t) for r in text_runs for t in r.findall(HP + "t")):
+        raise ValueError("hp:t 안에 요소(탭·형광펜 등)가 있는 문단은 통째로 바꿀 수 없습니다 — 안의 요소와 꼬리 글이 사라진다")
     first = text_runs[0] if text_runs else runs[0]
     collapsed = len(text_runs) > 1
     for t in list(first.findall(HP + "t")):
@@ -379,6 +409,146 @@ def resize_table(tbl: ET.Element, first_data_row: int, data_rows: int) -> None:
 
 def top_paragraphs(root: ET.Element) -> list[ET.Element]:
     return root.findall(HP + "p")
+
+
+# ---------------------------------------------------------------- 2단계 XML 능력 (hwpx-methods-bridge-refresh 설계 §3.3)
+def clone_paragraph(proto: ET.Element, text: str) -> ET.Element:
+    """원형 문단을 깊은 복사해 글만 바꾼다 — paraPr·style·charPr 승계. 빈 원형(글 run 없음)에 "" 를 주면 그대로 둔다."""
+    p = copy.deepcopy(proto)
+    p.set("pageBreak", "0"); p.set("columnBreak", "0")         # 원형이 쪽/단 나눔 문단이어도 복제본은 아니다 (레드팀)
+    if text == "" and p.find(f"{HP}run/{HP}t") is None:
+        return p
+    set_text(p, text)
+    return p
+
+
+def insert_after(root: ET.Element, ref: ET.Element, elements: list[ET.Element]) -> None:
+    children = list(root)
+    if ref not in children:
+        raise ValueError("삽입 기준 문단이 최상위에 없습니다")
+    at = children.index(ref) + 1
+    for offset, element in enumerate(elements):
+        root.insert(at + offset, element)
+
+
+def remove_paragraphs(root: ET.Element, elements: list[ET.Element]) -> None:
+    children = list(root)
+    for element in elements:
+        if element not in children:
+            raise ValueError("삭제할 문단이 최상위에 없습니다")
+        root.remove(element)
+
+
+def next_object_ids(root: ET.Element) -> tuple[int, int]:
+    """(새 id, 새 zOrder) — 문서에서 id 와 zOrder 를 함께 가진 모든 개체(표·그림·도형·글상자) 최댓값 + 1 이라 같은 문서면 같은 값(결정론)."""
+    ids, orders = [0], [0]
+    for obj in root.iter():
+        if obj.get("zOrder") is not None and obj.get("id") is not None and str(obj.get("id")).isdigit():
+            ids.append(int(obj.get("id"))); orders.append(int(obj.get("zOrder") or 0))
+    return max(ids) + 1, max(orders) + 1
+
+
+def clone_table_paragraph(proto_p: ET.Element, rows: list[list[str]], first_data_row: int, header: list[str] | None, ids: tuple[int, int]) -> ET.Element:
+    """표를 담은 문단을 복제해 새 표를 만든다 — hp:tbl 은 새 id·zOrder, 행은 resize_table, 셀은 fill_table; 문단의 글 run 은 비운다."""
+    p = copy.deepcopy(proto_p)
+    p.set("pageBreak", "0"); p.set("columnBreak", "0")
+    tbl = p.find(f".//{HP}tbl")
+    if tbl is None:
+        raise ValueError("표 원형 문단에 hp:tbl 이 없습니다")
+    tbl.set("id", str(ids[0])); tbl.set("zOrder", str(ids[1]))
+    resize_table(tbl, first_data_row, len(rows))
+    fill_table(tbl, rows, first_data_row, header)
+    for run in p.findall(HP + "run"):
+        for t in run.findall(HP + "t"):
+            t.text = ""
+    return p
+
+
+def locate_range(root: ET.Element, start_text: str, end_text: str, occurrence: int = 1) -> Section:
+    """start_text 의 occurrence 번째 일치(0 = 목차 사본, 1 = 본문)부터 그 뒤 첫 end_text 앞까지."""
+    tops = top_paragraphs(root)
+    texts = [direct_text(p).strip() for p in tops]
+    starts = [i for i, t in enumerate(texts) if t == start_text]
+    if len(starts) <= occurrence:
+        raise ValueError(f"'{start_text}' 제목의 {occurrence + 1}번째 일치를 찾지 못했습니다 ({len(starts)}회)")
+    start = starts[occurrence]
+    ends = [i for i, t in enumerate(texts) if t == end_text and i > start]
+    if not ends:
+        raise ValueError(f"'{start_text}' 뒤에 끝 제목 '{end_text}' 이 없습니다")
+    return Section(start_text, start, ends[0], tops[start:ends[0]])
+
+
+def locate_toc_block(root: ET.Element, entry_prefix: str, next_prefix: str) -> list[ET.Element]:
+    """목차 블록 — entry_prefix 로 시작하는 첫 최상위 문단(목차 사본)부터 next_prefix 로 시작하는 다음 문단 앞까지."""
+    tops = top_paragraphs(root)
+    texts = [direct_text(p).strip() for p in tops]
+    starts = [i for i, t in enumerate(texts) if t.startswith(entry_prefix)]
+    if not starts:
+        raise ValueError(f"목차 항목 '{entry_prefix}' 을 찾지 못했습니다")
+    start = starts[0]
+    ends = [i for i, t in enumerate(texts) if i > start and t.startswith(next_prefix)]
+    if not ends:
+        raise ValueError(f"목차 항목 '{entry_prefix}' 뒤에 '{next_prefix}' 이 없습니다")
+    return tops[start:ends[0]]
+
+
+def set_cell_paragraph(tc: ET.Element, prefix: str, text: str) -> None:
+    """셀 안 여러 문단 중 prefix 로 시작하는 하나의 글만 바꾼다(표 4 의 '반도체제조 14종')."""
+    hits = [p for p in cell_paragraphs(tc) if direct_text(p).strip().startswith(prefix)]
+    if len(hits) != 1:
+        raise ValueError(f"셀 안에 '{prefix}' 로 시작하는 문단이 {len(hits)}개입니다 (1개여야 함)")
+    set_text(hits[0], text)
+
+
+def snapshot_paragraphs(root: ET.Element) -> dict:
+    """편집 전 최상위 문단의 (순서, 직렬화) — check_untouched 의 기준. 같은 Element 객체를 id 로 식별한다."""
+    tops = top_paragraphs(root)
+    return {"order": [id(p) for p in tops], "xml": {id(p): ET.tostring(p) for p in tops}}
+
+
+def check_untouched(root: ET.Element, snapshot: dict, touched: set, inserted: set, removed: set) -> None:
+    """손댄 원소 집합 검사 — 장부(touched·inserted·removed)에 없는 문단은 직렬화가 같아야 하고, 순서도 그대로여야 하며, 낯선 문단이 없어야 한다.
+    1단계의 순번 기반 검사를 대체한다(2단계는 문단을 넣고 빼므로 순번이 어긋난다)."""
+    xml = snapshot["xml"]
+    new_tops = top_paragraphs(root)
+    expected_kept = [pid for pid in snapshot["order"] if pid not in touched and pid not in removed]
+    actual_kept = []
+    for p in new_tops:
+        pid = id(p)
+        if pid in inserted:
+            continue
+        if pid not in xml:
+            raise RuntimeError("손댄 범위 밖의 문단이 바뀌었습니다 — 장부에 없는 낯선 문단이 있습니다: 중단")
+        if pid in removed:
+            raise RuntimeError("손댄 범위 밖의 문단이 바뀌었습니다 — 삭제했다고 적힌 문단이 남아 있습니다: 중단")
+        if pid in touched:
+            continue
+        if ET.tostring(p) != xml[pid]:
+            raise RuntimeError(f"손댄 범위 밖의 문단이 바뀌었습니다: {direct_text(p)[:30]!r} — 중단")
+        actual_kept.append(pid)
+    if actual_kept != expected_kept:
+        raise RuntimeError("손댄 범위 밖의 문단이 바뀌었습니다 — 순서가 다르거나 빠진 문단이 있습니다: 중단")
+
+
+def owner_map(root: ET.Element) -> dict:
+    """모든 자손 원소 id → 그것을 담은 최상위 문단 (표·그림을 고쳤을 때 어느 문단을 손댔는지 장부에 적기 위해)."""
+    owners = {}
+    for top in top_paragraphs(root):
+        for el in top.iter():
+            owners[id(el)] = top
+    return owners
+
+
+def _paragraph_after(root: ET.Element, ref: ET.Element) -> ET.Element | None:
+    children = list(root)
+    at = children.index(ref)
+    return children[at + 1] if at + 1 < len(children) else None
+
+
+def _is_blank(p: ET.Element) -> bool:
+    """글도 개체(표·그림·컨트롤·책갈피)도 없는 순수 간격 문단 — 원형으로 복제해도 단 정의·책갈피가 따라오지 않는다 (Claude 적대적 리뷰 4)."""
+    runs = p.findall(HP + "run")
+    return direct_text(p).strip() == "" and all(all(c.tag == HP + "t" for c in r) for r in runs)
 
 
 def has_object(p: ET.Element, tag: str) -> bool:
@@ -551,6 +721,7 @@ def textbook_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
         "따라서 제조 분야는 안전보건교육이 가장 적극적으로": {"zero_keywords_in_sentence": [n for n in ("직업병", "물질안전보건자료") if k(n) == 0]},
         "따라서 장비 분야에서는 전기, 기계, 압력": {"textbook_accident_pages": f.cases.textbook_cases, "fall_is_zero": k("추락") == 0},
         "또한 공정안전관리, 직업병, 물질안전보건자료": {"zero_keywords": zero, "textbook_accident_pages": f.cases.textbook_cases},
+        "본 연구에서는 9권의 반도체 교과서를": {"page_basis": f.page_basis.get("NCS")},        # 실제 쪽 기준일 때만 "교과서는 … 영향을 받지 않았다" 문장 (2단계, hwpx-methods-bridge-refresh)
     }
     return _with_conditions([
         ("본 연구에서는 반도체고등학교의 전공교과서를 대상으로",
@@ -570,7 +741,8 @@ def textbook_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
         ("9권의 교과서에서 구체적인 사고",
          f"{s.documents}권의 교과서에서 구체적인 사고·부상·직업병 사례가 {'한 건도 발견되지 않았다' if f.cases.textbook_cases == 0 else str(f.cases.textbook_cases) + '쪽에서만 발견되었다'}는 것을 의미하기 때문이다. 단순히 ‘위험’이나 ‘안전’이라는 용어를 소개하는 것과 불산 누출, TMAH 급성중독, 질식, 엑스선 피폭 등의 사고가 어떻게 발생하고 어떻게 예방할 수 있는지를 사례로 학습하는 것은 교육 효과 측면에서 큰 차이가 있다. 따라서 현행 교과서는 위험의 존재를 일부 언급하고 있으나, 학생이 산업현장의 사고와 질병 발생 과정을 이해하고 예방 행동으로 연결하기에는 한계가 있다고 판단된다."),
         ("본 연구에서는 9권의 반도체 교과서를",
-         f"본 연구에서는 {s.documents}권의 반도체 교과서를 교육 내용에 따라 반도체 개발, 반도체 제조, 반도체 장비, 반도체 재료·인프라 분야로 재분류하였다. 이 분류는 교과서 제목과 주요 교육 내용을 기준으로 한 연구상 분류이며, 대시보드 자체에서 4개 분야별 수치를 별도로 제시한 것은 아니다. 분야별 쪽수는 각 교재 마크다운의 쪽 표식 최댓값을 합한 값이다. 분야별로 설명하면 다음과 같다."),
+         f"본 연구에서는 {s.documents}권의 반도체 교과서를 교육 내용에 따라 반도체 개발, 반도체 제조, 반도체 장비, 반도체 재료·인프라 분야로 재분류하였다. 이 분류는 교과서 제목과 주요 교육 내용을 기준으로 한 연구상 분류이며, 대시보드 자체에서 4개 분야별 수치를 별도로 제시한 것은 아니다. 분야별 쪽수는 각 교재 마크다운의 쪽 표식 최댓값을 합한 값이다."
+         + (f" {MB.textbook_basis_sentence(f)}" if f.ncs_real_pages and f.bridge is not None else "") + " 분야별로 설명하면 다음과 같다."),
         ("반도체 개발 분야는",
          area_sentence("개발", "반도체 개발 분야는") + " 『반도체 기초기술』과 『반도체 기초』는 반도체의 원리, 소자, 회로, 기본 기술을 중심으로 구성되기 때문에, 제조 설비나 화학물질을 직접 취급하는 상황에 대한 안전보건 내용은 제조·장비 분야보다 상대적으로 적을 가능성이 높다."),
         ("반도체 제조 분야는",
@@ -845,6 +1017,8 @@ def fill_table(tbl: ET.Element, rows: list[list[str]], first_data_row: int, head
         raise ValueError(f"표 행 수 {len(data)} ≠ 값 행 수 {len(rows)}")
     changed = 0
     if header is not None:
+        if len(trs[first_data_row - 1]) != len(header):
+            raise ValueError(f"표 헤더 열 수 {len(trs[first_data_row - 1])} ≠ 값 열 수 {len(header)}")
         for tc, value in zip(trs[first_data_row - 1], header):
             if cell_text(tc) != value:
                 set_cell(tc, value); changed += 1
@@ -860,10 +1034,14 @@ def fill_table(tbl: ET.Element, rows: list[list[str]], first_data_row: int, head
 # ---------------------------------------------------------------- 그림
 def image_dimensions(data: bytes) -> tuple[int, int, str]:
     if data[:8] == b"\x89PNG\r\n\x1a\n":
-        w, h = struct.unpack(">II", data[16:24]); return w, h, "PNG"
-    if data[:2] == b"BM":
-        w, h = struct.unpack("<ii", data[18:26]); return w, abs(h), "BMP"
-    raise ValueError("PNG 또는 BMP 가 아닙니다")
+        w, h, kind = *struct.unpack(">II", data[16:24]), "PNG"
+    elif data[:2] == b"BM":
+        w, h = struct.unpack("<ii", data[18:26]); h, kind = abs(h), "BMP"
+    else:
+        raise ValueError("PNG 또는 BMP 가 아닙니다")
+    if not (0 < w <= MAX_IMAGE_SIDE and 0 < h <= MAX_IMAGE_SIDE):
+        raise ValueError(f"그림 크기 {w}×{h} 가 상한({MAX_IMAGE_SIDE})을 넘거나 0 입니다 — 헤더가 손상됐거나 악성입니다")
+    return w, h, kind
 
 
 def image_bits(data: bytes) -> int:
@@ -950,15 +1128,27 @@ def figure_specs(f: Facts) -> list[dict]:
     """(절, 캡션 접두, svg 함수) — 그림 2 교과서 등급별, 그림 3 NCS 분야별, 그림 4 NCS 등급별."""
     stamp = f"정본 {str(f.run.get('generated_at', ''))[:10]} · 의미 표현 사전 {f.run.get('dictionary', '')} · 출현건수 기준"
     return [
-        {"section": "textbook", "caption": None, "item": "image1", "label": "그림 2", "svg": lambda w, h: grade_bars_svg(w, h, "교과서 안전보건 등급별 출현건수", f"등급 판정 {fmt(f.school.total)}건 · 출현건수 기준", f.school.grades, f.school.total, f"{stamp}\n교과서 {f.school.documents}권 · 등급 미확정 0건")},
-        {"section": "ncs", "caption": "그림 3.", "item": None, "label": "그림 3", "svg": lambda w, h: area_bars_svg(w, h, "NCS 분야별 등급 출현건수", f.ncs.areas, f"원자료 폴더 기준 · NCS {f.ncs.documents}권 {fmt(f.ncs.total)}건에 등급 1~3 배정\n{stamp}")},
-        {"section": "ncs", "caption": "그림 4.", "item": None, "label": "그림 4", "svg": lambda w, h: grade_bars_svg(w, h, "NCS 안전보건 등급별 출현건수", f"등급 판정 {fmt(f.ncs.total)}건 · 출현건수 기준", f.ncs.grades, f.ncs.total, f"등급: 출현이 놓인 페이지의 판정값을 각 키워드 출현에 연결 · 미확정 0건\n{stamp}")},
+        {"section": "textbook", "caption": None, "item": "image1", "label": "그림 2", "alt": "교과서 안전보건 등급별 출현건수 막대 그래프", "svg": lambda w, h: grade_bars_svg(w, h, "교과서 안전보건 등급별 출현건수", f"등급 판정 {fmt(f.school.total)}건 · 출현건수 기준", f.school.grades, f.school.total, f"{stamp}\n교과서 {f.school.documents}권 · 등급 미확정 0건")},
+        {"section": "ncs", "caption": "그림 3.", "item": None, "label": "그림 3", "alt": "NCS 분야별 등급 출현건수 막대 그래프", "svg": lambda w, h: area_bars_svg(w, h, "NCS 분야별 등급 출현건수", f.ncs.areas, f"원자료 폴더 기준 · NCS {f.ncs.documents}권 {fmt(f.ncs.total)}건에 등급 1~3 배정\n{stamp}")},
+        {"section": "ncs", "caption": "그림 4.", "item": None, "label": "그림 4", "alt": "NCS 안전보건 등급별 출현건수 막대 그래프", "svg": lambda w, h: grade_bars_svg(w, h, "NCS 안전보건 등급별 출현건수", f"등급 판정 {fmt(f.ncs.total)}건 · 출현건수 기준", f.ncs.grades, f.ncs.total, f"등급: 출현이 놓인 페이지의 판정값을 각 키워드 출현에 연결 · 미확정 0건\n{stamp}")},
     ]
 
 
 # ---------------------------------------------------------------- ZIP
+MAX_ENTRY_BYTES = 256 * 1024 ** 2          # HWPX 항목 하나의 압축 해제 상한 (정본 section0.xml 1.7 MB, 그림 수 MB) — 압축 폭탄 방어 (Codex 적대적 리뷰)
+MAX_ZIP_RATIO = 200                        # 압축 비율 상한 — truncation_audit.py 와 같은 규칙
+MAX_IMAGE_SIDE = 20000                     # 그림 한 변 픽셀 상한 — 헤더의 크기를 그대로 ImageMagick 에 넘기지 않는다
+
+
+def _check_entry(info: zipfile.ZipInfo) -> None:
+    ratio = info.file_size / max(1, info.compress_size)
+    if info.file_size > MAX_ENTRY_BYTES or ratio > MAX_ZIP_RATIO:
+        raise ValueError(f"HWPX 항목 {info.filename} 이 너무 크거나 압축 비율이 비정상입니다 ({info.file_size} B, {ratio:.0f}×) — 상한 {MAX_ENTRY_BYTES} B / {MAX_ZIP_RATIO}×")
+
+
 def read_section(hwpx: Path) -> tuple[bytes, ET.Element, str]:
     with zipfile.ZipFile(hwpx) as z:
+        _check_entry(z.getinfo(SECTION_ENTRY))
         raw = z.read(SECTION_ENTRY)
     text = raw.decode("utf-8")
     m = re.search(r"<hs:sec\b[^>]*>", text)
@@ -985,12 +1175,26 @@ def serialize_section(root: ET.Element, root_tag: str) -> bytes:
     return data
 
 
-def write_hwpx(src: Path, out: Path, section_xml: bytes, bindata: dict[str, bytes], force: bool = False) -> None:
+def write_hwpx(src: Path, out: Path, section_xml: bytes, bindata: dict[str, bytes], force: bool = False) -> tuple[Path | None, str]:
+    """새 HWPX 를 쓴다. 기존 출력이 있으면 --force 없이는 거부하고, --force 면 먼저 `<out>.<sha16>.bak` 로 보존한다(같은 내용이면 같은 이름 — 재실행에 안전).
+    반환: (백업 경로 또는 None, 쓴 바이트의 sha256 — 다시 읽지 않고 임시 파일에서 잰다: 다른 프로세스가 그 사이에 바꿔치기해도 대조 JSON 은 우리가 쓴 것을 말한다)."""
     src, out = Path(src), Path(out)
     if src.resolve() == out.resolve():
         raise ValueError("출력이 입력과 같은 파일입니다 — 원본은 덮어쓰지 않습니다")
-    if out.exists() and not force:
-        raise FileExistsError(f"{out.name} 이 이미 있습니다 (--force 로 덮어쓰기)")
+    backup = None
+    if out.exists():
+        if not force:
+            raise FileExistsError(f"{out.name} 이 이미 있습니다 (--force 로 덮어쓰기 — 기존 파일은 .bak 로 남습니다)")
+        previous = out.read_bytes()
+        digest = sha256(previous)
+        backup = out.with_name(f"{out.name}.{digest[:16]}.bak")          # 64비트 접두 — 8자리(32비트)는 충돌을 노릴 수 있다 (Codex 적대적 리뷰)
+        if backup.is_symlink():
+            raise ValueError(f"백업 자리 {backup.name} 가 심볼릭 링크입니다 — 덮어쓰지 않습니다")
+        if not backup.exists() or sha256(backup.read_bytes()) != digest:      # 없거나(또는 끊긴 반쪽 백업이면) 원자적으로 다시 쓴다 (보안 리뷰)
+            fd, tmp_name = tempfile.mkstemp(dir=out.parent, prefix=backup.name + ".", suffix=".tmp")
+            with os.fdopen(fd, "wb") as fh:
+                fh.write(previous)
+            os.replace(tmp_name, backup)
     out.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp_name = tempfile.mkstemp(dir=out.parent, prefix=out.name + ".", suffix=".tmp")    # 배타적 생성 — 고정 이름·심볼릭 링크·동시 실행 충돌 없음
     os.close(fd)
@@ -1000,6 +1204,7 @@ def write_hwpx(src: Path, out: Path, section_xml: bytes, bindata: dict[str, byte
             raise ValueError("임시 파일이 입력과 같습니다")
         with zipfile.ZipFile(src) as zin, zipfile.ZipFile(tmp, "w") as zout:
             for info in zin.infolist():
+                _check_entry(info)
                 data = zin.read(info)                              # 이름이 아니라 항목으로 — 같은 이름이 둘인 ZIP 에서도 각자 바이트
                 if info.filename == SECTION_ENTRY:
                     data = section_xml
@@ -1009,10 +1214,12 @@ def write_hwpx(src: Path, out: Path, section_xml: bytes, bindata: dict[str, byte
                 new_info.compress_type = info.compress_type
                 new_info.external_attr = info.external_attr
                 zout.writestr(new_info, data)
+        written = sha256(tmp.read_bytes())
         os.replace(tmp, out)
     finally:
         if tmp.exists():
             tmp.unlink()
+    return backup, written
 
 
 # ---------------------------------------------------------------- 감사·대조
@@ -1021,17 +1228,28 @@ def numbers_in(text: str) -> list[str]:
 
 
 ALLOWED_TOKENS = {"0", "1", "2", "3", "4", "100.0%", "60%"}            # 등급·분야 번호, 합계 비율, 60% 기준 (키워드 수는 value_index 의 keywords(count), 사고 연도는 cases.gist 에서 온다)
-STRIP_BEFORE_AUDIT = re.compile(r"\d{4}-\d{2}-\d{2}|(?:표|그림)\s*\d+\.?|\d+\)\s|\(\d+\)|등급\s*1~3")   # 날짜·표/그림 번호·목차 번호는 수치가 아니다
+STRIP_BEFORE_AUDIT = re.compile(r"\d{4}-\d{2}-\d{2}|\d{4}-\d{2}(?![\d-])|(?:표|그림)\s*\d+(?:-\d+)?\.?|(?<!\d)\d\)\s|\(\d\)|^\d\.\s|등급\s*1~3|(?<![A-Za-z0-9])v(?:1fix|[12])(?![A-Za-z0-9])|3-gram|±1쪽")   # 날짜(연-월 포함)·표/그림 번호(표 12-1)·한 자리 목차 번호(" 4) "·"(1)"·셀 첫머리 "1. ")·사전 판(한글이 붙어도 — \b 는 한글을 단어로 본다)·3-gram·±1쪽 은 수치가 아니다. 두 자리 이상 "(813)" 은 벗기지 않는다 (Claude 적대적 리뷰 1)
+
+
+def audited_numbers(text: str) -> list[str]:
+    """감사·대조 JSON 이 세는 숫자 토큰 — 스트립 뒤의 numbers_in (한 정의)."""
+    return numbers_in(STRIP_BEFORE_AUDIT.sub(" ", text))
+
+
+STALE_PATTERNS = ("85종", "12,875", "813건", "7,769페이지", "4,259건", "9건의 사례", "8,914쪽", "페이지·구역")   # 폐기된 실행·구고의 숫자+단위·문구 — 값만 보는 감사가 우연히 놓치는 것(85 = 코딩 표본 control 층)을 문맥으로 막는다 (Codex 적대적 리뷰)
 
 
 def audit_numbers(texts: list[str], facts: Facts) -> list[str]:
-    """정본 값(총계·등급·분야·키워드·쪽수·비율·쪽 번호)이 아닌 숫자 토큰 — 남아 있으면 구 수치다."""
+    """정본 값(총계·등급·분야·키워드·쪽수·비율·쪽 번호)이 아닌 숫자 토큰 — 남아 있으면 구 수치다. 폐기 문구(STALE_PATTERNS)는 값이 허용 집합에 있어도 잡는다."""
     allowed = facts.all_numbers() | ALLOWED_TOKENS
     unmatched = []
     for text in texts:
-        for token in numbers_in(STRIP_BEFORE_AUDIT.sub(" ", text)):
+        for token in audited_numbers(text):
             if token not in allowed and token.rstrip("%") not in allowed:
                 unmatched.append(token)
+        for pattern in STALE_PATTERNS:
+            if pattern in text:
+                unmatched.append(pattern)
     return sorted(set(unmatched))
 
 
@@ -1061,16 +1279,236 @@ def public(path: Path) -> str:
 # ---------------------------------------------------------------- 실행
 DEFAULT_TEXT_REVIEW_DIR = HERE / "data" / "hwpx-results-refresh"
 
+# ---------------------------------------------------------------- 2단계 — 제2장 5절 · 표 4 · 목차 · 제3장 2절 4)  (hwpx-methods-bridge-refresh, 설계 §3.4·§3.6)
+CH2_S1_HEADING = "1. 국내 반도체고등학교 교과서와 한국산업인력공단 NCS 교과서 분석"
+CH2_S2_HEADING = "2. 해외 기술 고등학교 교과서 비교·분석"
+METHODS_HEADING = "5. 키워드 기반 문서 분류·분석 방법론"
+METHODS_INTRO = "반도체 교과서와 NCS 자료에"                       # 5절 도입 문단(유지) — 그 다음 빈 문단이 삽입 문단 사이의 간격 원형
+METHODS_REMOVE_LOCATORS = ("분석 자료는 반도체고등학교 교과서와", "먼저 파일을 읽어", "파일과 검색어는", "검색 결과는 단순히")   # 삭제할 설명 문단 4개(첫머리) — 1)·2) 본문에 흡수
+METHODS_REMOVE_FIRST, METHODS_REMOVE_LAST = METHODS_REMOVE_LOCATORS[0], METHODS_REMOVE_LOCATORS[-1]   # 삭제 범위(포함)
+METHODS_PROTO_BODY = "먼저 파일을 읽어"                           # 5절 본문 서식 원형(삭제 전에 복제)
+TOC_METHODS_PREFIX, TOC_METHODS_END = "5. 키워드 기반", "제3장"
+TOC_NCS_PREFIX, TOC_NCS_END = "2. NCS", "3. NCS"
+CONCLUSION_LAST = "본 연구 결과는 반도체산업 특성을 반영한"      # 2절 소결 마지막 문단(ctrl run 있음 — 손대지 않고 뒤에 새 문단)
+TOC_ENTRY_RE = re.compile(r"^\s*\d\)\s")
+OLD_METHODS_TOC_ENTRIES = 8                                     # 원본 목차 5절의 구고 소제목 수(" 1) 시스템 구성과 데이터 흐름" ~ " 8) 검증과 한계") — 다르면 다른 문서다
+
+
+class _Ledger:
+    """2단계 편집 장부 — 손댄·삽입·삭제 문단, 대조용 숫자·문장. 삭제한 원소는 장부가 붙들어 둔다(id 재사용으로 장부가 헷갈리지 않게 — 레드팀)."""
+
+    def __init__(self, root: ET.Element, facts: Facts, touched: set, inserted: set, removed: set, text_pairs: list):
+        self.root, self.facts, self.touched, self.inserted, self.removed, self.text_pairs = root, facts, touched, inserted, removed, text_pairs
+        self.owners = owner_map(root)
+        self.kept: list[ET.Element] = []                            # 삭제·삽입한 원소의 참조 — check_untouched 가 끝날 때까지 살아 있어야 id 가 유일하다
+
+    def rewrite(self, p: ET.Element, text: str, section: str) -> dict:
+        old = direct_text(p)
+        info = set_text(p, text)
+        self.touched.add(id(p))
+        self.text_pairs.append((section, old, text))
+        new_numbers = audited_numbers(text)
+        return {"old_numbers": audited_numbers(old), "new_numbers": new_numbers, "keys": self.facts.keys_for(new_numbers), **info}
+
+    def touch_object(self, el: ET.Element) -> None:
+        owner = self.owners.get(id(el))
+        if owner is None:
+            raise ValueError("장부에 없는 원소를 손댔습니다 — 최상위 문단에 속하지 않거나 삽입 뒤 등록되지 않은 표·그림")
+        self.touched.add(id(owner))
+
+    def insert(self, ref: ET.Element, pieces: list, protos: dict, section: str) -> list[dict]:
+        """Piece 목록을 ref 뒤에 순서대로 삽입 — 원형은 kind 별(H·P·B·C·N·T)."""
+        elements, records = [], []
+        next_id, next_z = next_object_ids(self.root)                   # 이 호출 안의 표들은 여기서 이어 번호를 매긴다 (삽입 전이라 트리에 없으므로)
+        for pc in pieces:
+            if pc.kind == "T":
+                ids = (next_id, next_z); next_id += 1; next_z += 1
+                el = clone_table_paragraph(protos["T"], [list(r) for r in pc.rows], 1, list(pc.header), ids)
+                elements.append(el)
+                records.append({"kind": "T", "rows": len(table_rows(el.find(f".//{HP}tbl"))), "cols": len(pc.header), "table_id": ids[0]})
+                continue
+            el = clone_paragraph(protos[pc.kind], pc.text)
+            elements.append(el)
+            numbers = audited_numbers(pc.text)
+            records.append({"kind": pc.kind, "numbers": numbers, "keys": self.facts.keys_for(numbers), "conditions": dict(pc.conditions)})
+            if pc.kind != "B":
+                self.text_pairs.append((section, "", pc.text))
+        insert_after(self.root, ref, elements)
+        self.inserted.update(id(el) for el in elements)
+        self.kept.extend(elements)
+        for el in elements:                                            # 삽입한 문단(과 그 안의 표)도 장부의 소유자 지도에 넣는다
+            for sub in el.iter():
+                self.owners[id(sub)] = el
+        return records
+
+    def remove(self, elements: list[ET.Element], section: str) -> None:
+        for el in elements:
+            if not _is_blank(el):
+                self.text_pairs.append((section, direct_text(el), ""))
+        remove_paragraphs(self.root, elements)
+        self.removed.update(id(el) for el in elements)
+        self.kept.extend(elements)
+
+
+def refresh_methods_bridge(root: ET.Element, facts: Facts, touched: set, inserted: set, removed: set, text_pairs: list) -> dict:
+    """2단계. 반환: {"methods": …, "bridge": …, "tables": [대조 JSON 표 항목], "review_tables": [(절, 캡션, 행, first, 헤더)], "audit_texts": [추가 감사 글]}"""
+    if not facts.ncs_real_pages or facts.methods is None or facts.bridge is None:
+        raise ValueError("2단계(제2장 5절·제3장 2절 4))는 실제 PDF 쪽 기준 정본(meta.page_basis.NCS = real)과 2단계 사실이 있어야 만듭니다")
+    L = _Ledger(root, facts, touched, inserted, removed, text_pairs)
+    out = {"methods": {}, "bridge": {}, "tables": [], "review_tables": [], "audit_texts": []}
+
+    # --- 표 4 (제2장 1절)
+    ch1 = locate_range(root, CH2_S1_HEADING, CH2_S2_HEADING, 1)
+    cap4 = find_paragraph(ch1, "표 4.")
+    caption_changed = direct_text(cap4) != MB.table4_caption(facts)
+    L.rewrite(cap4, MB.table4_caption(facts), "methods")
+    tbl4 = find_table_after_caption(ch1, "표 4.")
+    changed4 = 0
+    group_cells = [tc for row in table_rows(tbl4) for tc in row if any(direct_text(q).strip().startswith(MB.NCS_GROUP_ORDER[0]) for q in cell_paragraphs(tc))]
+    if len(group_cells) != 1:
+        raise ValueError(f"표 4 에서 '{MB.NCS_GROUP_ORDER[0]}' 로 시작하는 문단을 가진 셀이 {len(group_cells)}개입니다 (1개여야 함)")
+    for prefix, text in MB.table4_group_lines(facts):
+        before = [direct_text(q) for q in cell_paragraphs(group_cells[0]) if direct_text(q).strip().startswith(prefix)]
+        set_cell_paragraph(group_cells[0], prefix, text)
+        if before != [text]:
+            changed4 += 1
+    L.touch_object(tbl4)
+    out["methods"]["table4"] = {"caption_changed": caption_changed, "changed_cells": changed4}
+    out["tables"].append({"section": "methods", "caption": "표 4.", "rows": len(table_rows(tbl4)), "cols": len(table_rows(tbl4)[0]), "changed_cells": changed4 + int(caption_changed)})
+    out["review_tables"].append(("methods", "표 4.", [[g, t] for g, t in MB.table4_group_lines(facts)], 1, ["분야", "권수"]))
+    out["audit_texts"] += section_texts(locate_range(root, CH2_S1_HEADING, CH2_S2_HEADING, 1))     # 1절 전체(표 4 를 소개하는 문장의 "86종" 까지) — 5절과 같은 범위 규칙 (레드팀)
+
+    # --- 목차 5절: 구고 소제목 8 → 6
+    block = locate_toc_block(root, TOC_METHODS_PREFIX, TOC_METHODS_END)
+    entries = [p for p in block[1:] if TOC_ENTRY_RE.match(direct_text(p))]
+    new_entries = list(MB.METHODS_HEADINGS)                            # 목차 항목 = 본문 소제목 (한 상수)
+    if len(entries) != OLD_METHODS_TOC_ENTRIES:
+        raise ValueError(f"목차 5절 소제목이 {len(entries)}개입니다 — 원본(2026-09-11)은 {OLD_METHODS_TOC_ENTRIES}개: 문서가 바뀌었거나 이미 2단계 산출물입니다")
+    for p, text in zip(entries, new_entries):
+        L.rewrite(p, text, "toc")
+    L.remove(entries[len(new_entries):], "toc")
+    out["methods"]["toc"] = {"rewritten": len(new_entries), "removed": len(entries) - len(new_entries)}
+    out["audit_texts"] += new_entries
+
+    # --- 목차 2절: ' 4) 소결' → 새 소절 + ' 5) 소결'
+    block2 = locate_toc_block(root, TOC_NCS_PREFIX, TOC_NCS_END)
+    concl_toc = [p for p in block2 if direct_text(p).strip() == MB.CONCLUSION_HEADING_OLD.strip()]
+    if len(concl_toc) != 1:
+        raise ValueError(f"목차 2절 블록에 '{MB.CONCLUSION_HEADING_OLD.strip()}' 이 {len(concl_toc)}개입니다 (1개여야 함)")
+    L.rewrite(concl_toc[0], MB.BRIDGE_HEADING, "toc")
+    L.insert(concl_toc[0], [MB.Piece("H", MB.CONCLUSION_HEADING_NEW)], {"H": concl_toc[0]}, "toc")
+    out["bridge"]["toc"] = {"rewritten": 1, "inserted": 1}
+    out["audit_texts"] += [MB.BRIDGE_HEADING, MB.CONCLUSION_HEADING_NEW]
+
+    # --- 5절 본문
+    sec5 = locate_range(root, METHODS_HEADING, CHAPTER_HEADING, 1)
+    ncs_body = locate_sections(root)["ncs"]
+    protos = {"H": next(p for p in ncs_body.paragraphs if TOC_ENTRY_RE.match(direct_text(p))),
+              "P": find_paragraph(sec5, METHODS_PROTO_BODY),
+              "B": _paragraph_after(root, find_paragraph(sec5, METHODS_INTRO))}
+    if protos["B"] is None or not _is_blank(protos["B"]):
+        raise ValueError("5절 도입 문단 다음이 빈 문단이 아닙니다 — 간격 원형을 찾지 못했습니다")
+    protos["P"] = copy.deepcopy(protos["P"])                       # 삭제되기 전에 복제해 둔다
+    tables_m = []
+    for caption, caption_text, rows, header in (("표 5.", MB.table5_caption(facts), MB.methods_table5_rows(facts), ["단계", "무엇을 하는가", "주요 결과"]),
+                                                ("표 6.", MB.TABLE6_CAPTION, MB.methods_table6_rows(facts), ["구분", "쉽게 말하면", "예시·기준"])):
+        cap = find_paragraph(sec5, caption)
+        L.rewrite(cap, caption_text, "methods")
+        tbl = find_table_after_caption(sec5, caption)
+        resize_table(tbl, 1, len(rows))
+        changed = fill_table(tbl, rows, 1, header)
+        L.touch_object(tbl)
+        tables_m.append({"section": "methods", "caption": caption, "rows": len(table_rows(tbl)), "cols": len(header), "changed_cells": changed})
+        out["review_tables"].append(("methods", caption, rows, 1, header))
+    out["methods"]["tables"] = tables_m
+    out["tables"] += tables_m
+    first, last = find_paragraph(sec5, METHODS_REMOVE_FIRST), find_paragraph(sec5, METHODS_REMOVE_LAST)
+    tops = top_paragraphs(root)
+    i0, i1 = tops.index(first), tops.index(last)
+    if i1 < i0 or i0 == 0 or tops[i0 - 1] not in sec5.paragraphs:
+        raise ValueError("5절 삭제 범위의 끝이 시작보다 앞에 있거나, 범위 앞 문단이 5절 밖입니다")
+    ref = tops[i0 - 1]
+    to_remove = tops[i0:i1 + 1]
+    for p in to_remove:                                                          # 지우는 것은 설명 문단 4개와 그 사이 빈 문단뿐 — 표·그림·소제목·다른 글이 끼어 있으면 문서가 바뀐 것 (Claude 적대적 리뷰 2)
+        text = direct_text(p).strip()
+        if not (_is_blank(p) or any(text.startswith(loc) for loc in METHODS_REMOVE_LOCATORS)):
+            raise ValueError(f"5절 삭제 범위에 예상 밖 문단이 있습니다: {text[:20]!r} — 원본(2026-09-11)이 아닙니다")
+    pieces = MB.methods_paragraphs(facts)
+    split = next(i for i, pc in enumerate(pieces) if pc.kind == "L")
+    L.remove(to_remove, "methods")
+    out["methods"]["removed_paragraphs"] = len(to_remove)
+    inserted_records = L.insert(ref, pieces[:split], protos, "methods")
+    rewritten = []
+    r_last = None
+    for locator, text in MB.methods_rewrites(facts):
+        p = find_paragraph(sec5, locator)
+        rewritten.append({"locator": locator, **L.rewrite(p, text, "methods")})
+        r_last = p
+    inserted_records += L.insert(r_last, pieces[split + 1:], protos, "methods")
+    out["methods"]["inserted"] = inserted_records
+    out["methods"]["rewritten"] = rewritten
+
+    # --- 제3장 2절 4)
+    sections = locate_sections(root)
+    ncs = sections["ncs"]
+    concl = find_paragraph(ncs, MB.CONCLUSION_HEADING_OLD.strip())
+    fig4 = find_paragraph(ncs, "그림 4.")
+    ref = fig4
+    nxt = _paragraph_after(root, fig4)
+    blank_proto = nxt if nxt is not None and _is_blank(nxt) else None
+    if blank_proto is not None:
+        ref = blank_proto
+    else:
+        blank_proto = next((p for p in ncs.paragraphs if _is_blank(p)), None)
+        if blank_proto is None:
+            raise ValueError("2절에 빈 문단이 없어 간격 원형을 찾지 못했습니다")
+    body_proto = None
+    headings = {h for pair in HEADINGS.values() for h in pair}
+    for p in ncs.paragraphs[ncs.paragraphs.index(concl) + 1:]:            # 2절 안에서만 — 다음 절 제목이 원형이 되면 안 된다 (레드팀)
+        runs = p.findall(HP + "run")
+        text = direct_text(p).strip()
+        if text and text not in headings and not TOC_ENTRY_RE.match(direct_text(p)) and runs and all(all(c.tag == HP + "t" for c in r) for r in runs) and not has_object(p, "tbl"):
+            body_proto = p
+            break
+    if body_proto is None:
+        raise ValueError("2절 소결에서 글 run 만 있는 본문 원형을 찾지 못했습니다")
+    tbl12 = find_table_after_caption(ncs, "표 12.")
+    protos2 = {"H": concl, "P": body_proto, "B": blank_proto, "C": find_paragraph(ncs, "표 12."), "N": find_paragraph(ncs, "주: 단위: 건."), "T": L.owners[id(tbl12)]}
+    bridge_pieces = MB.bridge_paragraphs(facts)
+    records = L.insert(ref, bridge_pieces, protos2, "bridge")
+    out["bridge"]["inserted"] = records
+    out["bridge"]["tables"] = [{"section": "bridge", "caption": cap, "rows": r["rows"], "cols": r["cols"], "table_id": r["table_id"]}
+                               for cap, r in zip((MB.TABLE12_1_LABEL, MB.TABLE12_2_LABEL), (r for r in records if r["kind"] == "T"))]
+    out["tables"] += [{**t, "changed_cells": t["rows"] * t["cols"]} for t in out["bridge"]["tables"]]
+    out["review_tables"] += [("bridge", MB.TABLE12_1_LABEL, MB.bridge_table1_rows(facts), 1, MB.bridge_table1_header(facts)),
+                             ("bridge", MB.TABLE12_2_LABEL, MB.bridge_table2_rows(facts), 1, MB.bridge_table2_header(facts))]
+    L.rewrite(concl, MB.CONCLUSION_HEADING_NEW, "bridge")
+    out["bridge"]["renumbered"] = {MB.CONCLUSION_HEADING_OLD.strip(): MB.CONCLUSION_HEADING_NEW.strip()}
+    last_concl = find_paragraph(ncs, CONCLUSION_LAST)
+    sentence, cond = MB.conclusion_sentence(facts)
+    concl_records = L.insert(last_concl, [MB.Piece("B"), MB.Piece("P", sentence, conditions=cond)], {"P": body_proto, "B": blank_proto}, "bridge")   # 소결 문단 사이의 간격 규칙대로 빈 문단 하나를 두고
+    out["bridge"]["conclusion_inserted"] = True
+    out["bridge"]["conclusion"] = next(r for r in concl_records if r["kind"] == "P")           # 숫자·출처 키·조건 (갭 분석 G4)
+    out["bridge"]["conditions"] = {**{k: v for r in records if r["kind"] == "P" for k, v in r["conditions"].items()}, **cond}
+    out["kept"] = L.kept                                                          # 삭제·삽입 원소의 참조 — refresh() 가 check_untouched 뒤까지 붙든다 (id 재사용 방지)
+    return out
+
 
 def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_dir: Path | None, force: bool = False, render: bool = True,
             text_review_dir: Path | None = None, write_output: bool = True) -> dict:
     """render=False 는 그림을 그리지 않는다(magick 없는 환경 — 원본 그림 바이트 유지); write_output=False 는 HWPX 를 쓰지 않는다(점검 실행)."""
     raw, root, root_tag = read_section(hwpx)
-    original_xml = ET.fromstring(raw)
+    already = {direct_text(p).strip() for p in top_paragraphs(root)} & {MB.METHODS_HEADINGS[0].strip(), MB.BRIDGE_HEADING.strip()}
+    if already:
+        raise ValueError(f"{hwpx.name} 은 이미 2단계 산출물입니다({', '.join(sorted(already))}) — 정본은 입력이 아니며, 언제나 원본(2026-09-11)에서 다시 만듭니다")
+    snapshot = snapshot_paragraphs(root)
+    owners = owner_map(root)
+    touched: set[int] = set(); inserted: set[int] = set(); removed: set[int] = set()       # 손댄 원소 장부 — 1·2단계 공용 (check_untouched)
     sections = locate_sections(root)
     diff: dict = {"source": {"hwpx": hwpx.name, "hwpx_sha256": sha256(hwpx.read_bytes()), "summary_run": {k: facts.run.get(k) for k in ("generated_at", "git_commit", "dictionary", "expected")},
                              "page_basis": dict(facts.page_basis), "cases_date": facts.cases_date},
-                  "output": out.name, "paragraphs": [], "tables": [], "figures": [], "audit": {}}
+                  "output": out.name, "paragraphs": [], "tables": [], "figures": [], "audit": {},
+                  "runtime": {"backup": None, "previous_hwpx_sha256": None, "previous_output_identical": None}}   # runtime(백업 이름·이전 sha·동일 여부)은 실행 환경 — 화면에만 찍고 추적 JSON 에는 쓰지 않는다 (레드팀·Claude 적대적 리뷰 11)
     text_pairs: list[tuple[str, str, str]] = []
 
     # 문단
@@ -1082,12 +1520,14 @@ def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_d
             p = find_paragraph(section, prefix, prefixes)
             old = direct_text(p)
             info = set_text(p, new_text)
-            new_numbers = numbers_in(STRIP_BEFORE_AUDIT.sub(" ", new_text))
-            diff["paragraphs"].append({"section": name, "locator": prefix, "old_numbers": numbers_in(old), "new_numbers": new_numbers,
+            touched.add(id(p))
+            new_numbers = audited_numbers(new_text)
+            diff["paragraphs"].append({"section": name, "locator": prefix, "old_numbers": audited_numbers(old), "new_numbers": new_numbers,
                                        "keys": facts.keys_for(new_numbers), "conditions": conditions, **info})
             text_pairs.append((name, old, new_text))
 
     # 표
+    review_specs: list = []                                              # 검토 HTML 용 (헤더 행 포함)
     table_specs = [
         ("textbook", "표 7.", keyword_table_rows(facts.school), 1, None),
         ("textbook", "표 8.", area_table_rows(facts.school, with_grade_sum=False), 1, None),
@@ -1099,11 +1539,15 @@ def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_d
     for name, caption, rows, first, header in table_specs:
         tbl = find_table_after_caption(sections[name], caption)
         changed = fill_table(tbl, rows, first, header)
+        touched.add(id(owners[id(tbl)]))
         diff["tables"].append({"section": name, "caption": caption, "rows": len(table_rows(tbl)), "cols": len(table_rows(tbl)[first]), "changed_cells": changed})
+        review_specs.append((name, caption, rows, first, header or [cell_text(tc) for tc in table_rows(tbl)[first - 1]]))   # 검토 HTML 은 문서의 헤더 행을 함께 보인다 (디자인 리뷰)
     tbl13 = find_table_by_first_cell(sections["cases"], "표 13.")
     rows13 = case_table_rows(facts.cases)
     resize_table(tbl13, 2, len(rows13))
     changed = fill_table(tbl13, rows13, 2, ["교과서 이름", "교과서 분야", "사고/부상 등 주요 내용", "페이지", "판정"])
+    touched.add(id(owners[id(tbl13)]))
+    review_specs.append(("cases", "표 13.", rows13, 2, ["교과서 이름", "교과서 분야", "사고/부상 등 주요 내용", "페이지", "판정"]))
     diff["tables"].append({"section": "cases", "caption": "표 13.", "rows": len(table_rows(tbl13)), "cols": len(table_rows(tbl13)[2]), "changed_cells": changed})
 
     # 그림
@@ -1113,6 +1557,7 @@ def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_d
         names = z.namelist()
         for spec in figure_specs(facts):
             pic = find_picture(sections[spec["section"]], spec["caption"], spec["item"])
+            touched.add(id(owners[id(pic)]))                       # BinData 만 바뀌지만 그림 문단을 손댄 것으로 적는다(장부의 보수적 해석)
             item = pic.find(f".//{HC}img").get("binaryItemIDRef")
             entry = next((n for n in names if n.startswith("BinData/") and Path(n).stem == item), None)
             if entry is None:
@@ -1125,30 +1570,37 @@ def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_d
                 bindata[entry] = data
                 record["sha256"] = sha256(data)
                 record["bits"] = image_bits(data)
-                review_images.append((spec["label"], data, kind))
+                review_images.append((spec["label"], data, kind, spec.get("alt") or spec["label"]))
             diff["figures"].append(record)
 
-    # 감사 — 다시 쓴 1~3절의 숫자 토큰 전부가 정본 값이어야 한다
-    texts = [t for name in sections for t in section_texts(sections[name])]
-    unmatched = audit_numbers(texts, facts)
-    diff["audit"] = {"tokens": sum(len(numbers_in(t)) for t in texts), "unmatched": unmatched,
-                     "out_of_scope": out_of_scope_numbers(root, facts)}          # 2장 5절(방법론)의 정본 밖 숫자 — 기록만, 실패 아님
+    # 2단계 — 제2장 5절 · 표 4 · 목차 · 제3장 2절 4)  (hwpx-methods-bridge-refresh)
+    stage2 = refresh_methods_bridge(root, facts, touched, inserted, removed, text_pairs)
+    kept_alive = stage2["kept"]                                          # noqa: F841 — 장부의 원소 참조를 검사가 끝날 때까지 붙든다
+    diff["methods"], diff["bridge"] = stage2["methods"], stage2["bridge"]
+    diff["tables"] += stage2["tables"]
+    review_specs = review_specs + stage2["review_tables"]                # 1단계 표 7~13 뒤에 2단계 표 4·5·6·12-1·12-2 (디자인 리뷰: 번호 순 읽기)
 
-    # 1~3절 밖 불변 검사
-    old_tops = top_paragraphs(original_xml); new_tops = top_paragraphs(root)
-    inside = set()
-    for s in sections.values():
-        inside.update(range(s.start, s.end))
-    if len(old_tops) != len(new_tops) or any(ET.tostring(old_tops[i]) != ET.tostring(new_tops[i]) for i in range(len(old_tops)) if i not in inside):
-        raise RuntimeError("1~3절 밖의 문단이 바뀌었습니다 — 중단")
+    # 감사 — 다시 쓴 제3장 1~3절(재탐지: 2절에 문단이 늘었다) + 제2장 5절 + 표 4·목차의 숫자 토큰 전부가 정본 값이어야 한다
+    sections = locate_sections(root)
+    methods_section = locate_range(root, METHODS_HEADING, CHAPTER_HEADING, 1)
+    texts = [t for name in sections for t in section_texts(sections[name])] + section_texts(methods_section) + stage2["audit_texts"]
+    unmatched = audit_numbers(texts, facts)
+    diff["methods"]["audited_tokens"] = sum(len(audited_numbers(t)) for t in section_texts(methods_section))
+    diff["audit"] = {"tokens": sum(len(numbers_in(t)) for t in texts), "unmatched": unmatched}
+
+    # 손댄 범위 밖 불변 검사 (1·2단계 장부)
+    check_untouched(root, snapshot, touched, inserted, removed)
+    del kept_alive
 
     if unmatched:
         diff["audit"]["status"] = "failed"
         diff["output"] = None
     elif write_output:
         diff["audit"]["status"] = "ok"
-        write_hwpx(hwpx, out, serialize_section(root, root_tag), bindata, force=force)
-        diff["output_sha256"] = sha256(out.read_bytes())
+        previous = sha256(out.read_bytes()) if out.exists() else None
+        backup, written = write_hwpx(hwpx, out, serialize_section(root, root_tag), bindata, force=force)
+        diff["output_sha256"] = written
+        diff["runtime"] = {"backup": backup.name if backup else None, "previous_hwpx_sha256": previous, "previous_output_identical": (previous == diff["output_sha256"]) if previous else None}
     else:
         diff["audit"]["status"] = "ok"                        # 점검 실행 — HWPX 는 쓰지 않는다
         diff["output"] = None
@@ -1157,41 +1609,24 @@ def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_d
             diff_out = Path(tempfile.mkdtemp(prefix="hwpx_refresh_failed_")) / diff_out.name
             print(f"숫자 감사 실패 — 대조 JSON 은 {diff_out} 에 씁니다 (추적 파일은 그대로)")
         diff_out.parent.mkdir(parents=True, exist_ok=True)
-        diff_out.write_text(json.dumps(diff, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+        diff_out.write_text(json.dumps({k: v for k, v in diff.items() if k != "runtime"}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")   # runtime(백업 이름·sha)은 실행 환경 — 추적 파일에 넣지 않는다
     if review_dir and not unmatched:
-        write_review(review_dir, facts, table_specs + [("cases", "표 13.", rows13, 2, None)], review_images)
+        write_review(review_dir, facts, review_specs, review_images)
     if text_review_dir and not unmatched:
         write_text_review(text_review_dir, text_pairs)
     return diff
-
-
-OUT_OF_SCOPE_HEADINGS = ("5. 키워드 기반 문서 분류·분석 방법론", "제3장 연구 결과")    # 2장 5절 본문 ~ 3장 시작
-
-
-def out_of_scope_numbers(root: ET.Element, facts: Facts) -> dict:
-    """계획 §2.2 — 2장 5절(방법론)에 남은 정본 밖 숫자를 기록만 한다(범위 밖, 갱신하지 않음)."""
-    tops = top_paragraphs(root)
-    texts = [direct_text(p).strip() for p in tops]
-    start_hits = [i for i, t in enumerate(texts) if t == OUT_OF_SCOPE_HEADINGS[0]]
-    end_hits = [i for i, t in enumerate(texts) if t == OUT_OF_SCOPE_HEADINGS[1]]
-    if len(start_hits) < 2 or len(end_hits) < 2:
-        return {"section": OUT_OF_SCOPE_HEADINGS[0], "found": False}
-    start, end = start_hits[1], end_hits[1]                 # 첫 번째는 목차
-    if end <= start:
-        return {"section": OUT_OF_SCOPE_HEADINGS[0], "found": False}
-    section = Section("methodology", start, end, tops[start:end])
-    stale = audit_numbers(section_texts(section), facts)
-    return {"section": OUT_OF_SCOPE_HEADINGS[0], "found": True, "stale_numbers": stale}
 
 
 def write_text_review(text_review_dir: Path, pairs: list[tuple[str, str, str]]) -> None:
     """구/신 문장 병기본 — 보고서 본문을 담으므로 data/ 아래(비추적)에만 쓴다."""
     import html
     text_review_dir.mkdir(parents=True, exist_ok=True)
-    parts = ["<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><title>HWPX 제3장 문단 구/신 대조 (비추적)</title>",
+    parts = ["<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>HWPX 문단 구/신 대조 (비추적)</title>",
              "<style>body{font-family:-apple-system,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem;line-height:1.5}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:.4rem .6rem;vertical-align:top;width:50%}th{background:#f3f4f6}h2{margin-top:2rem}</style></head><body>",
-             "<h1>HWPX 제3장 문단 구/신 대조</h1><p>보고서 본문을 담으므로 이 파일은 <code>data/</code> 아래(비추적)에만 둔다.</p>"]
+             "<h1>HWPX 문단 구/신 대조 — 제3장 1~3절(1단계) · 제2장 5절·목차·제3장 2절 4)(2단계)</h1><p>보고서 본문을 담으므로 이 파일은 <code>data/</code> 아래(비추적)에만 둔다.</p>"]
     current = None
+    order = ("textbook", "ncs", "cases", "methods", "toc", "bridge")
+    pairs = sorted(pairs, key=lambda pair: order.index(pair[0]) if pair[0] in order else len(order))      # 절 단위로 모아 보인다 (안정 정렬 — 절 안 순서는 편집 순서)
     for name, old, new in pairs:
         if name != current:
             if current is not None:
@@ -1203,28 +1638,33 @@ def write_text_review(text_review_dir: Path, pairs: list[tuple[str, str, str]]) 
     (text_review_dir / "review_text.html").write_text("".join(parts), encoding="utf-8")
 
 
+SECTION_LABEL = {"textbook": "교과서", "ncs": "NCS", "cases": "사고사례", "methods": "연구 방법", "bridge": "집계 기준 연결", "toc": "목차"}   # 검토 HTML 의 절 이름
+
+
 def write_review(review_dir: Path, facts: Facts, table_specs, images) -> None:
     import base64, html
     review_dir.mkdir(parents=True, exist_ok=True)
     numeric = re.compile(r"[\d,.%]+")
-    parts = ["<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>HWPX 제3장 표·그림 검토본</title>",
+    parts = ["<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>HWPX 표·그림 검토본</title>",
              "<style>body{font-family:-apple-system,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem}.scroll-x{overflow-x:auto}table{border-collapse:collapse;margin:1rem 0}td,th{border:1px solid #ccc;padding:.25rem .6rem;font-size:.875rem}th{background:#f3f4f6}td.n{text-align:right;font-variant-numeric:tabular-nums}img{max-width:100%;border:1px solid #ddd;margin:.5rem 0}</style></head><body>",
-             f"<h1>HWPX 제3장 표·그림 검토본</h1><p>정본 {html.escape(str(facts.run.get('generated_at')))} · git {html.escape(str(facts.run.get('git_commit')))} · 사전 {html.escape(str(facts.run.get('dictionary')))}. 본문 문장은 담지 않는다(표·그림만).</p>"]
+             f"<h1>HWPX 표·그림 검토본 — 제3장 표 7~13·그림 2~4(1단계), 표 4·5·6·12-1·12-2(2단계)</h1><p>정본 {html.escape(str(facts.run.get('generated_at')))} · git {html.escape(str(facts.run.get('git_commit')))} · 사전 {html.escape(str(facts.run.get('dictionary')))}. 본문 문장은 담지 않는다(표·그림만).</p>"]
     for name, caption, rows, first, header in table_specs:
-        parts.append(f"<h2>{html.escape(caption)} ({name})</h2><div class=\"scroll-x\"><table>")
+        parts.append(f"<h2>{html.escape(caption)} ({html.escape(SECTION_LABEL.get(name, name))})</h2><div class=\"scroll-x\" tabindex=\"0\" role=\"region\" aria-label=\"{html.escape(caption)}\"><table>")
+        if header:
+            parts.append("<tr>" + "".join(f"<th scope=\"col\">{html.escape(c)}</th>" for c in header) + "</tr>")
         for row in rows:
             parts.append("<tr>" + "".join(f"<td class=\"n\">{html.escape(c)}</td>" if numeric.fullmatch(c) else f"<td>{html.escape(c)}</td>" for c in row) + "</tr>")
         parts.append("</table></div>")
-    for caption, data, kind in images:
+    for caption, data, kind, alt in images:
         if kind == "BMP":
             data = subprocess.run(["magick", "BMP:-", "-strip", "PNG:-"], input=data, check=True, capture_output=True).stdout   # -strip: 날짜 청크 없이 — 같은 그림이면 review.html 도 같은 바이트
-        parts.append(f"<h2>{html.escape(caption)}</h2><img alt=\"{html.escape(caption)}\" src=\"data:image/png;base64,{base64.b64encode(data).decode()}\">")
+        parts.append(f"<h2>{html.escape(caption)}</h2><img alt=\"{html.escape(alt)}\" src=\"data:image/png;base64,{base64.b64encode(data).decode()}\">")
     parts.append("</body></html>")
     (review_dir / "review.html").write_text("".join(parts), encoding="utf-8")
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="기초보고서 HWPX 제3장 1~3절을 정본 수치로 다시 쓴다")
+    ap = argparse.ArgumentParser(description="기초보고서 HWPX 를 정본 수치로 다시 쓴다 — 1단계 제3장 1~3절, 2단계 제2장 5절·표 4·목차·제3장 2절 4)")
     ap.add_argument("--hwpx", type=Path, default=DEFAULT_HWPX)
     ap.add_argument("--out", type=Path, default=None, help="새 HWPX (기본 data/반도체 기초보고서_{정본 실행일}_정본.hwpx)")
     ap.add_argument("--summary", type=Path, default=DEFAULT_SUMMARY)
@@ -1260,6 +1700,9 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     if not args.no_render:
         print(f"→ {public(args.out)}")
+        runtime = diff.get("runtime") or {}
+        if runtime.get("backup"):
+            print(f"   기존 파일 보존: {runtime['backup']} (sha256 {runtime['previous_hwpx_sha256'][:8]}…, 새 출력과 {'같음' if runtime.get('previous_output_identical') else '다름'})")   # --force 로 덮어쓴 정본의 .bak (2단계 D1)
     return 0
 
 

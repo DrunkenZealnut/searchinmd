@@ -41,3 +41,5 @@ venv/
 
 # 원본 마크다운·이미지·PDF (연구책임자 지정 정본 소스, 659MB) — data/ 와 같은 이유로 비추적
 /data_source/
+# hwpx_results_refresh.py --force 가 남기는 기존 정본 백업 (<이름>.<sha8>.bak) — 보고서 본문 전체
+*.hwpx.*.bak

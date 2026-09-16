@@ -30,7 +30,7 @@ class AccidentCasePagesTests(unittest.TestCase):
 
 
 class CommittedDiffTests(unittest.TestCase):
-    """실문서 실행의 대조 JSON — 숫자 감사 통과, 문단 45·표 7·그림 3, 본문·절대 경로 없음."""
+    """실문서 실행의 대조 JSON — 숫자 감사 통과, 문단 45·표 7+5·그림 3, 2단계(methods·bridge) 기록, 본문·절대 경로 없음."""
 
     def test_committed_diff_json(self):
         paths = sorted(DATA.glob("hwpx_results_refresh_2*.json"))
@@ -40,8 +40,8 @@ class CommittedDiffTests(unittest.TestCase):
         diff = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual({"NCS": "real", "교과서": "marker"}, diff["source"]["page_basis"])                    # occurrence-real-pages 이후의 정본으로 만든 산출물
         self.assertEqual(([], "ok"), (diff["audit"]["unmatched"], diff["audit"]["status"]))
-        self.assertTrue(diff["audit"]["out_of_scope"]["found"])                                                    # 2장 5절 기록 (계획 §2.2)
-        self.assertEqual((7, 3), (len(diff["tables"]), len(diff["figures"])))
+        self.assertNotIn("out_of_scope", diff["audit"])                                                            # 5절은 2단계로 감사 범위에 들어왔다 (hwpx-methods-bridge-refresh FR-14)
+        self.assertEqual((12, 3), (len(diff["tables"]), len(diff["figures"])))
         self.assertEqual({"PNG": 1, "BMP": 2}, Counter(f["format"] for f in diff["figures"]))
         self.assertTrue(all(len(f["sha256"]) == 64 for f in diff["figures"]))
         self.assertTrue(all(f["bits"] == 24 for f in diff["figures"] if f["format"] == "BMP"))                      # G-6 24bit
@@ -52,7 +52,15 @@ class CommittedDiffTests(unittest.TestCase):
         self.assertTrue(conds["‘보호구’는"]["ppe_over_60pct"])
         self.assertTrue(all(p["keys"] for p in diff["paragraphs"] if set(p["new_numbers"]) - HR.ALLOWED_TOKENS))  # G-2 출처 키 (등급 번호 같은 작은 수만 있는 문단 제외)
         self.assertEqual(5, next(t for t in diff["tables"] if t["caption"] == "표 13.")["cols"])                   # G-8
-        self.assertIn("out_of_scope", diff["audit"])                                                               # G-11
+        m, b = diff["methods"], diff["bridge"]                                                                     # 2단계 — 설계 §3.9
+        self.assertEqual(({"rewritten": 6, "removed": 2}, {"caption_changed": True, "changed_cells": 2}, 6, 20, 2), (m["toc"], m["table4"], m["removed_paragraphs"], len(m["inserted"]), len(m["rewritten"])))
+        self.assertGreater(m["audited_tokens"], 30)
+        self.assertEqual(({"rewritten": 1, "inserted": 1}, 15, {"4) 소결": "5) 소결"}, True), (b["toc"], len(b["inserted"]), b["renumbered"], b["conclusion_inserted"]))
+        self.assertEqual([("표 12-1.", 7, 4), ("표 12-2.", 7, 4)], [(t["caption"], t["rows"], t["cols"]) for t in b["tables"]])
+        self.assertEqual({"grade_verbs": ["줄고", "늘었으며", "거의 같았다"], "real_pages_vs_block": "늘었으며", "shared_all_agree": True, "occurrence_share_exceeds_page_share": True, "level_same": True}, b["conditions"])
+        self.assertTrue(all(pc["keys"] for pc in m["inserted"] + b["inserted"] if pc["kind"] in ("P", "N") and set(pc["numbers"]) - HR.ALLOWED_TOKENS))   # 삽입 문단의 숫자는 출처 키가 있다
+        self.assertEqual("real", conds["본 연구에서는 9권의 반도체 교과서를"]["page_basis"])                                    # 1절 교과서 불변 문장
+        self.assertNotIn("previous_output_identical", diff["source"]); self.assertNotIn("runtime", diff); self.assertNotIn(".bak", path.read_text(encoding="utf-8"))   # 실행 환경(백업 이름·sha·동일 여부)은 추적 JSON 밖 (ship 레드팀·적대적 리뷰)
         self.assertEqual("v2", diff["source"]["summary_run"]["dictionary"])
         self.assertTrue(diff["source"]["summary_run"]["expected"])
         self.assertNotIn("/Users/", path.read_text(encoding="utf-8"))
@@ -89,16 +97,62 @@ def para(text, char="13", extra_runs=()):
     return f'<hp:p id="0" paraPrIDRef="10" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0">{runs}<hp:linesegarray><hp:lineseg textpos="0"/></hp:linesegarray></hp:p>'
 
 
-def table(rows, tid="1"):
+def table(rows, tid="1", zorder="1"):
+    """셀 값이 list 면 셀 안에 문단 여러 개 (표 4 의 'NCS 교과서' 셀)."""
     trs = []
     for r, row in enumerate(rows):
         tcs = "".join(
-            f'<hp:tc name="" header="0" borderFillIDRef="2"><hp:subList id="" textDirection="HORIZONTAL">{para(cell, "17")}</hp:subList>'
+            f'<hp:tc name="" header="0" borderFillIDRef="2"><hp:subList id="" textDirection="HORIZONTAL">{"".join(para(t, "17") for t in (cell if isinstance(cell, list) else [cell]))}</hp:subList>'
             f'<hp:cellAddr colAddr="{c}" rowAddr="{r}"/><hp:cellSpan colSpan="1" rowSpan="1"/><hp:cellSz width="100" height="10"/></hp:tc>'
             for c, cell in enumerate(row))
         trs.append(f"<hp:tr>{tcs}</hp:tr>")
-    tbl = f'<hp:tbl id="{tid}" rowCnt="{len(rows)}" colCnt="{len(rows[0])}" borderFillIDRef="7">' + "".join(trs) + "</hp:tbl>"
-    return f'<hp:p id="0" paraPrIDRef="10" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="13">{tbl}</hp:run></hp:p>'
+    tbl = f'<hp:tbl id="{tid}" zOrder="{zorder}" rowCnt="{len(rows)}" colCnt="{len(rows[0])}" borderFillIDRef="7">' + "".join(trs) + "</hp:tbl>"
+    return f'<hp:p id="0" paraPrIDRef="10" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="13">{tbl}</hp:run><hp:run charPrIDRef="13"><hp:t></hp:t></hp:run></hp:p>'
+
+
+def blank(para_pr="25", char="22"):
+    """글 run 이 없는 빈 문단 — 실제 문서의 간격 문단(5절 paraPr 25 / 제3장 paraPr 10)."""
+    return f'<hp:p id="0" paraPrIDRef="{para_pr}" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="{char}"/><hp:linesegarray><hp:lineseg textpos="0"/></hp:linesegarray></hp:p>'
+
+
+def ctrl_para(before, after):
+    """글 run 사이에 hp:ctrl run(각주 자리)이 있는 문단 — 2절 소결 마지막 문단의 모양. set_text 를 쓰면 각주가 끝으로 밀리므로 2단계는 이 문단을 손대지 않는다."""
+    return (f'<hp:p id="0" paraPrIDRef="10" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="13"><hp:t>{before}</hp:t></hp:run>'
+            f'<hp:run charPrIDRef="21"><hp:ctrl/></hp:run><hp:run charPrIDRef="13"><hp:t>{after}</hp:t></hp:run></hp:p>')
+
+
+CH2_HEADINGS = ("제2장 연구 방법", "1. 국내 반도체고등학교 교과서와 한국산업인력공단 NCS 교과서 분석", "2. 해외 기술 고등학교 교과서 비교·분석", "5. 키워드 기반 문서 분류·분석 방법론")
+OLD_METHODS_TOC = (" 1) 시스템 구성과 데이터 흐름 ", " 2) 키워드 정의와 정규화", " 3) 문헌수집과 전처리 ", " 4) 콘텐츠 구조 분해 ", " 5) 위치 정합: 행번호의 페이지 사상 ", " 6) 키워드 매칭과 분류 ", " 7) 결과 산출; Excel 내보내기", " 8) 검증과 한계 ")
+NCS_TOC_SUB = (" 1) 안전 등 사고, 부상, 질병 관련 30개 키워드 분석  ", "  (1) 키워드 분석", " 2) 반도체 분야별 키워드 분석", " 3) 안전보건 등급별 키워드 분석", " 4) 소결")
+
+
+def chapter2_fixture_body():
+    """제2장 본문 — 1절(표 4)·2절 제목·5절(도입·표 5·표 6·설명 4문단·등급 목록), 2026-09-15 정본의 모양."""
+    grade_list = [para("안전보건 수준은 각 출현이 속한 페이지 또는 페이지 구역의 내용을 기준으로 세 등급으로 나누었다. "), para("- 등급 1"), para("관련 내용이 없거나 매우 부족한 경우"), para("- 등급 2"),
+                  para("위험을 언급하지만 예방 방법이 충분하지 않은 경우"), para("- 등급 3"), para("위험과 함께 구체적인 예방 방법이나 대응 절차가 제시된 경우이다."),
+                  para("이 등급은 문장 하나의 완성도를 직접 평가한 값이 아니라 해당 출현에 연결된 페이지·구역의 판정값이다.")]
+    return "".join([
+        para(CH2_HEADINGS[0]), blank("10", "13"), para(CH2_HEADINGS[1]), blank("10", "13"), para("국내 반도체고등학교 교과서(9종)와 한국산업인력공단 NCS 교과서(86종)에서 안전보건 관련 내용을 분석하였다(표 4 참조)."), blank("10", "13"),
+        para("표 4. 국내 반도체고등학교 교과서(9종)와 한국산업인력공단 NCS 교과서(85종)"),
+        table([["구분", "교과서 이름/종류"], ["국내 반도체고등학교 교과서", ["반도체기초기술1 (크리아트)", "반도체 박막확산 (에이치앤지)"]], ["한국산업인력공단 NCS 교과서", ["반도체개발 30종", "반도체제조 14종", "반도체장비 19종", "반도체재료 22종"]]], tid="4"),
+        blank("10", "13"), para(CH2_HEADINGS[2]), para("해외 사례 본문 — 바뀌면 안 된다 85종"), blank("10", "13"),
+        para(CH2_HEADINGS[3], char="12"), para("반도체 교과서와 NCS 자료에 안전보건 관련 내용이 얼마나, 어떤 맥락으로 포함되어 있는지 일관된 기준으로 확인하기 위한 절차이다."), blank(),
+        para("표 5. 키워드 기반 분석의 이해하기 쉬운 6단계"),
+        table([["단계", "무엇을 하는가", "주요 결과"]] + [[f"{i}. 단계", "옛 설명", "옛 결과"] for i in range(1, 7)], tid="5"), blank(), blank(),
+        para("표 6. 검색과 등급 판정 기준"),
+        table([["구분", "쉽게 말하면", "예시·주의사항"], ["검색 표현", "옛", "옛"], ["문맥 확인", "옛", "옛"], ["등급 1", "옛", "옛"], ["등급 2", "옛", "옛"], ["등급 3", "옛", "옛"]], tid="6"), blank(), blank(),
+        para("분석 자료는 반도체고등학교 교과서와 NCS 학습자료의 본문이다. "), para("먼저 파일을 읽어 문장·표·제목을 구분하고 … 12,875건 85종"), blank(),
+        para("파일과 검색어는 한글의 띄어쓰기나 컴퓨터 저장 방식이 달라도 같은 말로 인식되도록 정리한 뒤 검색하였다."), blank(),
+        para("검색 결과는 단순히 단어가 나왔다는 사실만 세지 않고, 해당 표현이 실제 안전보건 내용으로 사용되었는지 문맥을 확인하였다."), blank(),
+        *grade_list, blank(),
+    ])
+
+
+def ncs_tail_fixture():
+    """2절 꼬리 — 그림 4 캡션 뒤: 빈 문단, ' 4) 소결', 소결 문단 3개(마지막은 각주 ctrl run 포함)."""
+    return "".join([blank("10", "13"), para(" 4) 소결"), blank("10", "13"), para("본 연구는 반도체 기술 고등학교 교과서의 안전보건교육 내용을 체계적으로 분석하여 구조적 한계를 확인하였다."), blank("10", "13"),
+                    para("반도체고등학교의 안전보건교육이 양적으로 일부 포함되어 있음에도 한계를 가지고 있음을 보여준다."), blank("10", "13"),
+                    ctrl_para("본 연구 결과는 반도체산업 특성을 반영한 체계적이고 실천 중심의 안전보건교육 교과서 개발이 필요함을 시사한다.", " 각주 뒤 글.")])
 
 
 def pic(item):
@@ -123,10 +177,16 @@ def bmp_bytes(width, height):
 FIXTURE_SECTION_TITLES = ["제3장 연구 결과", HR.HEADINGS["textbook"][0], HR.HEADINGS["ncs"][0], HR.HEADINGS["cases"][0], HR.HEADINGS["cases"][1]]
 
 
-def build_fixture_hwpx(path, body_paragraphs):
-    """목차(제목 중복) + 본문. body_paragraphs 는 절 이름 → 문단 XML 목록."""
-    toc = "".join(para(t) for t in FIXTURE_SECTION_TITLES)
-    body = para("제3장 연구 결과")
+def build_fixture_hwpx(path, body_paragraphs, chapter2=True):
+    """목차(제목 중복) + 본문. body_paragraphs 는 절 이름 → 문단 XML 목록. chapter2=True 면 제2장 목차(5절 구고 소제목 8개)·2절 목차 소항목·제2장 본문(표 4·5절)도 넣는다 — 2단계가 손대는 곳."""
+    toc = "".join(para(t) for t in CH2_HEADINGS[:3]) + para(CH2_HEADINGS[3] + " ") + "".join(para(t) for t in OLD_METHODS_TOC) if chapter2 else ""
+    for t in FIXTURE_SECTION_TITLES:
+        toc += para(t)
+        if chapter2 and t == HR.HEADINGS["textbook"][0]:
+            toc += para(" 4) 소결")                                                   # 1절 목차에도 ' 4) 소결' 이 있다 — 2절 블록 탐지가 헷갈리면 안 된다
+        if chapter2 and t == HR.HEADINGS["ncs"][0]:
+            toc += "".join(para(t2) for t2 in NCS_TOC_SUB)
+    body = (chapter2_fixture_body() if chapter2 else "") + para("제3장 연구 결과")
     for name in ("textbook", "ncs", "cases"):
         body += para(HR.HEADINGS[name][0]) + "".join(body_paragraphs.get(name, []))
     body += para(HR.HEADINGS["cases"][1]) + para("4절 본문 — 바뀌면 안 된다 12,875건")
@@ -322,7 +382,7 @@ class AuditTests(unittest.TestCase):
     def test_audit_flags_stale_numbers_and_accepts_canonical_ones(self):
         f = fixture_facts()
         self.assertEqual([], HR.audit_numbers([f"총 {HR.fmt(f.ncs.total)}건, 등급 3 {HR.pct(f.ncs.grades[3], f.ncs.total)}, 33쪽, 2014년"], f))
-        self.assertEqual(["12,875", "4,259"], HR.audit_numbers(["‘안전’ 4,259건 중 12,875"], f))
+        self.assertEqual(["12,875", "4,259", "4,259건"], HR.audit_numbers(["‘안전’ 4,259건 중 12,875"], f))          # "4,259건" 은 폐기 문구 목록에도 걸린다 (2단계 STALE_PATTERNS)
 
     def test_facts_from_canonical_files(self):
         f = fixture_facts()
@@ -625,24 +685,28 @@ class RealPageBasisTests(unittest.TestCase):
                 HR.load_facts(Path(td) / "broken.json", HR.DEFAULT_CASES, HR.DEFAULT_RECOUNT)
 
 
+def stage1_body(f):
+    """1단계 fixture 본문(제3장 1~3절) + 2절 꼬리(2단계 삽입 자리)."""
+    return {"textbook": [para(prefix + " 옛 문장 1,293건") for prefix, _, _ in HR.textbook_paragraphs(f)]
+                            + [para("표 7. 교과서"), table([["키워드", "전체", "등급 1", "등급 2", "등급 3", "등급 합계"]] + [[k, "0", "0", "0", "0", "0"] for k in f.school.order] + [["합계", "1,293", "0", "0", "0", "0"]], tid="7"),
+                               para("표 8. 교과서 분야별"), table([["분야", "권수", "전체", "등급 1", "등급 2", "등급 3", "출현비율"]] + [[a, "0", "0", "0", "0", "0", "0%"] for a in HR.AREA_ORDER] + [["합계", "9", "1,293", "0", "0", "0", "100.0%"]], tid="8"),
+                               para("표 9. 교과서 등급별"), table([["등급", "의미", "출현건수", "등급 비율"], ["등급 1", "", "0", "0%"], ["등급 2", "", "0", "0%"], ["등급 3", "", "0", "0%"], ["합계", "등급 1~3", "1,293", "100.0%"]], tid="9"),
+                               pic("image1"), para("그림 2. 교과서 등급")],
+                "ncs": [para(prefix + " 옛 문장 12,875건") for prefix, _, _ in HR.ncs_paragraphs(f)]
+                       + [para("표 10. NCS"), table([["키워드", "전체", "등급 1", "등급 2", "등급 3", "등급 합계"]] + [[k, "0", "0", "0", "0", "0"] for k in f.ncs.order] + [["합계", "12,875", "0", "0", "0", "0"]], tid="10"),
+                          para("표 11. NCS 분야별"), table([["분야", "파일수", "전체", "등급 1", "등급 2", "등급 3", "등급 합계", "출현비율"]] + [[a, "0", "0", "0", "0", "0", "0", "0%"] for a in HR.AREA_ORDER] + [["합계", "85", "12,875", "0", "0", "0", "0", "100.0%"]], tid="11"),
+                          pic("image2"), para("그림 3. 분야별"),
+                          para("표 12. NCS 등급별"), table([["등급", "의미", "출현건수", "등급 비율"], ["등급 1", "", "0", "0%"], ["등급 2", "", "0", "0%"], ["등급 3", "", "0", "0%"], ["합계", "등급 1~3", "12,875", "100.0%"]], tid="12"),
+                          pic("image3"), para("그림 4. 등급별"), ncs_tail_fixture()],
+                "cases": [para(prefix + " 옛 문장 9건") for prefix, _, _ in HR.case_paragraphs(f)]
+                         + [table([["표 13. NCS 반도체 교과서 내 사고·부상·질병 사례 분석", "", "", "", ""], ["교과서 이름", "교과서 분야", "사고/부상 등 주요 내용", "페이지", "문장 수(글자 수)"]]
+                                  + [["반도체 장비 안전관리", "장비", "옛 사례", "33", "1문장"]] * 9 + [["", "", "", "", ""]], tid="13")]}
+
+
 class EndToEndTests(unittest.TestCase):
     def _fixture(self, td):
         f = fixture_facts()
-        body = {"textbook": [para(prefix + " 옛 문장 1,293건") for prefix, _, _ in HR.textbook_paragraphs(f)]
-                            + [para("표 7. 교과서"), table([["키워드", "전체", "등급 1", "등급 2", "등급 3", "등급 합계"]] + [[k, "0", "0", "0", "0", "0"] for k in f.school.order] + [["합계", "1,293", "0", "0", "0", "0"]]),
-                               para("표 8. 교과서 분야별"), table([["분야", "권수", "전체", "등급 1", "등급 2", "등급 3", "출현비율"]] + [[a, "0", "0", "0", "0", "0", "0%"] for a in HR.AREA_ORDER] + [["합계", "9", "1,293", "0", "0", "0", "100.0%"]]),
-                               para("표 9. 교과서 등급별"), table([["등급", "의미", "출현건수", "등급 비율"], ["등급 1", "", "0", "0%"], ["등급 2", "", "0", "0%"], ["등급 3", "", "0", "0%"], ["합계", "등급 1~3", "1,293", "100.0%"]]),
-                               pic("image1"), para("그림 2. 교과서 등급")],
-                "ncs": [para(prefix + " 옛 문장 12,875건") for prefix, _, _ in HR.ncs_paragraphs(f)]
-                       + [para("표 10. NCS"), table([["키워드", "전체", "등급 1", "등급 2", "등급 3", "등급 합계"]] + [[k, "0", "0", "0", "0", "0"] for k in f.ncs.order] + [["합계", "12,875", "0", "0", "0", "0"]]),
-                          para("표 11. NCS 분야별"), table([["분야", "파일수", "전체", "등급 1", "등급 2", "등급 3", "등급 합계", "출현비율"]] + [[a, "0", "0", "0", "0", "0", "0", "0%"] for a in HR.AREA_ORDER] + [["합계", "85", "12,875", "0", "0", "0", "0", "100.0%"]]),
-                          pic("image2"), para("그림 3. 분야별"),
-                          para("표 12. NCS 등급별"), table([["등급", "의미", "출현건수", "등급 비율"], ["등급 1", "", "0", "0%"], ["등급 2", "", "0", "0%"], ["등급 3", "", "0", "0%"], ["합계", "등급 1~3", "12,875", "100.0%"]]),
-                          pic("image3"), para("그림 4. 등급별")],
-                "cases": [para(prefix + " 옛 문장 9건") for prefix, _, _ in HR.case_paragraphs(f)]
-                         + [table([["표 13. NCS 반도체 교과서 내 사고·부상·질병 사례 분석", "", "", "", ""], ["교과서 이름", "교과서 분야", "사고/부상 등 주요 내용", "페이지", "문장 수(글자 수)"]]
-                                  + [["반도체 장비 안전관리", "장비", "옛 사례", "33", "1문장"]] * 9 + [["", "", "", "", ""]])]}
-        return build_fixture_hwpx(Path(td) / "src.hwpx", body), f
+        return build_fixture_hwpx(Path(td) / "src.hwpx", stage1_body(f)), f
 
     def test_refresh_rewrites_sections_keeps_rest_and_audits(self):
         render = shutil.which("magick") is not None
@@ -654,7 +718,7 @@ class EndToEndTests(unittest.TestCase):
             self.assertIn("옛 문장", (Path(td) / "text" / "review_text.html").read_text(encoding="utf-8"))
             self.assertEqual("ok", diff["audit"]["status"], diff["audit"])
             self.assertEqual(len(HR.textbook_paragraphs(f)) + len(HR.ncs_paragraphs(f)) + len(HR.case_paragraphs(f)), len(diff["paragraphs"]))
-            self.assertEqual(7, len(diff["tables"])); self.assertEqual(3, len(diff["figures"]))
+            self.assertEqual(7 + 5, len(diff["tables"])); self.assertEqual(3, len(diff["figures"]))                        # 1단계 표 7 + 2단계 표 4·5·6·12-1·12-2 (hwpx-methods-bridge-refresh)
             self.assertTrue(out.exists())
             with zipfile.ZipFile(src) as a, zipfile.ZipFile(out) as b:
                 self.assertEqual(a.namelist(), b.namelist())
