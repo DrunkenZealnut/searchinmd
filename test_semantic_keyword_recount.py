@@ -1645,7 +1645,7 @@ class ImpactScriptTests(unittest.TestCase):
             self.assertEqual({"detected_pages": 0, "page_grades": {"1": 0, "2": 0, "3": 0}}, out["pages"]["교과서"])
 
     def test_impact_counts_textbook_pages_with_their_page_grade(self):
-        """교과서 쪽도 센다 — 쪽 1(안전 7건·조치 없음 → 등급 2)·쪽 2(안전 1건 → 등급 1); 등급은 쪽 속성이라 같은 쪽 출현은 한 등급이고, 갈리면 최솟값을 취하지 않고 멈춘다(아래 test_impact_refuses_conflicting_grades_on_one_page)."""
+        """교과서 쪽도 센다 — 쪽 1(안전어 8건: 안전 7·보호구 1, 조치어 1건: 착용 < ACTION_MIN 5 → 등급 2)·쪽 2(안전 1건 → 등급 1); page_grades 는 등급별 쪽 수 히스토그램({"1": 1, "2": 1} = 등급 1 한 쪽·등급 2 한 쪽). 등급은 쪽 속성이라 같은 쪽 출현은 한 등급이고, 갈리면 최솟값을 취하지 않고 멈춘다(아래 test_impact_refuses_conflicting_grades_on_one_page)."""
         with tempfile.TemporaryDirectory() as td:
             IMP, docs, page_maps, existing = self._setup(td)
             root = Path(td) / "school" / "교재A"; root.mkdir(parents=True)
