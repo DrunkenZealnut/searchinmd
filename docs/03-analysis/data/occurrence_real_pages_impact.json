@@ -16,9 +16,9 @@
    }
   },
   "book_kind_rule": "previous basis per_book.method (markers → real-marker, alignment → toc-block); fallback blocks / distinct real pages >= 0.8; no map → real-marker-nomap",
-  "generated_at": "2026-09-15T17:29:19+09:00",
+  "generated_at": "2026-09-16T15:24:03+09:00",
   "git": {
-   "commit": "e80943a",
+   "commit": "7b3f590",
    "dirty": true
   },
   "inputs": {
@@ -600,6 +600,19 @@
  "pages": {
   "block_pages": 1785,
   "real_pages": 2492,
+  "real_page_grades": {
+   "1": 1825,
+   "2": 524,
+   "3": 143
+  },
+  "교과서": {
+   "detected_pages": 388,
+   "page_grades": {
+    "1": 335,
+    "2": 45,
+    "3": 8
+   }
+  },
   "block_width_of_occurrences": {
    "1": 3718,
    "2-3": 2335,
