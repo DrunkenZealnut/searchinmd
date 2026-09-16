@@ -38,6 +38,13 @@ def _key(record: SKR.MatchRecord) -> tuple:
     return (record.corpus, record.relative_path, record.line, record.keyword, record.expression, record.matched_text)
 
 
+def _fold_page_grade(pages: dict, key: tuple, grade: int) -> None:
+    """쪽 등급은 쪽의 속성 — 같은 쪽의 출현이 다른 등급을 들고 오면 조용히 최솟값을 취하지 않고 멈춘다 (Codex 적대적 리뷰: 충돌은 보여야 한다)."""
+    seen = pages.setdefault(key, grade)
+    if seen != grade:
+        raise ValueError(f"같은 쪽 {key} 의 출현이 등급 {seen} 과 {grade} 로 갈립니다 — 쪽 등급 집계를 신뢰할 수 없습니다")
+
+
 def _grade_counts(records) -> dict[str, int]:
     counts = Counter(record.grade for record in records)
     return {"1": counts[1], "2": counts[2], "3": counts[3]}
@@ -93,6 +100,11 @@ def compute_impact(documents: list[SKR.Document], keywords: list[str], existing_
     transition = Counter(); by_source = defaultdict(Counter); by_kind = defaultdict(lambda: {"block": Counter(), "real": Counter(), "occurrences": 0})
     per_keyword = defaultdict(lambda: {"block": Counter(), "real": Counter()}); per_group = defaultdict(lambda: {"block": Counter(), "real": Counter()})
     pages_a, pages_b = set(), set()
+    real_page_grade: dict[tuple, int] = {}                                            # NCS (교재, 실제 쪽) → 쪽 등급 — 쪽 속성이라 같은 쪽 출현은 한 등급이어야 한다
+    school_page_grade: dict[tuple, int] = {}                                          # 교과서 (교재, 쪽) → 쪽 등급 — 표식이 실제 쪽이라 블록 = 실제 쪽 (hwpx-methods-bridge-refresh FR-12)
+    for rb in b_list:
+        if rb.corpus == "교과서" and rb.page is not None:
+            _fold_page_grade(school_page_grade, (rb.relative_path, rb.page), rb.grade)
     occ_by_doc: dict[str, Counter] = defaultdict(Counter)                          # 문서 → 출현 줄 → 건수 (블록 폭 표; 블록은 쪽 값이 아니라 줄 범위로 가른다 — 같은 표식 값의 블록이 둘인 교재에서 이중 계수하지 않게, CodeRabbit PR #17)
     for ra, rb in zip(a_list, b_list):
         if ra.corpus != "NCS":
@@ -104,7 +116,11 @@ def compute_impact(documents: list[SKR.Document], keywords: list[str], existing_
         per_keyword[ra.keyword]["block"][ra.grade] += 1; per_keyword[ra.keyword]["real"][rb.grade] += 1
         group = SKR._dashboard_group("NCS", ra.relative_path)
         per_group[group]["block"][ra.grade] += 1; per_group[group]["real"][rb.grade] += 1
-        pages_a.add((ra.relative_path, ra.page)); pages_b.add((rb.relative_path, rb.page))
+        if ra.page is not None:
+            pages_a.add((ra.relative_path, ra.page))
+        if rb.page is not None:                                                        # 쪽이 없는 출현(unpaged)은 쪽이 아니다 — 정본 detected_pages 와 같은 규칙 (Codex 구조 리뷰 P2)
+            pages_b.add((rb.relative_path, rb.page))
+            _fold_page_grade(real_page_grade, (rb.relative_path, rb.page), rb.grade)
         occ_by_doc[ra.relative_path][ra.line] += 1
     # 출현이 놓인 블록의 실제 쪽 폭
     span = Counter()
@@ -124,6 +140,10 @@ def compute_impact(documents: list[SKR.Document], keywords: list[str], existing_
             span[_width_bucket(width)] += hits
     ncs_total = sum(grades_a["NCS"].values())
     moved = sum(v for (x, y), v in transition.items() if x != y)
+    real_page_grades = {str(g): sum(1 for v in real_page_grade.values() if v == g) for g in (1, 2, 3)}
+    school_page_grades = {str(g): sum(1 for v in school_page_grade.values() if v == g) for g in (1, 2, 3)}
+    if sum(real_page_grades.values()) != len(pages_b) or sum(school_page_grades.values()) != len(school_page_grade):   # 쪽마다 등급 하나 — 합이 쪽 수와 다르면 집계가 깨진 것
+        raise ValueError(f"쪽 단위 등급 합이 쪽 수와 다릅니다: NCS {real_page_grades} vs {len(pages_b)}쪽, 교과서 {school_page_grades} vs {len(school_page_grade)}쪽")
     return {
         "meta": {"dictionary": dictionary, "unit": "occurrences", "corpus_note": "NCS 만 이동 — 교과서는 표식이 실제 쪽이라 불변",
                  "block_reference": block_reference,
@@ -137,7 +157,9 @@ def compute_impact(documents: list[SKR.Document], keywords: list[str], existing_
                                 "block": {str(g): v["block"][g] for g in (1, 2, 3)}, "real": {str(g): v["real"][g] for g in (1, 2, 3)}} for kind, v in sorted(by_kind.items())},
         "keywords": [{"name": k, "block": {str(g): per_keyword[k]["block"][g] for g in (1, 2, 3)}, "real": {str(g): per_keyword[k]["real"][g] for g in (1, 2, 3)}} for k in keywords],
         "groups": {g: {"block": {str(x): v["block"][x] for x in (1, 2, 3)}, "real": {str(x): v["real"][x] for x in (1, 2, 3)}} for g, v in sorted(per_group.items())},
-        "pages": {"block_pages": len(pages_a), "real_pages": len(pages_b), "block_width_of_occurrences": {label: span[label] for _, label in WIDTH_BUCKETS}},
+        "pages": {"block_pages": len(pages_a), "real_pages": len(pages_b), "real_page_grades": real_page_grades,                     # 실제 쪽 단위 등급 분포 — 보고서 표 12-2 의 '정본(쪽 단위)' 열 (hwpx-methods-bridge-refresh)
+                  "교과서": {"detected_pages": len(school_page_grade), "page_grades": school_page_grades},
+                  "block_width_of_occurrences": {label: span[label] for _, label in WIDTH_BUCKETS}},
     }
 
 
@@ -154,7 +176,8 @@ def main(argv: list[str] | None = None) -> None:
     sources = SKR.read_keyword_workbook(args.source_workbook)
     keywords = [s.keyword for s in sources]
     ncs, _ = SKR.select_ncs_documents(SKR.load_documents(args.ncs_root, "NCS"))
-    documents = ncs + SKR.load_documents(args.school_root, "교과서")
+    school_docs = SKR.load_documents(args.school_root, "교과서")
+    documents = ncs + school_docs
     school = args.school_grade_workbook or args.source_workbook.parent / SKR.DEFAULT_SCHOOL_GRADE_WORKBOOK_NAME
     existing = SKR.load_existing_grades(args.source_workbook, school)
     page_maps, info = SKR.load_page_maps(args.page_maps, ncs)
@@ -167,7 +190,8 @@ def main(argv: list[str] | None = None) -> None:
         "generated_at": datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds"),
         "git": SKR._git_info(),
         "inputs": {"source_workbook": SKR._file_sha256(args.source_workbook), "school_grade_workbook": SKR._file_sha256(school),
-                   "ncs_markdown": SKR._document_set_sha256(ncs), "page_maps": info.as_manifest()},
+                   "ncs_markdown": SKR._document_set_sha256(ncs), "school_markdown": SKR._document_set_sha256(school_docs),   # 정본 run.inputs 와 같은 지문 4종 — hwpx_methods_bridge 가 결속 (CodeRabbit PR #18)
+                   "page_maps": info.as_manifest()},
     })
     if reseg.get("alignment_check"):                                                       # 정렬 오차는 이전 기준과 같은 대응의 것 — 그 자기 검증 수치를 병기 (계획 §5)
         check = (reseg.get("alignment_check") or {}).get("overall") or {}

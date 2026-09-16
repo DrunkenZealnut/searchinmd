@@ -1639,6 +1639,41 @@ class ImpactScriptTests(unittest.TestCase):
             self.assertEqual({"real-marker-nomap", "toc-block"}, set(out["by_book_kind"]))            # LM…0408 은 목록 교재, LM…0101 은 블록 2 → 실제 쪽 3
             self.assertEqual((4, 5), (out["pages"]["block_pages"], out["pages"]["real_pages"]))
             self.assertEqual({"1": 3, "2-3": 6, "4-9": 0, "10+": 0}, out["pages"]["block_width_of_occurrences"])
+            # 쪽 단위 등급 (hwpx-methods-bridge-refresh FR-12): 실제 쪽 5개 중 쪽 12 만 등급3, 나머지 4쪽은 등급1; 교과서 문서가 없는 fixture 라 교과서는 0
+            self.assertEqual({"1": 4, "2": 0, "3": 1}, out["pages"]["real_page_grades"])
+            self.assertEqual(out["pages"]["real_pages"], sum(out["pages"]["real_page_grades"].values()))
+            self.assertEqual({"detected_pages": 0, "page_grades": {"1": 0, "2": 0, "3": 0}}, out["pages"]["교과서"])
+
+    def test_impact_counts_textbook_pages_with_their_page_grade(self):
+        """교과서 쪽도 센다 — 쪽 1(안전어 8건: 안전 7·보호구 1, 조치어 1건: 착용 < ACTION_MIN 5 → 등급 2)·쪽 2(안전 1건 → 등급 1); page_grades 는 등급별 쪽 수 히스토그램({"1": 1, "2": 1} = 등급 1 한 쪽·등급 2 한 쪽). 등급은 쪽 속성이라 같은 쪽 출현은 한 등급이고, 갈리면 최솟값을 취하지 않고 멈춘다(아래 test_impact_refuses_conflicting_grades_on_one_page)."""
+        with tempfile.TemporaryDirectory() as td:
+            IMP, docs, page_maps, existing = self._setup(td)
+            root = Path(td) / "school" / "교재A"; root.mkdir(parents=True)
+            (root / "교재A.md").write_text("<!-- page: 1 -->\n안전 안전 안전 안전 안전 안전 안전 보호구 착용 점검 교육 관리 조치\n<!-- page: 2 -->\n안전\n", encoding="utf-8")
+            school = SKR.load_documents(Path(td) / "school", "교과서")
+            out = IMP.compute_impact(docs + school, ["안전"], existing, page_maps, block_reference=None)
+            self.assertEqual({"detected_pages": 2, "page_grades": {"1": 1, "2": 1, "3": 0}}, out["pages"]["교과서"])
+            self.assertEqual(out["totals"]["교과서"], sum(out["grades"]["real"]["교과서"].values()))
+
+    def test_impact_refuses_conflicting_grades_on_one_page(self):
+        """쪽 등급은 쪽 속성 — 같은 쪽의 출현이 다른 등급을 들고 오면 최솟값을 조용히 취하지 않고 멈춘다 (Codex 적대적 리뷰)."""
+        import occurrence_real_pages_impact as IMP
+        pages = {}
+        IMP._fold_page_grade(pages, ("a", 1), 3); IMP._fold_page_grade(pages, ("a", 1), 3)
+        self.assertEqual({("a", 1): 3}, pages)
+        with self.assertRaisesRegex(ValueError, "갈립니다"):
+            IMP._fold_page_grade(pages, ("a", 1), 1)
+
+    def test_impact_page_sets_skip_unpaged_records(self):
+        """쪽이 없는 출현(page None)은 쪽 집합·쪽 등급에 들어가지 않는다 — 정본 detected_pages 와 같은 규칙 (Codex 구조 리뷰 P2)."""
+        with tempfile.TemporaryDirectory() as td:
+            IMP, docs, page_maps, existing = self._setup(td)
+            root = Path(td) / "school" / "교재B"; root.mkdir(parents=True)
+            (root / "교재B.md").write_text("표식 없는 첫 줄 안전\n<!-- page: 1 -->\n안전\n", encoding="utf-8")          # 표식 앞의 출현 = unpaged
+            school = SKR.load_documents(Path(td) / "school", "교과서")
+            out = IMP.compute_impact(docs + school, ["안전"], existing, page_maps, block_reference=None)
+            self.assertEqual(1, out["pages"]["교과서"]["detected_pages"]); self.assertEqual(1, sum(out["pages"]["교과서"]["page_grades"].values()))
+            self.assertEqual(2, out["totals"]["교과서"])                                                                    # 출현은 둘 다 센다
 
     def test_impact_refuses_when_block_basis_differs_from_reference(self):
         with tempfile.TemporaryDirectory() as td:
@@ -1667,6 +1702,10 @@ class ImpactScriptTests(unittest.TestCase):
             self.assertNotIn(str(root), text); self.assertNotIn("/Users/", text)
             self.assertEqual(1, data["meta"]["inputs"]["page_maps"]["files"]); self.assertEqual(data["totals"]["NCS"], sum(data["grades"]["real"]["NCS"].values()))
             self.assertIn("이동", buf.getvalue())
+            # 입력 계보 — 정본 run.inputs 와 같은 지문 4종 (워크북 2·마크다운 2) + 사전 (CodeRabbit PR #18): hwpx_methods_bridge.load_bridge_facts 가 이것으로 다른 실행의 영향표를 거른다
+            school_docs = SKR.load_documents(kw["school_root"], "교과서")
+            self.assertEqual(SKR._document_set_sha256(school_docs), data["meta"]["inputs"]["school_markdown"])
+            self.assertEqual(SKR._file_sha256(kw["source_workbook"]), data["meta"]["inputs"]["source_workbook"]); self.assertEqual("v2", data["meta"]["dictionary"])
 
     # ---- 출고 전 커버리지 감사 (2026-09-15): book_kind 의 세 값, 짝짓기 거부, 폭 구간 4-9·10+, 교과서 레코드, 정렬 자기 검증 병기
     def test_book_kind_real_marker_and_empty_map(self):
