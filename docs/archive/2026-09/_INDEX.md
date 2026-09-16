@@ -1,6 +1,6 @@
 # Archive Index — 2026-09
 
-보관 산출물 목록. `coding-v1` 은 **폐기된 라벨의 기록**, `recoding`·`resegment`·`resegment-publish`·`marker-offset`·`semantic-recount-remediation`·`semantic-expression-review`·`hwpx-ncs-section-refresh`·`occurrence-real-pages` 는 완료된 PDCA 기능 문서다.
+보관 산출물 목록. `coding-v1` 은 **폐기된 라벨의 기록**, `recoding`·`resegment`·`resegment-publish`·`marker-offset`·`semantic-recount-remediation`·`semantic-expression-review`·`hwpx-ncs-section-refresh`·`occurrence-real-pages`·`hwpx-methods-bridge-refresh` 는 완료된 PDCA 기능 문서다.
 
 | Item | 종류 | 보관일 | 보관 파일 |
 |------|------|--------|-----------|
@@ -13,6 +13,7 @@
 | [semantic-expression-review](semantic-expression-review/) | PDCA 기능 (완료, Match Rate 96% → Act-1 100%; PR #16 머지 `6f1fa1f`) | 2026-09-15 | plan · design · analysis(갭 + Act-1) · report |
 | [hwpx-ncs-section-refresh](hwpx-ncs-section-refresh/) | PDCA 기능 (완료, Match Rate 92% → Act-1 100%; PR #16 머지 `6f1fa1f`) | 2026-09-15 | plan · design · analysis(갭 + Act-1) · report |
 | [occurrence-real-pages](occurrence-real-pages/) | PDCA 기능 (완료, Match Rate 90.8% → Act-1 100%; PR #17, 보관 시점 미머지) | 2026-09-15 | plan · design · analysis(갭 + Act-1) · report |
+| [hwpx-methods-bridge-refresh](hwpx-methods-bridge-refresh/) | PDCA 기능 (완료, Match Rate 98.2% → Act-1 100%; 보관 시점 미커밋 — ship 예정) | 2026-09-16 | plan · design · analysis(갭 + Act-1) · report |
 
 ## coding-v1
 
@@ -138,3 +139,19 @@
 - [Design](occurrence-real-pages/occurrence-real-pages.design.md)
 - [Analysis (갭 + Act-1)](occurrence-real-pages/occurrence-real-pages.analysis.md)
 - [Report](occurrence-real-pages/occurrence-real-pages.report.md)
+
+## hwpx-methods-bridge-refresh
+
+기초보고서 HWPX 2단계 — 제2장 5절 연구 방법 갱신 + 제3장 2절 " 4) 집계 기준의 변경과 이전 결과와의 관계" 신설 — 2026-09-16, Plan(연구책임자 "A+B3", D1~D6 모두 (a)) → Design → Do(TDD) → Check(gap-detector 109항목 98.2%) → Act-1(G1~G9, 100%) → Report. 커밋·PR 은 보관 뒤 `/ship`.
+
+- **Problem**: 정본 HWPX 의 제3장 수치는 2026-09-15 정본인데 제2장 5절은 2026-04 방법(목차 기반 쪽 표식, "페이지·구역" 등급)을 설명하고 목차에는 본문에 없는 구고 소제목 8개가 남았다; 표 4 는 NCS 85종(제조 14·재료 22)으로 표 11 의 86종과 어긋났다; 제3장 2절은 등급3 21.7%(출현 기준)만 제시하고 쪽 단위 이전 기준(2026-09-06 발표, 2,189쪽·6.6%)과의 관계·블록→실제 쪽 전환 효과(등급 바뀐 출현 4,016건)를 설명하지 않았다.
+- **Solution**: 새 모듈 `hwpx_methods_bridge.py`(사실 `MethodsFacts`·`BridgeFacts` — 추적 파일 8종 + `EXCEL_MAX_CHARS` 에서, 계보 가드 7종; 템플릿·분기)와 `hwpx_results_refresh.py` 2단계(문단 복제·삽입·삭제, 표 12 복제(고유 id), 범위/목차 탐지, 셀 문단 편집, 손댄 집합 장부 `check_untouched`, `.<sha8>.bak` 백업, 감사 범위 확장, 정본 산출물 재입력 선제 거부). `occurrence_real_pages_impact.py` 에 `pages.real_page_grades`(1,825/524/143)·`pages.교과서`(388: 335/45/8) 추가. 숫자는 전부 `Facts.value_index()` 경유 — 손으로 넣는 허용 숫자 0; JSON 에 없는 값(변환 보고서 4건·사전 개정 날짜·"출현 50건 이상")은 문장에서 제외(D3).
+- **결과**: `data/반도체 기초보고서_20260915_정본.hwpx` 재생성(sha256 `573484cb…`, 이전 파일 `.235ec03f.bak`·리뷰 전 출력 `.e9856fad.bak`) — 5절 표 5(7단계)·표 6(8행)·소제목 6·본문 7·삭제 6·재작성 2, 목차 8→6, 표 4 86/13/24, 2절 4) 문단 2·표 12-1(4,378/4,614/2,525 → 3,788/5,227/2,502, 1,785 블록 → 2,492쪽, 등급 변경 4,016건 34.9%)·표 12-2(이전 기준 2,189쪽 145(6.6%) ↔ 정본 쪽 2,492쪽 143(5.7%) ↔ 출현 2,502/11,517(21.7%), 공유 2,035쪽 일치 100%)·소결 5)·1절 교과서 불변 문장; 숫자 감사 1,052 토큰·미일치 0; 재실행 시 ZIP 항목·대조 JSON·review.html 동일. `test_hwpx_methods_bridge` 49(신규)·`test_hwpx_results_refresh` 44, 하니스 24/79/390/32/38. ship 리뷰(전문가 6·레드팀·커버리지·계획 감사)에서 critical 1(`main()` 스텁 KeyError)·informational 40여 건을 닫았다(레드팀: `direct_text` 꼬리 글, 사실 적재 계보 가드, 공유 쪽 하한, 장부의 원소 참조, 사전 판 표기의 한글 인접, 백업 원자성·검증).
+- **한계·이월**(`TODOS.md` "기초보고서 보강 후속"): 숫자 감사는 문맥을 모른다(85 같은 작은 수 우연 일치); 한글(HWP) 쪽 넘김·표 열 너비 `[→E2E]`; 제안서 B1·B2·B4·B5·C·D·E·F 와 Codex 미반영 항목(원저자). 최대 표식 폭은 58(`;` 분리 — 초안의 53 은 `|` 분리 오류).
+- **관련 자산**: 대조 JSON `docs/03-analysis/data/hwpx_results_refresh_20260915.json`(`methods`·`bridge`; 실행 환경은 담지 않는다), 검토 HTML `docs/03-analysis/hwpx-results-refresh/review.html`, 영향표 `docs/03-analysis/data/occurrence_real_pages_impact.json`, 규칙 `CLAUDE.md` 그룹 4 `hwpx_results_refresh.py` 2단계 문단, 제안서·문안 초안 `docs/04-report/features/research-content-{proposals-20260915,draft-A-B3-20260916}.md`(비추적).
+
+보관 문서:
+- [Plan](hwpx-methods-bridge-refresh/hwpx-methods-bridge-refresh.plan.md)
+- [Design](hwpx-methods-bridge-refresh/hwpx-methods-bridge-refresh.design.md)
+- [Analysis (갭 + Act-1)](hwpx-methods-bridge-refresh/hwpx-methods-bridge-refresh.analysis.md)
+- [Report](hwpx-methods-bridge-refresh/hwpx-methods-bridge-refresh.report.md)
