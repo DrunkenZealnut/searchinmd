@@ -2469,5 +2469,10 @@
    "level_same": true
   }
  },
- "output_sha256": "161d2408aabdabe6d4cb86215a05478ae9a727fa660256718a8aba9ab48b48fe"
+ "layout": {
+  "paragraphs": 109,
+  "linesegarray_removed": 821,
+  "ledger_paragraphs": 109
+ },
+ "output_sha256": "438f61d7501cd9305ccfea971ec4d6369173fc842139a19d4eff8c9a64aa037e"
 }
