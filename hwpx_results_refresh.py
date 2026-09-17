@@ -1607,7 +1607,7 @@ def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_d
     if strip_layout_cache:
         diff["layout"] = drop_line_layout_cache(root, touched, inserted)
     else:
-        diff["layout"] = {"paragraphs": 0, "linesegarray_removed": 0, "kept": True}          # --keep-line-layout-cache: set_text 가 지운 재작성 문단 것만 없고 나머지는 그대로
+        diff["layout"] = {"paragraphs": 0, "linesegarray_removed": 0, "kept": True}          # --keep-line-layout-cache: 캐시를 하나도 지우지 않는다(set_text 도 건드리지 않는다)
     # 손댄 범위 밖 불변 검사 (1·2단계 장부)
     check_untouched(root, snapshot, touched, inserted, removed)
     del kept_alive
