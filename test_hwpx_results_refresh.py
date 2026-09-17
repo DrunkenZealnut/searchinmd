@@ -61,6 +61,8 @@ class CommittedDiffTests(unittest.TestCase):
         self.assertTrue(all(pc["keys"] for pc in m["inserted"] + b["inserted"] if pc["kind"] in ("P", "N") and set(pc["numbers"]) - HR.ALLOWED_TOKENS))   # 삽입 문단의 숫자는 출처 키가 있다
         self.assertEqual("real", conds["본 연구에서는 9권의 반도체 교과서를"]["page_basis"])                                    # 1절 교과서 불변 문장
         self.assertNotIn("previous_output_identical", diff["source"]); self.assertNotIn("runtime", diff); self.assertNotIn(".bak", path.read_text(encoding="utf-8"))   # 실행 환경(백업 이름·sha·동일 여부)은 추적 JSON 밖 (ship 레드팀·적대적 리뷰)
+        self.assertEqual({"paragraphs": 109, "linesegarray_removed": 821, "ledger_paragraphs": 109}, diff["layout"])   # 장부의 최상위 문단 109 전부의 줄 배치 캐시 제거(한글 원본은 문단마다 캐시가 있으므로 paragraphs == ledger_paragraphs), 표 셀까지 821 (2026-09-17)
+        self.assertEqual(64, len(diff["output_sha256"]))
         self.assertEqual("v2", diff["source"]["summary_run"]["dictionary"])
         self.assertTrue(diff["source"]["summary_run"]["expected"])
         self.assertNotIn("/Users/", path.read_text(encoding="utf-8"))
@@ -107,7 +109,7 @@ def table(rows, tid="1", zorder="1"):
             for c, cell in enumerate(row))
         trs.append(f"<hp:tr>{tcs}</hp:tr>")
     tbl = f'<hp:tbl id="{tid}" zOrder="{zorder}" rowCnt="{len(rows)}" colCnt="{len(rows[0])}" borderFillIDRef="7">' + "".join(trs) + "</hp:tbl>"
-    return f'<hp:p id="0" paraPrIDRef="10" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="13">{tbl}</hp:run><hp:run charPrIDRef="13"><hp:t></hp:t></hp:run></hp:p>'
+    return f'<hp:p id="0" paraPrIDRef="10" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="13">{tbl}</hp:run><hp:run charPrIDRef="13"><hp:t></hp:t></hp:run><hp:linesegarray><hp:lineseg textpos="0"/></hp:linesegarray></hp:p>'   # 실제 문서의 표 문단도 캐시를 가진다
 
 
 def blank(para_pr="25", char="22"):
@@ -157,7 +159,7 @@ def ncs_tail_fixture():
 
 def pic(item):
     return (f'<hp:p id="0" paraPrIDRef="10" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="13">'
-            f'<hp:pic id="9" zOrder="1"><hc:img binaryItemIDRef="{item}" bright="0" contrast="0" effect="REAL_PIC" alpha="0"/></hp:pic></hp:run></hp:p>')
+            f'<hp:pic id="9" zOrder="1"><hc:img binaryItemIDRef="{item}" bright="0" contrast="0" effect="REAL_PIC" alpha="0"/></hp:pic></hp:run><hp:linesegarray><hp:lineseg textpos="0"/></hp:linesegarray></hp:p>')   # 그림 문단도 캐시를 가진다
 
 
 def png_bytes(width, height):
@@ -206,14 +208,26 @@ def fixture_facts():
 
 
 class XmlHelperTests(unittest.TestCase):
+    def test_drop_line_layout_cache_counts_only_touched_paragraphs_with_a_cache(self):
+        """장부에 적힌 최상위 문단(표 셀 포함)의 hp:linesegarray 만 지우고 센다 — 캐시가 둘이면 둘 다, 캐시 없는 그림 문단은 세지 않고, 빈 장부는 아무것도 안 지운다."""
+        bare = f'<hp:p id="0" paraPrIDRef="10" styleIDRef="0" pageBreak="0" columnBreak="0" merged="0"><hp:run charPrIDRef="13"><hp:t>E</hp:t></hp:run></hp:p>'   # 캐시가 원래 없는 문단
+        root = ET.fromstring(f'<hs:sec {NS}>' + para("A") + para("B") + table([["h"], ["c1"], ["c2"]]) + pic("image1") + para("D") + bare + "</hs:sec>")
+        a, b, tbl, pc, d, e = list(root)
+        b.append(copy.deepcopy(b.find(f"{HP}linesegarray")))                                                          # 한 문단에 캐시 둘 — findall 루프
+        self.assertEqual({"paragraphs": 0, "linesegarray_removed": 0, "ledger_paragraphs": 0}, HR.drop_line_layout_cache(root, set(), set()))
+        self.assertTrue(all(p.find(f".//{HP}linesegarray") is not None for p in (a, b, tbl, pc, d)))                   # 빈 장부는 무해
+        got = HR.drop_line_layout_cache(root, touched={id(b), id(tbl), id(pc), id(e)}, inserted={id(d)})
+        self.assertEqual({"paragraphs": 4, "linesegarray_removed": 2 + (1 + 3) + 1 + 1, "ledger_paragraphs": 5}, got)   # b 2 + 표 문단 1·셀 3 + 그림 1 + d 1; 캐시 없던 e 는 장부엔 있지만 세지 않는다
+        self.assertIsNotNone(a.find(f"{HP}linesegarray"))                                                              # 손대지 않은 문단은 그대로
+        self.assertIsNone(b.find(f"{HP}linesegarray")); self.assertFalse(list(tbl.iter(f"{HP}linesegarray"))); self.assertIsNone(d.find(f"{HP}linesegarray")); self.assertIsNone(pc.find(f"{HP}linesegarray"))
+
     def test_set_text_keeps_first_run_format_and_collapses_extra_runs(self):
-        p = ET.fromstring(f'<hp:p {NS}>' + '<hp:run charPrIDRef="13"><hp:t>앞</hp:t></hp:run><hp:run charPrIDRef="9"><hp:t>뒤</hp:t></hp:run></hp:p>'.replace("<hp:p ", "<hp:p ") if False else
-                          f'<hp:p {NS}><hp:run charPrIDRef="13"><hp:t>앞</hp:t></hp:run><hp:run charPrIDRef="9"><hp:t>뒤</hp:t></hp:run><hp:linesegarray/></hp:p>')
+        p = ET.fromstring(f'<hp:p {NS}><hp:run charPrIDRef="13"><hp:t>앞</hp:t></hp:run><hp:run charPrIDRef="9"><hp:t>뒤</hp:t></hp:run><hp:linesegarray/><hp:x/></hp:p>')
         info = HR.set_text(p, "새 글")
         runs = p.findall(HP + "run")
         self.assertEqual(1, len(runs)); self.assertEqual("13", runs[0].get("charPrIDRef")); self.assertEqual("새 글", HR.direct_text(p))
         self.assertTrue(info["format_collapsed"])
-        self.assertIsNotNone(p.find(HP + "linesegarray"))                       # 글 아닌 자식은 그대로
+        self.assertIsNotNone(p.find(HP + "x")); self.assertIsNotNone(p.find(HP + "linesegarray"))   # 글 아닌 자식은 그대로 — 줄 배치 캐시는 실행의 drop_line_layout_cache 몫 (2026-09-17)
 
     def test_resize_table_clones_first_data_row_style_keeps_spacer_and_recomputes_height(self):
         xml = table([["h1", "h2"], ["a", "1"], ["b", "2"], ["", ""]])
@@ -342,11 +356,14 @@ class ErrorPathTests(unittest.TestCase):
         self.assertIsNotNone(reparsed.find(".//{urn:x}extra"))
         self.assertTrue(data.decode("utf-8").startswith(HR.XML_DECL + "<hs:sec "))
 
-    def test_set_text_resets_line_segments(self):
+    def test_set_text_leaves_the_line_layout_cache_to_the_run(self):
+        """set_text 는 글만 바꾼다 — 줄 배치 캐시는 실행의 drop_line_layout_cache 가 장부 단위로 지운다(한 줄만 남기던 이전 정리는 캐시를 믿는 뷰어(Polaris)가 긴 글을 한 줄에 눌러 그리게 했다, 2026-09-17)."""
         p = ET.fromstring(f'<hp:p {NS}><hp:run charPrIDRef="13"><hp:t>옛 글</hp:t></hp:run><hp:linesegarray><hp:lineseg textpos="0" vertpos="1"/><hp:lineseg textpos="617" vertpos="2"/></hp:linesegarray></hp:p>')
         HR.set_text(p, "새")
-        segs = p.findall(f"{HP}linesegarray/{HP}lineseg")
-        self.assertEqual(1, len(segs)); self.assertEqual("0", segs[0].get("textpos")); self.assertEqual("1", segs[0].get("vertpos"))
+        self.assertEqual(2, len(p.findall(f"{HP}linesegarray/{HP}lineseg"))); self.assertEqual("새", HR.direct_text(p))
+        sec = ET.fromstring(f'<hs:sec {NS}></hs:sec>'); sec.append(p)
+        self.assertEqual({"paragraphs": 1, "linesegarray_removed": 1, "ledger_paragraphs": 1}, HR.drop_line_layout_cache(sec, {id(p)}, set()))   # 실행의 규칙이 지운다
+        self.assertIsNone(p.find(f"{HP}linesegarray"))
 
     def test_write_hwpx_uses_exclusive_temp_and_cleans_up(self):
         with tempfile.TemporaryDirectory() as td:
@@ -756,6 +773,46 @@ class EndToEndTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 HR.write_hwpx(src, src, b"", {})
 
+    def test_touched_paragraphs_drop_their_line_layout_cache(self):
+        """손댄 문단(재작성·삽입, 표 셀 포함)에서는 hp:linesegarray 를 지운다 — 옛 글의 줄 배치 캐시를 믿는 뷰어(Polaris)가 긴 새 글을 한 줄에 눌러 그리던 것(한글 E2E 2026-09-17); 손대지 않은 문단은 그대로."""
+        from unittest import mock
+        def has_cache(p): return p.find(f".//{HP}linesegarray") is not None
+        with tempfile.TemporaryDirectory() as td:
+            src, f = self._fixture(td)
+            out = Path(td) / "out.hwpx"
+            original, seen = HR.check_untouched, {}
+            def spy(root_, *a, **kw):                                                                                  # 검사 시점에 이미 지워져 있어야 한다 — 검사가 이 변경까지 덮는다
+                seen["stripped_at_check"] = any(not has_cache(p) and p.find(f".//{HP}ctrl") is None for p in root_)
+                return original(root_, *a, **kw)
+            with mock.patch.object(HR, "check_untouched", spy):
+                diff = HR.refresh(src, f, out, Path(td) / "diff.json", None, render=False, text_review_dir=Path(td) / "text")
+            self.assertTrue(seen["stripped_at_check"])
+            with zipfile.ZipFile(out) as z:
+                root = ET.fromstring(z.read("Contents/section0.xml"))
+            tops = list(root)
+            untouched = [p for p in tops if HR.direct_text(p).startswith(("서론 12,875건 그대로", "4절 본문 — 바뀌면 안 된다", "해외 사례 본문 — 바뀌면 안 된다", "- 등급 1", "관련 내용이 없거나 매우 부족한 경우"))]
+            self.assertEqual(5, len(untouched)); self.assertTrue(all(has_cache(p) for p in untouched))                 # 편집 범위 밖 2 + 편집된 절 안의 손대지 않은 문단 3
+            sections = HR.locate_sections(root)
+            first_rewritten = HR.find_paragraph(sections["textbook"], HR.textbook_paragraphs(f)[0][0])                 # 1단계 set_text 재작성 문단
+            self.assertFalse(has_cache(first_rewritten))
+            first_new = next(p for p in tops if HR.direct_text(p).startswith(HR.MB.methods_paragraphs(f)[1].text[:20]))   # 2단계 삽입 문단
+            self.assertFalse(has_cache(first_new))
+            tbl5 = HR.find_table_after_caption(HR.locate_range(root, HR.METHODS_HEADING, HR.CHAPTER_HEADING, 1), "표 5.")
+            self.assertFalse(any(has_cache(p) for p in tbl5.iter(f"{HP}p")))                                          # 손댄 표의 셀 문단까지
+            tbl12_1 = HR.find_table_after_caption(sections["ncs"], "표 12-1.")                                          # 2단계 삽입 표 — 복제한 셀의 캐시도
+            self.assertFalse(any(has_cache(p) for p in tbl12_1.iter(f"{HP}p")))
+            self.assertEqual({"paragraphs": 109, "linesegarray_removed": 817, "ledger_paragraphs": 109}, diff["layout"])   # fixture: 장부의 최상위 문단 109 전부 캐시를 잃는다(표 문단·그림 문단 포함); 표 셀만큼 더 많다
+            self.assertEqual(diff["layout"], json.loads((Path(td) / "diff.json").read_text(encoding="utf-8"))["layout"])   # 대조 JSON 파일에도 그대로
+            with zipfile.ZipFile(src) as z:
+                before = sum(1 for p in ET.fromstring(z.read("Contents/section0.xml")) if not has_cache(p))              # fixture 에서 원래 캐시가 없던 최상위 문단(각주 ctrl 문단)
+            self.assertEqual(diff["layout"]["paragraphs"], sum(1 for p in tops if not has_cache(p)) - before)         # 캐시가 없어진 문단 = 손댄 문단뿐
+            kept = HR.refresh(src, f, Path(td) / "kept.hwpx", Path(td) / "kept.json", None, render=False, text_review_dir=Path(td) / "text2", strip_layout_cache=False)
+            self.assertEqual({"paragraphs": 0, "linesegarray_removed": 0, "kept": True}, kept["layout"])               # --keep-line-layout-cache: 캐시를 전부 남긴다
+            with zipfile.ZipFile(Path(td) / "kept.hwpx") as z:
+                kept_tops = list(ET.fromstring(z.read("Contents/section0.xml")))
+            self.assertEqual(before, sum(1 for p in kept_tops if not has_cache(p)))                                     # 원래 없던 문단(ctrl) 말고는 하나도 잃지 않는다
+            self.assertTrue(has_cache(next(p for p in kept_tops if HR.direct_text(p).startswith(HR.MB.methods_paragraphs(f)[1].text[:20]))))   # 삽입 문단이 원형의 캐시를 그대로 가진다
+
     def test_oversized_figure_entry_is_refused_before_decompression(self):
         """그림 BinData 항목도 section0.xml 처럼 읽기 전에 크기·압축 비율 상한을 검사한다 (CodeRabbit PR #18)."""
         with tempfile.TemporaryDirectory() as td:
@@ -789,6 +846,15 @@ class EndToEndTests(unittest.TestCase):
             with self.assertRaises(SystemExit), contextlib.redirect_stdout(io.StringIO()):
                 HR.main(["--hwpx", str(src), "--no-render", "--diff-out", str(tracked)])  # 명시해도 추적 경로는 거부
 
+    def test_keep_line_layout_cache_flag_reaches_refresh(self):
+        """--keep-line-layout-cache 는 점검 실행에서도 캐시를 남기고 대조 JSON 에 kept 를 적는다 (캐시 없는 문단을 그리지 못하는 뷰어용 안전판)."""
+        with tempfile.TemporaryDirectory() as td:
+            src, f = self._fixture(td)
+            with contextlib.redirect_stdout(io.StringIO()):
+                rc = HR.main(["--hwpx", str(src), "--no-render", "--diff-out", str(Path(td) / "keep.json"), "--keep-line-layout-cache"])
+            self.assertEqual(0, rc)
+            self.assertEqual({"paragraphs": 0, "linesegarray_removed": 0, "kept": True}, json.loads((Path(td) / "keep.json").read_text(encoding="utf-8"))["layout"])
+
     def test_refresh_reports_stale_number_and_writes_nothing(self):
         """숫자 감사 실패: status failed, HWPX·검토 HTML 없음, main 은 1 — 실패 기록은 추적 대조 경로를 덮어쓰지 않는다."""
         with tempfile.TemporaryDirectory() as td:
@@ -800,7 +866,7 @@ class EndToEndTests(unittest.TestCase):
             stale = Path(td) / "stale.hwpx"; HR.write_hwpx(src, stale, HR.serialize_section(root, tag), {})
             out = Path(td) / "o.hwpx"
             diff = HR.refresh(stale, f, out, Path(td) / "d.json", Path(td) / "rv", render=False, text_review_dir=Path(td) / "t")
-            self.assertEqual("failed", diff["audit"]["status"]); self.assertIn("12,875", diff["audit"]["unmatched"])
+            self.assertEqual("failed", diff["audit"]["status"]); self.assertIn("12,875", diff["audit"]["unmatched"]); self.assertIn("layout", diff)
             self.assertFalse(out.exists()); self.assertFalse((Path(td) / "rv").exists()); self.assertFalse((Path(td) / "t").exists())
             self.assertTrue((Path(td) / "d.json").exists())
             with contextlib.redirect_stdout(io.StringIO()):
@@ -818,6 +884,8 @@ class EndToEndTests(unittest.TestCase):
             out = Path(td) / "never.hwpx"
             diff = HR.refresh(src, f, out, Path(td) / "d.json", None, render=False, write_output=False)
             self.assertEqual("ok", diff["audit"]["status"]); self.assertIsNone(diff["output"]); self.assertFalse(out.exists())
+            written = json.loads((Path(td) / "d.json").read_text(encoding="utf-8"))
+            self.assertEqual(diff["layout"], written["layout"]); self.assertEqual({"paragraphs", "linesegarray_removed", "ledger_paragraphs"}, set(written["layout"]))   # 점검 실행도 정본 실행과 같은 layout 을 계산·기록
             diff = HR.refresh(src, f, out, Path(td) / "d.json", None, render=False)                  # render=False 만으로는(magick 없는 CI) HWPX 를 쓴다
             self.assertTrue(out.exists()); self.assertEqual(out.name, diff["output"]); self.assertFalse(any(f["rendered"] for f in diff["figures"]))
 

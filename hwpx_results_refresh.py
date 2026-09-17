@@ -10,7 +10,7 @@
 스크립트 상수는 문장 틀, 제목·첫머리 locator, 원본 목차의 구고 소제목 수(OLD_METHODS_TOC_ENTRIES)뿐이다.
 
 동작: 절은 제목 텍스트로 찾고(목차의 같은 제목은 건너뛴다), 문단은 원문 첫머리로 찾아 템플릿으로 다시 쓰며(서술 조건은 데이터로
-분기), 표 7~12 는 셀 텍스트만 바꾸고(표 13 만 행 증감), 그림 2~4 는 SVG → 원본 형식·크기로 다시 그려 BinData 바이트를 바꾼다.
+분기), 표 7~12 는 셀 텍스트만 바꾸고(표 13 만 행 증감), 그림 2~4 는 SVG → 원본 형식·크기로 다시 그려 BinData 바이트를 바꾼다. 손댄 문단(표 셀 포함)의 줄 배치 캐시 hp:linesegarray 는 지운다(drop_line_layout_cache, 대조 JSON layout).
 2단계는 같은 트리에서 문단을 원형 복제로 넣고 빼며(clone_paragraph·insert_after·remove_paragraphs), 표 12-1·12-2 는 표 12 를 복제해 고유 id 를 준다.
 손대지 않은 문단은 구조·값 그대로 — 편집 전 스냅샷과 손댄 집합 장부(touched·inserted·removed)로 검사한다(check_untouched); 나머지 ZIP 항목은 바이트 그대로.
 원본은 읽기만 하고 새 파일로 쓴다(기존 출력은 --force 로만 덮어쓰고 <이름>.<sha16>.bak 로 보존). 산출물에 다시 실행할 수는 없다 — 문단을 원본(2026-09-11)
@@ -335,14 +335,7 @@ def set_text(p: ET.Element, text: str) -> dict:
         p.remove(r)
     if direct_text(p) != text:
         raise ValueError("문단 글 교체가 닫히지 않았습니다 — 글 아닌 자식(hp:ctrl 등)과 섞인 run 이 있습니다")
-    lsa = p.find(HP + "linesegarray")
-    if lsa is not None:                                        # 옛 글의 줄 배치 캐시(textpos 가 새 글 길이를 넘을 수 있다) → 첫 줄 하나만 남기고 0 부터 다시 배치하게
-        segs = lsa.findall(HP + "lineseg")
-        for seg in segs[1:]:
-            lsa.remove(seg)
-        if segs:
-            segs[0].set("textpos", "0")
-    return {"format_collapsed": collapsed}
+    return {"format_collapsed": collapsed}                    # 줄 배치 캐시(hp:linesegarray)는 여기서 건드리지 않는다 — 실행의 drop_line_layout_cache 가 장부의 문단(글이 안 바뀐 셀·그림 문단까지) 한 규칙으로 지운다 (2026-09-17; 한 줄만 남기던 이전 정리는 캐시를 믿는 뷰어가 긴 글을 한 줄에 누르게 했다)
 
 
 def cell_paragraphs(tc: ET.Element) -> list[ET.Element]:
@@ -504,6 +497,25 @@ def snapshot_paragraphs(root: ET.Element) -> dict:
     """편집 전 최상위 문단의 (순서, 직렬화) — check_untouched 의 기준. 같은 Element 객체를 id 로 식별한다."""
     tops = top_paragraphs(root)
     return {"order": [id(p) for p in tops], "xml": {id(p): ET.tostring(p) for p in tops}}
+
+
+def drop_line_layout_cache(root: ET.Element, touched: set, inserted: set) -> dict:
+    """장부에 적힌 최상위 문단(touched·inserted — 재작성·삽입, 표 셀 문단 포함)의 hp:linesegarray 를 지운다 — 옛 글의 줄 배치 캐시.
+    OWPML 에서 선택 요소라 뷰어가 다시 배치하지만, 캐시를 믿는 뷰어(Polaris Office)는 긴 새 글을 옛 줄 수에 눌러 그렸다(한글 E2E 2026-09-17).
+    touched 는 장부의 보수적 집합이라 글은 그대로인 그림 문단(BinData 만 바뀜)도 들어 있다 — 함께 지우며 무해하다.
+    손대지 않은 문단은 그대로 둔다 — check_untouched 앞에 호출해 검사가 이 변경까지 덮게 한다."""
+    paragraphs = removed = ledger = 0
+    for top in list(root):
+        if id(top) not in touched and id(top) not in inserted:
+            continue
+        ledger += 1
+        hit = 0
+        for p in top.iter(HP + "p"):
+            for lsa in p.findall(HP + "linesegarray"):
+                p.remove(lsa); hit += 1
+        if hit:
+            paragraphs += 1; removed += hit
+    return {"paragraphs": paragraphs, "linesegarray_removed": removed, "ledger_paragraphs": ledger}   # 한글이 저장한 원본은 문단마다 캐시가 있으므로 paragraphs == ledger_paragraphs 가 정상 (적대적 리뷰 F4)
 
 
 def check_untouched(root: ET.Element, snapshot: dict, touched: set, inserted: set, removed: set) -> None:
@@ -1495,8 +1507,9 @@ def refresh_methods_bridge(root: ET.Element, facts: Facts, touched: set, inserte
 
 
 def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_dir: Path | None, force: bool = False, render: bool = True,
-            text_review_dir: Path | None = None, write_output: bool = True) -> dict:
-    """render=False 는 그림을 그리지 않는다(magick 없는 환경 — 원본 그림 바이트 유지); write_output=False 는 HWPX 를 쓰지 않는다(점검 실행)."""
+            text_review_dir: Path | None = None, write_output: bool = True, strip_layout_cache: bool = True) -> dict:
+    """render=False 는 그림을 그리지 않는다(magick 없는 환경 — 원본 그림 바이트 유지); write_output=False 는 HWPX 를 쓰지 않는다(점검 실행);
+    strip_layout_cache=False 는 손댄 문단의 줄 배치 캐시를 남긴다(--keep-line-layout-cache — 캐시 없는 문단을 다시 배치하지 못하는 뷰어가 있을 때의 안전판)."""
     raw, root, root_tag = read_section(hwpx)
     already = {direct_text(p).strip() for p in top_paragraphs(root)} & {MB.METHODS_HEADINGS[0].strip(), MB.BRIDGE_HEADING.strip()}
     if already:
@@ -1590,6 +1603,11 @@ def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_d
     diff["methods"]["audited_tokens"] = sum(len(audited_numbers(t)) for t in section_texts(methods_section))
     diff["audit"] = {"tokens": sum(len(numbers_in(t)) for t in texts), "unmatched": unmatched}
 
+    # 손댄 문단의 줄 배치 캐시 제거 — 뷰어가 새 글 길이로 다시 배치하게 (Polaris 는 캐시를 믿는다). 불변 검사 앞에서 하므로 검사가 이 변경까지 덮는다
+    if strip_layout_cache:
+        diff["layout"] = drop_line_layout_cache(root, touched, inserted)
+    else:
+        diff["layout"] = {"paragraphs": 0, "linesegarray_removed": 0, "kept": True}          # --keep-line-layout-cache: set_text 가 지운 재작성 문단 것만 없고 나머지는 그대로
     # 손댄 범위 밖 불변 검사 (1·2단계 장부)
     check_untouched(root, snapshot, touched, inserted, removed)
     del kept_alive
@@ -1677,6 +1695,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--no-render", action="store_true", help="그림을 그리지 않는 점검 실행 — 출력 HWPX·추적 대조 JSON 을 쓰지 않는다 (--diff-out 은 docs/ 밖 경로만)")
     ap.add_argument("--text-review-dir", type=Path, default=DEFAULT_TEXT_REVIEW_DIR, help="구/신 문장 병기본 (본문 포함 — data/ 아래, 비추적)")
+    ap.add_argument("--keep-line-layout-cache", action="store_true", help="손댄 문단의 hp:linesegarray(옛 줄 배치 캐시)를 지우지 않는다 — 캐시 없는 문단을 다시 배치하지 못하는 뷰어용 안전판 (기본은 지운다: Polaris 는 옛 캐시대로 한 줄에 눌러 그렸다)")
     args = ap.parse_args(argv)
     facts = load_facts(args.summary, args.cases, args.recount_summary)
     if args.out is None:
@@ -1692,10 +1711,10 @@ def main(argv: list[str] | None = None) -> int:
             sys.exit(f"--no-render 점검 실행은 추적 경로에 대조 JSON 을 쓰지 않습니다: {public(args.diff_out)}")
         else:
             diff_out = args.diff_out
-        diff = refresh(args.hwpx, facts, args.out, diff_out, None, force=True, render=False, write_output=False)   # 점검 실행 — HWPX 를 쓰지 않는다
+        diff = refresh(args.hwpx, facts, args.out, diff_out, None, force=True, render=False, write_output=False, strip_layout_cache=not args.keep_line_layout_cache)   # 점검 실행 — HWPX 를 쓰지 않는다
         print(f"(점검 실행 — 대조 JSON: {diff_out})")
     else:
-        diff = refresh(args.hwpx, facts, args.out, args.diff_out or default_diff_path(facts), args.review_dir, force=args.force, text_review_dir=args.text_review_dir)
+        diff = refresh(args.hwpx, facts, args.out, args.diff_out or default_diff_path(facts), args.review_dir, force=args.force, text_review_dir=args.text_review_dir, strip_layout_cache=not args.keep_line_layout_cache)
     print(f"문단 {len(diff['paragraphs'])}개 · 표 {len(diff['tables'])}개 · 그림 {len(diff['figures'])}개 · 숫자 토큰 {diff['audit']['tokens']}개 · 미일치 {len(diff['audit']['unmatched'])}개")
     if diff["audit"]["unmatched"]:
         print("정본에 없는 숫자:", ", ".join(diff["audit"]["unmatched"]))
