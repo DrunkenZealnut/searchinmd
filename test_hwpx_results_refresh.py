@@ -41,7 +41,7 @@ class CommittedDiffTests(unittest.TestCase):
         self.assertEqual({"NCS": "real", "교과서": "marker"}, diff["source"]["page_basis"])                    # occurrence-real-pages 이후의 정본으로 만든 산출물
         self.assertEqual(([], "ok"), (diff["audit"]["unmatched"], diff["audit"]["status"]))
         self.assertNotIn("out_of_scope", diff["audit"])                                                            # 5절은 2단계로 감사 범위에 들어왔다 (hwpx-methods-bridge-refresh FR-14)
-        self.assertEqual((12, 3), (len(diff["tables"]), len(diff["figures"])))
+        self.assertEqual((14, 3), (len(diff["tables"]), len(diff["figures"])))                                             # 3단계 표 12-3·12-4 포함 (ncs-book-concentration)
         self.assertEqual({"PNG": 1, "BMP": 2}, Counter(f["format"] for f in diff["figures"]))
         self.assertTrue(all(len(f["sha256"]) == 64 for f in diff["figures"]))
         self.assertTrue(all(f["bits"] == 24 for f in diff["figures"] if f["format"] == "BMP"))                      # G-6 24bit
@@ -55,13 +55,18 @@ class CommittedDiffTests(unittest.TestCase):
         m, b = diff["methods"], diff["bridge"]                                                                     # 2단계 — 설계 §3.9
         self.assertEqual(({"rewritten": 6, "removed": 2}, {"caption_changed": True, "changed_cells": 2}, 6, 20, 2), (m["toc"], m["table4"], m["removed_paragraphs"], len(m["inserted"]), len(m["rewritten"])))
         self.assertGreater(m["audited_tokens"], 30)
-        self.assertEqual(({"rewritten": 1, "inserted": 1}, 15, {"4) 소결": "5) 소결"}, True), (b["toc"], len(b["inserted"]), b["renumbered"], b["conclusion_inserted"]))
+        self.assertEqual(({"rewritten": 1, "inserted": 2}, 15, {"4) 소결": "6) 소결"}, True), (b["toc"], len(b["inserted"]), b["renumbered"], b["conclusion_inserted"]))
+        c = diff["concentration"]                                                                                      # 3단계 — 교재별 집중 (ncs-book-concentration)
+        self.assertEqual((14, ["LM1903060329", "LM1903060411"]), (len(c["inserted"]), c["dedicated"]))   # 15 → 14: 선행 중복 빈 문단 제거 (ship 적대적 리뷰)
+        self.assertEqual([("표 12-3.", 8, 4), ("표 12-4.", 11, 4)], [(t["caption"], t["rows"], t["cols"]) for t in c["tables"]])
+        self.assertEqual({"dedicated_count": 2, "rest_rate_direction": "내려간다", "group_majority": {"반도체장비": True, "반도체재료": False}, "zero_majority": True}, c["conditions"])
+        self.assertTrue(all(pc["keys"] for pc in c["inserted"] if pc["kind"] in ("P", "N") and set(pc["numbers"]) - HR.ALLOWED_TOKENS))
         self.assertEqual([("표 12-1.", 7, 4), ("표 12-2.", 7, 4)], [(t["caption"], t["rows"], t["cols"]) for t in b["tables"]])
         self.assertEqual({"grade_verbs": ["줄고", "늘었으며", "거의 같았다"], "real_pages_vs_block": "늘었으며", "shared_all_agree": True, "occurrence_share_exceeds_page_share": True, "level_same": True}, b["conditions"])
         self.assertTrue(all(pc["keys"] for pc in m["inserted"] + b["inserted"] if pc["kind"] in ("P", "N") and set(pc["numbers"]) - HR.ALLOWED_TOKENS))   # 삽입 문단의 숫자는 출처 키가 있다
         self.assertEqual("real", conds["본 연구에서는 9권의 반도체 교과서를"]["page_basis"])                                    # 1절 교과서 불변 문장
         self.assertNotIn("previous_output_identical", diff["source"]); self.assertNotIn("runtime", diff); self.assertNotIn(".bak", path.read_text(encoding="utf-8"))   # 실행 환경(백업 이름·sha·동일 여부)은 추적 JSON 밖 (ship 레드팀·적대적 리뷰)
-        self.assertEqual({"paragraphs": 109, "linesegarray_removed": 821, "ledger_paragraphs": 109}, diff["layout"])   # 장부의 최상위 문단 109 전부의 줄 배치 캐시 제거(한글 원본은 문단마다 캐시가 있으므로 paragraphs == ledger_paragraphs), 표 셀까지 821 (2026-09-17)
+        self.assertEqual({"paragraphs": 124, "linesegarray_removed": 912, "ledger_paragraphs": 124}, diff["layout"])   # 장부의 최상위 문단 124 전부의 줄 배치 캐시 제거(한글 원본은 문단마다 캐시가 있으므로 paragraphs == ledger_paragraphs), 표 셀까지 912 (선행 중복 빈 문단 제거로 125→124, ship 적대적 리뷰)
         self.assertEqual(64, len(diff["output_sha256"]))
         self.assertEqual("v2", diff["source"]["summary_run"]["dictionary"])
         self.assertTrue(diff["source"]["summary_run"]["expected"])
@@ -735,7 +740,7 @@ class EndToEndTests(unittest.TestCase):
             self.assertIn("옛 문장", (Path(td) / "text" / "review_text.html").read_text(encoding="utf-8"))
             self.assertEqual("ok", diff["audit"]["status"], diff["audit"])
             self.assertEqual(len(HR.textbook_paragraphs(f)) + len(HR.ncs_paragraphs(f)) + len(HR.case_paragraphs(f)), len(diff["paragraphs"]))
-            self.assertEqual(7 + 5, len(diff["tables"])); self.assertEqual(3, len(diff["figures"]))                        # 1단계 표 7 + 2단계 표 4·5·6·12-1·12-2 (hwpx-methods-bridge-refresh)
+            self.assertEqual(7 + 5 + 2, len(diff["tables"])); self.assertEqual(3, len(diff["figures"]))                    # 1단계 표 7 + 2단계 표 4·5·6·12-1·12-2 + 3단계 표 12-3·12-4 (ncs-book-concentration)
             self.assertTrue(out.exists())
             with zipfile.ZipFile(src) as a, zipfile.ZipFile(out) as b:
                 self.assertEqual(a.namelist(), b.namelist())
@@ -801,7 +806,7 @@ class EndToEndTests(unittest.TestCase):
             self.assertFalse(any(has_cache(p) for p in tbl5.iter(f"{HP}p")))                                          # 손댄 표의 셀 문단까지
             tbl12_1 = HR.find_table_after_caption(sections["ncs"], "표 12-1.")                                          # 2단계 삽입 표 — 복제한 셀의 캐시도
             self.assertFalse(any(has_cache(p) for p in tbl12_1.iter(f"{HP}p")))
-            self.assertEqual({"paragraphs": 109, "linesegarray_removed": 817, "ledger_paragraphs": 109}, diff["layout"])   # fixture: 장부의 최상위 문단 109 전부 캐시를 잃는다(표 문단·그림 문단 포함); 표 셀만큼 더 많다
+            self.assertEqual({"paragraphs": 124, "linesegarray_removed": 908, "ledger_paragraphs": 124}, diff["layout"])   # fixture: 장부의 최상위 문단 124 전부 캐시를 잃는다(표 문단·그림 문단 포함, 3단계 중복 빈 문단 제거 반영); 표 셀만큼 더 많다
             self.assertEqual(diff["layout"], json.loads((Path(td) / "diff.json").read_text(encoding="utf-8"))["layout"])   # 대조 JSON 파일에도 그대로
             with zipfile.ZipFile(src) as z:
                 before = sum(1 for p in ET.fromstring(z.read("Contents/section0.xml")) if not has_cache(p))              # fixture 에서 원래 캐시가 없던 최상위 문단(각주 ctrl 문단)

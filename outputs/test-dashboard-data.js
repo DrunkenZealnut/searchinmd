@@ -54,6 +54,7 @@ ctx.window = ctx; ctx.globalThis = ctx; vm.createContext(ctx);
 vm.runInContext(dataJs, ctx); vm.runInContext(renderer, ctx, { filename: 'docs/semantic_grade_dashboard.js' });
 const D = ctx.SEMANTIC_RECOUNT;
 const headings = (html) => [...html.matchAll(/<h2>([^<]+)<\/h2>/g)].map((m) => m[1]);
+const dedicatedStats = (books) => { const ded = books.filter((b) => b.title.includes('안전관리')); return { ded, d3: ded.reduce((a, b) => a + b.grades['3'], 0), zero: books.filter((b) => b.grades['3'] === 0).length }; };  // S1w·S3r 공용 (리뷰 정리)
 const render = (corpus) => { ctn.innerHTML = ''; ctx.renderSemanticGradeDashboard(corpus); return ctn.innerHTML; };
 const visible = (html) => html.replace(/<template id="legacy-dashboard">[\s\S]*?<\/template>/, '');
 const templateOf = (html) => (html.match(/<template id="legacy-dashboard">([\s\S]*?)<\/template>/) || ['', ''])[1];
@@ -81,6 +82,13 @@ check('S1n 헤더 데이터 문구가 정본 xlsx·commit 을 인용', ncs.inclu
 check('S1o 총계는 "레코드 합계(고유 문장·쪽 수 아님)" 로 명명 (m1)', ncs.includes('고유 문장·쪽 수') && school.includes('고유 문장·쪽 수'));
 check('S1s 브리지 절의 해석 문단은 각주(.ts)가 아니라 본문 서체', /<p class="bridge-note"[^>]*>2026-09-13 부터/.test(ncs) && /<p class="bridge-note"[^>]*><strong>두 값의 차이/.test(ncs));
 check('S1p NCS 에 브리지 절 — 이전 기준(페이지 단위) 표와 고정 문장', ncs.includes('이전 기준') && ncs.includes(fmt(R.pages) + '쪽') && ncs.includes(fmt(R.page_g['3'])) && ncs.includes('가중 방식의 차이') && ncs.includes(pct(R.page_g['3'], R.pages) + '%'));
+check('S1w NCS 에 교재별 현황 절 — 등급 3 최다 교재·0건 교재 수·전용 교재 몫을 books[] 에서 그린다', (() => {
+  const books = S.corpora.NCS.books, top = books.slice().sort((a, b) => b.grades['3'] - a.grades['3'])[0];
+  const { d3, zero } = dedicatedStats(books);
+  return headings(ncs).includes('NCS 등급 3 출현은 소수 교재에 집중') && ncs.includes(top.title) && ncs.includes(fmt(top.grades['3'])) && ncs.includes(fmt(zero) + '권') && ncs.includes(pct(d3, S.corpora.NCS.grades['3']) + '%')
+    && ncs.includes('aria-label="교재별 현황 표"') && ncs.includes('<td><strong>' + fmt(top.grades['3']) + '</strong></td>') && (ncs.match(/<tr><td><strong>/g) || []).length >= books.length;
+})());
+check('S1x 교과서에는 교재별 현황 절이 없다 (groups[] 가 이미 교재별)', !headings(school).includes('NCS 등급 3 출현은 소수 교재에 집중'));
 check('S1q 교과서에는 NCS 브리지 표를 그리지 않는다', !school.includes('가중 방식의 차이'));
 { // S1r 렌더러 방어 분기 — previous_basis·run 이 없는 payload(--previous-basis 없이 만든 data.js)도 렌더된다
   const ctx2 = makeContext();
@@ -102,6 +110,15 @@ check('S1q 교과서에는 NCS 브리지 표를 그리지 않는다', !school.in
   const marker = renderWith((P) => { P.meta.page_basis.NCS = 'marker'; });
   const noAgree = renderWith((P) => { P.meta.run.reseg_agreement = null; });
   check('S1u 브리지 문구는 데이터로만 갈린다 — marker: 실제 쪽 문구 없음 · real+결속 없음: 괄호 없음 · 원본 복사본: 동일 렌더', !marker.includes('같은 실제 PDF 쪽') && marker.includes('이전 기준과의 관계') && noAgree.includes('같은 실제 PDF 쪽') && !noAgree.includes('공유하는 쪽') && renderWith(() => {}) === ncs);
+  // S1y bookRows 동점 정렬 — 등급3·최종 출현이 같으면 제목 오름차순 (renderer bookRows() 의 세 번째 정렬키, 커버리지 감사: 정본 데이터에는 자연 동점이 없다)
+  const tied = renderWith((P) => {
+    P.corpora.NCS.books = [
+      { code: 'LM0000000001', title: '나중 교재', group: '반도체개발', pages: 10, total: 5, grades: { '1': 2, '2': 0, '3': 3, unpaged: 0 }, detected_pages: 2, grade3_pages: 1 },
+      { code: 'LM0000000002', title: '가나다 교재', group: '반도체개발', pages: 10, total: 5, grades: { '1': 2, '2': 0, '3': 3, unpaged: 0 }, detected_pages: 2, grade3_pages: 1 },
+    ];
+  });
+  const iFirst = tied.indexOf('가나다 교재'), iSecond = tied.indexOf('나중 교재');
+  check('S1y bookRows 동점(등급3·최종 출현 동일) 이면 제목 오름차순 — "가나다 교재" 가 "나중 교재" 보다 먼저', iFirst >= 0 && iSecond >= 0 && iFirst < iSecond, 'idx ' + iFirst + '/' + iSecond);
 }
 
 // ================================================================ S2 data ≡ summary
@@ -138,6 +155,28 @@ check('S3n NCS 그룹 pages 합 == reseg per_book.pdf_pages 합(84권) + manifes
 const I = JSON.parse(read('docs/03-analysis/data/occurrence_real_pages_impact.json'));
 check('S3o 영향표(occurrence_real_pages_impact.json)는 정본과 같은 대응 지문·총계·실제 쪽 등급·닿은 실제 쪽 수, 쪽 단위 등급 합 == 검출 쪽 수(NCS·교과서)', I.meta.inputs.page_maps.sha256 === S.meta.run.page_maps.sha256 && I.totals.NCS === N.total && I.totals['교과서'] === T.total && ['1', '2', '3'].every((g) => I.grades.real.NCS[g] === N.grades[g] && I.grades.real['교과서'][g] === T.grades[g]) && I.pages.real_pages === N.detected_pages && Object.values(I.pages.real_page_grades).reduce((a, b) => a + b, 0) === I.pages.real_pages && I.pages['교과서'].detected_pages === T.detected_pages && Object.values(I.pages['교과서'].page_grades).reduce((a, b) => a + b, 0) === T.detected_pages && I.pages.real_page_grades['3'] <= N.grades['3'] && I.pages['교과서'].page_grades['3'] <= T.grades['3'], JSON.stringify(I.pages.real_page_grades));
 check('S3p 출현이 놓인 (교재, 쪽) 수 — 공유 쪽(reseg_agreement.pages)은 두 기준의 검출 쪽 수를 넘지 않고, 검출 쪽 수는 출현 수·교재 쪽수 합을 넘지 않는다', S.meta.run.reseg_agreement.pages <= N.detected_pages && S.meta.run.reseg_agreement.pages <= R.pages && [N, T].every((c) => c.detected_pages > 0 && c.detected_pages <= c.total && c.detected_pages <= c.groups.reduce((a, g) => a + g.pages, 0)), N.detected_pages + ' / ' + T.detected_pages);
+check('S3q 교재별 집계 books[] — 행 수 == 문서 수, 합(출현·등급·검출 쪽) == 말뭉치·분야 집계, 교재마다 등급 3 쪽 ≤ 검출 쪽 ≤ 쪽수, NCS 코드·표시명, 교과서 books ≡ groups (ncs-book-concentration)', (() => {
+  const GR = ['1', '2', '3', 'unpaged'];
+  for (const [name, c] of Object.entries(S.corpora)) {
+    if (!Array.isArray(c.books) || c.books.length !== c.documents) return false;
+    if (c.books.reduce((a, b) => a + b.total, 0) !== c.total) return false;
+    if (c.books.reduce((a, b) => a + b.detected_pages, 0) !== c.detected_pages) return false;   // 쪽은 교재 안에서 고유 — 등식
+    for (const g of GR) if (c.books.reduce((a, b) => a + b.grades[g], 0) !== c.grades[g]) return false;
+    for (const group of c.groups) {
+      const rows = c.books.filter((b) => b.group === group.name);
+      if (rows.length !== group.documents || rows.reduce((a, b) => a + b.total, 0) !== group.total || rows.reduce((a, b) => a + b.pages, 0) !== group.pages) return false;
+      for (const g of GR) if (rows.reduce((a, b) => a + b.grades[g], 0) !== group.grades[g]) return false;   // 분야 사이 재배분
+    }
+    if (!c.books.every((b) => b.grade3_pages <= b.detected_pages && b.detected_pages <= b.pages && b.title && b.title.length <= 40)) return false;
+    if (name === 'NCS' && !c.books.every((b) => /^LM\d{10}$/.test(b.code) && b.pages > 0)) return false;
+    if (name === '교과서' && !c.books.every((b) => b.code === null && c.groups.some((g) => g.name === b.group && g.total === b.total && g.pages === b.pages && GR.every((k) => g.grades[k] === b.grades[k])))) return false;
+  }
+  return true;
+})());
+check('S3r 교재별 집중 — 안전관리 전용 2권이 NCS 등급 3 의 38.6%, 등급 3 0건 교재 57권 (제목 규칙은 파이썬·JS 가 같다)', (() => {
+  const books = S.corpora.NCS.books, { ded, d3, zero } = dedicatedStats(books);
+  return ded.length === 2 && d3 === 965 && zero === 57 && pct(d3, S.corpora.NCS.grades['3']) === '38.6';
+})());
 check('S3h 중복 제거 1건 기록 (LM1903060205)', S.meta.run.dedup.length === 1 && S.meta.run.dedup[0].code === 'LM1903060205' && S.meta.run.dedup[0].dropped.length === 1);
 check('S3i 절대 경로·홈·본문 필드 없음', !/\/Users\/|\/home\/|relative_path|"context"/.test(JSON.stringify(S)));
 check('S3j manifest 4종 해시 + 입력 7종(워크북 3·마크다운 2·이전 기준·이전 기준 쪽 등급) sha256, 비단조 마커 경고는 레거시 1권뿐', ['source_sha256', 'rule_sha256', 'detail_sha256', 'summary_sha256'].every((k) => /^[0-9a-f]{64}$/.test(S.meta.manifest[k])) && S.meta.run.inputs.length === 7 && S.meta.run.inputs.some((i) => i.kind === '이전 기준') && S.meta.run.inputs.some((i) => i.kind === '이전 기준 쪽 등급') && S.meta.run.inputs.every((i) => /^[0-9a-f]{64}$/.test(i.sha256)) && S.meta.run.marker_nonmonotone.length === 1 && S.meta.run.marker_nonmonotone[0].includes('LM1903060113'), JSON.stringify(S.meta.run.marker_nonmonotone));

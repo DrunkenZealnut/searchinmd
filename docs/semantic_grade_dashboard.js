@@ -19,6 +19,19 @@
   function groupRows(name){
     return corpusData(name).groups.slice().sort(function(a,b){return b.total-a.total}).map(function(group){var known=gradedTotal(group.grades);return '<tr><td><strong>'+esc(group.name)+'</strong></td><td>'+n(group.documents)+'</td><td><strong>'+n(group.total)+'</strong></td><td>'+n(group.grades['1'])+'</td><td>'+n(group.grades['2'])+'</td><td>'+n(group.grades['3'])+'</td><td>'+n(group.grades.unpaged)+'</td><td>'+pct(group.grades['3'],known)+'%</td></tr>'}).join('')
   }
+  function bookRows(name){
+    return corpusData(name).books.slice().sort(function(a,b){return b.grades['3']-a.grades['3']||b.total-a.total||(a.title===b.title?0:(a.title<b.title?-1:1))}).map(function(book){var known=gradedTotal(book.grades);return '<tr><td><strong>'+esc(book.title)+'</strong></td><td>'+esc(book.group)+'</td><td>'+n(book.pages)+'</td><td>'+n(book.total)+'</td><td>'+n(book.grades['1'])+'</td><td>'+n(book.grades['2'])+'</td><td><strong>'+n(book.grades['3'])+'</strong></td><td>'+(known?pct(book.grades['3'],known)+'%':'—')+'</td><td>'+n(book.detected_pages)+'</td></tr>'}).join('')
+  }
+  function books(name){
+    if(name!=='NCS')return '';                                                   // 교과서는 groups[] 가 곧 교재별 표다
+    var c=corpusData(name),rows=c.books,zero=rows.filter(function(b){return b.grades['3']===0}).length,
+        dedicated=rows.filter(function(b){return b.title.indexOf('안전관리')>=0}),
+        dedicated3=dedicated.reduce(function(sum,b){return sum+b.grades['3']},0),
+        dedicatedTotal=dedicated.reduce(function(sum,b){return sum+b.total},0);
+    return '<section style="margin-bottom:48px"><h2>NCS 등급 3 출현은 소수 교재에 집중</h2>'+
+      '<p style="margin-bottom:16px">등급 3 출현 내림차순. 합산 비율은 소수 교재에 몰려 있습니다 — 등급 3 이 0건인 교재가 <strong>'+n(zero)+'권</strong>('+pct(zero,rows.length)+'%)이고, 제목에 \'안전관리\'를 둔 전용 교재 '+n(dedicated.length)+'권이 출현 '+n(dedicatedTotal)+'건에 등급 3 <strong>'+n(dedicated3)+'건</strong>('+pct(dedicated3,c.grades['3'])+'%)을 차지합니다.</p>'+
+      '<div class="card"><div class="scroll-x" tabindex="0" role="region" aria-label="교재별 현황 표"><table class="tbl"><thead><tr><th>교재</th><th>분야</th><th>쪽수</th><th>최종 출현</th><th>등급1</th><th>등급2</th><th>등급3</th><th>교재 내 등급3 비율</th><th>검출 쪽</th></tr></thead><tbody>'+bookRows(name)+'</tbody></table></div></div></section>'
+  }
   function comparisonRows(){
     var a=corpusData('NCS'),b=corpusData('교과서'),ag=gradedTotal(a.grades),bg=gradedTotal(b.grades);
     return '<tr><td><strong>최종 의미 출현</strong></td><td>'+n(a.total)+'건</td><td>'+n(b.total)+'건</td></tr>'+
@@ -81,6 +94,7 @@
       '<section><h2>전체 등급 분포</h2><div class="g2"><div class="card"><h3 style="margin-bottom:4px">등급별 의미 출현</h3><p class="ts" style="margin-bottom:8px">등급 확정 출현건수 기준</p><div class="cc"><canvas id="gradeC1"></canvas></div></div><div class="card"><h3 style="margin-bottom:4px">상위 키워드별 등급 분포</h3><p class="ts" style="margin-bottom:8px">단위: 의미 출현건수</p><div class="cc"><canvas id="gradeC2"></canvas></div></div></div></section>'+
       '<section style="margin-bottom:48px"><h2>키워드별 상세</h2><div class="fb"><button type="button" class="fbtn on" aria-pressed="true" onclick="semanticGradeFilter(\'all\',this)">전체</button><button type="button" class="fbtn" aria-pressed="false" onclick="semanticGradeFilter(\'detected\',this)">검출 키워드</button><button type="button" class="fbtn" aria-pressed="false" onclick="semanticGradeFilter(\'high\',this)">상위15</button></div><div class="card"><div class="scroll-x" tabindex="0" role="region" aria-label="키워드별 등급 출현 표"><table class="tbl"><thead><tr><th>키워드</th><th>최종 출현</th><th>등급1</th><th>등급2</th><th>등급3</th><th>미확정</th><th>유효 정확</th><th>동등 추가</th><th>구체 추가</th><th>포함 확장 표현</th></tr></thead><tbody id="gradeKeywordBody">'+keywordRows(activeCorpus,'all')+'</tbody></table></div></div><p class="ts" style="margin-top:12px">* 등급 열은 해당 등급 페이지에 속한 표현의 출현건수입니다. 같은 페이지의 여러 출현은 각각 집계합니다.</p></section>'+
       '<section style="margin-bottom:48px"><h2>'+groupHeading(activeCorpus)+'</h2><div class="card"><div class="scroll-x" tabindex="0" role="region" aria-label="'+groupHeading(activeCorpus)+' 표"><table class="tbl"><thead><tr><th>'+(activeCorpus==='NCS'?'영역':'교과서')+'</th><th>문서</th><th>최종 출현</th><th>등급1</th><th>등급2</th><th>등급3</th><th>미확정</th><th>등급3 비율</th></tr></thead><tbody>'+groupRows(activeCorpus)+'</tbody></table></div></div></section>'+
+      books(activeCorpus)+
       '<section style="margin-bottom:48px"><h2>문제점과 시사점</h2>'+insights(activeCorpus)+'</section>'+
       '<section style="margin-bottom:48px"><h2>NCS 교재 vs 교과서 비교</h2><p class="ts" style="margin-bottom:16px">같은 30개 키워드와 같은 통일 등급을 사용하며, 모든 비율은 등급이 확정된 출현건수를 분모로 합니다.</p><div class="card"><div class="scroll-x" tabindex="0" role="region" aria-label="NCS와 교과서 등급 출현 비교 표"><table class="tbl"><thead><tr><th>항목</th><th>NCS 교재</th><th>교과서</th></tr></thead><tbody>'+comparisonRows()+'</tbody></table></div></div></section>'+
       '<section style="margin-bottom:48px"><h2>개선 권고안</h2><div class="rec"><h3>1. 등급1이 많은 키워드의 문맥 보강</h3><p>단순 반복보다 공정별 위험요인, 예방조치, 보호구, 응급대응을 실제 작업 문맥으로 제시해야 합니다.</p></div><div class="rec"><h3>2. 등급3 출현의 내용 품질 확인</h3><p>출현건수는 빈도 지표입니다. 실제 조치가 실행 가능한 절차인지 원문을 함께 검토해야 합니다.</p></div><div class="rec"><h3>3. 같은 분모로 계속 비교</h3><p>NCS와 교과서의 후속 분석도 페이지 비율과 출현 비율을 섞지 말고 의미 출현건수 기준을 유지해야 합니다.</p></div></section>'+
