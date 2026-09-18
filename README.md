@@ -10,7 +10,7 @@
 
 | 페이지 | 내용 |
 |---|---|
-| [NCS 교재 86권](https://drunkenzealnut.github.io/searchinmd/) | 의미 출현 11,517건(출현건수 기준)의 등급 분포, 영역별 현황, 키워드별 상세 · 이전 기준(실제 쪽 2,189쪽)과의 브리지 표 병기 |
+| [NCS 교재 86권](https://drunkenzealnut.github.io/searchinmd/) | 의미 출현 11,517건(출현건수 기준)의 등급 분포, 영역별 현황, 교재별 현황(86권, 등급3 내림차순 — 안전관리 전용 2권의 집중도 표시), 키워드별 상세 · 이전 기준(실제 쪽 2,189쪽)과의 브리지 표 병기 |
 | [반도체고 교과서 9권](https://drunkenzealnut.github.io/searchinmd/textbook.html) | 검출 362쪽·전체 2,055쪽 두 분모를 병기, NCS 대비 비교는 검출쪽 기준 |
 | [OSHA 안전교육](https://drunkenzealnut.github.io/searchinmd/osha.html) | 미국 OSHA 반도체 화학물질 안전교육 과정과의 비교 |
 
