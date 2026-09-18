@@ -1,6 +1,6 @@
 # Archive Index — 2026-09
 
-보관 산출물 목록. `coding-v1` 은 **폐기된 라벨의 기록**, `recoding`·`resegment`·`resegment-publish`·`marker-offset`·`semantic-recount-remediation`·`semantic-expression-review`·`hwpx-ncs-section-refresh`·`occurrence-real-pages`·`hwpx-methods-bridge-refresh` 는 완료된 PDCA 기능 문서다.
+보관 산출물 목록. `coding-v1` 은 **폐기된 라벨의 기록**, `recoding`·`resegment`·`resegment-publish`·`marker-offset`·`semantic-recount-remediation`·`semantic-expression-review`·`hwpx-ncs-section-refresh`·`occurrence-real-pages`·`hwpx-methods-bridge-refresh`·`ncs-book-concentration` 는 완료된 PDCA 기능 문서다.
 
 | Item | 종류 | 보관일 | 보관 파일 |
 |------|------|--------|-----------|
@@ -14,6 +14,7 @@
 | [hwpx-ncs-section-refresh](hwpx-ncs-section-refresh/) | PDCA 기능 (완료, Match Rate 92% → Act-1 100%; PR #16 머지 `6f1fa1f`) | 2026-09-15 | plan · design · analysis(갭 + Act-1) · report |
 | [occurrence-real-pages](occurrence-real-pages/) | PDCA 기능 (완료, Match Rate 90.8% → Act-1 100%; PR #17, 보관 시점 미머지) | 2026-09-15 | plan · design · analysis(갭 + Act-1) · report |
 | [hwpx-methods-bridge-refresh](hwpx-methods-bridge-refresh/) | PDCA 기능 (완료, Match Rate 98.2% → Act-1 100%; 보관 시점 미커밋 — ship 예정) | 2026-09-16 | plan · design · analysis(갭 + Act-1) · report |
+| [ncs-book-concentration](ncs-book-concentration/) | PDCA 기능 (완료, Match Rate 89.8% → Act-1 100%; 보관 시점 미커밋 — ship 예정) | 2026-09-17 | plan · design · analysis(갭 + Act-1) · report |
 
 ## coding-v1
 
@@ -155,3 +156,19 @@
 - [Design](hwpx-methods-bridge-refresh/hwpx-methods-bridge-refresh.design.md)
 - [Analysis (갭 + Act-1)](hwpx-methods-bridge-refresh/hwpx-methods-bridge-refresh.analysis.md)
 - [Report](hwpx-methods-bridge-refresh/hwpx-methods-bridge-refresh.report.md)
+
+## ncs-book-concentration
+
+기초보고서 HWPX 3단계 — 제3장 2절에 " 5) 교재별 집중과 편차"(표 12-3·12-4) 신설 + 정본 `books[]` + 대시보드 교재별 현황 — 2026-09-17, Plan(TODOS 후속 B1, 연구책임자 D1~D6) → Design → Do(TDD) → Check(gap-detector 118항목 89.8%) → Act-1(G1~G10, 100%) → Report. 커밋·PR 은 보관 뒤 `/ship`.
+
+- **Problem**: 정본 대시보드·보고서는 NCS 등급 3 을 "11,517건 중 2,502건(21.7%)" 합산값 하나로만 제시해, 그 중 38.6%(965건)가 안전관리 전용 2권에 몰려 있고 86권 중 57권은 등급 3 이 0건이라는 분포를 가렸다. 교재별 집계는 비추적 워크북 `NCS_파일별` 시트를 세션마다 다시 세는 값뿐이라 인용할 추적 근거가 없었다.
+- **Solution**: `semantic_keyword_recount.py`(정본 재실행 2026-09-17, 수치·해시 4종 불변)에 `corpora.*.books[]`(교재별 출현·등급·검출 쪽·쪽수, 매칭 0건 교재도 포함) 추가 + 쓰기 전 가드(`check_books` — 행 수·출현·등급 4종·Σ검출 쪽·분야별 4종·교재별 grade3_pages ≤ detected_pages) + `EXPECTED.books`/`books_digest`; 신규 `hwpx_methods_bridge.py` 3단계(`ConcentrationFacts`·`load_concentration_facts` — 전용 교재는 제목 "안전관리" + 기대 집합 `DEDICATED_EXPECTED_CODES` 고정, 파생값은 저장하지 않는다)와 `hwpx_results_refresh.py` 확장(2단계 블록 뒤 장부 `last_inserted` 로 삽입, 목차 2항목·소결 4)→6)); `docs/semantic_grade_dashboard.js`(NCS "교재별 현황" 절, 86행 등급 3 내림차순).
+- **결과**: 안전관리 전용 2권 965/2,502(38.6%, 자체 43.1%) · 제외 84권 16.6% · 장비 분야 32.5→16.9%(전용 1권이 분야의 74.1%) · 재료 21.4→20.3% · 교재별 평균 8.5%·중앙값 0.0%·0건 57권(66.3%) · 상위 10권 2,015건(80.5%). HWPX `data/반도체 기초보고서_20260917_정본.hwpx`(비추적, sha256 `aa0f3453…`) — 문단 45·표 14·그림 3, 3단계 삽입 14(문단 2·표 12-3 8×4·표 12-4 11×4)·목차 삽입 2, 숫자 감사 1,168 토큰·미일치 0, `--force` 재실행 바이트 동일. unittest 246 OK·하니스 24/84/390/32/38(대시보드 79→84). 갭 10건(G1~G10, Medium 1·Low 9 — 분야별 등급 합 가드 누락·항등식·문서 계보·테스트 강도)을 정본 재실행 없이 Act-1 로 닫았다(가드·테스트·문구만). `/ship` 리뷰(전문가 5·레드팀·Codex 디자인/적대적/구조화 보이스·Claude 적대적)가 커버리지 갭 4건·유지보수성 9건·단순화 3건·레드팀 3건을 찾아 반영(미사용 필드 삭제, 낡은 주석·수치 정정, 테스트 중복 제거, 대시보드 절 제목·라벨·강조 개선, 평균·중앙값 표본 크기 분리, 표 12-4 캡션의 실제 행 수 반영)했고, Claude 적대적 리뷰가 찾은 3단계 삽입의 중복 빈 문단(선행 2단계 블록 종료 문단과 겹침)도 고쳤다(삽입 15 → 14, sha `aa0f3453…`).
+- **한계·이월**(`TODOS.md` "기초보고서 보강 후속"): 한글(HWP) `[→E2E]`(3단계 절의 둘째 문단·목차 5)·6)·" 6) 소결"·쪽 넘김 — Polaris Office 9 대체 확인은 첫 문단·표 12-3·12-4 렌더 정상까지, 표 12-4 가 36/37쪽에 갈리는 문제 확인); B2 보조 분모(이제 `books[].pages` 로 계산 가능); C 교과서 보강·D/E/F·Codex 원저자 항목은 문안 초안 없음.
+- **관련 자산**: 정본 `docs/03-analysis/data/semantic_summary.json`(`corpora.*.books[]`·`books_digest`), 대조 JSON `docs/03-analysis/data/hwpx_results_refresh_20260917.json`(`concentration` 블록), 검토 HTML `docs/03-analysis/hwpx-results-refresh/review.html`, 규칙 `CLAUDE.md` 그룹 4 `hwpx_results_refresh.py` "Third stage" 문단.
+
+보관 문서:
+- [Plan](ncs-book-concentration/ncs-book-concentration.plan.md)
+- [Design](ncs-book-concentration/ncs-book-concentration.design.md)
+- [Analysis (갭 + Act-1)](ncs-book-concentration/ncs-book-concentration.analysis.md)
+- [Report](ncs-book-concentration/ncs-book-concentration.report.md)
