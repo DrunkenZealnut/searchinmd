@@ -86,7 +86,8 @@ check('S1w NCS 에 교재별 현황 절 — 등급 3 최다 교재·0건 교재 
   const books = S.corpora.NCS.books, top = books.slice().sort((a, b) => b.grades['3'] - a.grades['3'])[0];
   const { d3, zero } = dedicatedStats(books);
   return headings(ncs).includes('NCS 등급 3 출현은 소수 교재에 집중') && ncs.includes(top.title) && ncs.includes(fmt(top.grades['3'])) && ncs.includes(fmt(zero) + '권') && ncs.includes(pct(d3, S.corpora.NCS.grades['3']) + '%')
-    && ncs.includes('aria-label="교재별 현황 표"') && ncs.includes('<td><strong>' + fmt(top.grades['3']) + '</strong></td>') && (ncs.match(/<tr><td><strong>/g) || []).length >= books.length;
+    && ncs.includes('aria-label="교재별 현황 표"') && ncs.includes('<td><strong>' + fmt(top.grades['3']) + '</strong></td>')
+    && ((ncs.match(/aria-label="교재별 현황 표"[\s\S]*?<tbody>([\s\S]*?)<\/tbody>/) || [])[1] || '').match(/<tr>/g)?.length === books.length;   // 이 표의 tbody 만 골라 행 수를 정확히 센다 — CodeRabbit
 })());
 check('S1x 교과서에는 교재별 현황 절이 없다 (groups[] 가 이미 교재별)', !headings(school).includes('NCS 등급 3 출현은 소수 교재에 집중'));
 check('S1q 교과서에는 NCS 브리지 표를 그리지 않는다', !school.includes('가중 방식의 차이'));

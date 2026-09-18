@@ -2,7 +2,7 @@
 
 > **Feature**: ncs-book-concentration · **Design**: `docs/02-design/features/ncs-book-concentration.design.md` (D1 (b)·D2 (a)·D3 (b)·D4 (a)·D5 (a)·D6 (b)) · **Plan**: `docs/01-plan/features/ncs-book-concentration.plan.md`
 > **Date**: 2026-09-17 · **Analyst**: gap-detector 에이전트(Claude Opus 5) — 작업 트리(미커밋, HEAD `b057902`) 22:45 기준. 분석 중 다른 세션이 문서 3곳을 고쳤고(§3 끝), 표는 재확인 시각의 상태다.
-> **결과**: 1차 **89.8 %** (118항목: 일치 96 · 변경 10 · 부분 12 · 불일치 0 — 갭 Medium 1 · Low 9. 코드 동작·정본 수치·HWPX 산출·대시보드는 설계와 일치하고, 갭은 문서 계보(data README 1행)·가드 폭(분야별 등급 합)·테스트 강도(3권 수사·항등식) 에 몰려 있었다) → **Act-1 반영 후 100 %** (부분 12 → 0, §7; 정본 재실행 없음 — `EXPECTED`·해시·HWPX sha 불변, unittest 242 OK · 하니스 24/83/390/32/38).
+> **결과**: 1차 **89.8 %** (118항목: 일치 96 · 변경 10 · 부분 12 · 불일치 0 — 갭 Medium 1 · Low 9. 코드 동작·정본 수치·HWPX 산출·대시보드는 설계와 일치하고, 갭은 문서 계보(data README 1행)·가드 폭(분야별 등급 합)·테스트 강도(3권 수사·항등식) 에 몰려 있었다) → **Act-1 반영 후 100 %** (부분 12 → 0, §7; 정본 재실행 없음 — `EXPECTED`·해시·HWPX sha 불변, unittest 242 OK · 하니스 24/83/390/32/38). Act-1 이후 같은 PR 의 `/ship` 리뷰(전문가 5·레드팀·적대적 리뷰 2건)가 3단계 삽입의 중복 빈 문단·가드 공백 등을 추가로 찾아 고쳐, 최종 수치는 unittest 247 OK·하니스 24/84/390/32/38·HWPX sha `aa0f3453…`(§7 이후 수치는 바뀌었으나 Match Rate 100% 는 그대로).
 
 ## 1. 대조 범위
 

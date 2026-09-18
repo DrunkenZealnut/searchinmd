@@ -18,7 +18,7 @@
 |---|---|
 | **Feature** | 정본 데이터에 교재별 집계 `corpora.*.books[]` 추가(정본 재실행 2026-09-17, NCS 86권·교과서 9권) → 기초보고서 제3장 2절에 " 5) 교재별 집중과 편차"(표 12-3·12-4, 소결→6)) 3단계 삽입 + 대시보드(NCS) "교재별 현황" 절 추가 |
 | **방식** | `semantic_keyword_recount.py` payload 확장(`books[]` 규칙·가드·`EXPECTED` 고정) + `hwpx_methods_bridge.py` 3단계(ConcentrationFacts·템플릿·감사) + `hwpx_results_refresh.py` 2·3단계 호출 + `semantic_grade_dashboard.js` 대시보드 절 |
-| **확인** | `test_semantic_keyword_recount` 112 + `test_hwpx_methods_bridge` 55 + `test_hwpx_results_refresh` 48 + 기존 하니스(24·83·390·32·38) + 실문서 실행(정본 재실행 HWPX 바이트 동일) |
+| **확인** | `test_semantic_keyword_recount` 116 + `test_hwpx_methods_bridge` 56 + `test_hwpx_results_refresh` 48 + 기존 하니스(24·84·390·32·38) + 실문서 실행(정본 재실행 HWPX 바이트 동일, ship 리뷰 반영 후 재검증) |
 | **산출물** | 정본 재실행 JSON·data.js·분석 페이지·HWPX(비추적), 대조 JSON·검토 HTML·대시보드(추적) |
 
 ### 결과 요약
@@ -34,7 +34,7 @@
 | 집중도 값 | 안전관리 전용 2권 2,238건 중 등급 3 965건(NCS 등급 3 의 38.6%) · 제외 84권 16.6% · 장비 분야 32.5→16.9%(전용 1권이 분야의 74.1%) · 재료 21.4→20.3% · 교재별 평균 8.5%·중앙값 0.0%·0건 57권(66.3%) |
 | 표 12-3 | 집중도(NCS 전체·안전관리 전용·전용 제외·분야별) 7행 |
 | 표 12-4 | 등급 3 상위 10권(2,015건·80.5%) |
-| HWPX | 신규 `data/반도체 기초보고서_20260917_정본.hwpx`(비추적, 원본 2026-09-11 에서 1·2·3단계 한 번에: 문단 45·표 14·그림 3, 3단계 삽입 15·목차 삽입 2·소결 6), 토큰 1,168·미일치 0, `--force` 재실행 바이트 동일) |
+| HWPX | 신규 `data/반도체 기초보고서_20260917_정본.hwpx`(비추적, 원본 2026-09-11 에서 1·2·3단계 한 번에: 문단 45·표 14·그림 3, 3단계 삽입 14·목차 삽입 2·소결 6), 토큰 1,168·미일치 0, sha `aa0f3453…`(ship 적대적 리뷰가 찾은 중복 빈 문단 수정 반영, `--force` 재실행 바이트 동일) |
 | 정본 기준 | 사전 v2 · 출현건수 분모 · NCS 실제 PDF 쪽(교과서 쪽 표식) — 수치·해시 4종은 2026-09-15 정본과 동일, `books[]` 만 추가 |
 
 ### 1.3 Value Delivered — 4관점 가치 분석
@@ -100,7 +100,7 @@
   - G8: `EXPECTED` 주석 재정렬
   - G9: TODOS 5·Polaris 확인 기록 갱신
   - G10: 메모리 기록(정본 실행일·결정·HWPX 이름)
-- **검증**: unittest 242 OK · 하니스 83/83 · 대조 JSON 바이트 동일 · 정본 재실행 HWPX sha 일치
+- **검증**: unittest 247 OK · 하니스 24/84/390/32/38 · 대조 JSON 바이트 동일 · 정본 재실행 HWPX sha 일치(ship 리뷰 반영 후 재검증)
 - **결과 Match Rate**: **100%**
 
 ---
@@ -114,7 +114,7 @@
 | `docs/03-analysis/data/semantic_summary.json` | JSON | `corpora.*.books[]` (NCS 86 / 교과서 9행) 추가 | `meta.run.generated_at` 2026-09-17, `expected` true · `force` false |
 | `docs/semantic_recount_data.js` | JS | 위와 동일(렌더용) | +18.8 KB (48 → 67 KB) |
 | `keyword-analysis.html` · `NCS_키워드검색결과.html` · `교과서_키워드검색결과.html` | HTML | 정본 재실행 산출 | 실행일 2026-09-17, xlsx 이름 `…_20260917.xlsx` |
-| `docs/03-analysis/data/hwpx_results_refresh_20260917.json` | JSON | 3단계 산출: `concentration` 블록(삽입 15·표 12-3/12-4·conditions·dedicated), `bridge.toc` 1/2, `renumbered` 4)→6) | 신규 추적, 20260915 판은 계보로 남음 |
+| `docs/03-analysis/data/hwpx_results_refresh_20260917.json` | JSON | 3단계 산출: `concentration` 블록(삽입 14·표 12-3/12-4·conditions·dedicated), `bridge.toc` 1/2, `renumbered` 4)→6) | 신규 추적, 20260915 판은 계보로 남음 |
 | `docs/03-analysis/hwpx-results-refresh/review.html` | HTML | 표 12-3·12-4 절 추가(헤더 행 포함), h1 에 3단계 표기(Act-1 G7) | 표·그림만, 본문 문장 없음 |
 
 ### 비추적 산출물
@@ -133,7 +133,7 @@
 | `books[]` 집계 | 86/9(0건 교재 포함) | NCS 11,517/2,502 · 교과서 1,207/115 |
 | 교재별 숫자 | 86권 검증 | `check_books`(행 수·출현·등급 4종·Σ검출 쪽·분야별 4종·교재마다 등급 3 쪽 ≤ 검출 쪽) + `S3q`·`S3r` + 커밋 JSON 재계산 `books_digest` |
 | 숫자 감사 | OK (1,168 토큰·미일치 0, 2단계 1,052 에서 +116) | `Facts.value_index()` — 1·2단계 사실(추적 파일 11종) + `ConcentrationFacts.value_pairs()`(`books.*` 키); 손 허용 목록 없음, `STALE_PATTERNS` 검사 포함 |
-| 테스트 | unittest 242 OK · 하니스 83/83 | `test_semantic_keyword_recount` 112 · `test_hwpx_methods_bridge` 55 · `test_hwpx_results_refresh` 48 · 대시보드 83 |
+| 테스트 | unittest 247 OK · 하니스 24/84/390/32/38 | `test_semantic_keyword_recount` 116 · `test_hwpx_methods_bridge` 56 · `test_hwpx_results_refresh` 48 · 대시보드 84 |
 | 재현성 | OK (동일 입력 → 동일 해시) | 정본 재실행 `EXPECTED` 통과, HWPX sha 동일 |
 | 조건 분기 | 양쪽 테스트 | 전용 1권·2권·3권 수사 · 제외 후 비율 내려감/올라감/거의 같음 · 분야 과반/비과반 · 0건 과반/비과반 |
 
@@ -260,9 +260,9 @@ python3 hwpx_results_refresh.py --force     # 원본 → …_20260917_정본.hwp
 ### 테스트
 
 ```bash
-python3.13 -m unittest test_semantic_keyword_recount test_hwpx_methods_bridge test_hwpx_results_refresh test_expression_review   # 242 OK
+python3.13 -m unittest test_semantic_keyword_recount test_hwpx_methods_bridge test_hwpx_results_refresh test_expression_review   # 247 OK
 node outputs/test-search-equivalence.js; node outputs/test-dashboard-data.js; python3 outputs/test-recount-grades.py
-node outputs/run-core-logic-tests.js; node outputs/test-sri.js                                                                   # 24 · 83 · 390 · 32 · 38
+node outputs/run-core-logic-tests.js; node outputs/test-sri.js                                                                   # 24 · 84 · 390 · 32 · 38
 ```
 
 ## 버전 이력
