@@ -1,6 +1,6 @@
 {
  "meta": {
-  "generated": "2026-09-15",
+  "generated": "2026-09-17",
   "denominator": "occurrences",
   "page_basis": {
    "NCS": "real",
@@ -18,11 +18,11 @@
    "summary_sha256": "282d6c221b9e2c0c5841ea9dd73a63f0999ad5730ae22ec39a7e9c4a6b34d569"
   },
   "run": {
-   "generated_at": "2026-09-15T15:02:39+09:00",
-   "git_commit": "18b0a68",
+   "generated_at": "2026-09-17T20:47:47+09:00",
+   "git_commit": "b057902",
    "git_dirty": true,
-   "command": "semantic_keyword_recount.py --source-workbook data/ncs_keywords_in_markdown_results_20260402_재판정_20260414.xlsx --ncs-root data_source/markdown/ncs --school-root data_source/markdown/school-text --xlsx-out data/semantic_keyword_recount_20260915.xlsx --report-out data/semantic_keyword_recount_20260915_report.md --dashboard-data-out docs/semantic_recount_data.js --summary-out docs/03-analysis/data/semantic_summary.json --analysis-dir docs --page-maps data/markdown/ncs_paged --reseg-csv docs/03-analysis/data/ncs_pages_reseg.csv",
-   "xlsx": "semantic_keyword_recount_20260915.xlsx",
+   "command": "semantic_keyword_recount.py --source-workbook data/ncs_keywords_in_markdown_results_20260402_재판정_20260414.xlsx --ncs-root data_source/markdown/ncs --school-root data_source/markdown/school-text --xlsx-out data/semantic_keyword_recount_20260917.xlsx --report-out data/semantic_keyword_recount_20260917_report.md --dashboard-data-out docs/semantic_recount_data.js --summary-out docs/03-analysis/data/semantic_summary.json --analysis-dir docs --previous-basis docs/03-analysis/data/reseg_summary.json --page-maps data/markdown/ncs_paged --reseg-csv docs/03-analysis/data/ncs_pages_reseg.csv",
+   "xlsx": "semantic_keyword_recount_20260917.xlsx",
    "python": "3.13.7",
    "openpyxl": "3.1.5",
    "inputs": [
@@ -183,6 +183,1298 @@
       "unpaged": 0
      }
     }
+   ],
+   "books": [
+    {
+     "code": "LM1903060101",
+     "title": "반도체 제품 기획",
+     "group": "반도체개발",
+     "pages": 171,
+     "total": 32,
+     "grades": {
+      "1": 32,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 28,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060102",
+     "title": "반도체 아키텍처 설계",
+     "group": "반도체개발",
+     "pages": 101,
+     "total": 43,
+     "grades": {
+      "1": 32,
+      "2": 11,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 19,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060103",
+     "title": "아날로그 회로 설계",
+     "group": "반도체개발",
+     "pages": 90,
+     "total": 17,
+     "grades": {
+      "1": 17,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 16,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060104",
+     "title": "디지털 회로 설계 수정요청",
+     "group": "반도체개발",
+     "pages": 86,
+     "total": 11,
+     "grades": {
+      "1": 11,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 11,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060106",
+     "title": "반도체 제조 공정 개발",
+     "group": "반도체개발",
+     "pages": 198,
+     "total": 140,
+     "grades": {
+      "1": 84,
+      "2": 25,
+      "3": 31,
+      "unpaged": 0
+     },
+     "detected_pages": 40,
+     "grade3_pages": 1
+    },
+    {
+     "code": "LM1903060107",
+     "title": "패키지 제품설계",
+     "group": "반도체개발",
+     "pages": 82,
+     "total": 19,
+     "grades": {
+      "1": 19,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 17,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060108",
+     "title": "패키지 조립 공정 개발",
+     "group": "반도체개발",
+     "pages": 90,
+     "total": 17,
+     "grades": {
+      "1": 17,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 16,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060109",
+     "title": "반도체 제품 기능성능 검증",
+     "group": "반도체개발",
+     "pages": 107,
+     "total": 19,
+     "grades": {
+      "1": 19,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 17,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060110",
+     "title": "반도체신뢰성평가",
+     "group": "반도체개발",
+     "pages": 98,
+     "total": 18,
+     "grades": {
+      "1": 18,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 9,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060112",
+     "title": "자동 배치 배선 레이아웃 설계",
+     "group": "반도체개발",
+     "pages": 127,
+     "total": 17,
+     "grades": {
+      "1": 17,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 9,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060113",
+     "title": "반도체 설계 검증",
+     "group": "반도체개발",
+     "pages": 145,
+     "total": 15,
+     "grades": {
+      "1": 11,
+      "2": 4,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 7,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060114",
+     "title": "반도체 펌웨어 개발",
+     "group": "반도체개발",
+     "pages": 165,
+     "total": 52,
+     "grades": {
+      "1": 17,
+      "2": 35,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 16,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060115",
+     "title": "메모리 반도체 제조 공정 개발",
+     "group": "반도체개발",
+     "pages": 127,
+     "total": 55,
+     "grades": {
+      "1": 37,
+      "2": 18,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 23,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060116",
+     "title": "시스템 반도체 제조 공정 개발",
+     "group": "반도체개발",
+     "pages": 129,
+     "total": 14,
+     "grades": {
+      "1": 14,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 11,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060117",
+     "title": "반도체 제조 단위 공정 공정 개발",
+     "group": "반도체개발",
+     "pages": 123,
+     "total": 107,
+     "grades": {
+      "1": 60,
+      "2": 20,
+      "3": 27,
+      "unpaged": 0
+     },
+     "detected_pages": 31,
+     "grade3_pages": 1
+    },
+    {
+     "code": "LM1903060118",
+     "title": "아날로그 회로 아키텍처 설계",
+     "group": "반도체개발",
+     "pages": 126,
+     "total": 32,
+     "grades": {
+      "1": 20,
+      "2": 12,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 15,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060119",
+     "title": "아날로그 회로 소자 레벨 설계",
+     "group": "반도체개발",
+     "pages": 85,
+     "total": 5,
+     "grades": {
+      "1": 5,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 5,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060120",
+     "title": "아날로그 회로 시스템 설계",
+     "group": "반도체개발",
+     "pages": 112,
+     "total": 23,
+     "grades": {
+      "1": 23,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 13,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060121",
+     "title": "와이어 본딩 패키지 개발",
+     "group": "반도체개발",
+     "pages": 95,
+     "total": 17,
+     "grades": {
+      "1": 13,
+      "2": 4,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 13,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060122",
+     "title": "플립 패키지 개발",
+     "group": "반도체개발",
+     "pages": 111,
+     "total": 29,
+     "grades": {
+      "1": 29,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 17,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060123",
+     "title": "웨이퍼 레벨 패키지 개발",
+     "group": "반도체개발",
+     "pages": 106,
+     "total": 47,
+     "grades": {
+      "1": 34,
+      "2": 0,
+      "3": 13,
+      "unpaged": 0
+     },
+     "detected_pages": 13,
+     "grade3_pages": 1
+    },
+    {
+     "code": "LM1903060124",
+     "title": "어드밴스드 팬 아웃 패키지 개발",
+     "group": "반도체개발",
+     "pages": 92,
+     "total": 40,
+     "grades": {
+      "1": 22,
+      "2": 0,
+      "3": 18,
+      "unpaged": 0
+     },
+     "detected_pages": 15,
+     "grade3_pages": 1
+    },
+    {
+     "code": "LM1903060125",
+     "title": "이종 접합 패키지 개발",
+     "group": "반도체개발",
+     "pages": 74,
+     "total": 35,
+     "grades": {
+      "1": 10,
+      "2": 25,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 8,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060126",
+     "title": "어드밴스드 언더필 패키지 개발",
+     "group": "반도체개발",
+     "pages": 92,
+     "total": 16,
+     "grades": {
+      "1": 16,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 13,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060127",
+     "title": "반도체 환경 시험",
+     "group": "반도체개발",
+     "pages": 111,
+     "total": 121,
+     "grades": {
+      "1": 46,
+      "2": 51,
+      "3": 24,
+      "unpaged": 0
+     },
+     "detected_pages": 28,
+     "grade3_pages": 2
+    },
+    {
+     "code": "LM1903060128",
+     "title": "반도체 수명 시험",
+     "group": "반도체개발",
+     "pages": 102,
+     "total": 88,
+     "grades": {
+      "1": 39,
+      "2": 40,
+      "3": 9,
+      "unpaged": 0
+     },
+     "detected_pages": 22,
+     "grade3_pages": 1
+    },
+    {
+     "code": "LM1903060129",
+     "title": "반도체 내성 시험",
+     "group": "반도체개발",
+     "pages": 74,
+     "total": 29,
+     "grades": {
+      "1": 21,
+      "2": 8,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 12,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060130",
+     "title": "커스텀 레이아웃 적용 공정 분석",
+     "group": "반도체개발",
+     "pages": 128,
+     "total": 26,
+     "grades": {
+      "1": 26,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 18,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060131",
+     "title": "커스텀 레이아웃 설계",
+     "group": "반도체개발",
+     "pages": 163,
+     "total": 16,
+     "grades": {
+      "1": 16,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 14,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060132",
+     "title": "커스텀 레이아웃 검증",
+     "group": "반도체개발",
+     "pages": 125,
+     "total": 10,
+     "grades": {
+      "1": 10,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 9,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060201",
+     "title": "Photo 장비운영",
+     "group": "반도체제조",
+     "pages": 75,
+     "total": 43,
+     "grades": {
+      "1": 15,
+      "2": 28,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 14,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060202",
+     "title": "Etch 장비 운영",
+     "group": "반도체제조",
+     "pages": 105,
+     "total": 112,
+     "grades": {
+      "1": 42,
+      "2": 69,
+      "3": 1,
+      "unpaged": 0
+     },
+     "detected_pages": 34,
+     "grade3_pages": 1
+    },
+    {
+     "code": "LM1903060203",
+     "title": "박막확산 장비운영",
+     "group": "반도체제조",
+     "pages": 117,
+     "total": 67,
+     "grades": {
+      "1": 43,
+      "2": 24,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 29,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060204",
+     "title": "C C 장비 운영",
+     "group": "반도체제조",
+     "pages": 125,
+     "total": 141,
+     "grades": {
+      "1": 98,
+      "2": 43,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 52,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060205",
+     "title": "MI 장비 운영",
+     "group": "반도체제조",
+     "pages": 90,
+     "total": 53,
+     "grades": {
+      "1": 50,
+      "2": 3,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 23,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060209",
+     "title": "반도체 품질관리",
+     "group": "반도체제조",
+     "pages": 78,
+     "total": 42,
+     "grades": {
+      "1": 38,
+      "2": 4,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 26,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060210",
+     "title": "반도체 생산성 향상",
+     "group": "반도체제조",
+     "pages": 97,
+     "total": 24,
+     "grades": {
+      "1": 24,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 19,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060211",
+     "title": "반도체 웨이퍼 레벨 테스트 장비 운영",
+     "group": "반도체제조",
+     "pages": 92,
+     "total": 67,
+     "grades": {
+      "1": 19,
+      "2": 48,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 15,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060212",
+     "title": "반도체 패키지 레벨 테스트 장비 운영",
+     "group": "반도체제조",
+     "pages": 124,
+     "total": 83,
+     "grades": {
+      "1": 38,
+      "2": 45,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 28,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060213",
+     "title": "반도체 패키징 전공정 장비 운영",
+     "group": "반도체제조",
+     "pages": 101,
+     "total": 23,
+     "grades": {
+      "1": 23,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 14,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060214",
+     "title": "반도체 패키징 후공정장비 운영",
+     "group": "반도체제조",
+     "pages": 158,
+     "total": 27,
+     "grades": {
+      "1": 27,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 22,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060215",
+     "title": "반도체 유틸리티 운영",
+     "group": "반도체제조",
+     "pages": 101,
+     "total": 437,
+     "grades": {
+      "1": 122,
+      "2": 249,
+      "3": 66,
+      "unpaged": 0
+     },
+     "detected_pages": 56,
+     "grade3_pages": 2
+    },
+    {
+     "code": "LM1903060216",
+     "title": "반도체 클린룸 시설 운영",
+     "group": "반도체제조",
+     "pages": 100,
+     "total": 209,
+     "grades": {
+      "1": 91,
+      "2": 105,
+      "3": 13,
+      "unpaged": 0
+     },
+     "detected_pages": 53,
+     "grade3_pages": 2
+    },
+    {
+     "code": "LM1903060301",
+     "title": "반도체 장비 콘셉트 설계",
+     "group": "반도체장비",
+     "pages": 79,
+     "total": 22,
+     "grades": {
+      "1": 18,
+      "2": 4,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 15,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060302",
+     "title": "반도체 장비 주요부 기구 설계",
+     "group": "반도체장비",
+     "pages": 76,
+     "total": 60,
+     "grades": {
+      "1": 42,
+      "2": 6,
+      "3": 12,
+      "unpaged": 0
+     },
+     "detected_pages": 25,
+     "grade3_pages": 2
+    },
+    {
+     "code": "LM1903060303",
+     "title": "반도체 장비 주변부 기구 설계",
+     "group": "반도체장비",
+     "pages": 71,
+     "total": 18,
+     "grades": {
+      "1": 18,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 12,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060305",
+     "title": "반도체 장비 시스템 소프트웨어 개발",
+     "group": "반도체장비",
+     "pages": 79,
+     "total": 19,
+     "grades": {
+      "1": 19,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 13,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060307",
+     "title": "반도체 장비 전장 설계",
+     "group": "반도체장비",
+     "pages": 68,
+     "total": 92,
+     "grades": {
+      "1": 23,
+      "2": 60,
+      "3": 9,
+      "unpaged": 0
+     },
+     "detected_pages": 17,
+     "grade3_pages": 1
+    },
+    {
+     "code": "LM1903060308",
+     "title": "반도체 장비 생산 외주관리",
+     "group": "반도체장비",
+     "pages": 79,
+     "total": 19,
+     "grades": {
+      "1": 17,
+      "2": 2,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 15,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060313",
+     "title": "반도체 장비 고객 지원",
+     "group": "반도체장비",
+     "pages": 74,
+     "total": 54,
+     "grades": {
+      "1": 26,
+      "2": 28,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 17,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060314",
+     "title": "반도체 장비 보드 설계",
+     "group": "반도체장비",
+     "pages": 88,
+     "total": 12,
+     "grades": {
+      "1": 12,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 10,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060316",
+     "title": "반도체 장비 유틸리티 소프트웨어 개발",
+     "group": "반도체장비",
+     "pages": 75,
+     "total": 22,
+     "grades": {
+      "1": 22,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 18,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060318",
+     "title": "반도체 장비 시제품 성능평가",
+     "group": "반도체장비",
+     "pages": 94,
+     "total": 109,
+     "grades": {
+      "1": 49,
+      "2": 60,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 35,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060320",
+     "title": "반도체 장비 품질관리",
+     "group": "반도체장비",
+     "pages": 97,
+     "total": 50,
+     "grades": {
+      "1": 39,
+      "2": 11,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 26,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060322",
+     "title": "반도체 장비 기구 조립",
+     "group": "반도체장비",
+     "pages": 138,
+     "total": 175,
+     "grades": {
+      "1": 97,
+      "2": 34,
+      "3": 44,
+      "unpaged": 0
+     },
+     "detected_pages": 52,
+     "grade3_pages": 4
+    },
+    {
+     "code": "LM1903060323",
+     "title": "반도체 장비 기구 조립 검증",
+     "group": "반도체장비",
+     "pages": 130,
+     "total": 415,
+     "grades": {
+      "1": 67,
+      "2": 198,
+      "3": 150,
+      "unpaged": 0
+     },
+     "detected_pages": 66,
+     "grade3_pages": 9
+    },
+    {
+     "code": "LM1903060324",
+     "title": "반도체 장비 전장 조립",
+     "group": "반도체장비",
+     "pages": 107,
+     "total": 168,
+     "grades": {
+      "1": 65,
+      "2": 78,
+      "3": 25,
+      "unpaged": 0
+     },
+     "detected_pages": 41,
+     "grade3_pages": 1
+    },
+    {
+     "code": "LM1903060325",
+     "title": "반도체 장비 전장 조립 검증",
+     "group": "반도체장비",
+     "pages": 96,
+     "total": 116,
+     "grades": {
+      "1": 56,
+      "2": 60,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 36,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060326",
+     "title": "반도체 광학 장비 유지보수",
+     "group": "반도체장비",
+     "pages": 73,
+     "total": 20,
+     "grades": {
+      "1": 17,
+      "2": 3,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 12,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060327",
+     "title": "반도체 진공 플라스마 장비 유지보수",
+     "group": "반도체장비",
+     "pages": 87,
+     "total": 41,
+     "grades": {
+      "1": 41,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 17,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060328",
+     "title": "반도체 케미컬 가스 장비 유지보수",
+     "group": "반도체장비",
+     "pages": 114,
+     "total": 196,
+     "grades": {
+      "1": 90,
+      "2": 74,
+      "3": 32,
+      "unpaged": 0
+     },
+     "detected_pages": 54,
+     "grade3_pages": 1
+    },
+    {
+     "code": "LM1903060329",
+     "title": "반도체 장비 안전관리",
+     "group": "반도체장비",
+     "pages": 155,
+     "total": 1631,
+     "grades": {
+      "1": 153,
+      "2": 698,
+      "3": 780,
+      "unpaged": 0
+     },
+     "detected_pages": 137,
+     "grade3_pages": 42
+    },
+    {
+     "code": "LM1903060401",
+     "title": "반도체용 웨이퍼 재료 제조",
+     "group": "반도체재료",
+     "pages": 104,
+     "total": 40,
+     "grades": {
+      "1": 35,
+      "2": 5,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 20,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060402",
+     "title": "반도체용 리소그래피 재료 제조",
+     "group": "반도체재료",
+     "pages": 104,
+     "total": 163,
+     "grades": {
+      "1": 87,
+      "2": 76,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 31,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060403",
+     "title": "반도체용 가스 재료 제조",
+     "group": "반도체재료",
+     "pages": 109,
+     "total": 121,
+     "grades": {
+      "1": 74,
+      "2": 47,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 34,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060404",
+     "title": "반도체용 금속 Target 재료 제조",
+     "group": "반도체재료",
+     "pages": 83,
+     "total": 39,
+     "grades": {
+      "1": 35,
+      "2": 4,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 17,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060405",
+     "title": "반도체용 습식화공약품 Wet Chemical 재료 제조",
+     "group": "반도체재료",
+     "pages": 83,
+     "total": 140,
+     "grades": {
+      "1": 42,
+      "2": 98,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 34,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060406",
+     "title": "반도체 패키지 재료 제조",
+     "group": "반도체재료",
+     "pages": 126,
+     "total": 50,
+     "grades": {
+      "1": 37,
+      "2": 13,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 22,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060408",
+     "title": "반도체 재료 개발",
+     "group": "반도체재료",
+     "pages": 120,
+     "total": 27,
+     "grades": {
+      "1": 23,
+      "2": 4,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 20,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060409",
+     "title": "반도체 재료 생산관리",
+     "group": "반도체재료",
+     "pages": 102,
+     "total": 43,
+     "grades": {
+      "1": 22,
+      "2": 21,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 18,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060410",
+     "title": "반도체 재료 품질관리",
+     "group": "반도체재료",
+     "pages": 118,
+     "total": 178,
+     "grades": {
+      "1": 55,
+      "2": 88,
+      "3": 35,
+      "unpaged": 0
+     },
+     "detected_pages": 31,
+     "grade3_pages": 2
+    },
+    {
+     "code": "LM1903060411",
+     "title": "반도체 재료 안전관리",
+     "group": "반도체재료",
+     "pages": 81,
+     "total": 607,
+     "grades": {
+      "1": 30,
+      "2": 392,
+      "3": 185,
+      "unpaged": 0
+     },
+     "detected_pages": 62,
+     "grade3_pages": 13
+    },
+    {
+     "code": "LM1903060412",
+     "title": "반도체용 마스크 재료 제조",
+     "group": "반도체재료",
+     "pages": 78,
+     "total": 87,
+     "grades": {
+      "1": 49,
+      "2": 17,
+      "3": 21,
+      "unpaged": 0
+     },
+     "detected_pages": 23,
+     "grade3_pages": 1
+    },
+    {
+     "code": "LM1903060414",
+     "title": "반도체용 플립칩 재료 제조",
+     "group": "반도체재료",
+     "pages": 152,
+     "total": 140,
+     "grades": {
+      "1": 49,
+      "2": 49,
+      "3": 42,
+      "unpaged": 0
+     },
+     "detected_pages": 34,
+     "grade3_pages": 2
+    },
+    {
+     "code": "LM1903060415",
+     "title": "반도체용 CMP 재료 제조",
+     "group": "반도체재료",
+     "pages": 75,
+     "total": 125,
+     "grades": {
+      "1": 26,
+      "2": 0,
+      "3": 99,
+      "unpaged": 0
+     },
+     "detected_pages": 19,
+     "grade3_pages": 5
+    },
+    {
+     "code": "LM1903060416",
+     "title": "반도체용 식각 공정 가스 제조",
+     "group": "반도체재료",
+     "pages": 104,
+     "total": 495,
+     "grades": {
+      "1": 86,
+      "2": 243,
+      "3": 166,
+      "unpaged": 0
+     },
+     "detected_pages": 67,
+     "grade3_pages": 7
+    },
+    {
+     "code": "LM1903060417",
+     "title": "반도체용 세정 공정 가스 제조",
+     "group": "반도체재료",
+     "pages": 126,
+     "total": 615,
+     "grades": {
+      "1": 142,
+      "2": 278,
+      "3": 195,
+      "unpaged": 0
+     },
+     "detected_pages": 92,
+     "grade3_pages": 11
+    },
+    {
+     "code": "LM1903060418",
+     "title": "반도체용 박막 공정 가스 제조",
+     "group": "반도체재료",
+     "pages": 112,
+     "total": 582,
+     "grades": {
+      "1": 79,
+      "2": 366,
+      "3": 137,
+      "unpaged": 0
+     },
+     "detected_pages": 78,
+     "grade3_pages": 9
+    },
+    {
+     "code": "LM1903060419",
+     "title": "반도체용 이온 주입 공정 가스 제조",
+     "group": "반도체재료",
+     "pages": 112,
+     "total": 609,
+     "grades": {
+      "1": 70,
+      "2": 392,
+      "3": 147,
+      "unpaged": 0
+     },
+     "detected_pages": 75,
+     "grade3_pages": 8
+    },
+    {
+     "code": "LM1903060420",
+     "title": "반도체용 박막 공정 전구체 제조",
+     "group": "반도체재료",
+     "pages": 128,
+     "total": 478,
+     "grades": {
+      "1": 158,
+      "2": 270,
+      "3": 50,
+      "unpaged": 0
+     },
+     "detected_pages": 77,
+     "grade3_pages": 4
+    },
+    {
+     "code": "LM1903060421",
+     "title": "반도체용 포토 공정 재료 제조",
+     "group": "반도체재료",
+     "pages": 89,
+     "total": 120,
+     "grades": {
+      "1": 46,
+      "2": 74,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 27,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060422",
+     "title": "반도체용 트랙 공정 재료 제조",
+     "group": "반도체재료",
+     "pages": 91,
+     "total": 103,
+     "grades": {
+      "1": 42,
+      "2": 61,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 32,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060423",
+     "title": "반도체용 SOD 공정 재료 제조",
+     "group": "반도체재료",
+     "pages": 125,
+     "total": 247,
+     "grades": {
+      "1": 109,
+      "2": 138,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 61,
+     "grade3_pages": 0
+    },
+    {
+     "code": "LM1903060424",
+     "title": "반도체용 박막 도금 공정 재료 제조",
+     "group": "반도체재료",
+     "pages": 119,
+     "total": 388,
+     "grades": {
+      "1": 117,
+      "2": 181,
+      "3": 90,
+      "unpaged": 0
+     },
+     "detected_pages": 57,
+     "grade3_pages": 4
+    },
+    {
+     "code": "LM1903060425",
+     "title": "반도체용 세정 공정 재료 제조",
+     "group": "반도체재료",
+     "pages": 114,
+     "total": 330,
+     "grades": {
+      "1": 105,
+      "2": 209,
+      "3": 16,
+      "unpaged": 0
+     },
+     "detected_pages": 57,
+     "grade3_pages": 1
+    },
+    {
+     "code": "LM1903060426",
+     "title": "반도체용 CMP 슬러리 재료 제조",
+     "group": "반도체재료",
+     "pages": 67,
+     "total": 113,
+     "grades": {
+      "1": 34,
+      "2": 14,
+      "3": 65,
+      "unpaged": 0
+     },
+     "detected_pages": 16,
+     "grade3_pages": 4
+    }
    ]
   },
   "교과서": {
@@ -311,6 +1603,143 @@
       "3": 0,
       "unpaged": 0
      }
+    }
+   ],
+   "books": [
+    {
+     "code": null,
+     "title": "반도체 공정기초",
+     "group": "반도체 공정기초",
+     "pages": 224,
+     "total": 37,
+     "grades": {
+      "1": 37,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 23,
+     "grade3_pages": 0
+    },
+    {
+     "code": null,
+     "title": "반도체 기초",
+     "group": "반도체 기초",
+     "pages": 235,
+     "total": 21,
+     "grades": {
+      "1": 21,
+      "2": 0,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 15,
+     "grade3_pages": 0
+    },
+    {
+     "code": null,
+     "title": "반도체 기초기술 1",
+     "group": "반도체 기초기술 1",
+     "pages": 172,
+     "total": 47,
+     "grades": {
+      "1": 43,
+      "2": 4,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 23,
+     "grade3_pages": 0
+    },
+    {
+     "code": null,
+     "title": "반도체 기초기술 2",
+     "group": "반도체 기초기술 2",
+     "pages": 232,
+     "total": 68,
+     "grades": {
+      "1": 50,
+      "2": 18,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 40,
+     "grade3_pages": 0
+    },
+    {
+     "code": null,
+     "title": "반도체 박막확산",
+     "group": "반도체 박막확산",
+     "pages": 248,
+     "total": 88,
+     "grades": {
+      "1": 74,
+      "2": 10,
+      "3": 4,
+      "unpaged": 0
+     },
+     "detected_pages": 47,
+     "grade3_pages": 1
+    },
+    {
+     "code": null,
+     "title": "반도체 인프라 일반",
+     "group": "반도체 인프라 일반",
+     "pages": 197,
+     "total": 501,
+     "grades": {
+      "1": 155,
+      "2": 263,
+      "3": 83,
+      "unpaged": 0
+     },
+     "detected_pages": 76,
+     "grade3_pages": 4
+    },
+    {
+     "code": null,
+     "title": "반도체 장비 유지보수",
+     "group": "반도체 장비 유지보수",
+     "pages": 217,
+     "total": 271,
+     "grades": {
+      "1": 121,
+      "2": 122,
+      "3": 28,
+      "unpaged": 0
+     },
+     "detected_pages": 78,
+     "grade3_pages": 3
+    },
+    {
+     "code": null,
+     "title": "반도체 조립검사",
+     "group": "반도체 조립검사",
+     "pages": 256,
+     "total": 58,
+     "grades": {
+      "1": 48,
+      "2": 10,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 32,
+     "grade3_pages": 0
+    },
+    {
+     "code": null,
+     "title": "반도체 포토에칭",
+     "group": "반도체 포토에칭",
+     "pages": 274,
+     "total": 116,
+     "grades": {
+      "1": 84,
+      "2": 32,
+      "3": 0,
+      "unpaged": 0
+     },
+     "detected_pages": 54,
+     "grade3_pages": 0
     }
    ]
   }

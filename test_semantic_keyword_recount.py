@@ -660,6 +660,19 @@ def _doc(corpus, rel, text):
     return Document(corpus, Path(rel), rel, text)
 
 
+def _check_books_book(title, group, g1, g3, pages, detected, g3_pages):
+    return {"code": None, "title": title, "group": group, "pages": pages, "total": g1 + g3, "grades": {"1": g1, "2": 0, "3": g3, "unpaged": 0},
+            "detected_pages": detected, "grade3_pages": g3_pages}
+
+
+def _check_books_payload():
+    """check_books() 픽스처 — X 2권·Y 1권, 등급 3 합 6, 검출 쪽 합 5 (check_books 테스트 공용, 리뷰 정리로 중복 제거)."""
+    books = [_check_books_book("a", "X", 4, 5, 40, 3, 1), _check_books_book("b", "X", 0, 0, 7, 0, 0), _check_books_book("c", "Y", 2, 1, 9, 2, 1)]
+    return {"corpora": {"NCS": {"documents": 3, "total": 12, "grades": {"1": 6, "2": 0, "3": 6, "unpaged": 0}, "detected_pages": 5, "books": books,
+                                "groups": [{"name": "X", "documents": 2, "total": 9, "pages": 47, "grades": {"1": 4, "2": 0, "3": 5, "unpaged": 0}},
+                                           {"name": "Y", "documents": 1, "total": 3, "pages": 9, "grades": {"1": 2, "2": 0, "3": 1, "unpaged": 0}}]}}}
+
+
 class DictionaryVersionTests(unittest.TestCase):
     """semantic-expression-review §3.1 — 사전 버전(v1/v1fix/v2), 결함 2건, 조건부 규칙, 비정본 버전의 경로 거부."""
 
@@ -781,6 +794,15 @@ def graded_result(text="<!-- page: 1 -->\n안전 안전\n", corpus="NCS", rel="�
 def census_fixture(root, ncs_body="<!-- page: 1 -->\n안전 안내\n"):
     """run_census 용 임시 말뭉치·워크북 kwargs — RemediationTests._census_fixture 의 모듈 수준 이름."""
     return RemediationTests._census_fixture(RemediationTests(), root, ncs_body)
+
+
+def _books_digest_from_summary(summary: dict) -> str:
+    """커밋된 요약 JSON 의 books[] 에서 books_digest 를 다시 계산한다 — 스크립트의 _books_digest 와 같은 규칙(문서 순서·집계)."""
+    payload = sorted(
+        ([c, b["code"] or b["title"], b["total"], b["grades"], b["detected_pages"], b["grade3_pages"]] for c in ("NCS", "교과서") for b in summary["corpora"][c]["books"]),
+        key=lambda row: (row[0], row[1]),
+    )
+    return SKR._canonical_hash(payload)[:16]
 
 
 class RemediationTests(unittest.TestCase):
@@ -1035,10 +1057,18 @@ class RemediationTests(unittest.TestCase):
             "grade_sources": {k: sum(S["corpora"][c]["grade_sources"].get(k, 0) for c in C) for k in SKR.GRADE_SOURCES},
             "candidates": S["status"],
             "dedup": {d["code"]: len(d["dropped"]) for d in run["dedup"]},
+            "books": {c: len(S["corpora"][c]["books"]) for c in C},                                          # 교재별 집계도 커밋된 파일에서 다시 센다 (ncs-book-concentration)
+            "books_digest": _books_digest_from_summary(S),
             **S["meta"]["manifest"],
         }
         self.assertEqual([], check_expected(metrics))
         self.assertTrue(S["meta"]["run"]["expected"])
+        for c in C:                                                                                          # 커밋된 파일 자체의 합 불변식 (S3p 와 같은 검사, 파이썬 쪽)
+            corpus = S["corpora"][c]
+            self.assertEqual(corpus["total"], sum(b["total"] for b in corpus["books"]))
+            self.assertEqual(corpus["grades"]["3"], sum(b["grades"]["3"] for b in corpus["books"]))
+            self.assertTrue(all(b["grade3_pages"] <= b["detected_pages"] <= b["pages"] for b in corpus["books"]))            # 검출 쪽은 교재 쪽수 안 (갭 분석 G3)
+            self.assertEqual(corpus["detected_pages"], sum(b["detected_pages"] for b in corpus["books"]))
 
     def test_force_does_not_bypass_document_count_guard(self):
         with tempfile.TemporaryDirectory() as td:
@@ -1365,6 +1395,132 @@ class RealPageTests(unittest.TestCase):
             self.assertEqual({"NCS": "marker", "교과서": "marker"}, SKR.dashboard_payload(assign_match_grades(aggregate_matches(sources, docs, rules, candidates), {}))["meta"]["page_basis"])
             with self.assertRaisesRegex(ValueError, "LM1903060101"):
                 SKR.dashboard_payload(graded, pdf_pages={})                                          # 대응 교재인데 PDF 쪽수를 모른다
+
+    def test_payload_books_rows_and_sums(self):
+        """corpora.*.books[] — 교재 한 행씩(매칭 0건 포함), 필드·정렬·합 불변식, groups[].pages == Σ books[].pages (ncs-book-concentration FR-01·FR-02)."""
+        with tempfile.TemporaryDirectory() as td:
+            ncs, maps, docs = _real_page_fixture(Path(td))
+            docs = [d for d in docs if "LM1903060499" not in d.relative_path]
+            docs.append(_doc("NCS", "반도체개발/LM1903060102_20v1_무매칭_교재.md", "<!-- page: 1 -->\n본문\n"))     # 매칭 0건 교재도 행을 남긴다
+            docs.append(_doc("교과서", "20260413_171220_반도체기초기술1_크리아트_.md", "<!-- page: 1 -->\n안전\n<!-- page: 4 -->\n"))
+            rules, sources, candidates = self._rules()
+            page_maps, _ = SKR.load_page_maps(maps, [d for d in docs if "LM1903060102" not in d.relative_path])
+            graded = assign_match_grades(aggregate_matches(sources, docs, rules, candidates, page_maps=page_maps), {}, page_maps=page_maps)
+            payload = SKR.dashboard_payload(graded, pdf_pages={"LM1903060101": 40, "LM1903060102": 7})
+            books = payload["corpora"]["NCS"]["books"]
+            self.assertEqual(["LM1903060101", "LM1903060102", "LM1903060408"], [b["code"] for b in books])          # 코드 순
+            a = books[0]
+            self.assertEqual(("a", "반도체개발", 40), (a["title"], a["group"], a["pages"]))
+            self.assertEqual((9, {"1": 4, "2": 0, "3": 5, "unpaged": 0}), (a["total"], a["grades"]))                 # 실제 쪽 10·12·13 — 12 쪽이 등급 3
+            self.assertEqual((3, 1), (a["detected_pages"], a["grade3_pages"]))                                       # 등급 3 은 한 쪽에 몰려 있다
+            self.assertEqual({"title": "무매칭 교재", "total": 0, "detected_pages": 0, "grade3_pages": 0}, {k: books[1][k] for k in ("title", "total", "detected_pages", "grade3_pages")})
+            for corpus in ("NCS", "교과서"):
+                c = payload["corpora"][corpus]
+                self.assertEqual(c["documents"], len(c["books"]))
+                self.assertEqual(c["total"], sum(b["total"] for b in c["books"]))
+                for g in ("1", "2", "3", "unpaged"):
+                    self.assertEqual(c["grades"][g], sum(b["grades"][g] for b in c["books"]))
+                for group in c["groups"]:                                                                            # 분야 합 == 교재 합 (pages 포함)
+                    rows = [b for b in c["books"] if b["group"] == group["name"]]
+                    self.assertEqual((group["documents"], group["total"], group["pages"]), (len(rows), sum(b["total"] for b in rows), sum(b["pages"] for b in rows)))
+            school = payload["corpora"]["교과서"]["books"]
+            self.assertEqual([("반도체 기초기술 1", "반도체 기초기술 1", 4)], [(b["title"], b["group"], b["pages"]) for b in school])   # 교과서는 표시명 = 분야, 표식 최댓값
+            self.assertIsNone(school[0]["code"])
+
+    def test_book_title_strips_prefix_and_version_tokens(self):
+        self.assertEqual("반도체 장비 안전관리", SKR._book_title("반도체장비/LM1903060329_19v1_반도체_장비_안전관리/LM1903060329_19v1_반도체_장비_안전관리.md"))
+        self.assertEqual("반도체 재료 안전관리", SKR._book_title("반도체재료/x/20260121_134101_LM1903060411_23v3_반도체_재료_안전관리.md"))
+        self.assertEqual("반도체 내성 시험", SKR._book_title("반도체개발/LM1903060129_23v4_반도체_내성_시험.md"))
+        self.assertEqual("반도체용 리소그래피 재료 제조", SKR._book_title("반도체재료/x/20260121_133358_반도체_재료_02._반도체용_리소그래피_재료_제조_LM1903060402_14v1_.md"))   # 코드가 뒤에 오는 이름 + 목록 접두
+
+    def test_metrics_and_expected_pin_books(self):
+        """summary_metrics.books·books_digest 가 교재 수와 교재별 집계를 고정한다 (FR-03)."""
+        result = graded_result()
+        metrics = SKR.summary_metrics(result, SKR.artifact_manifest(result))
+        self.assertEqual({corpus: sum(1 for d in result.documents if d.corpus == corpus) for corpus in ("NCS", "교과서")}, metrics["books"])
+        self.assertRegex(metrics["books_digest"], r"^[0-9a-f]{16}$")
+        self.assertEqual(metrics["books_digest"], SKR.summary_metrics(result, SKR.artifact_manifest(result))["books_digest"])     # 결정적
+        self.assertEqual(["books.NCS: %d != 99" % metrics["books"]["NCS"]], SKR.check_expected(metrics, {"books": {"NCS": 99}}))
+        self.assertEqual(["books_digest: %s != deadbeefdeadbeef" % metrics["books_digest"]], SKR.check_expected(metrics, {"books_digest": "deadbeefdeadbeef"}))
+        self.assertEqual({"NCS": 86, "교과서": 9}, SKR.EXPECTED["books"])
+        self.assertTrue(SKR.EXPECTED["books_digest"] is None or re.fullmatch(r"[0-9a-f]{16}", SKR.EXPECTED["books_digest"]))   # 첫 정본 실행 뒤 값을 적는다
+
+    def test_books_digest_detects_reassignment_between_books_when_totals_are_unchanged(self):
+        """books_digest — 두 교재 사이에 등급을 맞바꾸면 말뭉치 합계(grade_sources)는 그대로인데 지문은 달라져야 한다
+        (R14i 의 impact_digest 와 같은 관례, ship 리뷰 — testing 전문가, 커버리지 감사)."""
+        def build(grade_a, grade_b):
+            docs = [_doc("NCS", "반도체개발/LM1903060101_a.md", "<!-- page: 1 -->\n안전 안전\n"),
+                    _doc("NCS", "반도체제조/LM1903060102_b.md", "<!-- page: 1 -->\n안전 안전\n")]
+            result = aggregate_matches([KeywordSource("안전", 1, True)], docs, [ExpressionRule("안전", "안전", "exact", "기존 키워드")], [])
+            return assign_match_grades(result, {
+                grade_lookup_key("NCS", "반도체개발/LM1903060101_a.md", 1): GradeAssignment(grade_a, SKR.GRADE_LABEL[grade_a], "고정", "existing"),
+                grade_lookup_key("NCS", "반도체제조/LM1903060102_b.md", 1): GradeAssignment(grade_b, SKR.GRADE_LABEL[grade_b], "고정", "existing"),
+            })
+        a_then_b, b_then_a = build(3, 1), build(1, 3)          # 등급을 두 교재 사이에 맞바꾼다 — 말뭉치 합계는 그대로
+        m1 = SKR.summary_metrics(a_then_b, SKR.artifact_manifest(a_then_b))
+        m2 = SKR.summary_metrics(b_then_a, SKR.artifact_manifest(b_then_a))
+        self.assertEqual(m1["grade_sources"], m2["grade_sources"])   # 순진한 합계 검사로는 못 잡는다
+        self.assertNotEqual(m1["books_digest"], m2["books_digest"])  # books_digest 는 재배분을 잡아야 한다
+
+    def test_check_books_catches_group_grades_and_detected_pages(self):
+        """check_books — 분야별 등급 합과 Σ detected_pages == 말뭉치 검출 쪽 수까지 본다 (FR-02, 갭 분석 G2·G5)."""
+        SKR.check_books(_check_books_payload())                                                          # 정합한 payload 는 통과
+        moved = _check_books_payload()                                                                   # 등급 3 한 건을 분야 X → Y 로 옮긴다 — 말뭉치 합·교재 total 은 그대로
+        moved["corpora"]["NCS"]["books"][0]["grades"].update({"1": 5, "3": 4}); moved["corpora"]["NCS"]["books"][2]["grades"].update({"1": 1, "3": 2})
+        with self.assertRaisesRegex(ValueError, r"X 등급 3 합 4 != 5"):
+            SKR.check_books(moved)
+        extra = _check_books_payload(); extra["corpora"]["NCS"]["books"][1]["detected_pages"] = 1          # 교재 검출 쪽 합 6 ≠ 말뭉치 5
+        with self.assertRaisesRegex(ValueError, r"검출 쪽 합 6 != 5"):
+            SKR.check_books(extra)
+        missing = _check_books_payload(); missing["corpora"]["NCS"]["books"].pop()                          # 교재 행 수가 documents 와 다르다
+        with self.assertRaisesRegex(ValueError, r"교재 행 2 != 문서 3"):
+            SKR.check_books(missing)
+        wrong_pages = _check_books_payload(); wrong_pages["corpora"]["NCS"]["books"][0]["pages"] = 41       # total·등급·검출 쪽은 그대로 — 분야 pages 합만 어긋난다
+        with self.assertRaisesRegex(ValueError, r"X pages 48 != 47"):
+            SKR.check_books(wrong_pages)
+
+    def test_check_books_catches_grade3_pages_exceeding_detected_pages(self):
+        """check_books — 교재의 등급 3 쪽은 검출 쪽을 넘을 수 없다 (기존 테스트가 안 건드리던 분기, 커버리지 감사)."""
+        over_g3 = _check_books_payload(); over_g3["corpora"]["NCS"]["books"][0]["grade3_pages"] = 99        # 등급 3 쪽(grade3_pages)은 검출 쪽(detected_pages)의 부분집합이어야 한다
+        with self.assertRaisesRegex(ValueError, r"a 등급 3 쪽 99 > 검출 쪽 3"):
+            SKR.check_books(over_g3)
+
+    def test_check_books_catches_corpus_level_and_group_membership_mismatches(self):
+        """check_books — 말뭉치 수준 출현·등급 합과 분야의 documents/total 키는 지금까지 분야 pages 키만큼 격리된 테스트가 없었다 (ship 리뷰 — testing 전문가, 커버리지 감사)."""
+        bad_total = _check_books_payload(); bad_total["corpora"]["NCS"]["total"] = 13                       # books[] 는 그대로 — 말뭉치 출현 합만 어긋난다
+        with self.assertRaisesRegex(ValueError, r"출현 합 12 != 13"):
+            SKR.check_books(bad_total)
+        bad_corpus_grade = _check_books_payload(); bad_corpus_grade["corpora"]["NCS"]["grades"]["3"] = 99   # groups[] 는 그대로 — 말뭉치 등급 3 합만 어긋난다
+        with self.assertRaisesRegex(ValueError, r"등급 3 합 6 != 99"):
+            SKR.check_books(bad_corpus_grade)
+        bad_group_docs = _check_books_payload(); bad_group_docs["corpora"]["NCS"]["groups"][0]["documents"] = 3   # 교재는 그대로 — 분야 문서 수만 어긋난다
+        with self.assertRaisesRegex(ValueError, r"X documents 2 != 3"):
+            SKR.check_books(bad_group_docs)
+        bad_group_total = _check_books_payload(); bad_group_total["corpora"]["NCS"]["groups"][1]["total"] = 4   # 교재는 그대로 — 분야 출현 합만 어긋난다
+        with self.assertRaisesRegex(ValueError, r"Y total 3 != 4"):
+            SKR.check_books(bad_group_total)
+
+    def test_check_books_catches_book_with_group_not_in_groups_list(self):
+        """check_books — 교재의 분야가 groups[] 에 없으면 말뭉치·나머지 분야 합은 그대로인데 그 교재만 분야별 집계에서 조용히 빠질 수 있다 (ship 적대적 리뷰 — Claude 서브에이전트)."""
+        orphan = _check_books_payload()
+        orphan["corpora"]["NCS"]["books"][0]["group"] = "Z"                                                # 교재 a(총 9건)를 목록에 없는 분야로 옮긴다
+        orphan["corpora"]["NCS"]["groups"][0].update({"documents": 1, "total": 0, "pages": 7,
+                                                       "grades": {"1": 0, "2": 0, "3": 0, "unpaged": 0}})    # X 를 남은 교재 b 하나(0건)로 맞춰 다른 검사는 전부 통과하게 한다
+        with self.assertRaisesRegex(ValueError, r"a 분야 'Z' 가 groups\[\] 에 없음"):
+            SKR.check_books(orphan)
+
+    def test_run_census_refuses_when_book_sums_disagree(self):
+        """교재 합이 말뭉치·분야 집계와 어긋나면 쓰지 않는다 (FR-02 가드)."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td); kw = census_fixture(root)
+            original = SKR.dashboard_payload
+            def broken(result, **kwargs):
+                payload = original(result, **kwargs)
+                payload["corpora"]["NCS"]["books"][0]["total"] += 1
+                return payload
+            with mock.patch.object(SKR, "dashboard_payload", broken), self.assertRaisesRegex(ValueError, "교재별 집계"):
+                run_census(**kw, expected={"documents": {"NCS": 86, "교과서": 9}}, summary_out=root / "s.json", git={"commit": "x", "dirty": False}, argv=["x"])
+            self.assertFalse((root / "s.json").exists())
 
     def test_manifest_and_metrics_carry_page_maps_and_agreement(self):
         result = graded_result()

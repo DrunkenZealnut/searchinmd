@@ -76,6 +76,8 @@ EXPECTED = {
     "grade_sources": {"real-page": 11517, "existing": 1149, "new": 58, "unpaged-context": 0, "unpaged-fallback": 0},   # NCS 전부 real-page, 교과서는 현행(existing 1,149 / new 58)
     "candidates": {"included": 73, "held": 21, "excluded": 2, "not-found": 4},                   # v2: 방진화·케미컬 보류 전환
     "dedup": {"LM1903060205": 1},                                                        # MI 장비 운영 공백 경로(마커 0) 1개를 버린다
+    "books": {"NCS": 86, "교과서": 9},                                                   # 교재 단위 행 수 == 문서 수 (ncs-book-concentration)
+    "books_digest": "9c57f39963c6c7cd",                                                  # 교재별 집계 지문 — 총계가 같아도 교재 사이 재배분을 잡는다 (2026-09-17 정본)
     "rule_sha256": "c08e6353ebf0f91e24da92009f786972bf739b0fae5a38f720976edf8b9cf302",    # v2 — 결정 2 처방 (v1fix: 1ffd26c6…, v1: 2da5dbf4…)
     "source_sha256": "2721f0f98f799272a0e411cfea5e0cfc0e48858763b8b1a58fe282f732d2fae5",  # 워크북 3종 + 마크다운 95개(86+9) 본문 — 사전과 무관, 불변
     "detail_sha256": "229e9a7904bf4f89a391e1a0f1c063033c419fd1ecd32739046d651731d9ea39",  # 상세 전체의 지문 — 총계가 같아도 재배정을 잡는다 (블록 기준 v2: 9acd5962…)
@@ -1464,9 +1466,29 @@ def summary_metrics(result: AnalysisResult, manifest: dict[str, str], dictionary
         "grade_sources": {key: sources.get(key, 0) for key in GRADE_SOURCES},
         "candidates": dict(Counter(candidate.decision for candidate in result.candidates)),
         "dedup": {record.code: len(record.dropped) for record in result.dedup},
+        "books": {corpus: sum(1 for d in result.documents if d.corpus == corpus) for corpus in ("NCS", "교과서")},
+        "books_digest": _books_digest(result),                                    # 교재별 집계의 지문 — 총계가 같아도 교재 사이 재배분을 잡는다 (ncs-book-concentration FR-03)
     }
     metrics.update(manifest)
     return metrics
+
+
+def _books_digest(result: AnalysisResult) -> str:
+    """교재별 집계의 정준 해시 16자리 — payload 의 books[] 행과 같은 값(식별자·출현·등급·검출 쪽·등급 3 쪽)으로 센다.
+    쪽수(pages)는 이전 기준 파일에서 오므로 빼고, 교재 식별자는 payload 와 같은 규칙(NCS 코드 / 교과서 표시명)을 쓴다."""
+    included = [record for record in result.matches if record.decision == "included"]
+    rows = defaultdict(list)
+    for record in included:
+        rows[(record.corpus, record.relative_path)].append(record)
+    payload = []
+    for document in result.documents:
+        records = rows[(document.corpus, document.relative_path)]
+        key = _document_code(document) if document.corpus == "NCS" else _dashboard_group(document.corpus, document.relative_path)
+        payload.append([document.corpus, key or _book_title(document.relative_path), len(records), _grade_counts(records),
+                        len({r.page for r in records if r.page is not None}),
+                        len({r.page for r in records if r.page is not None and r.grade == 3})])
+    payload.sort(key=lambda row: (row[0], row[1]))
+    return _canonical_hash(payload)[:16]
 
 
 def check_expected(metrics: dict[str, object], expected: dict[str, object] | None = None, prefix: str = "") -> list[str]:
@@ -1567,6 +1589,40 @@ def _write_text_atomic(path: Path, text: str) -> None:
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(text, encoding="utf-8")
     os.replace(tmp, path)
+
+
+def check_books(payload: dict[str, object]) -> None:
+    """corpora.*.books[] 의 합이 말뭉치·분야 집계와 같은지 — 어긋나면 쓰지 않는다 (ncs-book-concentration FR-02)."""
+    for corpus, data in payload["corpora"].items():
+        books = data["books"]
+        bad = []
+        if len(books) != data["documents"]:
+            bad.append(f"교재 행 {len(books)} != 문서 {data['documents']}")
+        if sum(b["total"] for b in books) != data["total"]:
+            bad.append(f"출현 합 {sum(b['total'] for b in books)} != {data['total']}")
+        for grade in ("1", "2", "3", "unpaged"):
+            if sum(b["grades"][grade] for b in books) != data["grades"][grade]:
+                bad.append(f"등급 {grade} 합 {sum(b['grades'][grade] for b in books)} != {data['grades'][grade]}")
+        if sum(b["detected_pages"] for b in books) != data["detected_pages"]:                        # 쪽은 교재 안에서 고유하므로 등식
+            bad.append(f"검출 쪽 합 {sum(b['detected_pages'] for b in books)} != {data['detected_pages']}")
+        group_names = {group["name"] for group in data["groups"]}
+        for book in books:
+            if book["group"] not in group_names:                                                        # groups[] 에 없는 분야면 모든 분야별 합계에서 조용히 빠진다
+                bad.append(f"{book['title']} 분야 '{book['group']}' 가 groups[] 에 없음")
+        for group in data["groups"]:
+            rows = [b for b in books if b["group"] == group["name"]]
+            for key in ("documents", "total", "pages"):
+                have = len(rows) if key == "documents" else sum(b[key] for b in rows)
+                if have != group[key]:
+                    bad.append(f"{group['name']} {key} {have} != {group[key]}")
+            for grade in ("1", "2", "3", "unpaged"):                                                    # 분야 사이 재배분도 잡는다
+                if sum(b["grades"][grade] for b in rows) != group["grades"][grade]:
+                    bad.append(f"{group['name']} 등급 {grade} 합 {sum(b['grades'][grade] for b in rows)} != {group['grades'][grade]}")
+        for book in books:
+            if not (book["grade3_pages"] <= book["detected_pages"]):
+                bad.append(f"{book['title']} 등급 3 쪽 {book['grade3_pages']} > 검출 쪽 {book['detected_pages']}")
+        if bad:
+            raise ValueError(f"{corpus} 교재별 집계가 어긋납니다: " + "; ".join(bad))
 
 
 def write_summary_json(payload: dict[str, object], path: Path) -> None:
@@ -1738,6 +1794,19 @@ def _grade_counts(records) -> dict[str, int]:
     return {"1": counts[1], "2": counts[2], "3": counts[3], "unpaged": counts[None]}
 
 
+_BOOK_TITLE_DROP = re.compile(r"(?:^\d{8}_\d{6}_)|(?:LM\d{10})|(?:(?<![0-9A-Za-z])\d+v\d+(?![0-9A-Za-z]))")   # 변환 타임스탬프·LM 코드·판 토큰 — 이름 어디에 있든 뗀다
+_BOOK_TITLE_PREFIX = re.compile(r"^(?:반도체\s*(?:개발|제조|장비|재료)\s*)?\d{1,2}\.\s*")                        # "반도체 재료 02. " 같은 목록 접두
+
+
+def _book_title(relative_path: str) -> str:
+    """교재 표시명 — 파일 이름에서 변환 접두·LM 코드·판 토큰·목록 번호를 떼고 밑줄을 공백으로 (ncs-book-concentration FR-01).
+    파일명은 두 모양이다: `LM…_14v1_이름.md`(코드가 앞) 과 `2026…_반도체 재료 02. 이름_LM…_14v1_.md`(코드가 뒤)."""
+    stem = unicodedata.normalize("NFC", Path(relative_path).name)
+    stem = stem[: -len(".md")] if stem.endswith(".md") else stem
+    text = re.sub(r"\s+", " ", _BOOK_TITLE_DROP.sub(" ", stem).replace("_", " ")).strip()
+    return _BOOK_TITLE_PREFIX.sub("", text).strip()
+
+
 def _dashboard_group(corpus: str, relative_path: str) -> str:
     normalized = unicodedata.normalize("NFC", relative_path)
     if corpus == "NCS":
@@ -1801,6 +1870,11 @@ def dashboard_payload(result: AnalysisResult, pdf_pages: dict[str, int] | None =
                 group_records[_dashboard_group(corpus, record.relative_path)].append(record)
         documents_by_group = defaultdict(set)
         pages_by_group: dict[str, int] = defaultdict(int)          # NCS(pdf_pages 가 있을 때): 이전 기준 per_book.pdf_pages 합 (D4); 교과서·대응 없는 REAL_PAGE_MARKER_BOOKS: 표식 최댓값 합 (hwpx-ncs-section-refresh D2)
+        records_by_document = defaultdict(list)
+        for record in included:
+            if record.corpus == corpus:
+                records_by_document[record.relative_path].append(record)
+        books = []
         for document in result.documents:
             if document.corpus == corpus:
                 group = _dashboard_group(corpus, document.relative_path)
@@ -1808,11 +1882,24 @@ def dashboard_payload(result: AnalysisResult, pdf_pages: dict[str, int] | None =
                 markers = [int(m.group(1)) for m in (PAGE_MARKER_RE.match(line) for line in document.text.splitlines()) if m]
                 code = _document_code(document) if corpus == "NCS" else None
                 if pdf_pages is not None and corpus == "NCS" and markers and code in pdf_pages:
-                    pages_by_group[group] += int(pdf_pages[code])                 # D4: 실제 PDF 쪽수 (reseg_summary.json per_book.pdf_pages)
+                    pages = int(pdf_pages[code])                                   # D4: 실제 PDF 쪽수 (reseg_summary.json per_book.pdf_pages)
                 elif pdf_pages is not None and corpus == "NCS" and markers and code not in REAL_PAGE_MARKER_BOOKS:
                     raise ValueError(f"PDF 쪽수를 모르는 교재입니다: {code} ({public_path(document.relative_path)}) — 이전 기준 per_book 에 없다")
                 else:
-                    pages_by_group[group] += max(markers) if markers else 0         # 마커 줄의 최댓값 — 빈 마지막 쪽 블록도 센다 (목록 교재는 표식이 실제 쪽, load_page_maps 와 같은 "대응이 없을 수 있다" 뜻)
+                    pages = max(markers) if markers else 0                          # 마커 줄의 최댓값 — 빈 마지막 쪽 블록도 센다 (목록 교재는 표식이 실제 쪽, load_page_maps 와 같은 "대응이 없을 수 있다" 뜻)
+                pages_by_group[group] += pages
+                rows = records_by_document.get(document.relative_path, [])          # 교재 단위 집계 (ncs-book-concentration D1) — 매칭 0건 교재도 행을 남긴다
+                books.append({
+                    "code": code,
+                    "title": _book_title(document.relative_path) if corpus == "NCS" else group,
+                    "group": group,
+                    "pages": pages,
+                    "total": len(rows),
+                    "grades": _grade_counts(rows),
+                    "detected_pages": len({r.page for r in rows if r.page is not None}),
+                    "grade3_pages": len({r.page for r in rows if r.page is not None and r.grade == 3}),
+                })
+        books.sort(key=lambda b: (b["code"] or "", b["title"]))
         groups = []
         for name in sorted(set(group_records) | set(documents_by_group)):          # 매칭이 하나도 없는 그룹도 문서·쪽수 분모에 남는다
             records = group_records.get(name, [])
@@ -1850,6 +1937,7 @@ def dashboard_payload(result: AnalysisResult, pdf_pages: dict[str, int] | None =
                 "unpaged": sum(row.grade_unpaged for row in corpus_rows),
             },
             "groups": groups,
+            "books": books,
         }
 
     return {
@@ -2394,6 +2482,7 @@ def run_census(
     )
     run["dictionary"] = dictionary
     payload = summary_payload(result, run=run, previous_basis=basis, pdf_pages=pdf_pages)
+    check_books(payload)                                                                    # 교재별 집계가 말뭉치·분야 집계와 맞아야 쓴다 (ncs-book-concentration FR-02)
     audits = audit_candidates(result)
     write_workbook(result, xlsx_out, run=run, audits=audits)
     write_report(result, report_out, run=run, audits=audits)

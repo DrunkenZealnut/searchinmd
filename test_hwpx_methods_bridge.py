@@ -27,7 +27,7 @@ def canonical_facts():
 
 
 class MethodsFactsTests(unittest.TestCase):
-    """제2장 5절의 사실 — 추적 파일 8종에서 읽고, 값은 정본(2026-09-15)과 같다."""
+    """제2장 5절의 사실 — 추적 파일 8종에서 읽고, 값은 정본(2026-09-17)과 같다."""
 
     def test_loads_canonical_values(self):
         m = MB.load_methods_facts(MB.MethodsPaths())
@@ -73,7 +73,7 @@ class BridgeFactsTests(unittest.TestCase):
 
     def test_loads_canonical_values(self):
         b = MB.load_bridge_facts(MB.MethodsPaths())
-        self.assertEqual("2026-09-15", b.run_date); self.assertEqual(11517, b.total)
+        self.assertEqual("2026-09-17", b.run_date); self.assertEqual(11517, b.total)
         self.assertEqual({1: 4378, 2: 4614, 3: 2525}, b.block_grades); self.assertEqual({1: 3788, 2: 5227, 3: 2502}, b.real_grades)
         self.assertEqual((1785, 2492), (b.block_pages, b.real_pages)); self.assertEqual((4016, 7501), (b.moved, b.unchanged))
         self.assertEqual(6, len(b.matrix)); self.assertEqual(4016, sum(b.matrix.values()))
@@ -236,6 +236,10 @@ class BackupTests(unittest.TestCase):
                 HR.write_hwpx(src, out, b"<d/>", {}, force=True)
 
 
+def with_concentration(f, **changes):
+    return dataclasses.replace(f, concentration=dataclasses.replace(f.concentration, **changes))
+
+
 def with_bridge(f, **changes):
     return dataclasses.replace(f, bridge=dataclasses.replace(f.bridge, **changes))
 
@@ -315,7 +319,7 @@ class BridgeTemplateTests(unittest.TestCase):
         self.assertEqual("BHBPBCTNBPBCTNB", "".join(pc.kind for pc in pieces))
         self.assertEqual([MB.BRIDGE_HEADING], texts(pieces, "H"))
         q1, q2 = texts(pieces, "P")
-        for needle in ("2026-09-15 정본", "11,517건은 변하지 않았고", "1,785개 블록에서 2,492쪽으로 늘었으며", "4,016건(34.9%)", "4,378건(38.0%)에서 3,788건(32.9%)으로 줄고",
+        for needle in ("2026-09-17 정본", "11,517건은 변하지 않았고", "1,785개 블록에서 2,492쪽으로 늘었으며", "4,016건(34.9%)", "4,378건(38.0%)에서 3,788건(32.9%)으로 줄고",
                        "4,614건(40.1%)에서 5,227건(45.4%)으로 늘었으며", "2,525건(21.9%)에서 2,502건(21.7%)으로 거의 같았다", "반도체개발 236건→122건", "반도체재료 1,174건→1,248건", "6,292건", "52.8%", "승계하지 않고"):
             self.assertIn(needle, q1, needle)
         for needle in ("2,492쪽", "143쪽(5.7%)", "2026-09-06", "7,769행", "2,189쪽 가운데 등급 3이 145쪽(6.6%)", "2,035쪽의 등급은 모두 일치한다", "21.7%", "몫이 커진다", "개선으로 읽어서는 안 되며"):
@@ -325,12 +329,12 @@ class BridgeTemplateTests(unittest.TestCase):
 
     def test_tables(self):
         t1 = MB.bridge_table1_rows(self.f)
-        self.assertEqual(["구분", "목차 블록 기준", "실제 PDF 쪽 기준(2026-09-15 정본)", "차이"], MB.bridge_table1_header(self.f))
+        self.assertEqual(["구분", "목차 블록 기준", "실제 PDF 쪽 기준(2026-09-17 정본)", "차이"], MB.bridge_table1_header(self.f))
         self.assertEqual(["출현 총계", "11,517", "11,517", "0"], t1[0])
         self.assertEqual(["등급 1", "4,378 (38.0%)", "3,788 (32.9%)", "−590"], t1[1]); self.assertEqual("+613", t1[2][3]); self.assertEqual("−23", t1[3][3])
         self.assertEqual(["출현이 놓인 단위", "1,785 블록", "2,492 쪽", "—"], t1[4]); self.assertEqual(["등급이 바뀐 출현", "—", "4,016 (34.9%)", "—"], t1[5])
         t2 = MB.bridge_table2_rows(self.f)
-        self.assertEqual(["구분", "이전 기준(쪽 단위, 2026-09-06)", "정본(쪽 단위, 2026-09-15)", "정본(출현 단위)"], MB.bridge_table2_header(self.f))
+        self.assertEqual(["구분", "이전 기준(쪽 단위, 2026-09-06)", "정본(쪽 단위, 2026-09-17)", "정본(출현 단위)"], MB.bridge_table2_header(self.f))
         self.assertEqual(6, len(t2)); self.assertEqual(["단위 수", "2,189쪽", "2,492쪽", "11,517건"], t2[1])
         self.assertEqual(["등급 3", "145 (6.6%)", "143 (5.7%)", "2,502 (21.7%)"], t2[4]); self.assertEqual(["두 집계가 공유하는 쪽", "2,035", "2,035 (등급 일치 2,035, 100.0%)", "—"], t2[5])
         self.assertIn("7,769행", t2[0][1])
@@ -445,7 +449,7 @@ class Stage2EndToEndTests(unittest.TestCase):
             self.assertEqual([("표 5.", 8, 3), ("표 6.", 8, 3)], [(t["caption"], t["rows"], t["cols"]) for t in m["tables"]])
             self.assertEqual(15, len(b["inserted"]))                                                                  # 소결 문장(B+P 2개)은 conclusion_inserted 로 따로 센다
             self.assertEqual([("표 12-1.", 7, 4), ("표 12-2.", 7, 4)], [(t["caption"], t["rows"], t["cols"]) for t in b["tables"]])
-            self.assertEqual({"rewritten": 1, "inserted": 1}, b["toc"]); self.assertEqual({"4) 소결": "5) 소결"}, b["renumbered"]); self.assertTrue(b["conclusion_inserted"])
+            self.assertEqual({"rewritten": 1, "inserted": 2}, b["toc"]); self.assertEqual({"4) 소결": "6) 소결"}, b["renumbered"]); self.assertTrue(b["conclusion_inserted"])
             self.assertEqual("P", b["conclusion"]["kind"]); self.assertIn("2,492", b["conclusion"]["numbers"]); self.assertTrue(b["conclusion"]["keys"]); self.assertIn("level_same", b["conclusion"]["conditions"])
             for key in ("grade_verbs", "real_pages_vs_block", "shared_all_agree", "occurrence_share_exceeds_page_share", "level_same"):
                 self.assertIn(key, b["conditions"])
@@ -463,11 +467,20 @@ class Stage2EndToEndTests(unittest.TestCase):
             self.assertIn("안전보건 수준은 각 출현이 놓인 실제 PDF 쪽(교과서는 쪽 표식이 가리키는 쪽)의 본문을 기준으로 세 등급으로 나누었다.", texts)
             self.assertEqual(1, texts.count("- 등급 1"))                                                             # 등급 목록은 그대로
             toc2 = [HR.direct_text(p) for p in HR.locate_toc_block(root, "2. NCS", "3. NCS")]
-            self.assertEqual([MB.BRIDGE_HEADING, MB.CONCLUSION_HEADING_NEW], toc2[-2:]); self.assertNotIn(" 4) 소결", toc2)
-            self.assertEqual(1, texts.count("4) 소결")); self.assertEqual(2, texts.count("5) 소결"))                 # 1절 목차의 ' 4) 소결' 만 남고, ' 5) 소결' 은 목차 + 본문
+            self.assertEqual([MB.BRIDGE_HEADING, MB.CONCENTRATION_HEADING, MB.CONCLUSION_HEADING_NEW], toc2[-3:]); self.assertNotIn(" 4) 소결", toc2)
+            self.assertEqual(1, texts.count("4) 소결")); self.assertEqual(2, texts.count("6) 소결"))                 # 1절 목차의 ' 4) 소결' 만 남고, ' 6) 소결' 은 목차 + 본문
+            self.assertEqual(2, texts.count(MB.CONCENTRATION_HEADING.strip()))                                       # 3단계 소제목도 목차 + 본문
             ncs = HR.locate_sections(root)["ncs"]
             ncs_texts = [HR.direct_text(p) for p in ncs.paragraphs]
-            self.assertIn(MB.BRIDGE_HEADING, ncs_texts); self.assertEqual(" 5) 소결", next(t for t in ncs_texts if t.strip().endswith("소결")))
+            self.assertIn(MB.BRIDGE_HEADING, ncs_texts); self.assertEqual(" 6) 소결", next(t for t in ncs_texts if t.strip().endswith("소결")))
+            body_order = [t for t in ncs_texts if t in (MB.BRIDGE_HEADING, MB.CONCENTRATION_HEADING, MB.CONCLUSION_HEADING_NEW)]
+            self.assertEqual([MB.BRIDGE_HEADING, MB.CONCENTRATION_HEADING, MB.CONCLUSION_HEADING_NEW], body_order)    # 4) → 5) → 6) 순서
+            conc = diff["concentration"]
+            self.assertEqual([MB.TABLE12_3_LABEL, MB.TABLE12_4_LABEL], [t["caption"] for t in conc["tables"]])
+            self.assertEqual([(7, 4), (10, 4)], [(t["rows"] - 1, t["cols"]) for t in conc["tables"]])                 # 헤더 행 제외 7·10, 4열(표 12 원형)
+            self.assertEqual(["LM1903060329", "LM1903060411"], conc["dedicated"])
+            self.assertEqual({"dedicated_count", "rest_rate_direction", "group_majority", "zero_majority"}, set(conc["conditions"]))
+            self.assertEqual(14, len(conc["inserted"]))
             ctrl = [p for p in ncs.paragraphs if p.find(f".//{HR.HP}ctrl") is not None]
             self.assertEqual(1, len(ctrl)); self.assertEqual(" 각주 뒤 글.", HR.direct_text(ctrl[0])[-8:])                 # 각주 문단은 손대지 않았다
             after_ctrl = ncs.paragraphs[ncs.paragraphs.index(ctrl[0]) + 1:ncs.paragraphs.index(ctrl[0]) + 3]
@@ -475,7 +488,7 @@ class Stage2EndToEndTests(unittest.TestCase):
             ids = [t.get("id") for t in root.iter(f"{HR.HP}tbl")]
             self.assertEqual(len(ids), len(set(ids)))
             caps = [t for t in texts if t.startswith("표 12-")]
-            self.assertEqual([MB.TABLE12_1_CAPTION, MB.TABLE12_2_CAPTION], caps)
+            self.assertEqual([MB.TABLE12_1_CAPTION, MB.TABLE12_2_CAPTION, MB.TABLE12_3_CAPTION, MB.table12_4_caption(f)], caps)   # 2단계 표 2 + 3단계 표 2
             ch1 = HR.locate_range(root, "1. 국내 반도체고등학교 교과서와 한국산업인력공단 NCS 교과서 분석", "2. 해외 기술 고등학교 교과서 비교·분석", 1)
             self.assertIn("NCS 교과서(86종)", HR.direct_text(HR.find_paragraph(ch1, "표 4.")))
             cells = [HR.direct_text(q) for p in ch1.paragraphs for q in p.iter(f"{HR.HP}p")]
@@ -486,9 +499,10 @@ class Stage2EndToEndTests(unittest.TestCase):
                 self.assertEqual(a.namelist(), z.namelist())
             text_review = (Path(td) / "text" / "review_text.html").read_text(encoding="utf-8")
             self.assertIn("methods", text_review); self.assertIn("bridge", text_review); self.assertIn("먼저 파일을 읽어", text_review)
+            self.assertIn("concentration", text_review); self.assertLess(text_review.index("bridge"), text_review.index("concentration"))   # 3단계 절도 있고 2단계 뒤에 온다
             if render:
                 review = (Path(td) / "review" / "review.html").read_text(encoding="utf-8")
-                for cap in ("표 4.", "표 5.", "표 6.", "표 12-1.", "표 12-2."):
+                for cap in ("표 4.", "표 5.", "표 6.", "표 12-1.", "표 12-2.", "표 12-3.", "표 12-4."):
                     self.assertIn(cap, review)
                 self.assertNotIn("층화 추출", review)                                                                  # 검토본에 본문 문장 없음
 
@@ -550,8 +564,123 @@ class Stage2EndToEndTests(unittest.TestCase):
     def test_refuses_its_own_output_as_input(self):
         with tempfile.TemporaryDirectory() as td:
             f, src, out, diff, render = self._run(td)
-            with self.assertRaisesRegex(ValueError, "이미 2단계 산출물"):                                      # 갭 분석 G6 — 1단계 locator 실패보다 앞서 선제 거부
+            with self.assertRaisesRegex(ValueError, "이미 2·3단계 산출물"):                                      # 갭 분석 G6 — 1단계 locator 실패보다 앞서 선제 거부
                 HR.refresh(out, f, Path(td) / "again.hwpx", Path(td) / "d2.json", None, render=False, write_output=False)
+
+
+class ConcentrationFactsTests(unittest.TestCase):
+    """교재별 집중·편차 사실 — 정본 books[] 에서 파생 (ncs-book-concentration FR-04)."""
+
+    def setUp(self):
+        self.f = HR.load_facts(HR.DEFAULT_SUMMARY, HR.DEFAULT_CASES, HR.DEFAULT_RECOUNT)
+
+    def test_loads_canonical_concentration(self):
+        c = self.f.concentration
+        self.assertEqual((86, 11517, 2502), (c.books, c.total, c.grade3))
+        self.assertEqual(["LM1903060329", "LM1903060411"], [b.code for b in c.dedicated])                 # D4: 제목에 '안전관리'
+        self.assertEqual((2238, 965), (c.dedicated_total, c.dedicated_g3))
+        self.assertEqual((84, 9279, 1537), (c.rest_books, c.rest_total, c.rest_g3))
+        self.assertEqual((8.5, 0.0, 57), (round(c.mean_pct, 1), round(c.median_pct, 1), c.zero_books))
+        self.assertEqual(10, len(c.top)); self.assertEqual("반도체 장비 안전관리", c.top[0].title); self.assertEqual(780, c.top[0].g[3])
+        self.assertEqual(2015, sum(b.g[3] for b in c.top))
+        equip = next(g for g in c.group_rows if g.name == "반도체장비")
+        self.assertEqual((19, 3239, 1052, 18, 1608, 272, 780), (equip.books, equip.total, equip.g3, equip.rest_books, equip.rest_total, equip.rest_g3, equip.dedicated_g3))
+        self.assertEqual(["반도체장비", "반도체재료"], [g.name for g in c.group_rows])                       # 전용 교재가 있는 분야만, 몫 큰 순
+
+    def test_guards_bind_books_to_the_canonical_totals(self):
+        summary = json.loads(HR.DEFAULT_SUMMARY.read_text(encoding="utf-8"))
+        cases = {"교재 수": lambda s: s["corpora"]["NCS"]["books"].pop(),
+                 "출현 합": lambda s: s["corpora"]["NCS"]["books"][0].__setitem__("total", 0),
+                 "등급 3 합": lambda s: s["corpora"]["NCS"]["books"][0]["grades"].__setitem__("3", 9999),
+                 "분야": lambda s: s["corpora"]["NCS"]["books"][0].__setitem__("group", "반도체제조"),
+                 "groups\\[\\] 에 없는 분야": lambda s: s["corpora"]["NCS"]["books"][0].__setitem__("group", "Z"),   # 목록에 없는 분야 — 조용히 빠지는 대신 정지 (ship 적대적 리뷰)
+                 "교재 등급 합": lambda s: (s["corpora"]["NCS"]["books"][0]["grades"].update({"1": s["corpora"]["NCS"]["books"][0]["grades"]["1"] + 1, "3": s["corpora"]["NCS"]["books"][0]["grades"]["3"] - 1}),
+                                        s["corpora"]["NCS"]["books"][-1]["grades"].update({"1": s["corpora"]["NCS"]["books"][-1]["grades"]["1"] - 1, "3": s["corpora"]["NCS"]["books"][-1]["grades"]["3"] + 1})),   # 분야 사이 재배분 — 말뭉치 합·total 불변
+                 "안전관리 전용": lambda s: s["corpora"]["NCS"]["books"][0].__setitem__("title", "반도체 안전관리 무엇")}
+        for name, mutate in cases.items():
+            with self.subTest(name=name):
+                bad = json.loads(json.dumps(summary)); mutate(bad)
+                with self.assertRaisesRegex(ValueError, name):
+                    MB.load_concentration_facts(bad)
+        old = json.loads(json.dumps(summary)); del old["corpora"]["NCS"]["books"]
+        with self.assertRaisesRegex(ValueError, "2026-09-17 이후"):
+            MB.load_concentration_facts(old)
+
+
+class ConcentrationTemplateTests(unittest.TestCase):
+    """교재별 집중 문단·표 — 값과 분기 (FR-05·FR-06·FR-07)."""
+
+    def setUp(self):
+        self.f = HR.load_facts(HR.DEFAULT_SUMMARY, HR.DEFAULT_CASES, HR.DEFAULT_RECOUNT)
+
+    def test_pieces_and_values(self):
+        pieces = MB.concentration_paragraphs(self.f)
+        self.assertEqual("HBPBCTNBCTNBPB", "".join(pc.kind for pc in pieces))   # 선행 B 없음 — 삽입 지점(2단계 블록의 끝 빈 문단)이 구분자다 (ship 적대적 리뷰, 중복 빈 문단 수정)
+        self.assertEqual(MB.CONCENTRATION_HEADING, texts(pieces, "H")[0])
+        p1, p2 = texts(pieces, "P")
+        for needle in ("2,502건", "86권", "두 권", "2,238건", "965건", "38.6%", "21.7%", "16.6%", "84권", "반도체 장비 안전관리", "780건", "1,052건", "74.1%", "32.5%", "16.9%"):
+            self.assertIn(needle, p1, needle)
+        for needle in ("8.5%", "0.0%", "57권", "66.3%", "과반", "21.7%"):
+            self.assertIn(needle, p2, needle)
+        t3, t4 = [pc for pc in pieces if pc.kind == "T"]
+        self.assertEqual(4, len(t3.header)); self.assertEqual(7, len(t3.rows))
+        self.assertEqual(["NCS 전체", "86", "11,517 (2,502)", "21.7%"], list(t3.rows[0]))
+        self.assertEqual(["안전관리 전용 교재", "2", "2,238 (965)", "43.1%"], list(t3.rows[1]))
+        self.assertEqual(["전용 교재 제외", "84", "9,279 (1,537)", "16.6%"], list(t3.rows[2]))
+        self.assertEqual((4, 10), (len(t4.header), len(t4.rows)))
+        self.assertEqual(["반도체 장비 안전관리 (장비)", "1,631", "780", "47.8%"], list(t4.rows[0]))
+        notes = texts(pieces, "N")
+        self.assertIn("제목에 ‘안전관리’를 포함하는 두 권", notes[0]); self.assertIn("2,015건", notes[1]); self.assertIn("80.5%", notes[1])
+        self.assertTrue(all(pc.text.strip() for pc in pieces if pc.kind in ("H", "P", "C", "N")))
+
+    def test_branches(self):
+        f = self.f
+        one = with_concentration(f, dedicated=f.concentration.dedicated[:1], dedicated_total=1631, dedicated_g3=780,
+                                 rest_books=85, rest_total=9886, rest_g3=1722)
+        self.assertIn("한 권", texts(MB.concentration_paragraphs(one), "P")[0])
+        third = dataclasses.replace(f.concentration.top[2], title="반도체 공정 안전관리", group="반도체장비")                 # 세 번째 전용 교재를 가정한다
+        three = with_concentration(f, dedicated=f.concentration.dedicated + (third,), dedicated_total=2238 + third.total, dedicated_g3=965 + third.g[3],
+                                   rest_books=83, rest_total=9279 - third.total, rest_g3=1537 - third.g[3])
+        p_three = texts(MB.concentration_paragraphs(three), "P")[0]
+        self.assertIn("세 권(", p_three); self.assertIn("이 세 권을 제외한 83권", p_three); self.assertIn("반도체 공정 안전관리", p_three)   # 3권 수사 + 분야 문장의 전용 교재 나열
+        self.assertEqual(3, [pc.conditions for pc in MB.concentration_paragraphs(three) if pc.kind == "P"][0]["dedicated_count"])
+        self.assertIn("반도체 장비 안전관리·반도체 공정 안전관리의 등급 3", p_three)                                        # 같은 분야의 전용 교재 두 권이 '·' 로 이어진다
+        up = with_concentration(f, rest_g3=2400, rest_total=9279)                                          # 제외해도 비율이 오른다
+        p_up = texts(MB.concentration_paragraphs(up), "P")[0]
+        self.assertIn("올라간다", p_up); self.assertNotIn("내려간다", p_up)
+        same = with_concentration(f, rest_g3=int(round(0.217 * 9279)), rest_total=9279)
+        self.assertIn("거의 같다", texts(MB.concentration_paragraphs(same), "P")[0])
+        # 경계값(커버리지 감사) — _trend 의 ±0.5pp(BRIDGE_SAME_PP) 관행과 같되, 위 fixture 들은 정확히 그 경계를 보장하지 않는다: 직접 호출로 고정한다
+        self.assertEqual(("거의 같다", "거의 같다", "내려간다", "올라간다"),
+                         (MB._rate_direction(20.0, 20.5), MB._rate_direction(20.5, 20.0), MB._rate_direction(20.0, 20.51), MB._rate_direction(20.51, 20.0)))
+        small = with_concentration(f, group_rows=tuple(dataclasses.replace(g, dedicated_g3=100) for g in f.concentration.group_rows))
+        p_small = texts(MB.concentration_paragraphs(small), "P")[0]
+        self.assertNotIn("과반이며", p_small)
+        few = with_concentration(f, zero_books=10)
+        self.assertIn("과반에 못 미친다", texts(MB.concentration_paragraphs(few), "P")[1])
+        conds = [pc.conditions for pc in MB.concentration_paragraphs(f) if pc.kind == "P"]
+        self.assertEqual({"dedicated_count", "rest_rate_direction", "group_majority"}, set(conds[0]))
+        self.assertEqual({"zero_majority"}, set(conds[1]))
+
+    def test_group_share_with_zero_grade3_does_not_divide_by_zero(self):
+        """분야 등급 3 합이 0 인 경우(실제 정본에는 없는 경로) — share = 100*dedicated_g3/g3 if g3 else 0.0 분기, ZeroDivisionError 없이 비과반으로 (커버리지 감사)."""
+        f = self.f
+        zeroed = tuple(dataclasses.replace(g, g3=0, dedicated_g3=0, rest_g3=0) for g in f.concentration.group_rows)
+        zero = with_concentration(f, group_rows=zeroed)
+        pieces = MB.concentration_paragraphs(zero)                     # ZeroDivisionError 를 던지면 여기서 실패한다
+        p1 = texts(pieces, "P")[0]
+        self.assertNotIn("과반이며", p1)
+        conds = [pc.conditions for pc in pieces if pc.kind == "P"][0]
+        self.assertEqual({g.name: False for g in f.concentration.group_rows}, conds["group_majority"])
+
+    def test_every_number_has_a_source_key(self):
+        f = self.f
+        index = f.value_index()
+        for pc in MB.concentration_paragraphs(f):
+            texts_to_audit = [pc.text] + [cell for row in pc.rows for cell in row] + list(pc.header)
+            for text in texts_to_audit:
+                for token in HR.audited_numbers(text):
+                    self.assertIn(token, index, f"{token} ← {text[:40]}")
 
 
 class ReviewGuardTests(unittest.TestCase):
@@ -719,7 +848,7 @@ class ReviewGuardTests(unittest.TestCase):
                  ("목차 2절 블록에", lambda xml: dup_nth(xml, para(" 4) 소결"), 2)),                                 # 목차의 두 번째 ' 4) 소결' = 2절 항목 (첫 번째는 1절)
                  ("빈 문단이 아닙니다", lambda xml: xml.replace("일관된 기준으로 확인하기 위한 절차이다.</hp:t></hp:run><hp:linesegarray><hp:lineseg textpos=\"0\"/></hp:linesegarray></hp:p>" + HR.MB.__name__ * 0 + '<hp:p id="0" paraPrIDRef="25"', "일관된 기준으로 확인하기 위한 절차이다.</hp:t></hp:run><hp:linesegarray><hp:lineseg textpos=\"0\"/></hp:linesegarray></hp:p>" + para("끼어든 글") + '<hp:p id="0" paraPrIDRef="25"', 1)),
                  ("본문 원형", lambda xml: xml.replace(para("본 연구는 반도체 기술 고등학교 교과서의 안전보건교육 내용을 체계적으로 분석하여 구조적 한계를 확인하였다."), "", 1).replace(para("반도체고등학교의 안전보건교육이 양적으로 일부 포함되어 있음에도 한계를 가지고 있음을 보여준다."), "", 1)),
-                 ("이미 2단계 산출물", lambda xml: xml.replace(para(" 8) 검증과 한계 "), para(" 8) 검증과 한계 ") + para(MB.BRIDGE_HEADING), 1))]
+                 ("이미 2·3단계 산출물", lambda xml: xml.replace(para(" 8) 검증과 한계 "), para(" 8) 검증과 한계 ") + para(MB.BRIDGE_HEADING), 1))]
         with tempfile.TemporaryDirectory() as td:
             src = build_fixture_hwpx(Path(td) / "src.hwpx", stage1_body(f))
             for regex, transform in cases:
@@ -727,7 +856,7 @@ class ReviewGuardTests(unittest.TestCase):
                     broken = rezip(src, Path(td) / f"{abs(hash(regex))}.hwpx", transform)
                     with self.assertRaisesRegex(ValueError, regex):
                         HR.refresh(broken, f, Path(td) / "out.hwpx", Path(td) / "d.json", None, render=False, write_output=False)
-            with self.assertRaisesRegex(ValueError, "2단계"):
+            with self.assertRaisesRegex(ValueError, "2·3단계"):
                 HR.refresh(src, dataclasses.replace(f, page_basis={"NCS": "marker", "교과서": "marker"}), Path(td) / "out.hwpx", Path(td) / "d.json", None, render=False, write_output=False)
             with self.assertRaisesRegex(ValueError, "찾지 못"):
                 HR.refresh(build_fixture_hwpx(Path(td) / "noch2.hwpx", stage1_body(f), chapter2=False), f, Path(td) / "out.hwpx", Path(td) / "d.json", None, render=False, write_output=False)

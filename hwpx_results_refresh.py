@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""hwpx_results_refresh.py — 기초보고서(HWPX) 제3장 연구 결과 1~3절을 정본 수치로 다시 쓰고(1단계), 제2장 5절 연구 방법·표 4·목차와 제3장 2절 " 4) 집계 기준의 변경과 이전 결과와의 관계" 를 데이터에서 만든다(2단계, hwpx-methods-bridge-refresh 2026-09-16 — 사실·문장은 hwpx_methods_bridge.py).
+"""hwpx_results_refresh.py — 기초보고서(HWPX) 제3장 연구 결과 1~3절을 정본 수치로 다시 쓰고(1단계), 제2장 5절 연구 방법·표 4·목차와 제3장 2절 " 4) 집계 기준의 변경과 이전 결과와의 관계" 를 데이터에서 만들며(2단계, hwpx-methods-bridge-refresh 2026-09-16), 그 뒤에 " 5) 교재별 집중과 편차"(표 12-3·12-4, 소결 → 6))를 붙인다(3단계, ncs-book-concentration 2026-09-17 — 사실·문장은 모두 hwpx_methods_bridge.py).
 
 1단계 — 기능 hwpx-ncs-section-refresh (2026-09-14, 연구책임자 결정 D1~D5). 숫자는 전부 추적 파일에서 온다:
   docs/03-analysis/data/semantic_summary.json   — 총계·등급·분야(groups, pages)·키워드(×그룹)·grade_sources·detected_pages   (정본 실행, 사전 v2)
   docs/03-analysis/data/accident_case_pages.json — 사고사례 자동 판정 13쪽과 원문 확인 판정
   docs/03-analysis/data/summary.json             — 교과서 사고사례 쪽 수(0)·NCS 절단 16쪽 (recount_grades)
 2단계 — 기능 hwpx-methods-bridge-refresh (2026-09-16, D1~D6 (a)): 제2장 5절(연구 방법)·표 4·목차와 제3장 2절 " 4) 집계 기준의 변경과 이전 결과와의 관계".
-  사실·문장은 hwpx_methods_bridge.py (MethodsPaths 의 추적 파일 8종 + page_utils.EXCEL_MAX_CHARS; 계보 가드로 다른 실행의 파일을 섞지 않는다).
+  사실·문장은 hwpx_methods_bridge.py (MethodsPaths 의 추적 파일 11종 + page_utils.EXCEL_MAX_CHARS; 계보 가드로 다른 실행의 파일을 섞지 않는다).
+3단계 — 기능 ncs-book-concentration (2026-09-17, D1 (b)·D2 (a)·D3 (b)·D4 (a)·D5 (a)·D6 (b)): 제3장 2절 " 5) 교재별 집중과 편차"(문단 2·표 12-3·12-4) 를 2단계 블록 뒤에 넣고 소결을 6) 으로 바꾼다.
+  사실은 정본 semantic_summary.json 의 corpora.NCS.books[] 에서만 파생한다(hwpx_methods_bridge.load_concentration_facts — 파생값은 저장하지 않는다).
 스크립트 상수는 문장 틀, 제목·첫머리 locator, 원본 목차의 구고 소제목 수(OLD_METHODS_TOC_ENTRIES)뿐이다.
 
 동작: 절은 제목 텍스트로 찾고(목차의 같은 제목은 건너뛴다), 문단은 원문 첫머리로 찾아 템플릿으로 다시 쓰며(서술 조건은 데이터로
@@ -127,6 +129,7 @@ class Facts:
     page_basis: dict = field(default_factory=dict)      # meta.page_basis — NCS "real"(실제 PDF 쪽, 2026-09-15~) / "marker"(표식 블록); 교과서는 "marker"(= 실제 쪽)
     methods: MB.MethodsFacts | None = None              # 2단계 — 제2장 5절 사실 (hwpx_methods_bridge.load_methods_facts)
     bridge: MB.BridgeFacts | None = None                # 2단계 — 제3장 2절 4) 사실 (hwpx_methods_bridge.load_bridge_facts)
+    concentration: MB.ConcentrationFacts | None = None   # 3단계 — 제3장 2절 5) 교재별 집중 (hwpx_methods_bridge.load_concentration_facts)
     _index: dict | None = field(default=None, init=False, repr=False, compare=False)   # value_index() 캐시 — 사실은 불변이라 한 번만 만든다 (성능 리뷰); init=False 라 dataclasses.replace() 로 만든 새 Facts 는 캐시를 물려받지 않는다
 
     @property
@@ -192,7 +195,7 @@ class Facts:
             add(fmt(corpus.detected_pages), f"corpora.{label}.detected_pages")
             for source, count in corpus.grade_sources.items():
                 add(fmt(count), f"corpora.{label}.grade_sources.{source}")
-        for facts in (self.methods, self.bridge):                                    # 2단계 사실 — 방법론·연결 소절의 숫자 40여 개 (hwpx_methods_bridge)
+        for facts in (self.methods, self.bridge, self.concentration):                # 2·3단계 사실 — 방법론·연결·교재별 집중 소절의 숫자 (hwpx_methods_bridge)
             if facts is not None:
                 for value, key in facts.value_pairs():
                     add(value, key)
@@ -295,8 +298,9 @@ def load_facts(summary_path: Path = DEFAULT_SUMMARY, cases_path: Path = DEFAULT_
     mp = replace(mp, summary=Path(summary_path), recount_summary=Path(recount_path))
     methods = MB.load_methods_facts(mp, summary=summary)
     bridge = MB.load_bridge_facts(mp, summary=summary)
+    concentration = MB.load_concentration_facts(summary, mp.summary)
     return Facts(ncs=ncs, school=school, cases=case_facts, run=summary.get("meta", {}).get("run", {}), cases_date=cases.get("date"), page_basis=dict(page_basis),
-                 methods=methods, bridge=bridge)
+                 methods=methods, bridge=bridge, concentration=concentration)
 
 
 def run_day(f: Facts) -> str:
@@ -1313,6 +1317,7 @@ class _Ledger:
         self.root, self.facts, self.touched, self.inserted, self.removed, self.text_pairs = root, facts, touched, inserted, removed, text_pairs
         self.owners = owner_map(root)
         self.kept: list[ET.Element] = []                            # 삭제·삽입한 원소의 참조 — check_untouched 가 끝날 때까지 살아 있어야 id 가 유일하다
+        self.last_inserted: list[ET.Element] = []                   # 마지막 insert 가 넣은 원소들
 
     def rewrite(self, p: ET.Element, text: str, section: str) -> dict:
         old = direct_text(p)
@@ -1348,6 +1353,7 @@ class _Ledger:
         insert_after(self.root, ref, elements)
         self.inserted.update(id(el) for el in elements)
         self.kept.extend(elements)
+        self.last_inserted = elements                                  # 3단계가 2단계 블록 끝 원소를 장부에서 받는다 (파일 재탐지 금지)
         for el in elements:                                            # 삽입한 문단(과 그 안의 표)도 장부의 소유자 지도에 넣는다
             for sub in el.iter():
                 self.owners[id(sub)] = el
@@ -1364,10 +1370,10 @@ class _Ledger:
 
 def refresh_methods_bridge(root: ET.Element, facts: Facts, touched: set, inserted: set, removed: set, text_pairs: list) -> dict:
     """2단계. 반환: {"methods": …, "bridge": …, "tables": [대조 JSON 표 항목], "review_tables": [(절, 캡션, 행, first, 헤더)], "audit_texts": [추가 감사 글]}"""
-    if not facts.ncs_real_pages or facts.methods is None or facts.bridge is None:
-        raise ValueError("2단계(제2장 5절·제3장 2절 4))는 실제 PDF 쪽 기준 정본(meta.page_basis.NCS = real)과 2단계 사실이 있어야 만듭니다")
+    if not facts.ncs_real_pages or facts.methods is None or facts.bridge is None or facts.concentration is None:
+        raise ValueError("2·3단계(제2장 5절·제3장 2절 4)·5))는 실제 PDF 쪽 기준 정본(meta.page_basis.NCS = real)과 2·3단계 사실이 있어야 만듭니다")
     L = _Ledger(root, facts, touched, inserted, removed, text_pairs)
-    out = {"methods": {}, "bridge": {}, "tables": [], "review_tables": [], "audit_texts": []}
+    out = {"methods": {}, "bridge": {}, "concentration": {}, "tables": [], "review_tables": [], "audit_texts": []}
 
     # --- 표 4 (제2장 1절)
     ch1 = locate_range(root, CH2_S1_HEADING, CH2_S2_HEADING, 1)
@@ -1395,7 +1401,7 @@ def refresh_methods_bridge(root: ET.Element, facts: Facts, touched: set, inserte
     entries = [p for p in block[1:] if TOC_ENTRY_RE.match(direct_text(p))]
     new_entries = list(MB.METHODS_HEADINGS)                            # 목차 항목 = 본문 소제목 (한 상수)
     if len(entries) != OLD_METHODS_TOC_ENTRIES:
-        raise ValueError(f"목차 5절 소제목이 {len(entries)}개입니다 — 원본(2026-09-11)은 {OLD_METHODS_TOC_ENTRIES}개: 문서가 바뀌었거나 이미 2단계 산출물입니다")
+        raise ValueError(f"목차 5절 소제목이 {len(entries)}개입니다 — 원본(2026-09-11)은 {OLD_METHODS_TOC_ENTRIES}개: 문서가 바뀌었거나 이미 2·3단계 산출물입니다")
     for p, text in zip(entries, new_entries):
         L.rewrite(p, text, "toc")
     L.remove(entries[len(new_entries):], "toc")
@@ -1408,9 +1414,9 @@ def refresh_methods_bridge(root: ET.Element, facts: Facts, touched: set, inserte
     if len(concl_toc) != 1:
         raise ValueError(f"목차 2절 블록에 '{MB.CONCLUSION_HEADING_OLD.strip()}' 이 {len(concl_toc)}개입니다 (1개여야 함)")
     L.rewrite(concl_toc[0], MB.BRIDGE_HEADING, "toc")
-    L.insert(concl_toc[0], [MB.Piece("H", MB.CONCLUSION_HEADING_NEW)], {"H": concl_toc[0]}, "toc")
-    out["bridge"]["toc"] = {"rewritten": 1, "inserted": 1}
-    out["audit_texts"] += [MB.BRIDGE_HEADING, MB.CONCLUSION_HEADING_NEW]
+    L.insert(concl_toc[0], [MB.Piece("H", MB.CONCENTRATION_HEADING), MB.Piece("H", MB.CONCLUSION_HEADING_NEW)], {"H": concl_toc[0]}, "toc")
+    out["bridge"]["toc"] = {"rewritten": 1, "inserted": 2}
+    out["audit_texts"] += [MB.BRIDGE_HEADING, MB.CONCENTRATION_HEADING, MB.CONCLUSION_HEADING_NEW]
 
     # --- 5절 본문
     sec5 = locate_range(root, METHODS_HEADING, CHAPTER_HEADING, 1)
@@ -1494,6 +1500,19 @@ def refresh_methods_bridge(root: ET.Element, facts: Facts, touched: set, inserte
     out["tables"] += [{**t, "changed_cells": t["rows"] * t["cols"]} for t in out["bridge"]["tables"]]
     out["review_tables"] += [("bridge", MB.TABLE12_1_LABEL, MB.bridge_table1_rows(facts), 1, MB.bridge_table1_header(facts)),
                              ("bridge", MB.TABLE12_2_LABEL, MB.bridge_table2_rows(facts), 1, MB.bridge_table2_header(facts))]
+    # --- 3단계: 제3장 2절 5) 교재별 집중과 편차 (ncs-book-concentration)
+    ref3 = L.last_inserted[-1]                                                     # 2단계 블록의 끝 빈 문단 — 장부에서 받는다
+    conc_pieces = MB.concentration_paragraphs(facts)
+    records3 = L.insert(ref3, conc_pieces, protos2, "concentration")
+    out["concentration"] = {"inserted": records3,
+                            "tables": [{"section": "concentration", "caption": cap, "rows": r["rows"], "cols": r["cols"], "table_id": r["table_id"]}
+                                       for cap, r in zip((MB.TABLE12_3_LABEL, MB.TABLE12_4_LABEL), (r for r in records3 if r["kind"] == "T"))],
+                            "dedicated": [b.code for b in facts.concentration.dedicated],
+                            "conditions": {k: v for r in records3 if r["kind"] == "P" for k, v in r["conditions"].items()}}
+    out["tables"] += [{**t, "changed_cells": t["rows"] * t["cols"]} for t in out["concentration"]["tables"]]
+    out["review_tables"] += [("concentration", MB.TABLE12_3_LABEL, MB.concentration_table1_rows(facts), 1, MB.concentration_table1_header(facts)),
+                             ("concentration", MB.TABLE12_4_LABEL, MB.concentration_table2_rows(facts), 1, MB.concentration_table2_header(facts))]
+
     L.rewrite(concl, MB.CONCLUSION_HEADING_NEW, "bridge")
     out["bridge"]["renumbered"] = {MB.CONCLUSION_HEADING_OLD.strip(): MB.CONCLUSION_HEADING_NEW.strip()}
     last_concl = find_paragraph(ncs, CONCLUSION_LAST)
@@ -1511,9 +1530,9 @@ def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_d
     """render=False 는 그림을 그리지 않는다(magick 없는 환경 — 원본 그림 바이트 유지); write_output=False 는 HWPX 를 쓰지 않는다(점검 실행);
     strip_layout_cache=False 는 손댄 문단의 줄 배치 캐시를 남긴다(--keep-line-layout-cache — 캐시 없는 문단을 다시 배치하지 못하는 뷰어가 있을 때의 안전판)."""
     raw, root, root_tag = read_section(hwpx)
-    already = {direct_text(p).strip() for p in top_paragraphs(root)} & {MB.METHODS_HEADINGS[0].strip(), MB.BRIDGE_HEADING.strip()}
+    already = {direct_text(p).strip() for p in top_paragraphs(root)} & {MB.METHODS_HEADINGS[0].strip(), MB.BRIDGE_HEADING.strip(), MB.CONCENTRATION_HEADING.strip()}
     if already:
-        raise ValueError(f"{hwpx.name} 은 이미 2단계 산출물입니다({', '.join(sorted(already))}) — 정본은 입력이 아니며, 언제나 원본(2026-09-11)에서 다시 만듭니다")
+        raise ValueError(f"{hwpx.name} 은 이미 2·3단계 산출물입니다({', '.join(sorted(already))}) — 정본은 입력이 아니며, 언제나 원본(2026-09-11)에서 다시 만듭니다")
     snapshot = snapshot_paragraphs(root)
     owners = owner_map(root)
     touched: set[int] = set(); inserted: set[int] = set(); removed: set[int] = set()       # 손댄 원소 장부 — 1·2단계 공용 (check_untouched)
@@ -1591,7 +1610,7 @@ def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_d
     # 2단계 — 제2장 5절 · 표 4 · 목차 · 제3장 2절 4)  (hwpx-methods-bridge-refresh)
     stage2 = refresh_methods_bridge(root, facts, touched, inserted, removed, text_pairs)
     kept_alive = stage2["kept"]                                          # noqa: F841 — 장부의 원소 참조를 검사가 끝날 때까지 붙든다
-    diff["methods"], diff["bridge"] = stage2["methods"], stage2["bridge"]
+    diff["methods"], diff["bridge"], diff["concentration"] = stage2["methods"], stage2["bridge"], stage2["concentration"]
     diff["tables"] += stage2["tables"]
     review_specs = review_specs + stage2["review_tables"]                # 1단계 표 7~13 뒤에 2단계 표 4·5·6·12-1·12-2 (디자인 리뷰: 번호 순 읽기)
 
@@ -1643,9 +1662,9 @@ def write_text_review(text_review_dir: Path, pairs: list[tuple[str, str, str]]) 
     text_review_dir.mkdir(parents=True, exist_ok=True)
     parts = ["<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>HWPX 문단 구/신 대조 (비추적)</title>",
              "<style>body{font-family:-apple-system,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem;line-height:1.5}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:.4rem .6rem;vertical-align:top;width:50%}th{background:#f3f4f6}h2{margin-top:2rem}</style></head><body>",
-             "<h1>HWPX 문단 구/신 대조 — 제3장 1~3절(1단계) · 제2장 5절·목차·제3장 2절 4)(2단계)</h1><p>보고서 본문을 담으므로 이 파일은 <code>data/</code> 아래(비추적)에만 둔다.</p>"]
+             "<h1>HWPX 문단 구/신 대조 — 제3장 1~3절(1단계) · 제2장 5절·목차·제3장 2절 4)(2단계) · 제3장 2절 5)(3단계)</h1><p>보고서 본문을 담으므로 이 파일은 <code>data/</code> 아래(비추적)에만 둔다.</p>"]
     current = None
-    order = ("textbook", "ncs", "cases", "methods", "toc", "bridge")
+    order = ("textbook", "ncs", "cases", "methods", "toc", "bridge", "concentration")
     pairs = sorted(pairs, key=lambda pair: order.index(pair[0]) if pair[0] in order else len(order))      # 절 단위로 모아 보인다 (안정 정렬 — 절 안 순서는 편집 순서)
     for name, old, new in pairs:
         if name != current:
@@ -1658,7 +1677,7 @@ def write_text_review(text_review_dir: Path, pairs: list[tuple[str, str, str]]) 
     (text_review_dir / "review_text.html").write_text("".join(parts), encoding="utf-8")
 
 
-SECTION_LABEL = {"textbook": "교과서", "ncs": "NCS", "cases": "사고사례", "methods": "연구 방법", "bridge": "집계 기준 연결", "toc": "목차"}   # 검토 HTML 의 절 이름
+SECTION_LABEL = {"textbook": "교과서", "ncs": "NCS", "cases": "사고사례", "methods": "연구 방법", "bridge": "집계 기준 연결", "concentration": "교재별 집중", "toc": "목차"}   # 검토 HTML 의 절 이름
 
 
 def write_review(review_dir: Path, facts: Facts, table_specs, images) -> None:
@@ -1667,7 +1686,7 @@ def write_review(review_dir: Path, facts: Facts, table_specs, images) -> None:
     numeric = re.compile(r"[\d,.%]+")
     parts = ["<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>HWPX 표·그림 검토본</title>",
              "<style>body{font-family:-apple-system,sans-serif;max-width:1100px;margin:2rem auto;padding:0 1rem}.scroll-x{overflow-x:auto}table{border-collapse:collapse;margin:1rem 0}td,th{border:1px solid #ccc;padding:.25rem .6rem;font-size:.875rem}th{background:#f3f4f6}td.n{text-align:right;font-variant-numeric:tabular-nums}img{max-width:100%;border:1px solid #ddd;margin:.5rem 0}</style></head><body>",
-             f"<h1>HWPX 표·그림 검토본 — 제3장 표 7~13·그림 2~4(1단계), 표 4·5·6·12-1·12-2(2단계)</h1><p>정본 {html.escape(str(facts.run.get('generated_at')))} · git {html.escape(str(facts.run.get('git_commit')))} · 사전 {html.escape(str(facts.run.get('dictionary')))}. 본문 문장은 담지 않는다(표·그림만).</p>"]
+             f"<h1>HWPX 표·그림 검토본 — 제3장 표 7~13·그림 2~4(1단계), 표 4·5·6·12-1·12-2(2단계), 표 12-3·12-4(3단계)</h1><p>정본 {html.escape(str(facts.run.get('generated_at')))} · git {html.escape(str(facts.run.get('git_commit')))} · 사전 {html.escape(str(facts.run.get('dictionary')))}. 본문 문장은 담지 않는다(표·그림만).</p>"]
     for name, caption, rows, first, header in table_specs:
         parts.append(f"<h2>{html.escape(caption)} ({html.escape(SECTION_LABEL.get(name, name))})</h2><div class=\"scroll-x\" tabindex=\"0\" role=\"region\" aria-label=\"{html.escape(caption)}\"><table>")
         if header:
@@ -1684,7 +1703,7 @@ def write_review(review_dir: Path, facts: Facts, table_specs, images) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="기초보고서 HWPX 를 정본 수치로 다시 쓴다 — 1단계 제3장 1~3절, 2단계 제2장 5절·표 4·목차·제3장 2절 4)")
+    ap = argparse.ArgumentParser(description="기초보고서 HWPX 를 정본 수치로 다시 쓴다 — 1단계 제3장 1~3절, 2단계 제2장 5절·표 4·목차·제3장 2절 4), 3단계 제3장 2절 5) 교재별 집중(표 12-3·12-4)")
     ap.add_argument("--hwpx", type=Path, default=DEFAULT_HWPX)
     ap.add_argument("--out", type=Path, default=None, help="새 HWPX (기본 data/반도체 기초보고서_{정본 실행일}_정본.hwpx)")
     ap.add_argument("--summary", type=Path, default=DEFAULT_SUMMARY)

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import csv
 import json
+import statistics
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -27,7 +28,11 @@ BRIDGE_LEVEL_PP = 1.0                                      # 쪽 단위 등급 3
 CONSERVATIVE_RECALL = 50                                   # 재현율 상한(%)이 이 미만이면 "등급 3 은 보수적 판정" 문장
 METHODS_HEADINGS = (" 1) 자료 정제", " 2) 의미 표현 사전", " 3) 쪽 배치: 실제 PDF 쪽 대응", " 4) 쪽 등급 판정", " 5) 집계 단위", " 6) 재현성과 한계")
 BRIDGE_HEADING = " 4) 집계 기준의 변경과 이전 결과와의 관계"
-CONCLUSION_HEADING_OLD, CONCLUSION_HEADING_NEW = " 4) 소결", " 5) 소결"
+CONCENTRATION_HEADING = " 5) 교재별 집중과 편차"                 # 3단계 신설 소절 (ncs-book-concentration D2)
+CONCLUSION_HEADING_OLD, CONCLUSION_HEADING_NEW = " 4) 소결", " 6) 소결"   # 2단계가 4)→5) 로 옮겼고 3단계가 5)→6) 으로 (한 실행이라 4)→6))
+DEDICATED_TITLE_RULE = "안전관리"                                   # D4: 안전관리 전용 교재 식별 규칙 (제목 포함)
+DEDICATED_EXPECTED_CODES = ("LM1903060329", "LM1903060411")         # 그 규칙이 내야 하는 집합 — 다르면 정지(문장이 두 권을 전제한다)
+TOP_BOOKS = 10                                                      # 표 12-4 의 행 수
 NCS_GROUP_TO_AREA = {"반도체개발": "개발", "반도체제조": "제조", "반도체장비": "장비", "반도체재료": "재료"}   # 정본 그룹명 → 보고서 분야명 (hwpx_results_refresh 가 여기서 가져간다 — 한 정의)
 NCS_GROUP_ORDER = tuple(NCS_GROUP_TO_AREA)                  # 보고서의 분야 순서 = 대응표의 삽입 순서
 
@@ -286,6 +291,129 @@ def load_methods_facts(paths: MethodsPaths = MethodsPaths(), summary: dict | Non
         sample_pages=sum(int(v) for v in strata.values()), census_pages=sum(int(strata[k]) for k in strata if k != "recall"), recall_pages=int(_get(strata, "recall", paths.recoding_scores)),
         recall_pool=int(_get(recoding, "population.recall_pool", paths.recoding_scores)),
         precision=tuple(float(_get(v, "precision", paths.recoding_scores)) for v in baseline), recall=tuple(float(_get(v, "recall", paths.recoding_scores)) for v in baseline),
+    )
+
+
+@dataclass(frozen=True)
+class BookRow:
+    """정본 corpora.NCS.books[] 한 행 — 표·문단이 실제로 쓰는 필드만(쪽수·검출 쪽·등급3 쪽은 이 모듈에서 미사용, 리뷰 정리)."""
+    code: str | None
+    title: str
+    group: str
+    total: int
+    g: dict                                   # {1,2,3} 출현 수
+
+
+@dataclass(frozen=True)
+class GroupConcentration:
+    """전용 교재가 있는 분야의 집중도 — 전용 교재를 뺀 값과 나란히."""
+    name: str
+    books: int
+    total: int
+    g3: int
+    rest_books: int
+    rest_total: int
+    rest_g3: int
+    dedicated_g3: int
+
+
+@dataclass(frozen=True)
+class ConcentrationFacts:
+    """제3장 2절 5) 가 말하는 사실 — 정본 books[] 에서 파생(저장하지 않는다). 전체 행(rows)·실행일은 어느 문장·표도 안 써서 뺐다(리뷰 정리)."""
+    total: int
+    grade3: int
+    books: int
+    dedicated: tuple
+    dedicated_total: int
+    dedicated_g3: int
+    rest_books: int
+    rest_total: int
+    rest_g3: int
+    group_rows: tuple
+    rated_books: int                          # 평균·중앙값 표본 크기 — total==0 인 교재는 비율이 없어 제외(0으로 나누기 방지); 현재 정본은 books 와 같다
+    mean_pct: float
+    median_pct: float
+    zero_books: int
+    top: tuple
+
+    def value_pairs(self) -> list[tuple[str, str]]:
+        c = self
+        pairs = [(fmt(c.total), "books.total"), (fmt(c.grade3), "books.grade3"), (pct(c.grade3, c.total), "books.grade3/total"),
+                 (fmt(c.books), "books.count"), (fmt(c.rated_books), "books.rated.count"), (fmt(len(c.dedicated)), "books.dedicated.count"),
+                 (fmt(c.dedicated_total), "books.dedicated.total"), (fmt(c.dedicated_g3), "books.dedicated.grade3"),
+                 (pct(c.dedicated_g3, c.grade3), "books.dedicated.grade3/grade3"), (pct(c.dedicated_total, c.total), "books.dedicated.total/total"),
+                 (pct(c.dedicated_g3, c.dedicated_total), "books.dedicated.grade3/dedicated_total"),
+                 (fmt(c.rest_books), "books.rest.count"), (fmt(c.rest_total), "books.rest.total"), (fmt(c.rest_g3), "books.rest.grade3"),
+                 (pct(c.rest_g3, c.rest_total), "books.rest.grade3/total"),
+                 (f"{c.mean_pct:.1f}%", "books.mean_grade3_pct"), (f"{c.median_pct:.1f}%", "books.median_grade3_pct"),
+                 (fmt(c.zero_books), "books.zero_grade3.count"), (pct(c.zero_books, c.books), "books.zero_grade3/count"),
+                 (fmt(len(c.top)), "books.top.count"), (fmt(sum(b.g[3] for b in c.top)), "books.top.grade3"),
+                 (pct(sum(b.g[3] for b in c.top), c.grade3), "books.top.grade3/grade3")]
+        for g in c.group_rows:
+            pairs += [(fmt(g.books), f"books.group.{g.name}.count"), (fmt(g.total), f"books.group.{g.name}.total"), (fmt(g.g3), f"books.group.{g.name}.grade3"),
+                      (pct(g.g3, g.total), f"books.group.{g.name}.grade3/total"), (fmt(g.dedicated_g3), f"books.group.{g.name}.dedicated_grade3"),
+                      (pct(g.dedicated_g3, g.g3), f"books.group.{g.name}.dedicated_grade3/grade3"),
+                      (fmt(g.rest_books), f"books.group.{g.name}.rest.count"), (fmt(g.rest_total), f"books.group.{g.name}.rest.total"),
+                      (fmt(g.rest_g3), f"books.group.{g.name}.rest.grade3"), (pct(g.rest_g3, g.rest_total), f"books.group.{g.name}.rest.grade3/total")]
+        for b in c.dedicated + c.top:
+            pairs += [(fmt(b.total), f"books.{b.code}.total"), (fmt(b.g[3]), f"books.{b.code}.grade3"), (pct(b.g[3], b.total), f"books.{b.code}.grade3/total")]
+        return pairs
+
+
+def load_concentration_facts(summary: dict, file: Path = MethodsPaths().summary) -> ConcentrationFacts:
+    """정본 corpora.NCS.books[] → 집중도·분포. 파생값은 저장하지 않고 여기서 계산한다 (ncs-book-concentration D1)."""
+    ncs = _get(summary, "corpora.NCS", file)
+    if "books" not in ncs:
+        raise ValueError(f"{Path(file).name} 에 corpora.NCS.books 가 없습니다 — 정본을 2026-09-17 이후 스크립트로 다시 만드십시오")
+    rows = tuple(BookRow(code=b["code"], title=b["title"], group=b["group"], total=int(b["total"]),
+                         g={g: int(b["grades"][str(g)]) for g in (1, 2, 3)})
+                 for b in ncs["books"])
+    total, grade3 = int(ncs["total"]), int(ncs["grades"]["3"])
+    if len(rows) != int(ncs["documents"]):
+        raise ValueError(f"교재 수 {len(rows)} 가 corpora.NCS.documents({ncs['documents']}) 와 다릅니다")
+    if sum(b.total for b in rows) != total:
+        raise ValueError(f"교재 출현 합 {sum(b.total for b in rows)} 이 corpora.NCS.total({total}) 과 다릅니다")
+    if sum(b.g[3] for b in rows) != grade3:
+        raise ValueError(f"교재 등급 3 합 {sum(b.g[3] for b in rows)} 이 corpora.NCS.grades.3({grade3}) 과 다릅니다")
+    by_group = {}
+    for b in rows:
+        by_group.setdefault(b.group, []).append(b)
+    known_groups = {group["name"] for group in _get(ncs, "groups", file)}
+    unknown = [b for b in rows if b.group not in known_groups]
+    if unknown:
+        raise ValueError(f"groups[] 에 없는 분야: {[(b.title, b.group) for b in unknown]} — 분야별 집계에서 조용히 빠진다")
+    for group in _get(ncs, "groups", file):
+        got = by_group.get(group["name"], [])
+        if len(got) != int(group["documents"]) or sum(b.total for b in got) != int(group["total"]):
+            raise ValueError(f"분야 {group['name']} 의 교재 집계가 groups[] 와 다릅니다: {len(got)}권·{sum(b.total for b in got)}건 ≠ {group['documents']}권·{group['total']}건")
+        got_grades = {g: sum(b.g[g] for b in got) for g in (1, 2, 3)}
+        if got_grades != {g: int(group["grades"][str(g)]) for g in (1, 2, 3)}:                            # 분야 사이 재배분 — 말뭉치 합이 그대로여도 잡는다
+            raise ValueError(f"분야 {group['name']} 의 교재 등급 합이 groups[] 와 다릅니다: {got_grades} ≠ {group['grades']}")
+    dedicated = tuple(b for b in rows if DEDICATED_TITLE_RULE in b.title)
+    if tuple(b.code for b in dedicated) != DEDICATED_EXPECTED_CODES:
+        raise ValueError(f"안전관리 전용 교재 집합이 기대와 다릅니다: {[b.code for b in dedicated]} ≠ {list(DEDICATED_EXPECTED_CODES)} — 문장이 이 집합을 전제한다")
+    rest = [b for b in rows if b not in dedicated]
+    group_rows = []
+    for name in NCS_GROUP_ORDER:
+        books = by_group.get(name, [])
+        ded = [b for b in books if b in dedicated]
+        if not ded:
+            continue
+        keep = [b for b in books if b not in ded]
+        group_rows.append(GroupConcentration(name=name, books=len(books), total=sum(b.total for b in books), g3=sum(b.g[3] for b in books),
+                                             rest_books=len(keep), rest_total=sum(b.total for b in keep), rest_g3=sum(b.g[3] for b in keep),
+                                             dedicated_g3=sum(b.g[3] for b in ded)))
+    group_rows.sort(key=lambda g: -g.dedicated_g3 / g.g3 if g.g3 else 0)
+    shares = [100 * b.g[3] / b.total for b in rows if b.total]                # total==0 인 교재는 비율이 없어 평균·중앙값 표본에서 뺀다(0으로 나누기 방지) — rated_books 로 실제 표본 크기를 밝힌다
+    return ConcentrationFacts(
+        total=total, grade3=grade3, books=len(rows),
+        dedicated=dedicated, dedicated_total=sum(b.total for b in dedicated), dedicated_g3=sum(b.g[3] for b in dedicated),
+        rest_books=len(rest), rest_total=sum(b.total for b in rest), rest_g3=sum(b.g[3] for b in rest), group_rows=tuple(group_rows),
+        rated_books=len(shares),
+        mean_pct=sum(shares) / len(shares) if shares else 0.0,
+        median_pct=statistics.median(shares) if shares else 0.0,
+        zero_books=sum(1 for b in rows if b.g[3] == 0),
+        top=tuple(sorted(rows, key=lambda b: (-b.g[3], -b.total, b.code or b.title))[:TOP_BOOKS]),
     )
 
 
@@ -599,6 +727,98 @@ def bridge_paragraphs(f) -> list[Piece]:
     t1 = Piece("T", rows=tuple(tuple(r) for r in bridge_table1_rows(f)), header=tuple(bridge_table1_header(f)))
     t2 = Piece("T", rows=tuple(tuple(r) for r in bridge_table2_rows(f)), header=tuple(bridge_table2_header(f)))
     return [B, Piece("H", BRIDGE_HEADING), B, q1, B, Piece("C", TABLE12_1_CAPTION), t1, Piece("N", bridge_table1_note(f)), B, q2, B, Piece("C", TABLE12_2_CAPTION), t2, Piece("N", bridge_table2_note(f)), B]
+
+
+TABLE12_3_CAPTION = "표 12-3. NCS 교재별 등급 3 집중"
+TABLE12_3_LABEL, TABLE12_4_LABEL = "표 12-3.", "표 12-4."
+
+
+def table12_4_caption(f) -> str:
+    """"상위 N권" 은 실제 행 수(len(top))에서 — 말뭉치가 10권 밑으로 줄어도 표·캡션이 어긋나지 않는다 (ship 레드팀 리뷰)."""
+    return f"표 12-4. NCS 등급 3 출현 상위 {len(f.concentration.top)}권"
+
+
+def concentration_table1_header(f) -> list[str]:
+    return ["구분", "교재 수", "출현 (등급 3)", "등급 3 비율"]
+
+
+def _cell(total: int, g3: int) -> str:
+    return f"{fmt(total)} ({fmt(g3)})"
+
+
+def concentration_table1_rows(f) -> list[list[str]]:
+    c = f.concentration
+    rows = [["NCS 전체", fmt(c.books), _cell(c.total, c.grade3), pct(c.grade3, c.total)],
+            ["안전관리 전용 교재", fmt(len(c.dedicated)), _cell(c.dedicated_total, c.dedicated_g3), pct(c.dedicated_g3, c.dedicated_total)],
+            ["전용 교재 제외", fmt(c.rest_books), _cell(c.rest_total, c.rest_g3), pct(c.rest_g3, c.rest_total)]]
+    for g in c.group_rows:
+        area = NCS_GROUP_TO_AREA[g.name]
+        rows.append([f"{area} 분야", fmt(g.books), _cell(g.total, g.g3), pct(g.g3, g.total)])
+        rows.append([f"{area} 분야(전용 제외)", fmt(g.rest_books), _cell(g.rest_total, g.rest_g3), pct(g.rest_g3, g.rest_total)])
+    return rows
+
+
+def concentration_table1_note(f) -> str:
+    c = f.concentration
+    names = "·".join(b.title for b in c.dedicated)
+    return (f"주: 단위: 건. 등급 3 비율의 분모는 각 행의 출현. 안전관리 전용 교재는 제목에 ‘{DEDICATED_TITLE_RULE}’를 포함하는 "
+            f"{KOREAN_COUNT.get(len(c.dedicated), str(len(c.dedicated)))} 권({names})이다.")
+
+
+def concentration_table2_header(f) -> list[str]:
+    return ["교재 (분야)", "출현", "등급 3", "등급 3 비율"]
+
+
+def concentration_table2_rows(f) -> list[list[str]]:
+    return [[f"{b.title} ({NCS_GROUP_TO_AREA[b.group]})", fmt(b.total), fmt(b.g[3]), pct(b.g[3], b.total)] for b in f.concentration.top]
+
+
+def concentration_table2_note(f) -> str:
+    c = f.concentration
+    top3 = sum(b.g[3] for b in c.top)
+    return f"주: 단위: 건. 상위 {fmt(len(c.top))}권의 등급 3 합은 {fmt(top3)}건으로 NCS 등급 3의 {pct(top3, c.grade3)}이다."
+
+
+def _rate_direction(now: float, then: float) -> str:
+    if abs(now - then) <= BRIDGE_SAME_PP:
+        return "거의 같다"
+    return "내려간다" if now < then else "올라간다"
+
+
+def concentration_paragraphs(f) -> list[Piece]:
+    c = f.concentration
+    B = Piece("B")
+    count_word = KOREAN_COUNT.get(len(c.dedicated), str(len(c.dedicated)))
+    names = "·".join(b.title for b in c.dedicated)
+    whole_rate = 100 * c.grade3 / c.total if c.total else 0.0                 # c.total==0 은 EXPECTED 총계 가드가 이미 막지만, 나머지 나눗셈처럼 일관되게 지킨다
+    rest_rate = 100 * c.rest_g3 / c.rest_total if c.rest_total else 0.0
+    direction = _rate_direction(rest_rate, whole_rate)
+    group_sentences, majority = [], {}
+    for g in c.group_rows:
+        area = NCS_GROUP_TO_AREA[g.name]
+        share = 100 * g.dedicated_g3 / g.g3 if g.g3 else 0.0
+        majority[g.name] = share > 50.0
+        ded_titles = "·".join(b.title for b in c.dedicated if b.group == g.name)
+        tail = "로 과반이며" if majority[g.name] else "이며"
+        group_sentences.append(f"{area} 분야에서는 {ded_titles}의 등급 3 {fmt(g.dedicated_g3)}건이 분야 등급 3 {fmt(g.g3)}건의 {pct(g.dedicated_g3, g.g3)}{tail}, "
+                               f"이 교재를 제외하면 분야 비율은 {pct(g.g3, g.total)}에서 {pct(g.rest_g3, g.rest_total)}가 된다.")
+    p1 = Piece("P", (f"NCS의 등급 3 출현 {fmt(c.grade3)}건은 {fmt(c.books)}권에 고르게 있지 않다. 제목에 ‘{DEDICATED_TITLE_RULE}’를 둔 전용 교재 {count_word} 권({names})이 "
+                     f"출현 {fmt(c.dedicated_total)}건(전체의 {pct(c.dedicated_total, c.total)})에 등급 3 {fmt(c.dedicated_g3)}건({pct(c.dedicated_g3, c.grade3)})을 차지하며, "
+                     f"이 {count_word} 권을 제외한 {fmt(c.rest_books)}권의 등급 3 비율은 {pct(c.grade3, c.total)}에서 {pct(c.rest_g3, c.rest_total)}로 {direction}(표 12-3). "
+                     + " ".join(group_sentences) +
+                     " 이 제외 집계는 자료를 버린 결과가 아니라 집중도를 확인하기 위한 보조 비교이다."),
+                conditions={"dedicated_count": len(c.dedicated), "rest_rate_direction": direction, "group_majority": majority})
+    zero_majority = c.zero_books * 2 > c.books
+    p2 = Piece("P", (f"교재 단위로 보면 등급 3 비율의 {fmt(c.rated_books)}권 평균은 {c.mean_pct:.1f}%, 중앙값은 {c.median_pct:.1f}%이고, 등급 3 출현이 한 건도 없는 교재가 "
+                     f"{fmt(c.zero_books)}권({pct(c.zero_books, c.books)})으로 {'과반이다' if zero_majority else '과반에 못 미친다'}(상위 {fmt(len(c.top))}권은 표 12-4). "
+                     f"합산 {pct(c.grade3, c.total)}는 소수 교재에 몰린 값이므로, 본 보고서는 합산값과 교재별 분포를 함께 제시한다. "
+                     "전문 안전관리 교재의 내용을 개별 작업 교재의 해당 단원과 어떻게 연결할지는 후속 검토 대상이며, 이 수치만으로 교재 사이의 교육 전이가 이루어진다고 볼 수는 없다."),
+                conditions={"zero_majority": zero_majority})
+    t3 = Piece("T", rows=tuple(tuple(r) for r in concentration_table1_rows(f)), header=tuple(concentration_table1_header(f)))
+    t4 = Piece("T", rows=tuple(tuple(r) for r in concentration_table2_rows(f)), header=tuple(concentration_table2_header(f)))
+    # 선행 B 없음 — 삽입 지점(ref3, hwpx_results_refresh.py)이 이미 2단계 블록의 끝 빈 문단이라 그것이 구분자다(중복 빈 문단 방지, ship 적대적 리뷰)
+    return [Piece("H", CONCENTRATION_HEADING), B, p1, B, Piece("C", TABLE12_3_CAPTION), t3, Piece("N", concentration_table1_note(f)), B,
+            Piece("C", table12_4_caption(f)), t4, Piece("N", concentration_table2_note(f)), B, p2, B]
 
 
 def conclusion_sentence(f) -> tuple[str, dict]:

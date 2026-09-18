@@ -1,0 +1,2895 @@
+{
+ "source": {
+  "hwpx": "반도체 기초보고서_20260911.hwpx",
+  "hwpx_sha256": "ad5167ea1434a6b7195765ecfacb9669b87dcb16a82245442fa96d0b4bc51ff5",
+  "summary_run": {
+   "generated_at": "2026-09-17T20:47:47+09:00",
+   "git_commit": "b057902",
+   "dictionary": "v2",
+   "expected": true
+  },
+  "page_basis": {
+   "NCS": "real",
+   "교과서": "marker"
+  },
+  "cases_date": "2026-09-06"
+ },
+ "output": "반도체 기초보고서_20260917_정본.hwpx",
+ "paragraphs": [
+  {
+   "section": "textbook",
+   "locator": "본 연구에서는 반도체고등학교의 전공교과서를 대상으로",
+   "old_numbers": [
+    "9",
+    "2,055",
+    "30"
+   ],
+   "new_numbers": [
+    "9",
+    "2,055",
+    "30"
+   ],
+   "keys": [
+    "corpora.NCS.groups[개발].documents",
+    "corpora.교과서.documents",
+    "corpora.교과서.groups[].pages(sum)",
+    "expression_review_key.per_expression",
+    "keywords(count)",
+    "keywords[].corpora.NCS.total>0(count)",
+    "keywords[끼임].corpora.NCS.groups[제조].total",
+    "keywords[누출].corpora.교과서.groups[개발].total",
+    "keywords[먼지].corpora.교과서.groups[장비].total",
+    "keywords[물질안전보건자료].corpora.NCS.groups[제조].total",
+    "keywords[방사선].corpora.NCS.groups[개발].total",
+    "keywords[보호구].corpora.교과서.grades.3",
+    "keywords[분진].corpora.NCS.groups[장비].total",
+    "keywords[분진].corpora.교과서.total",
+    "keywords[산업안전보건법].corpora.NCS.grades.2",
+    "keywords[산업안전보건법].corpora.NCS.groups[장비].total",
+    "keywords[안전보건].corpora.NCS.groups[제조].total",
+    "keywords[인화].corpora.교과서.groups[개발].total",
+    "keywords[진동].corpora.교과서.groups[제조].total",
+    "keywords[질병].corpora.NCS.grades.1",
+    "keywords[화재].corpora.NCS.groups[개발].total"
+   ],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "키워드 분석 결과",
+   "old_numbers": [
+    "26",
+    "4",
+    "380",
+    "130",
+    "101",
+    "82",
+    "67",
+    "55"
+   ],
+   "new_numbers": [
+    "26",
+    "4",
+    "363",
+    "103",
+    "101",
+    "67",
+    "65",
+    "61"
+   ],
+   "keys": [
+    "cases.pages[LM1903060329_19v1_반도체_장비_안전관리].page",
+    "cases.pages[LM1903060421_23v3_반도체용_포토_공정_재료_제조].page",
+    "keywords[].corpora.교과서.total>0(count)",
+    "keywords[끼임].corpora.NCS.total",
+    "keywords[먼지].corpora.NCS.groups[제조].total",
+    "keywords[방사선].corpora.NCS.grades.2",
+    "keywords[방사선].corpora.NCS.groups[장비].total",
+    "keywords[보건].corpora.교과서.groups[재료].total",
+    "keywords[보건].corpora.교과서.total",
+    "keywords[보호구].corpora.교과서.total",
+    "keywords[부상].corpora.NCS.grades.3",
+    "keywords[부상].corpora.NCS.groups[재료].total",
+    "keywords[안전].corpora.교과서.total",
+    "keywords[위험].corpora.교과서.total",
+    "keywords[인화].corpora.NCS.groups[개발].total",
+    "keywords[진동].corpora.교과서.total",
+    "keywords[폭발].corpora.NCS.grades.3",
+    "keywords[화학물질].corpora.교과서.total"
+   ],
+   "conditions": {
+    "top_keyword": "안전",
+    "zero_keywords": [
+     "추락",
+     "공정안전관리",
+     "직업병",
+     "물질안전보건자료"
+    ]
+   },
+   "format_collapsed": true
+  },
+  {
+   "section": "textbook",
+   "locator": "‘화학물질’은",
+   "old_numbers": [
+    "82"
+   ],
+   "new_numbers": [
+    "61"
+   ],
+   "keys": [
+    "keywords[먼지].corpora.NCS.groups[제조].total",
+    "keywords[방사선].corpora.NCS.groups[장비].total",
+    "keywords[보건].corpora.교과서.groups[재료].total",
+    "keywords[화학물질].corpora.교과서.total"
+   ],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "특히 질병 관련 내용의 부족이 두드러졌다",
+   "old_numbers": [
+    "11",
+    "0",
+    "20",
+    "10"
+   ],
+   "new_numbers": [
+    "11",
+    "0",
+    "28",
+    "20"
+   ],
+   "keys": [
+    "corpora.교과서.groups[장비].grades.3",
+    "keywords[먼지].corpora.교과서.groups[개발].total",
+    "keywords[먼지].corpora.교과서.groups[재료].total",
+    "keywords[방사선].corpora.교과서.grades.1",
+    "keywords[보건].corpora.NCS.groups[개발].total",
+    "keywords[분진].corpora.NCS.grades.2",
+    "keywords[분진].corpora.NCS.groups[재료].total",
+    "keywords[사망].corpora.NCS.grades.2",
+    "keywords[사망].corpora.NCS.groups[장비].total",
+    "keywords[유해인자].corpora.NCS.grades.3",
+    "keywords[유해인자].corpora.교과서.groups[재료].total",
+    "keywords[유해인자].corpora.교과서.total",
+    "keywords[인화].corpora.NCS.groups[제조].total",
+    "keywords[작업환경].corpora.교과서.grades.2",
+    "keywords[작업환경].corpora.교과서.total",
+    "keywords[중독].corpora.NCS.groups[장비].total",
+    "keywords[질병].corpora.교과서.total",
+    "keywords[폭발].corpora.교과서.total",
+    "keywords[화학물질].corpora.교과서.groups[장비].total",
+    "keywords[화학물질].corpora.교과서.groups[재료].total"
+   ],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "또한 ‘끼임’",
+   "old_numbers": [
+    "3",
+    "0",
+    "0",
+    "2"
+   ],
+   "new_numbers": [
+    "3",
+    "0",
+    "0",
+    "2"
+   ],
+   "keys": [],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "종합하면, 현행 반도체고등학교의 반도체 교과서에는",
+   "old_numbers": [
+    "0",
+    "4"
+   ],
+   "new_numbers": [
+    "0",
+    "4"
+   ],
+   "keys": [],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "9권의 교과서에서 구체적인 사고",
+   "old_numbers": [
+    "9"
+   ],
+   "new_numbers": [
+    "9"
+   ],
+   "keys": [
+    "corpora.교과서.documents",
+    "keywords[끼임].corpora.NCS.groups[제조].total",
+    "keywords[누출].corpora.교과서.groups[개발].total",
+    "keywords[먼지].corpora.교과서.groups[장비].total",
+    "keywords[물질안전보건자료].corpora.NCS.groups[제조].total",
+    "keywords[보호구].corpora.교과서.grades.3",
+    "keywords[분진].corpora.NCS.groups[장비].total",
+    "keywords[분진].corpora.교과서.total",
+    "keywords[산업안전보건법].corpora.NCS.groups[장비].total",
+    "keywords[안전보건].corpora.NCS.groups[제조].total",
+    "keywords[인화].corpora.교과서.groups[개발].total",
+    "keywords[진동].corpora.교과서.groups[제조].total",
+    "keywords[질병].corpora.NCS.grades.1",
+    "keywords[화재].corpora.NCS.groups[개발].total"
+   ],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "본 연구에서는 9권의 반도체 교과서를",
+   "old_numbers": [
+    "9",
+    "4"
+   ],
+   "new_numbers": [
+    "9",
+    "4",
+    "1,207",
+    "388",
+    "3",
+    "8"
+   ],
+   "keys": [
+    "books.LM1903060424.total",
+    "cases.pages[area=장비](count)",
+    "cases.top_book_pages",
+    "corpora.교과서.detected_pages",
+    "corpora.교과서.documents",
+    "corpora.교과서.total",
+    "expression_review_impact.totals.v2.교과서",
+    "impact.pages.교과서.detected_pages",
+    "impact.pages.교과서.page_grades.3",
+    "keywords[끼임].corpora.NCS.groups[제조].total",
+    "keywords[누출].corpora.교과서.groups[개발].total",
+    "keywords[먼지].corpora.교과서.groups[장비].total",
+    "keywords[물질안전보건자료].corpora.NCS.groups[제조].total",
+    "keywords[방사선].corpora.교과서.groups[장비].total",
+    "keywords[보호구].corpora.교과서.grades.3",
+    "keywords[분진].corpora.NCS.groups[장비].total",
+    "keywords[분진].corpora.교과서.total",
+    "keywords[산업안전보건법].corpora.NCS.groups[장비].total",
+    "keywords[소음].corpora.NCS.grades.3",
+    "keywords[소음].corpora.NCS.groups[개발].total",
+    "keywords[안전보건].corpora.NCS.grades.1",
+    "keywords[안전보건].corpora.NCS.groups[제조].total",
+    "keywords[유해인자].corpora.교과서.grades.1",
+    "keywords[인화].corpora.교과서.groups[개발].total",
+    "keywords[인화].corpora.교과서.groups[제조].total",
+    "keywords[중독].corpora.NCS.grades.1",
+    "keywords[중독].corpora.교과서.grades.3",
+    "keywords[진동].corpora.교과서.groups[제조].total",
+    "keywords[질병].corpora.NCS.grades.1",
+    "keywords[화재].corpora.NCS.groups[개발].total",
+    "keywords[화재].corpora.교과서.grades.1"
+   ],
+   "conditions": {
+    "page_basis": "real"
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "반도체 개발 분야는",
+   "old_numbers": [
+    "3",
+    "639",
+    "31.1%"
+   ],
+   "new_numbers": [
+    "3",
+    "639",
+    "31.1%"
+   ],
+   "keys": [
+    "corpora.교과서.groups[개발].pages",
+    "corpora.교과서.groups[개발].pages/corpus",
+    "keywords[보호구].corpora.교과서.grades.2/total",
+    "keywords[화학물질].corpora.교과서.grades.2+3/total"
+   ],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "반도체 제조 분야는",
+   "old_numbers": [
+    "4",
+    "1,002",
+    "48.8%"
+   ],
+   "new_numbers": [
+    "4",
+    "1,002",
+    "48.8%"
+   ],
+   "keys": [
+    "corpora.교과서.groups[제조].pages",
+    "corpora.교과서.groups[제조].pages/corpus"
+   ],
+   "conditions": {
+    "manufacturing_has_most_pages": true
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "따라서 제조 분야는 안전보건교육이 가장 적극적으로",
+   "old_numbers": [],
+   "new_numbers": [
+    "2",
+    "28"
+   ],
+   "keys": [
+    "corpora.교과서.groups[장비].grades.3",
+    "keywords[작업환경].corpora.교과서.total",
+    "keywords[중독].corpora.NCS.groups[장비].total"
+   ],
+   "conditions": {
+    "zero_keywords_in_sentence": [
+     "직업병",
+     "물질안전보건자료"
+    ]
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "반도체 장비 분야는",
+   "old_numbers": [
+    "1",
+    "217",
+    "10.6%"
+   ],
+   "new_numbers": [
+    "1",
+    "217",
+    "10.6%"
+   ],
+   "keys": [
+    "corpora.교과서.groups[장비].pages",
+    "corpora.교과서.groups[장비].pages/corpus"
+   ],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "따라서 장비 분야에서는 전기, 기계, 압력",
+   "old_numbers": [
+    "0"
+   ],
+   "new_numbers": [
+    "3",
+    "0"
+   ],
+   "keys": [],
+   "conditions": {
+    "textbook_accident_pages": 0,
+    "fall_is_zero": true
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "반도체 재료·인프라 분야는",
+   "old_numbers": [
+    "1",
+    "197",
+    "9.6%"
+   ],
+   "new_numbers": [
+    "1",
+    "197",
+    "9.6%"
+   ],
+   "keys": [
+    "corpora.NCS.groups[개발].total/corpus",
+    "corpora.교과서.groups[재료].pages",
+    "corpora.교과서.groups[재료].pages/corpus"
+   ],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "특히 반도체산업의 대형 사고는",
+   "old_numbers": [
+    "0"
+   ],
+   "new_numbers": [
+    "0",
+    "2",
+    "28",
+    "20"
+   ],
+   "keys": [
+    "corpora.교과서.groups[장비].grades.3",
+    "keywords[먼지].corpora.교과서.groups[재료].total",
+    "keywords[분진].corpora.NCS.grades.2",
+    "keywords[분진].corpora.NCS.groups[재료].total",
+    "keywords[사망].corpora.NCS.grades.2",
+    "keywords[유해인자].corpora.교과서.groups[재료].total",
+    "keywords[유해인자].corpora.교과서.total",
+    "keywords[작업환경].corpora.교과서.total",
+    "keywords[중독].corpora.NCS.groups[장비].total",
+    "keywords[화학물질].corpora.교과서.groups[장비].total",
+    "keywords[화학물질].corpora.교과서.groups[재료].total"
+   ],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "첫째, 등급 1은",
+   "old_numbers": [
+    "1",
+    "705",
+    "54.5%"
+   ],
+   "new_numbers": [
+    "1",
+    "633",
+    "52.4%"
+   ],
+   "keys": [
+    "corpora.교과서.grades.1",
+    "corpora.교과서.grades.1/total"
+   ],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "둘째, 등급2는",
+   "old_numbers": [
+    "2",
+    "468",
+    "36.2%"
+   ],
+   "new_numbers": [
+    "2",
+    "459",
+    "38.0%"
+   ],
+   "keys": [
+    "corpora.교과서.grades.2",
+    "corpora.교과서.grades.2/total",
+    "impact.grades.block.NCS.1/total"
+   ],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "셋째, 가장 중요한 등급 3",
+   "old_numbers": [
+    "3",
+    "120",
+    "1,293",
+    "9.3%",
+    "3"
+   ],
+   "new_numbers": [
+    "3",
+    "115",
+    "1,207",
+    "9.5%",
+    "3"
+   ],
+   "keys": [
+    "corpora.교과서.grades.3",
+    "corpora.교과서.grades.3/total",
+    "corpora.교과서.total",
+    "expression_review_impact.totals.v2.교과서",
+    "keywords[물질안전보건자료].corpora.NCS.groups[재료].total"
+   ],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "반도체고등학교에서 사용하는 반도체 교과서",
+   "old_numbers": [
+    "9",
+    "2,055",
+    "30",
+    "26",
+    "1,293",
+    "3",
+    "120",
+    "9.3%"
+   ],
+   "new_numbers": [
+    "9",
+    "2,055",
+    "30",
+    "26",
+    "1,207",
+    "3",
+    "115",
+    "9.5%"
+   ],
+   "keys": [
+    "corpora.NCS.groups[개발].documents",
+    "corpora.교과서.documents",
+    "corpora.교과서.grades.3",
+    "corpora.교과서.grades.3/total",
+    "corpora.교과서.groups[].pages(sum)",
+    "corpora.교과서.total",
+    "expression_review_impact.totals.v2.교과서",
+    "expression_review_key.per_expression",
+    "keywords(count)",
+    "keywords[].corpora.NCS.total>0(count)",
+    "keywords[].corpora.교과서.total>0(count)",
+    "keywords[끼임].corpora.NCS.groups[제조].total",
+    "keywords[누출].corpora.교과서.groups[개발].total",
+    "keywords[먼지].corpora.교과서.groups[장비].total",
+    "keywords[물질안전보건자료].corpora.NCS.groups[재료].total",
+    "keywords[물질안전보건자료].corpora.NCS.groups[제조].total",
+    "keywords[방사선].corpora.NCS.grades.2",
+    "keywords[방사선].corpora.NCS.groups[개발].total",
+    "keywords[보호구].corpora.교과서.grades.3",
+    "keywords[부상].corpora.NCS.grades.3",
+    "keywords[부상].corpora.NCS.groups[재료].total",
+    "keywords[분진].corpora.NCS.groups[장비].total",
+    "keywords[분진].corpora.교과서.total",
+    "keywords[산업안전보건법].corpora.NCS.grades.2",
+    "keywords[산업안전보건법].corpora.NCS.groups[장비].total",
+    "keywords[안전보건].corpora.NCS.groups[제조].total",
+    "keywords[인화].corpora.NCS.groups[개발].total",
+    "keywords[인화].corpora.교과서.groups[개발].total",
+    "keywords[진동].corpora.교과서.groups[제조].total",
+    "keywords[질병].corpora.NCS.grades.1",
+    "keywords[화재].corpora.NCS.groups[개발].total"
+   ],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "textbook",
+   "locator": "또한 공정안전관리, 직업병, 물질안전보건자료",
+   "old_numbers": [
+    "4",
+    "9"
+   ],
+   "new_numbers": [
+    "4",
+    "9"
+   ],
+   "keys": [
+    "corpora.교과서.documents",
+    "keywords[끼임].corpora.NCS.groups[제조].total",
+    "keywords[누출].corpora.교과서.groups[개발].total",
+    "keywords[먼지].corpora.교과서.groups[장비].total",
+    "keywords[물질안전보건자료].corpora.NCS.groups[제조].total",
+    "keywords[보호구].corpora.교과서.grades.3",
+    "keywords[분진].corpora.NCS.groups[장비].total",
+    "keywords[분진].corpora.교과서.total",
+    "keywords[산업안전보건법].corpora.NCS.groups[장비].total",
+    "keywords[안전보건].corpora.NCS.groups[제조].total",
+    "keywords[인화].corpora.교과서.groups[개발].total",
+    "keywords[진동].corpora.교과서.groups[제조].total",
+    "keywords[질병].corpora.NCS.grades.1",
+    "keywords[화재].corpora.NCS.groups[개발].total"
+   ],
+   "conditions": {
+    "zero_keywords": [
+     "추락",
+     "공정안전관리",
+     "직업병",
+     "물질안전보건자료"
+    ],
+    "textbook_accident_pages": 0
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "NCS 기반 반도체 자료를 대상으로",
+   "old_numbers": [
+    "85",
+    "7,769",
+    "30"
+   ],
+   "new_numbers": [
+    "86",
+    "9,100",
+    "2",
+    "30",
+    "11,517"
+   ],
+   "keys": [
+    "books.count",
+    "books.rated.count",
+    "books.total",
+    "corpora.NCS.documents",
+    "corpora.NCS.grade_sources.real-page",
+    "corpora.NCS.groups[].pages(sum)",
+    "corpora.NCS.groups[개발].documents",
+    "corpora.NCS.total",
+    "expression_review_impact.totals.v2.NCS",
+    "expression_review_key.per_expression",
+    "impact.totals.NCS",
+    "keywords(count)",
+    "keywords[].corpora.NCS.total>0(count)",
+    "keywords[방사선].corpora.NCS.groups[개발].total",
+    "keywords[산업안전보건법].corpora.NCS.grades.2"
+   ],
+   "conditions": {
+    "page_basis": "real",
+    "marker_books": 2
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "교과서의 전체 키워드 중 ‘안전’이",
+   "old_numbers": [
+    "4,259",
+    "1",
+    "2,084",
+    "48.9%",
+    "2",
+    "1,423",
+    "33.4%",
+    "3",
+    "752",
+    "17.6%"
+   ],
+   "new_numbers": [
+    "3,929",
+    "2",
+    "1,702",
+    "43.3%",
+    "1",
+    "1,508",
+    "38.4%",
+    "3",
+    "719",
+    "18.3%"
+   ],
+   "keys": [
+    "keywords[누출].corpora.교과서.grades.2+3/total",
+    "keywords[안전].corpora.NCS.grades.1",
+    "keywords[안전].corpora.NCS.grades.1/total",
+    "keywords[안전].corpora.NCS.grades.2",
+    "keywords[안전].corpora.NCS.grades.2/total",
+    "keywords[안전].corpora.NCS.grades.3",
+    "keywords[안전].corpora.NCS.grades.3/total",
+    "keywords[안전].corpora.NCS.total"
+   ],
+   "conditions": {
+    "safety_top_grade": 2,
+    "safety_rank": 1
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "사고 관련 주요 키워드 검출 건수는",
+   "old_numbers": [
+    "1,522",
+    "1,393",
+    "1,230",
+    "639",
+    "582",
+    "479",
+    "393",
+    "385",
+    "323"
+   ],
+   "new_numbers": [
+    "1,272",
+    "1,080",
+    "965",
+    "646",
+    "587",
+    "453",
+    "393",
+    "360",
+    "320"
+   ],
+   "keys": [
+    "books.dedicated.grade3",
+    "expression_review_impact.totals.v1fix.교과서",
+    "impact.transition.matrix.2->3",
+    "keywords[MSDS].corpora.NCS.total",
+    "keywords[누출].corpora.NCS.total",
+    "keywords[보호구].corpora.NCS.total",
+    "keywords[위험].corpora.NCS.total",
+    "keywords[인화].corpora.NCS.total",
+    "keywords[진동].corpora.NCS.total",
+    "keywords[폭발].corpora.NCS.total",
+    "keywords[화재].corpora.NCS.total",
+    "keywords[화학물질].corpora.NCS.grades.2",
+    "keywords[화학물질].corpora.NCS.total"
+   ],
+   "conditions": {
+    "accident_keyword_order": [
+     "위험",
+     "화학물질",
+     "보호구",
+     "누출",
+     "인화",
+     "MSDS",
+     "폭발",
+     "진동",
+     "화재"
+    ]
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "화학물질 관련 키워드는",
+   "old_numbers": [
+    "1,522",
+    "479",
+    "164",
+    "643",
+    "348",
+    "55",
+    "40",
+    "36",
+    "649",
+    "546",
+    "227",
+    "100"
+   ],
+   "new_numbers": [
+    "1,080",
+    "453",
+    "155",
+    "330",
+    "55",
+    "36",
+    "32",
+    "676",
+    "163",
+    "156",
+    "85"
+   ],
+   "keys": [
+    "corpora.교과서.groups[재료].grades.1",
+    "keywords[MSDS].corpora.NCS.groups[개발].total",
+    "keywords[MSDS].corpora.NCS.groups[장비].total",
+    "keywords[MSDS].corpora.NCS.groups[재료].total",
+    "keywords[MSDS].corpora.NCS.groups[제조].total",
+    "keywords[MSDS].corpora.NCS.total",
+    "keywords[감전].corpora.NCS.grades.2",
+    "keywords[먼지].corpora.NCS.grades.2",
+    "keywords[먼지].corpora.교과서.total",
+    "keywords[물질안전보건자료].corpora.NCS.total",
+    "keywords[보호구].corpora.교과서.grades.2",
+    "keywords[산업안전보건법].corpora.NCS.total",
+    "keywords[안전보건].corpora.NCS.grades.3",
+    "keywords[위험].corpora.NCS.groups[제조].total",
+    "keywords[위험].corpora.교과서.groups[재료].total",
+    "keywords[작업환경].corpora.NCS.grades.3",
+    "keywords[중독].corpora.교과서.groups[재료].total",
+    "keywords[중독].corpora.교과서.total",
+    "keywords[화학물질].corpora.NCS.grades.2",
+    "keywords[화학물질].corpora.NCS.groups[개발].total",
+    "keywords[화학물질].corpora.NCS.groups[장비].total",
+    "keywords[화학물질].corpora.NCS.groups[재료].total",
+    "keywords[화학물질].corpora.NCS.groups[제조].total",
+    "keywords[화학물질].corpora.NCS.total"
+   ],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "건강 영향 관련 키워드는",
+   "old_numbers": [
+    "5",
+    "19",
+    "53",
+    "214",
+    "94",
+    "385"
+   ],
+   "new_numbers": [
+    "5",
+    "19",
+    "53",
+    "113",
+    "91",
+    "360"
+   ],
+   "keys": [
+    "books.group.반도체장비.count",
+    "cases.books",
+    "cases.pages[LM1903060329_19v1_반도체_장비_안전관리].page",
+    "cases.pages[area=재료](count)",
+    "corpora.NCS.groups[장비].documents",
+    "keywords[감전].corpora.교과서.grades.1",
+    "keywords[누출].corpora.교과서.grades.2",
+    "keywords[방사선].corpora.NCS.groups[제조].total",
+    "keywords[방사선].corpora.NCS.total",
+    "keywords[보건].corpora.NCS.groups[제조].total",
+    "keywords[보호구].corpora.교과서.groups[개발].total",
+    "keywords[산업안전보건법].corpora.NCS.grades.3",
+    "keywords[소음].corpora.NCS.total",
+    "keywords[유해인자].corpora.NCS.total",
+    "keywords[인화].corpora.교과서.total",
+    "keywords[작업환경].corpora.NCS.grades.2",
+    "keywords[작업환경].corpora.NCS.groups[개발].total",
+    "keywords[직업병].corpora.NCS.total",
+    "keywords[진동].corpora.NCS.total",
+    "keywords[질병].corpora.NCS.grades.2",
+    "keywords[질병].corpora.NCS.grades.3",
+    "keywords[질병].corpora.NCS.total",
+    "keywords[폭발].corpora.NCS.grades.1",
+    "keywords[화재].corpora.교과서.groups[재료].total",
+    "regrade_impact.rule.action_min",
+    "regrade_impact.rule.safety_min-1"
+   ],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "‘보호구’는",
+   "old_numbers": [
+    "1,230",
+    "2",
+    "336",
+    "27.3%",
+    "3",
+    "437",
+    "35.5%",
+    "60%"
+   ],
+   "new_numbers": [
+    "965",
+    "2",
+    "285",
+    "29.5%",
+    "3",
+    "465",
+    "48.2%",
+    "60%"
+   ],
+   "keys": [
+    "books.dedicated.grade3",
+    "keywords[보건].corpora.NCS.groups[장비].total/keyword",
+    "keywords[보호구].corpora.NCS.grades.2",
+    "keywords[보호구].corpora.NCS.grades.2/total",
+    "keywords[보호구].corpora.NCS.grades.3",
+    "keywords[보호구].corpora.NCS.grades.3/total",
+    "keywords[보호구].corpora.NCS.total"
+   ],
+   "conditions": {
+    "ppe_over_60pct": true
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "‘작업환경’은",
+   "old_numbers": [
+    "191",
+    "54",
+    "3",
+    "39",
+    "20.4%",
+    "3",
+    "13",
+    "24.0%"
+   ],
+   "new_numbers": [
+    "185",
+    "54",
+    "3",
+    "36",
+    "19.5%",
+    "3",
+    "12",
+    "22.2%",
+    "3",
+    "21.7%"
+   ],
+   "keys": [
+    "books.LM1903060411.grade3",
+    "books.grade3/total",
+    "books.group.반도체재료.dedicated_grade3",
+    "corpora.NCS.grades.3/total",
+    "impact.grades.real.NCS.3/total",
+    "keywords[MSDS].corpora.NCS.groups[장비].total",
+    "keywords[누출].corpora.교과서.groups[장비].total",
+    "keywords[먼지].corpora.NCS.grades.2",
+    "keywords[부상].corpora.NCS.groups[개발].total",
+    "keywords[부상].corpora.NCS.groups[제조].total/keyword",
+    "keywords[분진].corpora.교과서.groups[개발].total/keyword",
+    "keywords[산업안전보건법].corpora.NCS.total",
+    "keywords[소음].corpora.교과서.groups[장비].total",
+    "keywords[위험].corpora.교과서.groups[재료].total",
+    "keywords[작업환경].corpora.NCS.grades.3",
+    "keywords[작업환경].corpora.NCS.grades.3/total",
+    "keywords[작업환경].corpora.NCS.total",
+    "keywords[중독].corpora.NCS.grades.3",
+    "keywords[중독].corpora.NCS.grades.3/total",
+    "keywords[중독].corpora.NCS.total",
+    "keywords[화재].corpora.교과서.total"
+   ],
+   "conditions": {
+    "g3_vs_overall": "과 비슷하거나 그보다 높았다"
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "한편 ‘공정안전관리’는",
+   "old_numbers": [
+    "7",
+    "8",
+    "47",
+    "5",
+    "3"
+   ],
+   "new_numbers": [
+    "7",
+    "2",
+    "36",
+    "4",
+    "3"
+   ],
+   "keys": [
+    "keywords[MSDS].corpora.NCS.groups[장비].total",
+    "keywords[감전].corpora.NCS.groups[재료].total",
+    "keywords[감전].corpora.교과서.total",
+    "keywords[공정안전관리].corpora.NCS.total",
+    "keywords[누출].corpora.교과서.grades.3",
+    "keywords[먼지].corpora.NCS.grades.2",
+    "keywords[산업안전보건법].corpora.NCS.groups[제조].total",
+    "keywords[산업안전보건법].corpora.NCS.total",
+    "keywords[소음].corpora.교과서.grades.2",
+    "keywords[위험].corpora.교과서.groups[재료].total",
+    "keywords[작업환경].corpora.NCS.grades.3",
+    "run.inputs(count)"
+   ],
+   "conditions": {
+    "psm_all_grade3": false
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "반도체 개발 분야는 총",
+   "old_numbers": [
+    "30",
+    "794",
+    "409",
+    "4,259",
+    "12.0%"
+   ],
+   "new_numbers": [
+    "30",
+    "3,435",
+    "420",
+    "3,929",
+    "10.7%"
+   ],
+   "keys": [
+    "corpora.NCS.groups[개발].documents",
+    "corpora.NCS.groups[개발].pages",
+    "expression_review_key.per_expression",
+    "keywords(count)",
+    "keywords[].corpora.NCS.total>0(count)",
+    "keywords[먼지].corpora.NCS.groups[장비].total/keyword",
+    "keywords[방사선].corpora.NCS.groups[개발].total",
+    "keywords[산업안전보건법].corpora.NCS.grades.2",
+    "keywords[안전].corpora.NCS.groups[개발].total",
+    "keywords[안전].corpora.NCS.groups[개발].total/keyword",
+    "keywords[안전].corpora.NCS.groups[제조].total/keyword",
+    "keywords[안전].corpora.NCS.total",
+    "keywords[작업환경].corpora.교과서.grades.3/total"
+   ],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "반도체 제조 분야는 총",
+   "old_numbers": [
+    "13",
+    "988",
+    "402",
+    "11.8%",
+    "12.7%"
+   ],
+   "new_numbers": [
+    "13",
+    "1,363",
+    "421",
+    "3,929",
+    "10.7%",
+    "15.0%"
+   ],
+   "keys": [
+    "cases.pages(count)",
+    "corpora.NCS.groups[제조].documents",
+    "corpora.NCS.groups[제조].pages",
+    "corpora.NCS.groups[제조].pages/corpus",
+    "keywords[감전].corpora.NCS.grades.1",
+    "keywords[누출].corpora.교과서.groups[개발].total/keyword",
+    "keywords[먼지].corpora.NCS.groups[장비].total/keyword",
+    "keywords[방사선].corpora.NCS.groups[재료].total/keyword",
+    "keywords[소음].corpora.NCS.groups[재료].total",
+    "keywords[안전].corpora.NCS.groups[개발].total/keyword",
+    "keywords[안전].corpora.NCS.groups[제조].total",
+    "keywords[안전].corpora.NCS.groups[제조].total/keyword",
+    "keywords[안전].corpora.NCS.total",
+    "keywords[위험].corpora.교과서.grades.3",
+    "keywords[유해인자].corpora.NCS.grades.1",
+    "keywords[작업환경].corpora.교과서.grades.3/total",
+    "keywords[진동].corpora.교과서.grades.2",
+    "keywords[화학물질].corpora.교과서.grades.2",
+    "recoding_scores.*.variants.baseline.recall(round%)"
+   ],
+   "conditions": {
+    "safety_share_vs_pages": "보다 낮은 수준으로"
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "그러나 등급별 분석에서는 등급 2(형식적 언급)의 비중이 높아",
+   "old_numbers": [
+    "2",
+    "14"
+   ],
+   "new_numbers": [
+    "2",
+    "0"
+   ],
+   "keys": [],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "반도체 장비 분야는 총",
+   "old_numbers": [
+    "19",
+    "2,202",
+    "964",
+    "28.3%",
+    "740",
+    "584",
+    "78.9%"
+   ],
+   "new_numbers": [
+    "19",
+    "1,780",
+    "1,257",
+    "3,929",
+    "32.0%",
+    "13",
+    "8",
+    "61.5%",
+    "1",
+    "7",
+    "3"
+   ],
+   "keys": [
+    "books.group.반도체장비.count",
+    "cases.pages(count)",
+    "cases.pages[area=장비](count)",
+    "cases.top_book_pages",
+    "cases.top_book_pages/flagged",
+    "corpora.NCS.groups[장비].documents",
+    "corpora.NCS.groups[장비].pages",
+    "corpora.NCS.groups[제조].documents",
+    "impact.pages.교과서.page_grades.3",
+    "keywords[감전].corpora.NCS.grades.1",
+    "keywords[감전].corpora.NCS.groups[재료].total",
+    "keywords[감전].corpora.교과서.total",
+    "keywords[공정안전관리].corpora.NCS.total",
+    "keywords[누출].corpora.교과서.grades.2",
+    "keywords[누출].corpora.교과서.grades.3",
+    "keywords[방사선].corpora.교과서.groups[장비].total",
+    "keywords[보건].corpora.NCS.groups[제조].total",
+    "keywords[산업안전보건법].corpora.NCS.groups[제조].total",
+    "keywords[소음].corpora.NCS.grades.3",
+    "keywords[소음].corpora.NCS.groups[개발].total",
+    "keywords[소음].corpora.NCS.groups[재료].total",
+    "keywords[소음].corpora.교과서.grades.2",
+    "keywords[안전].corpora.NCS.groups[장비].total",
+    "keywords[안전].corpora.NCS.groups[장비].total/keyword",
+    "keywords[안전].corpora.NCS.total",
+    "keywords[안전보건].corpora.NCS.grades.1",
+    "keywords[위험].corpora.교과서.grades.3",
+    "keywords[유해인자].corpora.NCS.grades.1",
+    "keywords[유해인자].corpora.교과서.grades.1",
+    "keywords[인화].corpora.교과서.groups[제조].total",
+    "keywords[인화].corpora.교과서.total",
+    "keywords[중독].corpora.NCS.grades.1",
+    "keywords[중독].corpora.교과서.grades.3",
+    "keywords[진동].corpora.교과서.grades.2",
+    "keywords[질병].corpora.NCS.total",
+    "keywords[화재].corpora.교과서.grades.1",
+    "keywords[화학물질].corpora.교과서.grades.2",
+    "recoding_scores.*.variants.baseline.recall(round%)",
+    "run.inputs(count)"
+   ],
+   "conditions": {
+    "equipment_safety_rank": 2,
+    "equipment_narrative_pages": 1,
+    "equipment_top_book": true
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "반도체 재료 분야는 총",
+   "old_numbers": [
+    "24",
+    "3,784",
+    "1,630",
+    "47.9%"
+   ],
+   "new_numbers": [
+    "24",
+    "2,522",
+    "1,831",
+    "3,929",
+    "46.6%"
+   ],
+   "keys": [
+    "books.group.반도체재료.count",
+    "corpora.NCS.groups[재료].documents",
+    "corpora.NCS.groups[재료].pages",
+    "keywords[감전].corpora.NCS.groups[제조].total",
+    "keywords[물질안전보건자료].corpora.NCS.grades.3",
+    "keywords[보호구].corpora.교과서.groups[제조].total",
+    "keywords[부상].corpora.교과서.grades.1",
+    "keywords[소음].corpora.NCS.groups[장비].total",
+    "keywords[안전].corpora.NCS.groups[재료].total",
+    "keywords[안전].corpora.NCS.groups[재료].total/keyword",
+    "keywords[안전].corpora.NCS.total",
+    "keywords[위험].corpora.교과서.groups[장비].total",
+    "keywords[폭발].corpora.NCS.groups[제조].total",
+    "keywords[화재].corpora.NCS.groups[제조].total"
+   ],
+   "conditions": {
+    "materials_is_top": true,
+    "near_half": true
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "실제로 전체적으로 가장 많이 검출된 키워드인 ‘안전’의 경우에도",
+   "old_numbers": [
+    "3,405",
+    "1,094",
+    "32.1%",
+    "1"
+   ],
+   "new_numbers": [
+    "3,929",
+    "1,508",
+    "38.4%",
+    "1"
+   ],
+   "keys": [
+    "keywords[안전].corpora.NCS.grades.1",
+    "keywords[안전].corpora.NCS.grades.1/total",
+    "keywords[안전].corpora.NCS.total"
+   ],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "등급 2는 안전보건 관련 키워드가 확인되지만",
+   "old_numbers": [
+    "2",
+    "2",
+    "1",
+    "2,077",
+    "2",
+    "3,464",
+    "3",
+    "2,228",
+    "740",
+    "2",
+    "44.6%",
+    "3,405",
+    "1,442",
+    "42.3%"
+   ],
+   "new_numbers": [
+    "2",
+    "2",
+    "1",
+    "3,788",
+    "2",
+    "5,227",
+    "3",
+    "2,502",
+    "2",
+    "45.4%",
+    "3,929",
+    "1,702",
+    "43.3%",
+    "2"
+   ],
+   "keys": [
+    "books.grade3",
+    "corpora.NCS.grades.1",
+    "corpora.NCS.grades.2",
+    "corpora.NCS.grades.2/total",
+    "corpora.NCS.grades.3",
+    "impact.grades.real.NCS.1",
+    "impact.grades.real.NCS.2",
+    "impact.grades.real.NCS.2/total",
+    "impact.grades.real.NCS.3",
+    "keywords[누출].corpora.교과서.grades.2+3/total",
+    "keywords[안전].corpora.NCS.grades.2",
+    "keywords[안전].corpora.NCS.grades.2/total",
+    "keywords[안전].corpora.NCS.total"
+   ],
+   "conditions": {
+    "largest_grade": 2,
+    "grade2_rank": 1
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "등급 3은 위험 요인, 사고 유형, 건강 영향",
+   "old_numbers": [
+    "3",
+    "3",
+    "2,228",
+    "28.7%",
+    "2",
+    "3",
+    "144",
+    "78",
+    "54.2%",
+    "3"
+   ],
+   "new_numbers": [
+    "3",
+    "3",
+    "2,502",
+    "21.7%",
+    "2",
+    "3",
+    "965",
+    "465",
+    "48.2%",
+    "3"
+   ],
+   "keys": [
+    "books.dedicated.grade3",
+    "books.grade3",
+    "books.grade3/total",
+    "corpora.NCS.grades.3",
+    "corpora.NCS.grades.3/total",
+    "impact.grades.real.NCS.3",
+    "impact.grades.real.NCS.3/total",
+    "keywords[보건].corpora.NCS.groups[장비].total/keyword",
+    "keywords[보호구].corpora.NCS.grades.3",
+    "keywords[보호구].corpora.NCS.grades.3/total",
+    "keywords[보호구].corpora.NCS.total"
+   ],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "또한 ‘작업환경’은 총",
+   "old_numbers": [
+    "49",
+    "53.1%",
+    "51",
+    "51.0%",
+    "3"
+   ],
+   "new_numbers": [
+    "185",
+    "19.5%",
+    "54",
+    "22.2%",
+    "3",
+    "21.7%"
+   ],
+   "keys": [
+    "books.LM1903060411.grade3",
+    "books.grade3/total",
+    "books.group.반도체재료.dedicated_grade3",
+    "corpora.NCS.grades.3/total",
+    "impact.grades.real.NCS.3/total",
+    "keywords[부상].corpora.NCS.groups[제조].total/keyword",
+    "keywords[분진].corpora.교과서.groups[개발].total/keyword",
+    "keywords[작업환경].corpora.NCS.grades.3/total",
+    "keywords[작업환경].corpora.NCS.total",
+    "keywords[중독].corpora.NCS.grades.3/total",
+    "keywords[중독].corpora.NCS.total"
+   ],
+   "conditions": {
+    "g3_vs_overall": {
+     "작업환경": "비슷",
+     "중독": "비슷"
+    }
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "한편 ‘공정안전관리’는 총",
+   "old_numbers": [
+    "4",
+    "7",
+    "3"
+   ],
+   "new_numbers": [
+    "7",
+    "2",
+    "4",
+    "57.1%",
+    "3"
+   ],
+   "keys": [
+    "keywords[감전].corpora.NCS.groups[재료].total",
+    "keywords[감전].corpora.교과서.groups[장비].total/keyword",
+    "keywords[감전].corpora.교과서.total",
+    "keywords[공정안전관리].corpora.NCS.grades.2+3/total",
+    "keywords[공정안전관리].corpora.NCS.grades.3/total",
+    "keywords[공정안전관리].corpora.NCS.groups[장비].total/keyword",
+    "keywords[공정안전관리].corpora.NCS.total",
+    "keywords[누출].corpora.교과서.grades.3",
+    "keywords[산업안전보건법].corpora.NCS.groups[제조].total",
+    "keywords[소음].corpora.교과서.grades.2",
+    "run.inputs(count)"
+   ],
+   "conditions": {
+    "psm_all_grade3": false
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "ncs",
+   "locator": "주: 단위: 건.",
+   "old_numbers": [
+    "12,875"
+   ],
+   "new_numbers": [
+    "11,517",
+    "0"
+   ],
+   "keys": [
+    "books.total",
+    "corpora.NCS.grade_sources.real-page",
+    "corpora.NCS.total",
+    "expression_review_impact.totals.v2.NCS",
+    "impact.totals.NCS"
+   ],
+   "conditions": {
+    "page_basis": "real"
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "cases",
+   "locator": "본 연구에서는 NCS 반도체 교과서에 수록된 사고, 부상, 질병 관련 사례를",
+   "old_numbers": [
+    "2",
+    "9"
+   ],
+   "new_numbers": [
+    "5",
+    "13",
+    "3",
+    "1",
+    "2",
+    "1",
+    "2014",
+    "1",
+    "2"
+   ],
+   "keys": [
+    "cases.books",
+    "cases.pages(count)",
+    "cases.pages[LM1903060411_23v3_반도체_재료_안전관리].gist(year)",
+    "cases.pages[area=재료](count)",
+    "corpora.NCS.groups[제조].documents",
+    "keywords[감전].corpora.NCS.grades.1",
+    "keywords[감전].corpora.교과서.grades.1",
+    "keywords[방사선].corpora.NCS.groups[제조].total",
+    "keywords[보호구].corpora.교과서.groups[개발].total",
+    "keywords[산업안전보건법].corpora.NCS.grades.3",
+    "keywords[소음].corpora.NCS.groups[재료].total",
+    "keywords[위험].corpora.교과서.grades.3",
+    "keywords[유해인자].corpora.NCS.grades.1",
+    "keywords[직업병].corpora.NCS.total",
+    "keywords[진동].corpora.교과서.grades.2",
+    "keywords[질병].corpora.NCS.grades.2",
+    "keywords[질병].corpora.NCS.grades.3",
+    "keywords[화재].corpora.교과서.groups[재료].total",
+    "keywords[화학물질].corpora.교과서.grades.2",
+    "recoding_scores.*.variants.baseline.recall(round%)",
+    "regrade_impact.rule.action_min",
+    "regrade_impact.rule.safety_min-1"
+   ],
+   "conditions": {
+    "flagged": 13,
+    "narrative": 3,
+    "industrial_events": 1,
+    "false_positive": 10,
+    "page_basis": "real"
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "cases",
+   "locator": "사례의 분포를 보면",
+   "old_numbers": [
+    "9",
+    "8"
+   ],
+   "new_numbers": [
+    "13",
+    "8"
+   ],
+   "keys": [
+    "cases.pages(count)",
+    "cases.pages[area=장비](count)",
+    "cases.top_book_pages",
+    "corpora.NCS.groups[제조].documents",
+    "impact.pages.교과서.page_grades.3",
+    "keywords[감전].corpora.NCS.grades.1",
+    "keywords[방사선].corpora.교과서.groups[장비].total",
+    "keywords[소음].corpora.NCS.grades.3",
+    "keywords[소음].corpora.NCS.groups[개발].total",
+    "keywords[소음].corpora.NCS.groups[재료].total",
+    "keywords[안전보건].corpora.NCS.grades.1",
+    "keywords[위험].corpora.교과서.grades.3",
+    "keywords[유해인자].corpora.NCS.grades.1",
+    "keywords[유해인자].corpora.교과서.grades.1",
+    "keywords[인화].corpora.교과서.groups[제조].total",
+    "keywords[중독].corpora.NCS.grades.1",
+    "keywords[중독].corpora.교과서.grades.3",
+    "keywords[진동].corpora.교과서.grades.2",
+    "keywords[화재].corpora.교과서.grades.1",
+    "keywords[화학물질].corpora.교과서.grades.2",
+    "recoding_scores.*.variants.baseline.recall(round%)"
+   ],
+   "conditions": {
+    "areas_without_cases": [
+     "개발",
+     "제조"
+    ],
+    "top_area": "장비"
+   },
+   "format_collapsed": false
+  },
+  {
+   "section": "cases",
+   "locator": "사고 유형 측면에서는",
+   "old_numbers": [],
+   "new_numbers": [
+    "3",
+    "10",
+    "6",
+    "3",
+    "1",
+    "1"
+   ],
+   "keys": [
+    "books.top.count",
+    "cases.false_positive",
+    "cases.false_positive[guideline]",
+    "keywords[누출].corpora.교과서.groups[재료].total",
+    "keywords[방사선].corpora.교과서.groups[개발].total",
+    "keywords[보건].corpora.교과서.grades.3",
+    "keywords[분진].corpora.NCS.grades.3",
+    "keywords[분진].corpora.교과서.grades.1",
+    "keywords[분진].corpora.교과서.groups[재료].total",
+    "keywords[소음].corpora.교과서.groups[개발].total",
+    "keywords[소음].corpora.교과서.groups[재료].total",
+    "keywords[안전보건].corpora.NCS.groups[개발].total",
+    "keywords[유해인자].corpora.교과서.grades.2",
+    "keywords[중독].corpora.교과서.grades.1",
+    "keywords[질병].corpora.교과서.grades.3",
+    "keywords[질병].corpora.교과서.groups[재료].total",
+    "keywords[폭발].corpora.교과서.grades.1",
+    "keywords[화학물질].corpora.교과서.grades.3",
+    "regrade_impact.rule.safety_min"
+   ],
+   "conditions": {},
+   "format_collapsed": true
+  },
+  {
+   "section": "cases",
+   "locator": "사례의 서술 방식 또한 중요한 특징이다",
+   "old_numbers": [
+    "30",
+    "45"
+   ],
+   "new_numbers": [],
+   "keys": [],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "cases",
+   "locator": "또한 사고 사례는 대부분 위험 상황을 단순히 언급하는 수준에",
+   "old_numbers": [],
+   "new_numbers": [],
+   "keys": [],
+   "conditions": {},
+   "format_collapsed": false
+  },
+  {
+   "section": "cases",
+   "locator": "이러한 분석 결과를 종합하면, NCS 반도체 교과서에 수록된 사고 사례는",
+   "old_numbers": [],
+   "new_numbers": [
+    "3",
+    "2",
+    "1",
+    "2",
+    "13",
+    "10"
+   ],
+   "keys": [
+    "books.top.count",
+    "cases.false_positive",
+    "cases.pages(count)",
+    "corpora.NCS.groups[제조].documents",
+    "keywords[감전].corpora.NCS.grades.1",
+    "keywords[누출].corpora.교과서.groups[재료].total",
+    "keywords[분진].corpora.NCS.grades.3",
+    "keywords[소음].corpora.NCS.groups[재료].total",
+    "keywords[위험].corpora.교과서.grades.3",
+    "keywords[유해인자].corpora.NCS.grades.1",
+    "keywords[유해인자].corpora.교과서.grades.2",
+    "keywords[진동].corpora.교과서.grades.2",
+    "keywords[질병].corpora.교과서.groups[재료].total",
+    "keywords[화학물질].corpora.교과서.grades.2",
+    "recoding_scores.*.variants.baseline.recall(round%)"
+   ],
+   "conditions": {
+    "industrial_areas": [
+     "장비",
+     "재료"
+    ],
+    "narrative_events": 2
+   },
+   "format_collapsed": false
+  }
+ ],
+ "tables": [
+  {
+   "section": "textbook",
+   "caption": "표 7.",
+   "rows": 32,
+   "cols": 6,
+   "changed_cells": 94
+  },
+  {
+   "section": "textbook",
+   "caption": "표 8.",
+   "rows": 6,
+   "cols": 7,
+   "changed_cells": 21
+  },
+  {
+   "section": "textbook",
+   "caption": "표 9.",
+   "rows": 5,
+   "cols": 4,
+   "changed_cells": 7
+  },
+  {
+   "section": "ncs",
+   "caption": "표 10.",
+   "rows": 32,
+   "cols": 6,
+   "changed_cells": 150
+  },
+  {
+   "section": "ncs",
+   "caption": "표 11.",
+   "rows": 6,
+   "cols": 8,
+   "changed_cells": 32
+  },
+  {
+   "section": "ncs",
+   "caption": "표 12.",
+   "rows": 5,
+   "cols": 4,
+   "changed_cells": 7
+  },
+  {
+   "section": "cases",
+   "caption": "표 13.",
+   "rows": 16,
+   "cols": 5,
+   "changed_cells": 48
+  },
+  {
+   "section": "methods",
+   "caption": "표 4.",
+   "rows": 3,
+   "cols": 2,
+   "changed_cells": 3
+  },
+  {
+   "section": "methods",
+   "caption": "표 5.",
+   "rows": 8,
+   "cols": 3,
+   "changed_cells": 19
+  },
+  {
+   "section": "methods",
+   "caption": "표 6.",
+   "rows": 8,
+   "cols": 3,
+   "changed_cells": 20
+  },
+  {
+   "section": "bridge",
+   "caption": "표 12-1.",
+   "rows": 7,
+   "cols": 4,
+   "table_id": 2109024909,
+   "changed_cells": 28
+  },
+  {
+   "section": "bridge",
+   "caption": "표 12-2.",
+   "rows": 7,
+   "cols": 4,
+   "table_id": 2109024910,
+   "changed_cells": 28
+  },
+  {
+   "section": "concentration",
+   "caption": "표 12-3.",
+   "rows": 8,
+   "cols": 4,
+   "table_id": 2109024911,
+   "changed_cells": 32
+  },
+  {
+   "section": "concentration",
+   "caption": "표 12-4.",
+   "rows": 11,
+   "cols": 4,
+   "table_id": 2109024912,
+   "changed_cells": 44
+  }
+ ],
+ "figures": [
+  {
+   "label": "그림 2",
+   "caption": null,
+   "item": "image1",
+   "entry": "BinData/image1.PNG",
+   "format": "PNG",
+   "width": 702,
+   "height": 391,
+   "svg_sha256": "40ba23f4db39ef549a83d2c33aee4e2d9963a3c7ba5a3dfa9c981bec95e085f2",
+   "rendered": true,
+   "sha256": "057c449dc697ad54243c5589e7617ff7214fc99036a39450b7fb3c0b40f6e3c9",
+   "bits": 24
+  },
+  {
+   "label": "그림 3",
+   "caption": "그림 3.",
+   "item": "image2",
+   "entry": "BinData/image2.BMP",
+   "format": "BMP",
+   "width": 1160,
+   "height": 750,
+   "svg_sha256": "2a7d6d8fff1108eb9fd802a5084c78357f39551ce51b2484dee67822fcc8def9",
+   "rendered": true,
+   "sha256": "12553e74900646a46bcc23087fe51594dbcc1964f8c78b834c441b04b6b4edac",
+   "bits": 24
+  },
+  {
+   "label": "그림 4",
+   "caption": "그림 4.",
+   "item": "image3",
+   "entry": "BinData/image3.BMP",
+   "format": "BMP",
+   "width": 1160,
+   "height": 724,
+   "svg_sha256": "66b2221ef646234653291e3a279d293c00c62ca9691438ede40cee20c4aec90e",
+   "rendered": true,
+   "sha256": "d46a55a68c3cea3d2752248608a42813e8a0dcb111bc64c4d9aaf4c72a09c630",
+   "bits": 24
+  }
+ ],
+ "audit": {
+  "tokens": 1168,
+  "unmatched": [],
+  "status": "ok"
+ },
+ "methods": {
+  "table4": {
+   "caption_changed": true,
+   "changed_cells": 2
+  },
+  "toc": {
+   "rewritten": 6,
+   "removed": 2
+  },
+  "tables": [
+   {
+    "section": "methods",
+    "caption": "표 5.",
+    "rows": 8,
+    "cols": 3,
+    "changed_cells": 19
+   },
+   {
+    "section": "methods",
+    "caption": "표 6.",
+    "rows": 8,
+    "cols": 3,
+    "changed_cells": 20
+   }
+  ],
+  "removed_paragraphs": 6,
+  "inserted": [
+   {
+    "kind": "H",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "P",
+    "numbers": [
+     "86",
+     "30",
+     "13",
+     "19",
+     "24",
+     "9,100",
+     "9",
+     "2,055",
+     "1"
+    ],
+    "keys": [
+     "books.count",
+     "books.group.반도체장비.count",
+     "books.group.반도체재료.count",
+     "books.rated.count",
+     "cases.pages(count)",
+     "corpora.NCS.documents",
+     "corpora.NCS.groups[].pages(sum)",
+     "corpora.NCS.groups[개발].documents",
+     "corpora.NCS.groups[장비].documents",
+     "corpora.NCS.groups[재료].documents",
+     "corpora.NCS.groups[제조].documents",
+     "corpora.교과서.documents",
+     "corpora.교과서.groups[].pages(sum)",
+     "expression_review_key.per_expression",
+     "keywords(count)",
+     "keywords[].corpora.NCS.total>0(count)",
+     "keywords[감전].corpora.NCS.grades.1",
+     "keywords[감전].corpora.NCS.groups[제조].total",
+     "keywords[끼임].corpora.NCS.groups[제조].total",
+     "keywords[누출].corpora.교과서.grades.2",
+     "keywords[누출].corpora.교과서.groups[개발].total",
+     "keywords[먼지].corpora.교과서.groups[장비].total",
+     "keywords[물질안전보건자료].corpora.NCS.grades.3",
+     "keywords[물질안전보건자료].corpora.NCS.groups[제조].total",
+     "keywords[방사선].corpora.NCS.groups[개발].total",
+     "keywords[보건].corpora.NCS.groups[제조].total",
+     "keywords[보호구].corpora.교과서.grades.3",
+     "keywords[보호구].corpora.교과서.groups[제조].total",
+     "keywords[부상].corpora.교과서.grades.1",
+     "keywords[분진].corpora.NCS.groups[장비].total",
+     "keywords[분진].corpora.교과서.total",
+     "keywords[산업안전보건법].corpora.NCS.grades.2",
+     "keywords[산업안전보건법].corpora.NCS.groups[장비].total",
+     "keywords[소음].corpora.NCS.groups[장비].total",
+     "keywords[소음].corpora.NCS.groups[재료].total",
+     "keywords[안전보건].corpora.NCS.groups[제조].total",
+     "keywords[위험].corpora.교과서.grades.3",
+     "keywords[위험].corpora.교과서.groups[장비].total",
+     "keywords[유해인자].corpora.NCS.grades.1",
+     "keywords[인화].corpora.교과서.groups[개발].total",
+     "keywords[인화].corpora.교과서.total",
+     "keywords[진동].corpora.교과서.grades.2",
+     "keywords[진동].corpora.교과서.groups[제조].total",
+     "keywords[질병].corpora.NCS.grades.1",
+     "keywords[질병].corpora.NCS.total",
+     "keywords[폭발].corpora.NCS.groups[제조].total",
+     "keywords[화재].corpora.NCS.groups[개발].total",
+     "keywords[화재].corpora.NCS.groups[제조].total",
+     "keywords[화학물질].corpora.교과서.grades.2",
+     "recoding_scores.*.variants.baseline.recall(round%)"
+    ],
+    "conditions": {
+     "dedup_clause": true
+    }
+   },
+   {
+    "kind": "B",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "H",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "P",
+    "numbers": [
+     "30"
+    ],
+    "keys": [
+     "corpora.NCS.groups[개발].documents",
+     "expression_review_key.per_expression",
+     "keywords(count)",
+     "keywords[].corpora.NCS.total>0(count)",
+     "keywords[방사선].corpora.NCS.groups[개발].total",
+     "keywords[산업안전보건법].corpora.NCS.grades.2"
+    ],
+    "conditions": {}
+   },
+   {
+    "kind": "B",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "P",
+    "numbers": [
+     "22",
+     "30",
+     "618",
+     "612",
+     "595",
+     "97.2%",
+     "0.965",
+     "17",
+     "95%",
+     "0.8",
+     "12,310",
+     "11,517",
+     "1,272",
+     "1,207"
+    ],
+    "keys": [
+     "books.total",
+     "corpora.NCS.grade_sources.real-page",
+     "corpora.NCS.groups[개발].documents",
+     "corpora.NCS.groups[제조].grades.2",
+     "corpora.NCS.total",
+     "corpora.교과서.groups[개발].grades.2",
+     "corpora.교과서.total",
+     "expression_review_impact.totals.v1fix.NCS",
+     "expression_review_impact.totals.v1fix.교과서",
+     "expression_review_impact.totals.v2.NCS",
+     "expression_review_impact.totals.v2.교과서",
+     "expression_review_key.items(count)",
+     "expression_review_key.per_expression",
+     "expression_review_key.targets(count)",
+     "expression_review_scores.meta.alpha(ci%)",
+     "expression_review_scores.meta.floor",
+     "expression_review_scores.overall.(n-disagreements)/n",
+     "expression_review_scores.overall.adjudicated",
+     "expression_review_scores.overall.disagreements",
+     "expression_review_scores.overall.kappa",
+     "expression_review_scores.overall.n",
+     "expression_review_scores.overall.n-disagreements",
+     "impact.totals.NCS",
+     "keywords(count)",
+     "keywords[MSDS].corpora.NCS.grades.1",
+     "keywords[].corpora.NCS.total>0(count)",
+     "keywords[끼임].corpora.NCS.grades.1",
+     "keywords[끼임].corpora.NCS.grades.2",
+     "keywords[물질안전보건자료].corpora.NCS.groups[개발].total",
+     "keywords[방사선].corpora.NCS.groups[개발].total",
+     "keywords[방사선].corpora.NCS.groups[재료].total",
+     "keywords[보건].corpora.NCS.grades.2",
+     "keywords[산업안전보건법].corpora.NCS.grades.2",
+     "keywords[산업안전보건법].corpora.NCS.grades.2+3/total",
+     "keywords[안전].corpora.교과서.grades.3",
+     "keywords[위험].corpora.NCS.total",
+     "keywords[인화].corpora.교과서.grades.1",
+     "keywords[작업환경].corpora.교과서.groups[재료].total"
+    ],
+    "conditions": {
+     "totals_decreased": true,
+     "revisions": 2,
+     "all_adjudicated": true,
+     "review_two_families": true
+    }
+   },
+   {
+    "kind": "B",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "H",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "P",
+    "numbers": [
+     "58",
+     "32,767",
+     "16",
+     "84",
+     "23",
+     "21,711",
+     "83.6%",
+     "94.9%",
+     "2",
+     "9",
+     "3",
+     "2",
+     "4"
+    ],
+    "keys": [
+     "books.group.반도체재료.rest.count",
+     "books.rest.count",
+     "corpora.교과서.documents",
+     "corpora.교과서.grade_sources.new",
+     "impact.grades.real-block.NCS.3",
+     "keywords[끼임].corpora.NCS.grades.3",
+     "keywords[끼임].corpora.NCS.groups[장비].total",
+     "keywords[끼임].corpora.NCS.groups[제조].total",
+     "keywords[누출].corpora.교과서.groups[개발].total",
+     "keywords[먼지].corpora.NCS.groups[장비].total",
+     "keywords[먼지].corpora.교과서.groups[장비].total",
+     "keywords[물질안전보건자료].corpora.NCS.groups[제조].total",
+     "keywords[보호구].corpora.교과서.grades.3",
+     "keywords[부상].corpora.NCS.groups[제조].total",
+     "keywords[부상].corpora.교과서.groups[재료].total",
+     "keywords[분진].corpora.NCS.groups[장비].total",
+     "keywords[분진].corpora.교과서.total",
+     "keywords[산업안전보건법].corpora.NCS.groups[장비].total",
+     "keywords[안전].corpora.교과서.groups[재료].total",
+     "keywords[안전보건].corpora.NCS.groups[제조].total",
+     "keywords[위험].corpora.교과서.groups[개발].total",
+     "keywords[유해인자].corpora.NCS.groups[재료].total",
+     "keywords[인화].corpora.교과서.groups[개발].total",
+     "keywords[작업환경].corpora.NCS.groups[제조].total",
+     "keywords[진동].corpora.교과서.groups[제조].total",
+     "keywords[질병].corpora.NCS.grades.1",
+     "keywords[질병].corpora.NCS.groups[장비].total",
+     "keywords[화재].corpora.NCS.groups[개발].total",
+     "ncs_pages_reseg.csv(구라벨 max pages)",
+     "page_utils.EXCEL_MAX_CHARS",
+     "recoding_scores.*.variants.baseline.precision(round%)",
+     "reseg alignment_check.books",
+     "reseg alignment_check.overall.exact/lines",
+     "reseg alignment_check.overall.lines",
+     "reseg alignment_check.overall.near/lines",
+     "run.page_maps.files",
+     "summary.json ncs.truncated_pages"
+    ],
+    "conditions": {}
+   },
+   {
+    "kind": "B",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "H",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "B",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "P",
+    "numbers": [
+     "5",
+     "1",
+     "6",
+     "5",
+     "3",
+     "2",
+     "1,847",
+     "99.6%",
+     "1,839",
+     "538",
+     "3",
+     "238",
+     "1,609",
+     "300",
+     "3",
+     "80",
+     "84%",
+     "3",
+     "3",
+     "3",
+     "13",
+     "21%",
+     "3",
+     "3",
+     "1,149",
+     "58"
+    ],
+    "keys": [
+     "books.rest.count",
+     "cases.books",
+     "cases.false_positive[guideline]",
+     "cases.pages(count)",
+     "cases.pages[area=재료](count)",
+     "corpora.NCS.groups[제조].documents",
+     "corpora.NCS.groups[제조].grades.3",
+     "corpora.교과서.grade_sources.existing",
+     "corpora.교과서.grade_sources.new",
+     "impact.groups.반도체제조.real.3",
+     "keywords[감전].corpora.NCS.grades.1",
+     "keywords[감전].corpora.교과서.grades.1",
+     "keywords[끼임].corpora.NCS.groups[장비].total",
+     "keywords[방사선].corpora.NCS.groups[제조].total",
+     "keywords[방사선].corpora.교과서.grades.3",
+     "keywords[방사선].corpora.교과서.groups[개발].total",
+     "keywords[보건].corpora.교과서.grades.3",
+     "keywords[보호구].corpora.교과서.groups[개발].total",
+     "keywords[분진].corpora.NCS.grades.1",
+     "keywords[분진].corpora.NCS.groups[제조].total",
+     "keywords[분진].corpora.교과서.grades.1",
+     "keywords[분진].corpora.교과서.groups[재료].total",
+     "keywords[산업안전보건법].corpora.NCS.grades.3",
+     "keywords[소음].corpora.NCS.groups[재료].total",
+     "keywords[소음].corpora.교과서.groups[개발].total",
+     "keywords[소음].corpora.교과서.groups[재료].total",
+     "keywords[안전].corpora.교과서.groups[재료].total",
+     "keywords[안전보건].corpora.NCS.groups[개발].total",
+     "keywords[위험].corpora.교과서.grades.3",
+     "keywords[유해인자].corpora.NCS.grades.1",
+     "keywords[중독].corpora.교과서.grades.1",
+     "keywords[직업병].corpora.NCS.total",
+     "keywords[진동].corpora.교과서.grades.2",
+     "keywords[질병].corpora.NCS.grades.2",
+     "keywords[질병].corpora.NCS.grades.3",
+     "keywords[질병].corpora.교과서.grades.3",
+     "keywords[폭발].corpora.교과서.grades.1",
+     "keywords[화재].corpora.교과서.groups[재료].total",
+     "keywords[화학물질].corpora.교과서.grades.2",
+     "keywords[화학물질].corpora.교과서.grades.3",
+     "keywords[화학물질].corpora.교과서.groups[제조].total",
+     "ncs_pages_reseg.csv(구라벨 max pages)",
+     "recoding_scores.*.variants.baseline.precision(round%)",
+     "recoding_scores.*.variants.baseline.recall(round%)",
+     "recoding_scores.population.recall_pool",
+     "recoding_scores.population.strata(disputed+control+boundary)",
+     "recoding_scores.population.strata(sum)",
+     "recoding_scores.population.strata.recall",
+     "regrade_impact.reproduction.agree",
+     "regrade_impact.reproduction.agree/total",
+     "regrade_impact.reproduction.total",
+     "regrade_impact.rule.action_min",
+     "regrade_impact.rule.safety_min",
+     "regrade_impact.rule.safety_min-1",
+     "run.page_maps.files"
+    ],
+    "conditions": {
+     "conservative": true,
+     "recoding_two_families": true
+    }
+   },
+   {
+    "kind": "B",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "H",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "P",
+    "numbers": [
+     "3",
+     "3",
+     "3",
+     "21.7%",
+     "5.7%",
+     "2,189",
+     "3",
+     "6.6%",
+     "3",
+     "2",
+     "4"
+    ],
+    "keys": [
+     "books.grade3/total",
+     "corpora.NCS.grades.3/total",
+     "impact.grades.real.NCS.3/total",
+     "impact.pages.real_page_grades.3/real_pages",
+     "previous_basis.page_g.3/pages",
+     "previous_basis.pages"
+    ],
+    "conditions": {
+     "occurrence_share_exceeds_page_share": true
+    }
+   },
+   {
+    "kind": "B",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "H",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "P",
+    "numbers": [
+     "7",
+     "5.1%",
+     "3",
+     "3"
+    ],
+    "keys": [
+     "keywords[감전].corpora.NCS.groups[재료].total",
+     "keywords[감전].corpora.교과서.total",
+     "keywords[공정안전관리].corpora.NCS.total",
+     "keywords[누출].corpora.교과서.grades.3",
+     "keywords[산업안전보건법].corpora.NCS.groups[제조].total",
+     "keywords[소음].corpora.교과서.grades.2",
+     "keywords[인화].corpora.NCS.total/corpus",
+     "keywords[화학물질].corpora.교과서.total/corpus",
+     "reseg alignment_check.overall.(lines-near)/lines",
+     "run.inputs(count)"
+    ],
+    "conditions": {
+     "conservative": true,
+     "limits": 4
+    }
+   }
+  ],
+  "rewritten": [
+   {
+    "locator": "안전보건 수준은 각 출현이 속한",
+    "old_numbers": [],
+    "new_numbers": [],
+    "keys": [],
+    "format_collapsed": false
+   },
+   {
+    "locator": "이 등급은 문장 하나의 완성도를",
+    "old_numbers": [],
+    "new_numbers": [],
+    "keys": [],
+    "format_collapsed": false
+   }
+  ],
+  "audited_tokens": 101
+ },
+ "bridge": {
+  "toc": {
+   "rewritten": 1,
+   "inserted": 2
+  },
+  "inserted": [
+   {
+    "kind": "B",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "H",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "B",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "P",
+    "numbers": [
+     "11,517",
+     "1,785",
+     "2,492",
+     "4,016",
+     "34.9%",
+     "1",
+     "4,378",
+     "38.0%",
+     "3,788",
+     "32.9%",
+     "2",
+     "4,614",
+     "40.1%",
+     "5,227",
+     "45.4%",
+     "3",
+     "2,525",
+     "21.9%",
+     "2,502",
+     "21.7%",
+     "1",
+     "2",
+     "3",
+     "3",
+     "236",
+     "122",
+     "105",
+     "80",
+     "1,010",
+     "1,052",
+     "1,174",
+     "1,248",
+     "6,292",
+     "52.8%"
+    ],
+    "keys": [
+     "books.grade3",
+     "books.grade3/total",
+     "books.group.반도체장비.grade3",
+     "books.group.반도체재료.grade3",
+     "books.total",
+     "cases.pages[LM1903060329_19v1_반도체_장비_안전관리].page",
+     "corpora.NCS.detected_pages",
+     "corpora.NCS.grade_sources.real-page",
+     "corpora.NCS.grades.1",
+     "corpora.NCS.grades.1/total",
+     "corpora.NCS.grades.2",
+     "corpora.NCS.grades.2/total",
+     "corpora.NCS.grades.3",
+     "corpora.NCS.grades.3/total",
+     "corpora.NCS.groups[개발].grades.3",
+     "corpora.NCS.groups[장비].grades.3",
+     "corpora.NCS.groups[재료].grades.3",
+     "corpora.NCS.groups[제조].grades.3",
+     "corpora.NCS.total",
+     "corpora.교과서.grades.2/total",
+     "corpora.교과서.groups[장비].grades.2",
+     "expression_review_impact.totals.v2.NCS",
+     "impact.by_source.existing.occurrences",
+     "impact.by_source.existing.unchanged_pct",
+     "impact.grades.block.NCS.1",
+     "impact.grades.block.NCS.1/total",
+     "impact.grades.block.NCS.2",
+     "impact.grades.block.NCS.2/total",
+     "impact.grades.block.NCS.3",
+     "impact.grades.block.NCS.3/total",
+     "impact.grades.real.NCS.1",
+     "impact.grades.real.NCS.1/total",
+     "impact.grades.real.NCS.2",
+     "impact.grades.real.NCS.2/total",
+     "impact.grades.real.NCS.3",
+     "impact.grades.real.NCS.3/total",
+     "impact.groups.반도체개발.block.3",
+     "impact.groups.반도체개발.real.3",
+     "impact.groups.반도체장비.block.3",
+     "impact.groups.반도체장비.real.3",
+     "impact.groups.반도체재료.block.3",
+     "impact.groups.반도체재료.real.3",
+     "impact.groups.반도체제조.block.3",
+     "impact.groups.반도체제조.real.3",
+     "impact.pages.block_pages",
+     "impact.pages.real_pages",
+     "impact.totals.NCS",
+     "impact.transition.moved",
+     "impact.transition.moved/total",
+     "keywords[부상].corpora.교과서.groups[제조].total/keyword",
+     "keywords[화재].corpora.NCS.groups[장비].total",
+     "recoding_scores.*.variants.baseline.precision(round%)"
+    ],
+    "conditions": {
+     "grade_verbs": [
+      "줄고",
+      "늘었으며",
+      "거의 같았다"
+     ],
+     "real_pages_vs_block": "늘었으며"
+    }
+   },
+   {
+    "kind": "B",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "C",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "T",
+    "rows": 7,
+    "cols": 4,
+    "table_id": 2109024909
+   },
+   {
+    "kind": "N",
+    "numbers": [
+     "11,517",
+     "1",
+     "2",
+     "1,296",
+     "1",
+     "3",
+     "398",
+     "2",
+     "1",
+     "727",
+     "2",
+     "3",
+     "587",
+     "3",
+     "1",
+     "377",
+     "3",
+     "2",
+     "631",
+     "7,501"
+    ],
+    "keys": [
+     "books.total",
+     "corpora.NCS.grade_sources.real-page",
+     "corpora.NCS.total",
+     "expression_review_impact.totals.v2.NCS",
+     "impact.totals.NCS",
+     "impact.transition.matrix.1->2",
+     "impact.transition.matrix.1->3",
+     "impact.transition.matrix.2->1",
+     "impact.transition.matrix.2->3",
+     "impact.transition.matrix.3->1",
+     "impact.transition.matrix.3->2",
+     "impact.transition.unchanged",
+     "keywords[인화].corpora.NCS.total"
+    ],
+    "conditions": {}
+   },
+   {
+    "kind": "B",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "P",
+    "numbers": [
+     "2,492",
+     "3",
+     "143",
+     "5.7%",
+     "7,769",
+     "2,189",
+     "3",
+     "145",
+     "6.6%",
+     "2,035",
+     "3",
+     "21.7%",
+     "5.7%",
+     "3",
+     "3"
+    ],
+    "keys": [
+     "books.grade3/total",
+     "corpora.NCS.detected_pages",
+     "corpora.NCS.grades.3/total",
+     "impact.grades.real.NCS.3/total",
+     "impact.pages.real_page_grades.3",
+     "impact.pages.real_page_grades.3/real_pages",
+     "impact.pages.real_pages",
+     "keywords[위험].corpora.NCS.groups[개발].total",
+     "previous_basis.page_g.3",
+     "previous_basis.page_g.3/pages",
+     "previous_basis.pages",
+     "reseg.meta.rows",
+     "run.reseg_agreement.agree",
+     "run.reseg_agreement.pages"
+    ],
+    "conditions": {
+     "shared_all_agree": true,
+     "occurrence_share_exceeds_page_share": true
+    }
+   },
+   {
+    "kind": "B",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "C",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "T",
+    "rows": 7,
+    "cols": 4,
+    "table_id": 2109024910
+   },
+   {
+    "kind": "N",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "B",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   }
+  ],
+  "tables": [
+   {
+    "section": "bridge",
+    "caption": "표 12-1.",
+    "rows": 7,
+    "cols": 4,
+    "table_id": 2109024909
+   },
+   {
+    "section": "bridge",
+    "caption": "표 12-2.",
+    "rows": 7,
+    "cols": 4,
+    "table_id": 2109024910
+   }
+  ],
+  "renumbered": {
+   "4) 소결": "6) 소결"
+  },
+  "conclusion_inserted": true,
+  "conclusion": {
+   "kind": "P",
+   "numbers": [
+    "3",
+    "2,492",
+    "143",
+    "5.7%",
+    "2,189",
+    "145",
+    "6.6%"
+   ],
+   "keys": [
+    "corpora.NCS.detected_pages",
+    "impact.pages.real_page_grades.3",
+    "impact.pages.real_page_grades.3/real_pages",
+    "impact.pages.real_pages",
+    "keywords[위험].corpora.NCS.groups[개발].total",
+    "previous_basis.page_g.3",
+    "previous_basis.page_g.3/pages",
+    "previous_basis.pages"
+   ],
+   "conditions": {
+    "level_same": true
+   }
+  },
+  "conditions": {
+   "grade_verbs": [
+    "줄고",
+    "늘었으며",
+    "거의 같았다"
+   ],
+   "real_pages_vs_block": "늘었으며",
+   "shared_all_agree": true,
+   "occurrence_share_exceeds_page_share": true,
+   "level_same": true
+  }
+ },
+ "concentration": {
+  "inserted": [
+   {
+    "kind": "H",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "B",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "P",
+    "numbers": [
+     "3",
+     "2,502",
+     "86",
+     "2,238",
+     "19.4%",
+     "3",
+     "965",
+     "38.6%",
+     "84",
+     "3",
+     "21.7%",
+     "16.6%",
+     "3",
+     "780",
+     "3",
+     "1,052",
+     "74.1%",
+     "32.5%",
+     "16.9%",
+     "3",
+     "185",
+     "3",
+     "1,248",
+     "14.8%",
+     "21.4%",
+     "20.3%"
+    ],
+    "keys": [
+     "books.LM1903060329.grade3",
+     "books.LM1903060411.grade3",
+     "books.count",
+     "books.dedicated.grade3",
+     "books.dedicated.grade3/grade3",
+     "books.dedicated.total",
+     "books.dedicated.total/total",
+     "books.grade3",
+     "books.grade3/total",
+     "books.group.반도체장비.dedicated_grade3",
+     "books.group.반도체장비.dedicated_grade3/grade3",
+     "books.group.반도체장비.grade3",
+     "books.group.반도체장비.grade3/total",
+     "books.group.반도체장비.rest.grade3/total",
+     "books.group.반도체재료.dedicated_grade3",
+     "books.group.반도체재료.dedicated_grade3/grade3",
+     "books.group.반도체재료.grade3",
+     "books.group.반도체재료.grade3/total",
+     "books.group.반도체재료.rest.grade3/total",
+     "books.rated.count",
+     "books.rest.count",
+     "books.rest.grade3/total",
+     "corpora.NCS.documents",
+     "corpora.NCS.grades.3",
+     "corpora.NCS.grades.3/total",
+     "corpora.NCS.groups[장비].grades.3",
+     "corpora.NCS.groups[장비].grades.3/total",
+     "corpora.NCS.groups[재료].grades.3",
+     "corpora.NCS.groups[재료].grades.3/total",
+     "corpora.교과서.groups[재료].grades.3/total",
+     "impact.grades.real.NCS.3",
+     "impact.grades.real.NCS.3/total",
+     "impact.groups.반도체장비.real.3",
+     "impact.groups.반도체재료.real.3",
+     "keywords[보호구].corpora.NCS.total",
+     "keywords[사망].corpora.NCS.grades.2/total",
+     "keywords[사망].corpora.NCS.grades.3/total",
+     "keywords[산업안전보건법].corpora.NCS.groups[제조].total/keyword",
+     "keywords[작업환경].corpora.NCS.total",
+     "keywords[중독].corpora.NCS.grades.1/total",
+     "keywords[진동].corpora.교과서.grades.2/total",
+     "recoding_scores.*.variants.baseline.precision(round%)",
+     "run.page_maps.files"
+    ],
+    "conditions": {
+     "dedicated_count": 2,
+     "rest_rate_direction": "내려간다",
+     "group_majority": {
+      "반도체장비": true,
+      "반도체재료": false
+     }
+    }
+   },
+   {
+    "kind": "B",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "C",
+    "numbers": [
+     "3"
+    ],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "T",
+    "rows": 8,
+    "cols": 4,
+    "table_id": 2109024911
+   },
+   {
+    "kind": "N",
+    "numbers": [
+     "3"
+    ],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "B",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "C",
+    "numbers": [
+     "3",
+     "10"
+    ],
+    "keys": [
+     "books.top.count",
+     "cases.false_positive",
+     "keywords[누출].corpora.교과서.groups[재료].total",
+     "keywords[분진].corpora.NCS.grades.3",
+     "keywords[유해인자].corpora.교과서.grades.2",
+     "keywords[질병].corpora.교과서.groups[재료].total"
+    ],
+    "conditions": {}
+   },
+   {
+    "kind": "T",
+    "rows": 11,
+    "cols": 4,
+    "table_id": 2109024912
+   },
+   {
+    "kind": "N",
+    "numbers": [
+     "10",
+     "3",
+     "2,015",
+     "3",
+     "80.5%"
+    ],
+    "keys": [
+     "books.top.count",
+     "books.top.grade3",
+     "books.top.grade3/grade3",
+     "cases.false_positive",
+     "keywords[누출].corpora.교과서.groups[재료].total",
+     "keywords[분진].corpora.NCS.grades.3",
+     "keywords[유해인자].corpora.교과서.grades.2",
+     "keywords[질병].corpora.교과서.groups[재료].total"
+    ],
+    "conditions": {}
+   },
+   {
+    "kind": "B",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   },
+   {
+    "kind": "P",
+    "numbers": [
+     "3",
+     "86",
+     "8.5%",
+     "0.0%",
+     "3",
+     "57",
+     "66.3%",
+     "10",
+     "21.7%"
+    ],
+    "keys": [
+     "books.count",
+     "books.grade3/total",
+     "books.mean_grade3_pct",
+     "books.median_grade3_pct",
+     "books.rated.count",
+     "books.top.count",
+     "books.zero_grade3.count",
+     "books.zero_grade3/count",
+     "cases.false_positive",
+     "corpora.NCS.documents",
+     "corpora.NCS.grades.3/total",
+     "corpora.교과서.groups[개발].grades.3/total",
+     "impact.grades.real.NCS.3/total",
+     "keywords[MSDS].corpora.교과서.grades.1/total",
+     "keywords[MSDS].corpora.교과서.grades.3/total",
+     "keywords[MSDS].corpora.교과서.groups[개발].total/keyword",
+     "keywords[MSDS].corpora.교과서.groups[재료].total/keyword",
+     "keywords[MSDS].corpora.교과서.groups[제조].total/keyword",
+     "keywords[PSM].corpora.NCS.grades.1/total",
+     "keywords[PSM].corpora.NCS.grades.2/total",
+     "keywords[PSM].corpora.NCS.groups[개발].total/keyword",
+     "keywords[PSM].corpora.NCS.groups[재료].total/keyword",
+     "keywords[PSM].corpora.NCS.groups[제조].total/keyword",
+     "keywords[PSM].corpora.NCS.total/corpus",
+     "keywords[PSM].corpora.교과서.grades.2+3/total",
+     "keywords[PSM].corpora.교과서.grades.2/total",
+     "keywords[PSM].corpora.교과서.grades.3/total",
+     "keywords[PSM].corpora.교과서.groups[개발].total/keyword",
+     "keywords[PSM].corpora.교과서.groups[장비].total/keyword",
+     "keywords[PSM].corpora.교과서.groups[재료].total/keyword",
+     "keywords[공정안전관리].corpora.NCS.grades.2/total",
+     "keywords[공정안전관리].corpora.NCS.groups[개발].total/keyword",
+     "keywords[공정안전관리].corpora.NCS.groups[제조].total/keyword",
+     "keywords[공정안전관리].corpora.교과서.grades.1/total",
+     "keywords[공정안전관리].corpora.교과서.grades.2+3/total",
+     "keywords[공정안전관리].corpora.교과서.grades.2/total",
+     "keywords[공정안전관리].corpora.교과서.grades.3/total",
+     "keywords[공정안전관리].corpora.교과서.groups[개발].total/keyword",
+     "keywords[공정안전관리].corpora.교과서.groups[장비].total/keyword",
+     "keywords[공정안전관리].corpora.교과서.groups[재료].total/keyword",
+     "keywords[공정안전관리].corpora.교과서.groups[제조].total/keyword",
+     "keywords[공정안전관리].corpora.교과서.total/corpus",
+     "keywords[끼임].corpora.NCS.groups[개발].total/keyword",
+     "keywords[끼임].corpora.NCS.groups[재료].total/keyword",
+     "keywords[끼임].corpora.교과서.grades.1/total",
+     "keywords[끼임].corpora.교과서.grades.3/total",
+     "keywords[끼임].corpora.교과서.groups[개발].total/keyword",
+     "keywords[끼임].corpora.교과서.groups[장비].total/keyword",
+     "keywords[끼임].corpora.교과서.groups[재료].total/keyword",
+     "keywords[누출].corpora.교과서.groups[재료].total",
+     "keywords[물질안전보건자료].corpora.교과서.grades.1/total",
+     "keywords[물질안전보건자료].corpora.교과서.grades.2+3/total",
+     "keywords[물질안전보건자료].corpora.교과서.grades.2/total",
+     "keywords[물질안전보건자료].corpora.교과서.grades.3/total",
+     "keywords[물질안전보건자료].corpora.교과서.groups[개발].total/keyword",
+     "keywords[물질안전보건자료].corpora.교과서.groups[장비].total/keyword",
+     "keywords[물질안전보건자료].corpora.교과서.groups[재료].total/keyword",
+     "keywords[물질안전보건자료].corpora.교과서.groups[제조].total/keyword",
+     "keywords[물질안전보건자료].corpora.교과서.total/corpus",
+     "keywords[보건].corpora.교과서.groups[개발].total/keyword",
+     "keywords[보건].corpora.교과서.groups[제조].total/keyword",
+     "keywords[보호구].corpora.교과서.total/corpus",
+     "keywords[부상].corpora.NCS.groups[장비].total",
+     "keywords[분진].corpora.NCS.grades.3",
+     "keywords[분진].corpora.교과서.grades.3/total",
+     "keywords[분진].corpora.교과서.groups[제조].total/keyword",
+     "keywords[사망].corpora.NCS.groups[개발].total/keyword",
+     "keywords[사망].corpora.교과서.grades.1/total",
+     "keywords[사망].corpora.교과서.groups[개발].total/keyword",
+     "keywords[사망].corpora.교과서.groups[장비].total/keyword",
+     "keywords[사망].corpora.교과서.groups[제조].total/keyword",
+     "keywords[산업안전보건법].corpora.교과서.grades.1/total",
+     "keywords[산업안전보건법].corpora.교과서.grades.3/total",
+     "keywords[산업안전보건법].corpora.교과서.groups[개발].total/keyword",
+     "keywords[산업안전보건법].corpora.교과서.groups[장비].total/keyword",
+     "keywords[산업안전보건법].corpora.교과서.groups[제조].total/keyword",
+     "keywords[소음].corpora.교과서.grades.3/total",
+     "keywords[안전보건].corpora.교과서.grades.1/total",
+     "keywords[안전보건].corpora.교과서.grades.3/total",
+     "keywords[안전보건].corpora.교과서.groups[개발].total/keyword",
+     "keywords[안전보건].corpora.교과서.groups[장비].total/keyword",
+     "keywords[안전보건].corpora.교과서.groups[제조].total/keyword",
+     "keywords[유해인자].corpora.NCS.groups[제조].total/keyword",
+     "keywords[유해인자].corpora.교과서.grades.2",
+     "keywords[유해인자].corpora.교과서.groups[개발].total/keyword",
+     "keywords[유해인자].corpora.교과서.groups[장비].total/keyword",
+     "keywords[유해인자].corpora.교과서.groups[제조].total/keyword",
+     "keywords[인화].corpora.교과서.groups[재료].total/keyword",
+     "keywords[작업환경].corpora.교과서.groups[제조].total/keyword",
+     "keywords[중독].corpora.NCS.groups[개발].total/keyword",
+     "keywords[중독].corpora.교과서.groups[개발].total/keyword",
+     "keywords[중독].corpora.교과서.groups[장비].total/keyword",
+     "keywords[중독].corpora.교과서.groups[제조].total/keyword",
+     "keywords[직업병].corpora.NCS.groups[개발].total/keyword",
+     "keywords[직업병].corpora.NCS.groups[제조].total/keyword",
+     "keywords[직업병].corpora.NCS.total/corpus",
+     "keywords[직업병].corpora.교과서.grades.1/total",
+     "keywords[직업병].corpora.교과서.grades.2+3/total",
+     "keywords[직업병].corpora.교과서.grades.2/total",
+     "keywords[직업병].corpora.교과서.grades.3/total",
+     "keywords[직업병].corpora.교과서.groups[개발].total/keyword",
+     "keywords[직업병].corpora.교과서.groups[장비].total/keyword",
+     "keywords[직업병].corpora.교과서.groups[재료].total/keyword",
+     "keywords[직업병].corpora.교과서.groups[제조].total/keyword",
+     "keywords[직업병].corpora.교과서.total/corpus",
+     "keywords[진동].corpora.NCS.grades.3/total",
+     "keywords[질병].corpora.NCS.groups[개발].total/keyword",
+     "keywords[질병].corpora.NCS.groups[제조].total/keyword",
+     "keywords[질병].corpora.교과서.groups[장비].total/keyword",
+     "keywords[질병].corpora.교과서.groups[재료].total",
+     "keywords[질병].corpora.교과서.groups[제조].total/keyword",
+     "keywords[추락].corpora.NCS.grades.1/total",
+     "keywords[추락].corpora.NCS.groups[개발].total/keyword",
+     "keywords[추락].corpora.NCS.groups[장비].total/keyword",
+     "keywords[추락].corpora.NCS.groups[제조].total/keyword",
+     "keywords[추락].corpora.NCS.total/corpus",
+     "keywords[추락].corpora.교과서.grades.1/total",
+     "keywords[추락].corpora.교과서.grades.2+3/total",
+     "keywords[추락].corpora.교과서.grades.2/total",
+     "keywords[추락].corpora.교과서.grades.3/total",
+     "keywords[추락].corpora.교과서.groups[개발].total/keyword",
+     "keywords[추락].corpora.교과서.groups[장비].total/keyword",
+     "keywords[추락].corpora.교과서.groups[재료].total/keyword",
+     "keywords[추락].corpora.교과서.groups[제조].total/keyword",
+     "keywords[추락].corpora.교과서.total/corpus",
+     "keywords[화학물질].corpora.교과서.groups[개발].total/keyword"
+    ],
+    "conditions": {
+     "zero_majority": true
+    }
+   },
+   {
+    "kind": "B",
+    "numbers": [],
+    "keys": [],
+    "conditions": {}
+   }
+  ],
+  "tables": [
+   {
+    "section": "concentration",
+    "caption": "표 12-3.",
+    "rows": 8,
+    "cols": 4,
+    "table_id": 2109024911
+   },
+   {
+    "section": "concentration",
+    "caption": "표 12-4.",
+    "rows": 11,
+    "cols": 4,
+    "table_id": 2109024912
+   }
+  ],
+  "dedicated": [
+   "LM1903060329",
+   "LM1903060411"
+  ],
+  "conditions": {
+   "dedicated_count": 2,
+   "rest_rate_direction": "내려간다",
+   "group_majority": {
+    "반도체장비": true,
+    "반도체재료": false
+   },
+   "zero_majority": true
+  }
+ },
+ "layout": {
+  "paragraphs": 124,
+  "linesegarray_removed": 912,
+  "ledger_paragraphs": 124
+ },
+ "output_sha256": "aa0f34530f048356a8d603a8dc09a1f02bbe019a8a07cabf5107ca07694314d2"
+}
