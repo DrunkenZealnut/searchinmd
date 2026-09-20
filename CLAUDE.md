@@ -262,6 +262,16 @@ Other invariants worth not breaking:
 - `server.py` auto-detects an available port starting from 3008. It uses only Python stdlib — no pip dependencies.
 - The File System Access API (`showDirectoryPicker`) only works in Chromium browsers. Safari/Firefox are not supported.
 
+## Agent working rules (any agent, any skill pack)
+
+These apply to every coding agent working in this repo, including skill packs an agent loads on its own (`superpowers` executing-plans / using-git-worktrees / TDD / verification-before-completion and similar). A skill's built-in default never overrides a rule here. They exist because a 2026-09-20 external audit of those skills found they auto-commit, narrow the test scope, and delete their own decision log.
+
+- **Commit only when the research lead asks.** That includes commits a skill wants to make on its own — a `.gitignore` edit before creating a worktree, a "WIP" checkpoint, a "docs sync", a fix-pass. Never `git add -A`; stage files by name. Never commit `data/`, `data_source/`, `.env*`, `~/.config/auditagent/`, absolute paths, or textbook body text (the untracked other-work files listed in the session rules stay untracked).
+- **Worktrees are ignored through `.git/info/exclude`, not `.gitignore`.** `.worktrees/` and `worktrees/` are already there. Do not add them to `.gitignore` and do not commit anything to make a worktree "safe". If a skill insists on a repo-level ignore commit, stop and ask.
+- **A task is "done" only when the whole harness passes**, not the one test file the task named. The task-completion test command for this repo is the full Testing block above: the five `outputs/` harnesses plus `python3.13 -m unittest test_semantic_keyword_recount test_hwpx_methods_bridge test_hwpx_results_refresh test_expression_review`. Read the full output (`S9`/`R17` will also refuse a cited-count drift). A run that executes zero tests, or a "complete" mark with an empty commit range, is not evidence.
+- **Before starting a task or creating a worktree, run `git status`.** If tracked files are already modified, do not build on top of them silently and do not let a skill's "delete code written before its test" rule touch them — they are someone's uncommitted work. Report them and ask how to proceed (commit, stash, or leave).
+- **Decisions an agent makes on the lead's behalf ("rulings": a skipped review finding, a deferred defect, a scope deviation) go into a tracked place** — TODOS.md, the PDCA analysis/report, or the PR body — before any skill workspace or ledger is deleted. A ruling that lives only in a chat message or a git-ignored directory is lost.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill
