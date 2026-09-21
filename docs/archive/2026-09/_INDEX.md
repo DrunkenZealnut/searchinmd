@@ -1,6 +1,6 @@
 # Archive Index — 2026-09
 
-보관 산출물 목록. `coding-v1` 은 **폐기된 라벨의 기록**, `recoding`·`resegment`·`resegment-publish`·`marker-offset`·`semantic-recount-remediation`·`semantic-expression-review`·`hwpx-ncs-section-refresh`·`occurrence-real-pages`·`hwpx-methods-bridge-refresh`·`ncs-book-concentration` 는 완료된 PDCA 기능 문서다.
+보관 산출물 목록. `coding-v1` 은 **폐기된 라벨의 기록**, `recoding`·`resegment`·`resegment-publish`·`marker-offset`·`semantic-recount-remediation`·`semantic-expression-review`·`hwpx-ncs-section-refresh`·`occurrence-real-pages`·`hwpx-methods-bridge-refresh`·`ncs-book-concentration`·`semantic-report-area-symmetry`·`report-area-crosswalk` 는 완료된 PDCA 기능 문서다.
 
 | Item | 종류 | 보관일 | 보관 파일 |
 |------|------|--------|-----------|
@@ -15,6 +15,8 @@
 | [occurrence-real-pages](occurrence-real-pages/) | PDCA 기능 (완료, Match Rate 90.8% → Act-1 100%; PR #17, 보관 시점 미머지) | 2026-09-15 | plan · design · analysis(갭 + Act-1) · report |
 | [hwpx-methods-bridge-refresh](hwpx-methods-bridge-refresh/) | PDCA 기능 (완료, Match Rate 98.2% → Act-1 100%; 보관 시점 미커밋 — ship 예정) | 2026-09-16 | plan · design · analysis(갭 + Act-1) · report |
 | [ncs-book-concentration](ncs-book-concentration/) | PDCA 기능 (완료, Match Rate 89.8% → Act-1 100%; 보관 시점 미커밋 — ship 예정) | 2026-09-17 | plan · design · analysis(갭 + Act-1) · report |
+| [semantic-report-area-symmetry](#semantic-report-area-symmetry) | PDCA 기능 (완료, Match Rate 100%; HWPX 재생성은 비범위 — `report-area-crosswalk` 가 승계) | 2026-09-19 | plan · design · analysis(갭) · report |
+| [report-area-crosswalk](#report-area-crosswalk) | PDCA 기능 (완료, Match Rate 93.5% → Act-1 97.4%; 보관 시점 미커밋 — ship 예정) | 2026-09-22 | plan · design · analysis(갭 + Act-1) · report |
 
 ## coding-v1
 
@@ -172,3 +174,34 @@
 - [Design](ncs-book-concentration/ncs-book-concentration.design.md)
 - [Analysis (갭 + Act-1)](ncs-book-concentration/ncs-book-concentration.analysis.md)
 - [Report](ncs-book-concentration/ncs-book-concentration.report.md)
+
+## semantic-report-area-symmetry
+
+Markdown 보고서의 NCS·교과서 4영역 대칭 표 + 공용 대응표 `semantic_report_areas.py` + `--skip-xlsx-write` — 2026-09-19, Codex 세션(계획 "Approved — 사용자 실행 지시"), Plan → Design → Do → Check(100%) → Report. 연구책임자 결정: 『반도체 인프라 일반』을 재료 → **장비**로(전기·공조·유틸리티·설비 운용). HWPX 재생성은 이 계획의 **비범위**였고 2단계 `report-area-crosswalk`(아래)가 맡았다. 작업 트리는 2026-09-19~09-21 미커밋 상태였다가 그 기능(2026-09-22 완료)의 산출물과 함께 커밋될 예정이다.
+
+- **Problem**: 확정 XLSX·요약 JSON 은 NCS 를 4개 그룹, 교과서를 교재 9권으로만 집계해 두 말뭉치를 같은 4영역으로 나란히 볼 표가 없었고, 4영역 대응표가 `hwpx_results_refresh.py`·`hwpx_methods_bridge.py` 에 각각 있었다.
+- **Solution**: `semantic_report_areas.py`(AREA_ORDER·AREA_DISPLAY·NCS/교과서 대응표·교과서 근거표·`area_for` 실패 폐쇄) 한 곳으로 모으고, `semantic_keyword_recount.py` 의 `area_distribution_rows`(합 불변식)·`_area_distribution_markdown`(대칭 표 + 근거표)·`--skip-xlsx-write`; HWPX 두 모듈은 공용 대응표를 import.
+- **결과**: Markdown 보고서(비추적)에 절 추가, XLSX·요약 JSON·해시 4종 불변, 테스트 6건(unittest 247 → 253). 검증 증거의 "HWPX SHA 9ef93187 전후 동일" 은 Polaris 재저장본 기준(분석 문서 주석).
+- **관련 자산**: `semantic_report_areas.py`, `data/semantic_keyword_recount_20260917_report.md`(비추적), 2단계 [report-area-crosswalk](#report-area-crosswalk).
+
+보관 문서:
+- [Plan](semantic-report-area-symmetry/semantic-report-area-symmetry.plan.md)
+- [Design](semantic-report-area-symmetry/semantic-report-area-symmetry.design.md)
+- [Analysis](semantic-report-area-symmetry/semantic-report-area-symmetry.analysis.md)
+- [Report](semantic-report-area-symmetry/semantic-report-area-symmetry.report.md)
+
+## report-area-crosswalk
+
+[semantic-report-area-symmetry](#semantic-report-area-symmetry)(위)가 범위 밖에 둔 정본 HWPX·추적 대조 JSON·검토 HTML·문서에 같은 대응 변경(『반도체 인프라 일반』 재료 → 장비)을 반영 — 2026-09-22, Plan(연구책임자 D1 (b)·D2 (b)·D3 W1·D4 무시·D5 (a)) → Design(1.1 — Do 중 슬롯 교환을 장부 이동으로 수정) → Do(TDD) → Check(gap-detector 77항목 93.5%) → Act-1(문서 문구 3건) → 97.4% → Report.
+
+- **Problem**: 코드(공용 대응표)는 "장비", 출하 문서(정본 HWPX·대조 JSON)는 "재료"로 갈라져 있었고, `CommittedDiffTests` 가 옛 대응을 `mock.patch.dict` 로 되살려 그 불일치를 가리고 있었다.
+- **Solution**: `hwpx_results_refresh.py` 의 교과서 절 템플릿을 권수로 분기(0권 한 문장·2권 이상 『』 제목 나열)하고, 사고·SDS/GHS 문단을 2단계 편집 장부(`_Ledger`)로 장비 블록 끝에 구조 이동, 본문 소제목 "(4)" 를 목차와 일치시켜 원본에서 `--force` 재생성. 정본 JSON·XLSX·대시보드는 손대지 않음(4영역 접기는 정본에 저장되지 않아 재실행이 불필요).
+- **결과**: 정본 HWPX sha `aa0f3453…` → `1b46474225e03233…`(문단 45 → 46, layout 124/912/124 → 126/914/126, 토큰 1,168 → 1,167). 표 8: 장비 2권 414쪽(20.1%)·출현 772건(64.0%), 재료 0권. unittest 257 OK·하니스 24/84/390/32/38. 재실행 바이트 동일.
+- **한계·이월**(`TODOS.md` "기초보고서 보강 후속" 5): Polaris/한글에서 새 1절 2) 문단 7개·표 8 렌더 미확인(`[→E2E]`).
+- **관련 자산**: 정본 HWPX(비추적), `docs/03-analysis/data/hwpx_results_refresh_20260917.json`, `docs/03-analysis/hwpx-results-refresh/review.html`, 1단계 [semantic-report-area-symmetry](#semantic-report-area-symmetry).
+
+보관 문서:
+- [Plan](report-area-crosswalk/report-area-crosswalk.plan.md)
+- [Design](report-area-crosswalk/report-area-crosswalk.design.md)
+- [Analysis](report-area-crosswalk/report-area-crosswalk.analysis.md)
+- [Report](report-area-crosswalk/report-area-crosswalk.report.md)

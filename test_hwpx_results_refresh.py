@@ -5,6 +5,7 @@ import json
 import unittest
 from collections import Counter
 from pathlib import Path
+from unittest import mock
 
 HERE = Path(__file__).resolve().parent
 DATA = HERE / "docs" / "03-analysis" / "data"
@@ -30,7 +31,7 @@ class AccidentCasePagesTests(unittest.TestCase):
 
 
 class CommittedDiffTests(unittest.TestCase):
-    """실문서 실행의 대조 JSON — 숫자 감사 통과, 문단 45·표 7+5·그림 3, 2단계(methods·bridge) 기록, 본문·절대 경로 없음."""
+    """실문서 실행의 대조 JSON — 숫자 감사 통과, 문단 46·표 7+5·그림 3, 2단계(methods·bridge) 기록, 본문·절대 경로 없음."""
 
     def test_committed_diff_json(self):
         paths = sorted(DATA.glob("hwpx_results_refresh_2*.json"))
@@ -66,7 +67,7 @@ class CommittedDiffTests(unittest.TestCase):
         self.assertTrue(all(pc["keys"] for pc in m["inserted"] + b["inserted"] if pc["kind"] in ("P", "N") and set(pc["numbers"]) - HR.ALLOWED_TOKENS))   # 삽입 문단의 숫자는 출처 키가 있다
         self.assertEqual("real", conds["본 연구에서는 9권의 반도체 교과서를"]["page_basis"])                                    # 1절 교과서 불변 문장
         self.assertNotIn("previous_output_identical", diff["source"]); self.assertNotIn("runtime", diff); self.assertNotIn(".bak", path.read_text(encoding="utf-8"))   # 실행 환경(백업 이름·sha·동일 여부)은 추적 JSON 밖 (ship 레드팀·적대적 리뷰)
-        self.assertEqual({"paragraphs": 124, "linesegarray_removed": 912, "ledger_paragraphs": 124}, diff["layout"])   # 장부의 최상위 문단 124 전부의 줄 배치 캐시 제거(한글 원본은 문단마다 캐시가 있으므로 paragraphs == ledger_paragraphs), 표 셀까지 912 (선행 중복 빈 문단 제거로 125→124, ship 적대적 리뷰)
+        self.assertEqual({"paragraphs": 126, "linesegarray_removed": 914, "ledger_paragraphs": 126}, diff["layout"])   # 장부의 최상위 문단 126 전부의 줄 배치 캐시 제거(한글 원본은 문단마다 캐시가 있으므로 paragraphs == ledger_paragraphs), 표 셀까지 914 (124·912 + (4) 제목 재작성 1 − 사고·SDS 원본 1 + 이동 삽입 2, report-area-crosswalk)
         self.assertEqual(64, len(diff["output_sha256"]))
         self.assertEqual("v2", diff["source"]["summary_run"]["dictionary"])
         self.assertTrue(diff["source"]["summary_run"]["expected"])
@@ -75,8 +76,17 @@ class CommittedDiffTests(unittest.TestCase):
         run = json.loads(HR.DEFAULT_SUMMARY.read_text(encoding="utf-8"))["meta"]["run"]
         self.assertEqual({k: run.get(k) for k in ("generated_at", "git_commit", "dictionary", "expected")}, diff["source"]["summary_run"])   # 대조 JSON 은 지금의 정본 실행에 묶여 있다 (F4)
         self.assertEqual(path.name, HR.default_diff_path(fixture_facts()).name)                                                          # 날짜 접미 = 정본 실행일
-        facts = fixture_facts()
-        self.assertEqual([], HR.audit_numbers([" ".join(p["new_numbers"]) for p in diff["paragraphs"]], facts))                    # 기록된 새 숫자는 전부 지금의 정본 값
+        self.assertEqual([], HR.audit_numbers([" ".join(p["new_numbers"]) for p in diff["paragraphs"]], fixture_facts()))   # 현행 공용 대응표(인프라 일반 = 장비)로 감사 — 2026-09-21 재생성 (report-area-crosswalk)
+        self.assertEqual({"materials_documents": 0, "materials_empty": True}, conds["반도체 재료·인프라 분야는"])                # 재료 0권 — 정본에 들어갔다
+        self.assertEqual(({"relocate_after_equipment": True}, {"area_label": "반도체 재료 분야"}), (conds["특히 반도체산업의 대형 사고는"], conds["(4) 반도체 재료·인프라 분야"]))
+        self.assertEqual({"locator": "특히 반도체산업의 대형 사고는", "after": "따라서 장비 분야에서는 전기, 기계, 압력", "inserted": 2, "removed": 2}, {k: diff["relocation"][k] for k in ("locator", "after", "inserted", "removed")})   # D3 W1: 본문 + 간격 문단
+        self.assertEqual((2, ["반도체 장비 유지보수", "반도체 인프라 일반"], True), tuple(conds["반도체 장비 분야는"][k] for k in ("equipment_documents", "equipment_titles", "infra_in_equipment")))
+        self.assertEqual((["재료"], ["반도체 개발 분야", "반도체 제조 분야", "반도체 장비 분야", "반도체 재료 분야"]), (conds["본 연구에서는 9권의 반도체 교과서를"]["empty_areas"], conds["본 연구에서는 9권의 반도체 교과서를"]["area_labels"]))
+        para = {p["locator"]: p for p in diff["paragraphs"]}
+        self.assertEqual((["2", "414", "20.1%"], ["1", "217", "10.6%"]), (para["반도체 장비 분야는"]["new_numbers"], para["반도체 장비 분야는"]["old_numbers"]))
+        self.assertEqual([], para["반도체 재료·인프라 분야는"]["new_numbers"])                                                    # 0권 한 문장에는 숫자가 없다
+        self.assertEqual({"section": "textbook", "caption": "표 8.", "rows": 6, "cols": 7, "changed_cells": 24}, next(t for t in diff["tables"] if t["caption"] == "표 8."))   # 재료 행 전부 0·장비 행 2권 — 셀 값은 review.html
+        self.assertIn('<td>재료</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0.0%</td>', (HR.DEFAULT_REVIEW_DIR / "review.html").read_text(encoding="utf-8"))
         self.assertEqual("v2", HR.CANONICAL_DICTIONARY)
 
 
@@ -97,6 +107,11 @@ import hwpx_results_refresh as HR
 HP = HR.HP
 NS = ('xmlns:hp="http://www.hancom.co.kr/hwpml/2011/paragraph" xmlns:hs="http://www.hancom.co.kr/hwpml/2011/section" '
       'xmlns:hc="http://www.hancom.co.kr/hwpml/2011/core" xmlns:ha="http://www.hancom.co.kr/hwpml/2011/app"')
+
+
+class AreaCrosswalkTests(unittest.TestCase):
+    def test_infrastructure_textbook_maps_to_equipment(self):
+        self.assertEqual("장비", HR.TEXTBOOK_AREA["반도체 인프라 일반"])
 
 
 def para(text, char="13", extra_runs=()):
@@ -406,12 +421,25 @@ class AuditTests(unittest.TestCase):
         self.assertEqual([], HR.audit_numbers([f"총 {HR.fmt(f.ncs.total)}건, 등급 3 {HR.pct(f.ncs.grades[3], f.ncs.total)}, 33쪽, 2014년"], f))
         self.assertEqual(["12,875", "4,259", "4,259건"], HR.audit_numbers(["‘안전’ 4,259건 중 12,875"], f))          # "4,259건" 은 폐기 문구 목록에도 걸린다 (2단계 STALE_PATTERNS)
 
+    def test_audit_rejects_the_retired_materials_figures(self):
+        """옛 대응(인프라 일반 = 재료)의 197쪽·9.6% 는 새 대응의 값 인덱스에 없어 감사에서 탈락한다 — 감사가 대응 변경을 실제로 본다는 증거 (report-area-crosswalk T4)."""
+        f = fixture_facts()
+        retired = "반도체 재료 분야는 1권, 총 197쪽으로 전체의 약 9.6%를 차지하였고 출현은 501건이었다."
+        self.assertEqual(["197", "501"], HR.audit_numbers([retired], f))                                     # 9.6% 는 corpora.NCS.groups[개발].total/corpus 와 우연히 같아 값 소속 감사로는 못 잡는다 — 감사의 알려진 한계(STALE_PATTERNS 가 있는 이유)
+        self.assertEqual({"corpora.NCS.groups[개발].total/corpus"}, f.value_index()["9.6%"])
+        with mock.patch.dict(HR.TEXTBOOK_AREA, {"반도체 인프라 일반": "재료"}):
+            old_facts = fixture_facts()
+        self.assertEqual([], HR.audit_numbers([retired], old_facts))
+
     def test_facts_from_canonical_files(self):
         f = fixture_facts()
         self.assertEqual((86, 9), (f.ncs.documents, f.school.documents))
         self.assertEqual(f.ncs.total, sum(a["total"] for a in f.ncs.areas.values()))
         self.assertEqual(2055, sum(a["pages"] for a in f.school.areas.values()))                      # 교과서 4개 분야 쪽수 합 = 2,055
-        self.assertEqual({"개발": 3, "제조": 4, "장비": 1, "재료": 1}, {a: v["documents"] for a, v in f.school.areas.items()})
+        self.assertEqual({"개발": 3, "제조": 4, "장비": 2, "재료": 0}, {a: v["documents"] for a, v in f.school.areas.items()})
+        self.assertEqual(["반도체 장비 유지보수", "반도체 인프라 일반"], f.school.areas["장비"]["titles"])            # 영역별 교재 제목(등장 순) — 산문의 『』 나열 (report-area-crosswalk T1)
+        self.assertEqual([], f.school.areas["재료"]["titles"])
+        self.assertEqual({"개발": ["반도체개발"], "제조": ["반도체제조"], "장비": ["반도체장비"], "재료": ["반도체재료"]}, {a: v["titles"] for a, v in f.ncs.areas.items()})
         self.assertEqual(f.ncs.keywords["안전"]["total"], sum(a["total"] for a in f.ncs.keywords["안전"]["areas"].values()))
         self.assertEqual((13, 5, 3, 1, 2, 10), (f.cases.flagged, f.cases.books, f.cases.narrative, f.cases.industrial_events, f.cases.industrial_books, f.cases.false_positive))
         self.assertEqual("안전", f.ncs.ranked()[0][0])
@@ -446,6 +474,109 @@ class TemplateTests(unittest.TestCase):
         self.assertIn("‘추락’은 2건에 그쳤고", alt["따라서 장비 분야에서는 전기, 기계, 압력"][0])
         self.assertIn("3쪽에서만 확인되었다", alt["또한 공정안전관리, 직업병, 물질안전보건자료"][0])
         self.assertIn("3쪽에서만 발견되었다", alt["9권의 교과서에서 구체적인 사고"][0])
+
+    def test_textbook_area_paragraphs_branch_on_book_count(self):
+        """영역 문장은 권수로 분기한다 — 0권 한 문장(재료), 2권 이상은 제목 나열(장비), 재료가 0권이면 사고·SDS 문단이 장비 블록 뒤 슬롯으로 옮겨진다 (D3 W1, report-area-crosswalk T2)."""
+        f = fixture_facts()
+        base = {k: (v, c) for k, v, c in HR.textbook_paragraphs(f)}
+        equip, ec = base["반도체 장비 분야는"]
+        self.assertIn("반도체 장비 분야는 2권(『반도체 장비 유지보수』·『반도체 인프라 일반』), 총 414쪽으로 전체의 약 20.1%를 차지하였다.", equip)
+        self.assertIn("『반도체 인프라 일반』은 반도체 생산에 필요한", equip)
+        self.assertEqual({"equipment_documents": 2, "equipment_titles": ["반도체 장비 유지보수", "반도체 인프라 일반"], "infra_in_equipment": True}, ec)
+        heading, hc = base["(4) 반도체 재료·인프라 분야"]; body, c4 = base["반도체 재료·인프라 분야는"]; sds, cs = base["특히 반도체산업의 대형 사고는"]
+        self.assertEqual(("  (4) 반도체 재료 분야", {"area_label": "반도체 재료 분야"}), (heading, hc))                          # 본문 소제목이 목차("  (4) 반도체 재료 분야")와 같아진다 (D2 b)
+        self.assertEqual(("반도체 재료 분야로 분류한 교과서는 없었다.", {"materials_documents": 0, "materials_empty": True}), (body, c4))
+        self.assertTrue(sds.startswith("특히 반도체산업의 대형 사고는")); self.assertIn("따라서 인프라 관련 교육에서는 GHS, SDS/MSDS", sds)
+        self.assertEqual({"relocate_after_equipment": True}, cs)
+        self.assertIn("3권(『반도체 기초기술 1』·『반도체 기초기술 2』·『반도체 기초』), 총 639쪽", base["반도체 개발 분야는"][0])
+        self.assertIn("4권(『반도체 공정기초』·『반도체 포토에칭』·『반도체 박막확산』·『반도체 조립검사』), 총 1,002쪽", base["반도체 제조 분야는"][0])
+        for text, _ in base.values():
+            self.assertNotIn("0권", text); self.assertNotIn("0쪽", text); self.assertNotIn("재료·인프라", text)
+        with mock.patch.dict(HR.TEXTBOOK_AREA, {"반도체 인프라 일반": "재료"}):                                       # 옛 대응 — 다른 쪽 분기
+            old_facts = fixture_facts()
+        alt = {k: (v, c) for k, v, c in HR.textbook_paragraphs(old_facts)}
+        self.assertIn("반도체 장비 분야는 1권, 총 217쪽으로 전체의 약 10.6%", alt["반도체 장비 분야는"][0]); self.assertNotIn("인프라 일반", alt["반도체 장비 분야는"][0])
+        self.assertEqual({"equipment_documents": 1, "equipment_titles": ["반도체 장비 유지보수"], "infra_in_equipment": False}, alt["반도체 장비 분야는"][1])
+        self.assertIn("반도체 재료 분야는 1권, 총 197쪽으로 전체의 약 9.6%를 차지하였다. 이 분야는 반도체 생산에 필요한 화학물질", alt["반도체 재료·인프라 분야는"][0])
+        self.assertTrue(alt["특히 반도체산업의 대형 사고는"][0].startswith("특히 반도체산업의 대형 사고는")); self.assertNotIn("재료·인프라", alt["특히 반도체산업의 대형 사고는"][0])
+        self.assertEqual(({"materials_documents": 1, "materials_empty": False}, {"relocate_after_equipment": False}), (alt["반도체 재료·인프라 분야는"][1], alt["특히 반도체산업의 대형 사고는"][1]))
+        self.assertEqual("  (4) 반도체 재료 분야", alt["(4) 반도체 재료·인프라 분야"][0])                                          # 제목은 대응과 무관하게 D2 b
+        for prefix, text, _ in HR.textbook_paragraphs(old_facts):
+            self.assertEqual([], HR.audit_numbers([text], old_facts), prefix)                                            # 다른 쪽 분기의 숫자도 전부 그 정본 값 (T6)
+
+    def test_lead_paragraph_names_areas_from_the_crosswalk(self):
+        """리드 문단의 영역명은 AREA_LABEL(→ AREA_ORDER)에서 나온다 — "재료·인프라" 손 문구 없음 (D2 b, report-area-crosswalk T3·T9)."""
+        f = fixture_facts()
+        base = {k: (v, c) for k, v, c in HR.textbook_paragraphs(f)}
+        text, cond = base["본 연구에서는 9권의 반도체 교과서를"]
+        self.assertIn("반도체 개발, 반도체 제조, 반도체 장비, 반도체 재료 분야로 재분류하였다", text)
+        self.assertEqual((["반도체 개발 분야", "반도체 제조 분야", "반도체 장비 분야", "반도체 재료 분야"], ["재료"]), (cond["area_labels"], cond["empty_areas"]))
+        source = Path(HR.__file__).read_text(encoding="utf-8")
+        locators = {p for p, _, _ in HR.textbook_paragraphs(f)}
+        self.assertLessEqual({"반도체 재료·인프라 분야는", "(4) 반도체 재료·인프라 분야"}, locators)                          # 원본 첫머리(locator)에만 남는다
+        self.assertEqual(source.count("반도체 재료·인프라 분야"), source.count("재료·인프라"), "원본 첫머리(locator) 밖에 '재료·인프라' 손 문구가 남아 있다")
+
+    def test_area_sentence_refuses_an_empty_area(self):
+        f = fixture_facts()
+        with self.assertRaises(ValueError) as ctx:
+            HR.area_sentence(f.school, "재료", "반도체 재료 분야는")
+        self.assertIn("0권", str(ctx.exception))
+        self.assertEqual("반도체 재료 분야로 분류한 교과서는 없었다.", HR.empty_area_sentence("재료"))
+
+    def test_materials_empty_and_infra_in_equipment_branch_independently(self):
+        """report-area-crosswalk (ship coverage-audit 갭 3): materials_empty·infra_in_equipment 는 코드에서 따로 읽힌다(infra_sentence 는 infra_in_equipment 만,
+        (4) 본문은 materials_empty 만 본다) — 정본·옛 대응은 둘 다 대각선(T/T, F/F)만 지나므로 대각선 밖 두 조합도 각자 옳게 갈리는지 직접 확인한다."""
+        f = fixture_facts()
+        off1 = copy.deepcopy(f); off1.school.areas["장비"]["titles"] = ["반도체 장비 유지보수"]           # materials_empty=True(그대로), infra_in_equipment=False
+        base1 = {k: (v, c) for k, v, c in HR.textbook_paragraphs(off1)}
+        self.assertNotIn("인프라 일반", base1["반도체 장비 분야는"][0]); self.assertFalse(base1["반도체 장비 분야는"][1]["infra_in_equipment"])
+        self.assertEqual("반도체 재료 분야로 분류한 교과서는 없었다.", base1["반도체 재료·인프라 분야는"][0])                # 재료는 여전히 0권
+        self.assertFalse(base1[HR.ACCIDENT_LOCATOR][1]["relocate_after_equipment"])                       # ship 레드팀: 재료가 비어도 옮길 근거(인프라 일반)가 장비에 없으면 옮기지 않는다
+
+        off2 = copy.deepcopy(f); off2.school.areas["재료"]["documents"] = 1                              # materials_empty=False, infra_in_equipment=True(그대로 — 정본 장비 titles 에 인프라 일반 있음)
+        base2 = {k: (v, c) for k, v, c in HR.textbook_paragraphs(off2)}
+        self.assertIn("『반도체 인프라 일반』은 반도체 생산에 필요한", base2["반도체 장비 분야는"][0]); self.assertTrue(base2["반도체 장비 분야는"][1]["infra_in_equipment"])
+        self.assertNotEqual("반도체 재료 분야로 분류한 교과서는 없었다.", base2["반도체 재료·인프라 분야는"][0])              # 재료가 1권이라 문장이 생긴다
+        self.assertFalse(base2["반도체 재료·인프라 분야는"][1]["materials_empty"])
+        self.assertFalse(base2[HR.ACCIDENT_LOCATOR][1]["relocate_after_equipment"])                       # 재료가 1권이라 애초에 옮길 필요가 없다
+
+        both = copy.deepcopy(f); both.school.areas["재료"]["documents"] = 0; both.school.areas["장비"]["titles"] = ["반도체 장비 유지보수"]   # 대각선(T/T) 재확인
+        base_both = {k: (v, c) for k, v, c in HR.textbook_paragraphs(both)}
+        self.assertFalse(base_both[HR.ACCIDENT_LOCATOR][1]["relocate_after_equipment"])                    # materials_empty=True 지만 infra_in_equipment=False 라 옮기지 않는다
+        canonical = {k: (v, c) for k, v, c in HR.textbook_paragraphs(f)}
+        self.assertTrue(canonical[HR.ACCIDENT_LOCATOR][1]["relocate_after_equipment"])                     # 정본(T/T)만 옮긴다
+
+    def test_relocate_accident_paragraph_blank_spacer_combinations(self):
+        """report-area-crosswalk (ship coverage-audit 갭 2): src_blank·tail_blank 는 독립적으로 읽힌다 — 정본(둘 다 있음, CommittedDiffTests)과 fixture(둘 다 없음, EndToEndTests)는
+        대각선만 지나므로, 한쪽에만 빈 문단이 있는 나머지 두 조합도 삽입·삭제 개수가 옳게 갈리는지 직접 확인한다."""
+        ACC, TAIL = HR.ACCIDENT_LOCATOR, HR.EQUIPMENT_TAIL_LOCATOR
+        f = fixture_facts()
+
+        def run(xml_body):
+            root = ET.fromstring(f'<hs:sec {NS}>{xml_body}</hs:sec>')
+            tops = HR.top_paragraphs(root)
+            paragraphs = {ACC: next(p for p in tops if HR.direct_text(p).startswith(ACC)),
+                          TAIL: next(p for p in tops if HR.direct_text(p).startswith(TAIL))}
+            ledger = HR._Ledger(root, f, set(), set(), set(), [])
+            return HR.relocate_accident_paragraph(root, paragraphs, ledger), root
+
+        # src_blank 있음 · tail_blank 없음 — 꼬리 뒤에 원래 빈 문단이 없으니 새 스페이서(B)를 만들지 않고, src 원본+그 뒤 빈 문단만 지운다
+        body_a = para(TAIL + " tail text") + para("바로 뒤 채움 문단(blank 아님)") + para(ACC + " accident text") + para("")
+        r_a, _ = run(body_a)
+        self.assertEqual((1, 2), (r_a["inserted"], r_a["removed"]))
+
+        # src_blank 없음 · tail_blank 있음 — 꼬리 뒤 빈 문단까지 같이 옮기며 새 스페이서(B) 하나를 더 넣고, src 는 원본 1개만 지운다
+        body_b = para(TAIL + " tail text") + para("") + para("사이 채움 문단") + para(ACC + " accident text") + para("닫는 채움 문단(blank 아님)")
+        r_b, _ = run(body_b)
+        self.assertEqual((2, 1), (r_b["inserted"], r_b["removed"]))
+
+        # 빈 문단이라도 명시적 쪽/단 나눔이 있으면 스페이서로 보지 않는다 (ship 리뷰 — Codex 적대적: _is_blank 는 pageBreak 를 보지 않아 그 나눔을 조용히 지울 뻔했다)
+        page_break_blank = '<hp:p id="0" paraPrIDRef="10" styleIDRef="0" pageBreak="1" columnBreak="0" merged="0"><hp:run charPrIDRef="13"><hp:t></hp:t></hp:run><hp:linesegarray><hp:lineseg textpos="0"/></hp:linesegarray></hp:p>'
+        body_c = para(TAIL + " tail text") + page_break_blank + para(ACC + " accident text") + para("")
+        r_c, root_c = run(body_c)
+        self.assertEqual((1, 2), (r_c["inserted"], r_c["removed"]))                                        # tail_blank 를 쪽 나눔 때문에 스페이서로 못 쓰므로 새 B 를 넣지 않고(inserted=1), src 원본 + 그 뒤 빈 문단을 지운다(removed=2)
+        remaining = [p for p in HR.top_paragraphs(root_c) if p.get("pageBreak") == "1"]
+        self.assertEqual(1, len(remaining))                                                                # 쪽 나눔 문단은 그대로 남아 있다(옮기지도 지우지도 않음, 지워지지도 원형으로 복제되지도 않았다)
 
     def test_svg_has_all_values(self):
         f = fixture_facts()
@@ -759,6 +890,19 @@ class EndToEndTests(unittest.TestCase):
             sections = HR.locate_sections(root)
             texts = [t for s in sections.values() for t in HR.section_texts(s)]
             self.assertFalse(any("12,875" in t or "1,293" in t or "옛 문장" in t for t in texts))
+            school_texts = HR.section_texts(sections["textbook"])                                                       # 재료 0권 이동 (report-area-crosswalk T7, D3 W1): 사고·SDS 문단이 장비 마지막 문단 뒤·(4) 제목 앞, (4) 아래는 한 문장
+            i_equip = next(i for i, x in enumerate(school_texts) if x.startswith("따라서 장비 분야에서는 전기, 기계, 압력"))
+            i_sds = next(i for i, x in enumerate(school_texts) if x.startswith("특히 반도체산업의 대형 사고는"))
+            i_head = school_texts.index("  (4) 반도체 재료 분야")
+            i_empty = school_texts.index("반도체 재료 분야로 분류한 교과서는 없었다.")
+            self.assertTrue(i_equip < i_sds < i_head < i_empty, (i_equip, i_sds, i_head, i_empty))
+            self.assertEqual(1, sum(x.startswith("특히 반도체산업의 대형 사고는") for x in school_texts))
+            self.assertFalse(any("0권" in x or "재료·인프라" in x for x in school_texts))
+            self.assertEqual({"locator": "특히 반도체산업의 대형 사고는", "after": "따라서 장비 분야에서는 전기, 기계, 압력", "inserted": 1, "removed": 1}, {k: diff["relocation"][k] for k in ("locator", "after", "inserted", "removed")})   # fixture 에는 빈 문단이 없다
+            self.assertTrue(diff["relocation"]["keys"])
+            rows8 = [[HR.cell_text(c) for c in row] for row in HR.table_rows(HR.find_table_after_caption(sections["textbook"], "표 8."))]
+            self.assertEqual(["재료", "0", "0", "0", "0", "0", "0.0%"], rows8[4])
+            self.assertEqual(["장비", "2", HR.fmt(f.school.areas["장비"]["total"])], rows8[3][:3])
             tbl13 = HR.find_table_by_first_cell(sections["cases"], "표 13.")
             rows13 = HR.table_rows(tbl13)
             self.assertEqual(2 + 13 + 1, len(rows13)); self.assertEqual("판정", HR.cell_text(rows13[1][4]))                      # 데이터 13 + 원본의 빈 간격 행 유지
@@ -777,6 +921,52 @@ class EndToEndTests(unittest.TestCase):
                 HR.write_hwpx(src, out, b"", {})
             with self.assertRaises(ValueError):
                 HR.write_hwpx(src, src, b"", {})
+
+    def test_refresh_does_not_relocate_when_materials_area_has_a_textbook(self):
+        """report-area-crosswalk (ship 리뷰 — testing specialist): materials_empty=False 이면 refresh() 는 relocate_accident_paragraph 를 부르지 않는다 — 옛 대응(인프라 일반=재료)으로
+        실제 refresh() 파이프라인 전체를 태워 확인한다(템플릿 단위 확인은 TemplateTests 에 이미 있지만, refresh() 의 분기 자체는 아직 실제로 통과해 본 적이 없었다)."""
+        render = shutil.which("magick") is not None
+        with tempfile.TemporaryDirectory() as td:
+            src, f = self._fixture(td)                                    # locator 집합은 대응표와 무관 — 정본 f 로 만든 fixture 를 그대로 쓴다
+            with mock.patch.dict(HR.TEXTBOOK_AREA, {"반도체 인프라 일반": "재료"}):
+                old_f = fixture_facts()
+            out = Path(td) / "out.hwpx"
+            diff = HR.refresh(src, old_f, out, None, None, render=render)
+            self.assertNotIn("relocation", diff)
+            with zipfile.ZipFile(out) as z:
+                root = ET.fromstring(z.read("Contents/section0.xml"))
+            school_texts = HR.section_texts(HR.locate_sections(root)["textbook"])
+            i_tail = next(i for i, x in enumerate(school_texts) if x.startswith(HR.EQUIPMENT_TAIL_LOCATOR))
+            i_head = school_texts.index("  (4) 반도체 재료 분야")
+            i_body = next(i for i, x in enumerate(school_texts) if x.startswith("반도체 재료 분야는"))
+            i_sds = next(i for i, x in enumerate(school_texts) if x.startswith(HR.ACCIDENT_LOCATOR))
+            self.assertTrue(i_tail < i_head < i_body < i_sds, (i_tail, i_head, i_body, i_sds))   # 원본 순서 그대로 — 사고·SDS 문단이 옮겨지지 않았다
+            self.assertIn("총 197쪽", school_texts[i_body])
+
+    def test_paragraphs_are_located_before_any_rewrite_to_avoid_locator_collisions(self):
+        """report-area-crosswalk (ship coverage-audit 갭 1): 한 문단의 새 글이 우연히 다른 locator 로 시작하면, 순차(찾고→바로쓰기) 방식은 그 다음 locator 탐색에서
+        원본 문단과 방금 고친 문단 둘 다를 잡아 find_paragraph 가 예외를 낸다. refresh() 는 절마다 모든 문단을 원본 상태로 먼저 찾고 나서 고치므로(`located = [...]`)
+        이 충돌이 나지 않는다 — 재작성 순서를 되돌리면(찾자마자 바로 쓰기) 이 테스트가 ValueError 로 잡아낸다."""
+        render = shutil.which("magick") is not None
+        with tempfile.TemporaryDirectory() as td:
+            src, f = self._fixture(td)
+            out = Path(td) / "out.hwpx"
+            LOCATOR_A, LOCATOR_B = "반도체 개발 분야는", "반도체 제조 분야는"
+            NEW_A = f"{LOCATOR_B} 완전히 새로운 문장으로 교체되었다."          # 다른 locator(B) 로 시작 — 순차 방식이면 B 탐색에서 이 문단도 걸린다
+            NEW_B = "여기는 최종적으로 남아야 하는 문장이다."
+            def colliding_textbook_paragraphs(facts):
+                # 나머지 19개 locator 는 실제 문장 그대로 둔다 — 그래야 숫자 감사가 그 문단들에서 실패하지 않는다. 바꾸는 건 A·B 둘의 글뿐.
+                return [(LOCATOR_A, NEW_A, cond) if prefix == LOCATOR_A else
+                        (LOCATOR_B, NEW_B, cond) if prefix == LOCATOR_B else
+                        (prefix, text, cond)
+                        for prefix, text, cond in HR.textbook_paragraphs(facts)]
+            with mock.patch.dict(HR.PARAGRAPH_TEMPLATES, {"textbook": colliding_textbook_paragraphs}):
+                HR.refresh(src, f, out, None, None, render=render)          # 순차 방식이면 여기서 "…로 시작하는 문단이 2개입니다" ValueError
+            with zipfile.ZipFile(out) as z:
+                root = ET.fromstring(z.read("Contents/section0.xml"))
+            texts = HR.section_texts(HR.locate_sections(root)["textbook"])
+            self.assertIn(NEW_A, texts); self.assertIn(NEW_B, texts)
+            self.assertEqual(1, sum(t == NEW_B for t in texts))             # LOCATOR_B 문단은 자기 몫(NEW_B)만 받는다 — NEW_A 에 잘못 겹쳐 써지지 않았다
 
     def test_touched_paragraphs_drop_their_line_layout_cache(self):
         """손댄 문단(재작성·삽입, 표 셀 포함)에서는 hp:linesegarray 를 지운다 — 옛 글의 줄 배치 캐시를 믿는 뷰어(Polaris)가 긴 새 글을 한 줄에 눌러 그리던 것(한글 E2E 2026-09-17); 손대지 않은 문단은 그대로."""
@@ -806,7 +996,7 @@ class EndToEndTests(unittest.TestCase):
             self.assertFalse(any(has_cache(p) for p in tbl5.iter(f"{HP}p")))                                          # 손댄 표의 셀 문단까지
             tbl12_1 = HR.find_table_after_caption(sections["ncs"], "표 12-1.")                                          # 2단계 삽입 표 — 복제한 셀의 캐시도
             self.assertFalse(any(has_cache(p) for p in tbl12_1.iter(f"{HP}p")))
-            self.assertEqual({"paragraphs": 124, "linesegarray_removed": 908, "ledger_paragraphs": 124}, diff["layout"])   # fixture: 장부의 최상위 문단 124 전부 캐시를 잃는다(표 문단·그림 문단 포함, 3단계 중복 빈 문단 제거 반영); 표 셀만큼 더 많다
+            self.assertEqual({"paragraphs": 125, "linesegarray_removed": 909, "ledger_paragraphs": 125}, diff["layout"])   # fixture: 장부의 최상위 문단 125 전부 캐시를 잃는다(표 문단·그림 문단 포함, 3단계 중복 빈 문단 제거 반영, (4) 제목 재작성 +1·사고 문단 이동 −1+1); 표 셀만큼 더 많다
             self.assertEqual(diff["layout"], json.loads((Path(td) / "diff.json").read_text(encoding="utf-8"))["layout"])   # 대조 JSON 파일에도 그대로
             with zipfile.ZipFile(src) as z:
                 before = sum(1 for p in ET.fromstring(z.read("Contents/section0.xml")) if not has_cache(p))              # fixture 에서 원래 캐시가 없던 최상위 문단(각주 ctrl 문단)

@@ -24,6 +24,12 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 from page_utils import GRADE_LABEL, NCS_PAGED_DIR, PAGE_MARKER_RE as _MARKER_ANYWHERE_RE
+from semantic_report_areas import (
+    AREA_DISPLAY,
+    AREA_ORDER,
+    TEXTBOOK_CLASSIFICATION_ROWS,
+    area_for,
+)
 
 
 HERE = Path(__file__).resolve().parent
@@ -2210,7 +2216,95 @@ def _ranked_keyword_statistics(result: AnalysisResult) -> list[str]:
     return lines
 
 
-def write_report(result: AnalysisResult, path: Path, run: dict[str, object] | None = None, audits: list[CandidateAudit] | None = None) -> None:
+def area_distribution_rows(result: AnalysisResult, corpus: str, payload: dict[str, object] | None = None) -> list[dict[str, object]]:
+    """기존 말뭉치·그룹 집계를 연구상 4영역으로 접고 합계 불변식을 검사한다. payload 를 넘기면 dashboard_payload() 를 다시 계산하지 않는다(ship 리뷰 — 성능)."""
+
+    if corpus not in ("NCS", "교과서"):
+        raise ValueError(f"4영역 집계를 지원하지 않는 말뭉치: {corpus}")
+    corpus_data = (payload if payload is not None else dashboard_payload(result))["corpora"][corpus]
+    rows = {
+        area: {
+            "area": area,
+            "documents": 0,
+            "total": 0,
+            "grades": {"1": 0, "2": 0, "3": 0, "unpaged": 0},
+        }
+        for area in AREA_ORDER
+    }
+    for group in corpus_data["groups"]:
+        row = rows[area_for(corpus, group["name"])]
+        row["documents"] += group["documents"]
+        row["total"] += group["total"]
+        for grade in ("1", "2", "3", "unpaged"):
+            row["grades"][grade] += group["grades"][grade]
+
+    ordered = [rows[area] for area in AREA_ORDER]
+    checks = {
+        "자료 수": (sum(row["documents"] for row in ordered), corpus_data["documents"]),
+        "전체": (sum(row["total"] for row in ordered), corpus_data["total"]),
+        **{
+            f"등급 {grade}": (
+                sum(row["grades"][grade] for row in ordered),
+                corpus_data["grades"][grade],
+            )
+            for grade in ("1", "2", "3", "unpaged")
+        },
+    }
+    mismatches = [f"{label} {actual} != {expected}" for label, (actual, expected) in checks.items() if actual != expected]
+    if mismatches:
+        raise ValueError(f"{corpus} 4영역 합계 불일치: " + "; ".join(mismatches))
+    return ordered
+
+
+def _area_distribution_markdown(result: AnalysisResult, payload: dict[str, object] | None = None) -> list[str]:
+    lines = [
+        "## 4영역별 키워드·등급 분포",
+        "",
+        "단위는 30개 키워드의 의미 출현건수이며, 출현 비율의 분모는 각 말뭉치의 전체 의미 출현이다. 영역별 비율은 소수 첫째 자리에서 독립 반올림하므로 표시값 합계에 0.1%p 안팎의 반올림 차이가 생길 수 있다.",
+        "",
+    ]
+    for corpus in ("NCS", "교과서"):
+        lines.extend([f"### {corpus}", ""])
+        if corpus == "교과서":
+            lines.extend(
+                [
+                    "교과서 9권의 4영역 배정은 공식 교육과정 분류가 아니라 NCS 4영역과 비교하기 위해 교재 제목과 주요 교육 내용을 기준으로 구성한 연구상 대응이다. 『반도체 인프라 일반』은 전기설비·공조·유틸리티·설비 운용 중심의 내용에 따라 `반도체장비`에 배정하였다.",
+                    "",
+                    "| 교과서 | 연구상 대응 영역 | 대응 근거 |",
+                    "|---|---|---|",
+                ]
+            )
+            lines.extend(
+                f"| {_markdown_cell(title)} | {AREA_DISPLAY[area]} | {_markdown_cell(reason)} |"
+                for title, area, reason in TEXTBOOK_CLASSIFICATION_ROWS
+            )
+            lines.append("")
+        rows = area_distribution_rows(result, corpus, payload)
+        total = sum(row["total"] for row in rows)
+        lines.extend(
+            [
+                "| 영역 | 자료 수 | 전체 | 등급 1 | 등급 2 | 등급 3 | 출현 비율 |",
+                "|---|---:|---:|---:|---:|---:|---:|",
+            ]
+        )
+        for row in rows:
+            share = 100 * row["total"] / total if total else 0.0
+            lines.append(
+                f"| {AREA_DISPLAY[row['area']]} | {row['documents']:,} | {row['total']:,} | "
+                f"{row['grades']['1']:,} | {row['grades']['2']:,} | {row['grades']['3']:,} | {share:.1f}% |"
+            )
+        lines.extend(
+            [
+                f"| 합계 | {sum(row['documents'] for row in rows):,} | {total:,} | "
+                f"{sum(row['grades']['1'] for row in rows):,} | {sum(row['grades']['2'] for row in rows):,} | "
+                f"{sum(row['grades']['3'] for row in rows):,} | {100.0 if total else 0.0:.1f}% |",
+                "",
+            ]
+        )
+    return lines
+
+
+def write_report(result: AnalysisResult, path: Path, run: dict[str, object] | None = None, audits: list[CandidateAudit] | None = None, payload: dict[str, object] | None = None) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     manifest = artifact_manifest(result)
@@ -2267,6 +2361,8 @@ def write_report(result: AnalysisResult, path: Path, run: dict[str, object] | No
                 )
             ) + " |"
         )
+
+    lines.extend([""] + _area_distribution_markdown(result, payload))
 
     lines.extend(["", "## 키워드 순위 통계", ""])
     lines.extend(_ranked_keyword_statistics(result))
@@ -2379,6 +2475,7 @@ def run_census(
     dictionary: str = DEFAULT_DICTIONARY,
     page_maps_dir: Path | None = None,
     reseg_csv: Path | None = None,
+    write_xlsx: bool = True,
 ) -> AnalysisResult:
     """정본 실행 — 산출물 전부를 한 번에 쓴다. EXPECTED 와 어긋나면 force 없이는 아무것도 쓰지 않는다.
 
@@ -2483,9 +2580,12 @@ def run_census(
     run["dictionary"] = dictionary
     payload = summary_payload(result, run=run, previous_basis=basis, pdf_pages=pdf_pages)
     check_books(payload)                                                                    # 교재별 집계가 말뭉치·분야 집계와 맞아야 쓴다 (ncs-book-concentration FR-02)
+    for corpus in ("NCS", "교과서"):                                                          # 4영역 대응표 완결성도 파괴적 쓰기(xlsx) 전에 확인 — 미등록 그룹이면 write_report() 가 뒤늦게 던져 xlsx 만 갱신되고 나머지는 이전 실행 그대로 남는 것을 막는다 (ship 리뷰 — Codex 적대적)
+        area_distribution_rows(result, corpus, payload)
     audits = audit_candidates(result)
-    write_workbook(result, xlsx_out, run=run, audits=audits)
-    write_report(result, report_out, run=run, audits=audits)
+    if write_xlsx:
+        write_workbook(result, xlsx_out, run=run, audits=audits)
+    write_report(result, report_out, run=run, audits=audits, payload=payload)   # payload 는 위에서 이미 계산됨 — dashboard_payload() 재계산 없음 (ship 리뷰 — 성능)
     if dashboard_data_out is not None:
         write_dashboard_data(result, dashboard_data_out, payload=payload)
     if summary_out is not None:
@@ -2501,6 +2601,7 @@ def main() -> None:
     parser.add_argument("--ncs-root", type=Path, required=True)
     parser.add_argument("--school-root", type=Path, required=True)
     parser.add_argument("--xlsx-out", type=Path, required=True)
+    parser.add_argument("--skip-xlsx-write", action="store_true", help="XLSX는 계보 이름에만 사용하고 파일은 쓰지 않는다")
     parser.add_argument("--report-out", type=Path, required=True)
     parser.add_argument("--ncs-grade-workbook", type=Path, help="기존 NCS 등급 워크북 (기본: --source-workbook)")
     parser.add_argument("--school-grade-workbook", type=Path, help="기존 교과서 등급 워크북")
@@ -2546,6 +2647,7 @@ def _main_run(args: argparse.Namespace) -> AnalysisResult:
         dictionary=args.dictionary,
         page_maps_dir=args.page_maps,
         reseg_csv=args.reseg_csv,
+        write_xlsx=not args.skip_xlsx_write,
     )
 
 

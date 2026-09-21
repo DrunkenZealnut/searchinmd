@@ -11,6 +11,7 @@ from dataclasses import replace
 from unittest import mock
 
 import semantic_keyword_recount as SKR
+from semantic_report_areas import AREA_ORDER, TEXTBOOK_GROUP_TO_AREA, area_for
 from semantic_keyword_recount import (
     CandidateDecision,
     DedupRecord,
@@ -446,7 +447,7 @@ class OutputTests(unittest.TestCase):
             Document(
                 "NCS",
                 Path("source.md"),
-                "source.md",
+                "반도체개발/source.md",
                 "<!-- page: 1 -->\n안전과 safety를 확인한다.\n",
             )
         ]
@@ -458,7 +459,7 @@ class OutputTests(unittest.TestCase):
             CandidateDecision("안전", "safety", "included", "equivalent", "영문 동등 표현"),
             CandidateDecision("안전", "안전성", "held", "equivalent", "문맥 혼재"),
         ]
-        return aggregate_matches(sources, documents, rules, candidates)
+        return assign_match_grades(aggregate_matches(sources, documents, rules, candidates), {})
 
     def test_workbook_has_required_sheets_and_readable_headers(self):
         with tempfile.TemporaryDirectory() as td:
@@ -518,7 +519,7 @@ class OutputTests(unittest.TestCase):
         documents = [
             Document("NCS", Path("a.md"), "반도체개발/LM1903060101_a/a.md", "<!-- page: 1 -->\n안전 위험 위험\n<!-- page: 2 -->\n안전 safety\n"),
             Document("NCS", Path("b.md"), "반도체개발/LM1903060102_b/b.md", "<!-- page: 1 -->\n위험 위험\n"),
-            Document("교과서", Path("s.md"), "s.md", "<!-- page: 1 -->\n위험 위험\n"),
+            Document("교과서", Path("반도체 기초.md"), "반도체 기초.md", "<!-- page: 1 -->\n위험 위험\n"),
         ]
         rules = [ExpressionRule("안전", "안전", "exact", "기존 키워드"), ExpressionRule("안전", "safety", "equivalent", "영문"),
                  ExpressionRule("위험", "위험", "exact", "기존 키워드"), ExpressionRule("추락", "추락", "exact", "기존 키워드")]
@@ -543,6 +544,53 @@ class OutputTests(unittest.TestCase):
         school_rows = [l for l in school.splitlines() if l.startswith("| ") and not l.startswith("| 순위")]
         self.assertEqual(["위험", "안전", "추락"], [r.split(" | ")[1].strip("`") for r in school_rows[:3]])  # 동률 0 은 원본 키워드 순서
         self.assertIn("| 합계 | | 2 | 100.0% |", school)
+
+    def sample_result_with_all_area_groups(self):
+        ncs_groups = ("반도체개발", "반도체제조", "반도체장비", "반도체재료")
+        school_groups = tuple(TEXTBOOK_GROUP_TO_AREA)
+        documents = [
+            Document("NCS", Path(f"{group}/book.md"), f"{group}/book.md", "<!-- page: 1 -->\n안전\n")
+            for group in ncs_groups
+        ] + [
+            Document("교과서", Path(f"{title}.md"), f"{title}.md", "<!-- page: 1 -->\n안전\n")
+            for title in school_groups
+        ]
+        result = aggregate_matches(
+            [KeywordSource("안전", 1, True)],
+            documents,
+            [ExpressionRule("안전", "안전", "exact", "기존 키워드")],
+            [],
+        )
+        return assign_match_grades(result, {})
+
+    def test_area_distribution_rows_reconcile_to_corpus_totals(self):
+        result = self.sample_result_with_all_area_groups()
+        expected = {"NCS": (4, 4), "교과서": (9, 9)}
+        for corpus in ("NCS", "교과서"):
+            rows = SKR.area_distribution_rows(result, corpus)
+            self.assertEqual(list(AREA_ORDER), [row["area"] for row in rows])
+            self.assertEqual(expected[corpus], (sum(row["documents"] for row in rows), sum(row["total"] for row in rows)))
+            self.assertEqual(0, sum(row["grades"]["unpaged"] for row in rows))
+
+    def test_report_has_symmetric_area_tables_and_research_crosswalk_notice(self):
+        result = self.sample_result_with_all_area_groups()
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "report.md"
+            write_report(result, path)
+            report = path.read_text(encoding="utf-8")
+        section = report.split("## 4영역별 키워드·등급 분포", 1)[1].split("## 키워드 순위 통계", 1)[0]
+        self.assertEqual(2, section.count("| 영역 | 자료 수 | 전체 | 등급 1 | 등급 2 | 등급 3 | 출현 비율 |"))
+        self.assertIn("공식 교육과정 분류가 아니라", section)
+        self.assertIn("『반도체 인프라 일반』", section)
+        self.assertIn("전기설비·공조·유틸리티·설비 운용", section)
+        self.assertIn("| 반도체장비 | 2 | 2 | 2 | 0 | 0 | 22.2% |", section)
+        self.assertIn("| 반도체재료 | 0 | 0 | 0 | 0 | 0 | 0.0% |", section)
+
+    def test_area_crosswalk_is_complete_and_unknown_groups_fail_closed(self):
+        self.assertEqual(9, len(TEXTBOOK_GROUP_TO_AREA))
+        self.assertEqual("장비", TEXTBOOK_GROUP_TO_AREA["반도체 인프라 일반"])
+        with self.assertRaisesRegex(ValueError, "미등록 4영역 그룹"):
+            area_for("교과서", "새 교과서")
 
     def test_manifest_source_hash_includes_grade_workbook_lineage(self):
         base = self.sample_result()
@@ -575,13 +623,13 @@ class OutputTests(unittest.TestCase):
             root = Path(td)
             ncs_root = root / "ncs"
             school_root = root / "school"
-            ncs_root.mkdir()
+            (ncs_root / "반도체개발").mkdir(parents=True)
             school_root.mkdir()
-            (ncs_root / "LM1903060101_안전.md").write_text("<!-- page: 1 -->\n안전 안내\n", encoding="utf-8")
+            (ncs_root / "반도체개발" / "LM1903060101_안전.md").write_text("<!-- page: 1 -->\n안전 안내\n", encoding="utf-8")
             for index in range(1, 86):
-                (ncs_root / f"LM19030602{index:02d}_book.md").write_text("", encoding="utf-8")
-            for index in range(9):
-                (school_root / f"school-{index}.md").write_text("", encoding="utf-8")
+                (ncs_root / "반도체개발" / f"LM19030602{index:02d}_book.md").write_text("", encoding="utf-8")
+            for title in TEXTBOOK_GROUP_TO_AREA:
+                (school_root / f"{title}.md").write_text("", encoding="utf-8")
 
             source = root / "source.xlsx"
             workbook = Workbook()
@@ -891,8 +939,8 @@ class RemediationTests(unittest.TestCase):
         (ncs_root / "반도체개발" / "LM1903060101_안전.md").write_text(ncs_body, encoding="utf-8")
         for index in range(1, 86):
             (ncs_root / "반도체개발" / f"LM19030602{index:02d}_book.md").write_text("", encoding="utf-8")
-        for index in range(9):
-            (school_root / f"school-{index}.md").write_text("", encoding="utf-8")
+        for title in TEXTBOOK_GROUP_TO_AREA:
+            (school_root / f"{title}.md").write_text("", encoding="utf-8")
         source = root / "source.xlsx"
         workbook = Workbook()
         workbook.remove(workbook.active)
@@ -935,6 +983,23 @@ class RemediationTests(unittest.TestCase):
             self.assertFalse(kw["report_out"].exists())
             self.assertFalse((Path(td) / "d.js").exists())
             self.assertFalse((Path(td) / "s.json").exists())
+
+    def test_report_only_run_does_not_touch_existing_xlsx(self):
+        with tempfile.TemporaryDirectory() as td:
+            kw = self._census_fixture(Path(td))
+            xlsx = kw["xlsx_out"]
+            xlsx.write_bytes(b"confirmed-xlsx")
+            before = (xlsx.read_bytes(), xlsx.stat().st_mtime_ns)
+            run_census(
+                **kw,
+                write_xlsx=False,
+                expected={"documents": {"NCS": 86, "교과서": 9}},
+                git={"commit": "abc1234", "dirty": False},
+                argv=["x", "--skip-xlsx-write"],
+            )
+            after = (xlsx.read_bytes(), xlsx.stat().st_mtime_ns)
+            self.assertEqual(before, after)
+            self.assertTrue(kw["report_out"].is_file())
 
     def test_force_writes_and_records_mismatch_in_manifest(self):
         with tempfile.TemporaryDirectory() as td:
@@ -1169,12 +1234,12 @@ class RemediationTests(unittest.TestCase):
             seen.update(kwargs); return self._graded_result()
         argv = ["semantic_keyword_recount.py", "--source-workbook", "s.xlsx", "--ncs-root", "n", "--school-root", "t",
                 "--xlsx-out", "o.xlsx", "--report-out", "r.md", "--summary-out", "s.json", "--analysis-dir", "d",
-                "--previous-basis", "p.json", "--force"]
+                "--previous-basis", "p.json", "--skip-xlsx-write", "--force"]
         import io, contextlib
         buf = io.StringIO()
         with mock.patch.object(SKR, "run_census", fake_run_census), mock.patch.object(SKR.sys, "argv", argv), contextlib.redirect_stdout(buf):
             SKR.main()
-        self.assertEqual((Path("s.json"), Path("d"), Path("p.json"), True), (seen["summary_out"], seen["analysis_dir"], seen["previous_basis"], seen["force"]))
+        self.assertEqual((Path("s.json"), Path("d"), Path("p.json"), False, True), (seen["summary_out"], seen["analysis_dir"], seen["previous_basis"], seen["write_xlsx"], seen["force"]))
         self.assertIn("측정값", buf.getvalue())
 
     def test_analysis_pages_cite_manifest_and_totals(self):
@@ -1521,6 +1586,16 @@ class RealPageTests(unittest.TestCase):
             with mock.patch.object(SKR, "dashboard_payload", broken), self.assertRaisesRegex(ValueError, "교재별 집계"):
                 run_census(**kw, expected={"documents": {"NCS": 86, "교과서": 9}}, summary_out=root / "s.json", git={"commit": "x", "dirty": False}, argv=["x"])
             self.assertFalse((root / "s.json").exists())
+
+    def test_run_census_validates_area_crosswalk_before_writing_the_workbook(self):
+        """4영역 대응표에 없는 그룹이 있으면 xlsx 를 쓰기 전에 멈춘다 — write_report() 가 나중에 던져 xlsx 만 갱신되고 나머지 산출물은 이전 실행 그대로 남는 부분 완료를 막는다 (ship 리뷰 — Codex 적대적)."""
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td); kw = census_fixture(root)
+            reduced = {title: area for title, area in TEXTBOOK_GROUP_TO_AREA.items() if title != "반도체 인프라 일반"}
+            with mock.patch.dict(TEXTBOOK_GROUP_TO_AREA, reduced, clear=True), self.assertRaisesRegex(ValueError, "미등록 4영역 그룹"):
+                run_census(**kw, expected={"documents": {"NCS": 86, "교과서": 9}}, git={"commit": "x", "dirty": False}, argv=["x"])
+            self.assertFalse(kw["xlsx_out"].exists())                         # 파괴적 쓰기(xlsx) 전에 멈췄다 — write_report() 가 뒤늦게 던지지 않는다
+            self.assertFalse(kw["report_out"].exists())
 
     def test_manifest_and_metrics_carry_page_maps_and_agreement(self):
         result = graded_result()
