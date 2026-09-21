@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from page_utils import BASELINE, EXCEL_MAX_CHARS
+from semantic_report_areas import NCS_GROUP_TO_AREA
 
 HERE = Path(__file__).resolve().parent
 DATA = HERE / "docs" / "03-analysis" / "data"
@@ -33,7 +34,6 @@ CONCLUSION_HEADING_OLD, CONCLUSION_HEADING_NEW = " 4) 소결", " 6) 소결"   # 
 DEDICATED_TITLE_RULE = "안전관리"                                   # D4: 안전관리 전용 교재 식별 규칙 (제목 포함)
 DEDICATED_EXPECTED_CODES = ("LM1903060329", "LM1903060411")         # 그 규칙이 내야 하는 집합 — 다르면 정지(문장이 두 권을 전제한다)
 TOP_BOOKS = 10                                                      # 표 12-4 의 행 수
-NCS_GROUP_TO_AREA = {"반도체개발": "개발", "반도체제조": "제조", "반도체장비": "장비", "반도체재료": "재료"}   # 정본 그룹명 → 보고서 분야명 (hwpx_results_refresh 가 여기서 가져간다 — 한 정의)
 NCS_GROUP_ORDER = tuple(NCS_GROUP_TO_AREA)                  # 보고서의 분야 순서 = 대응표의 삽입 순서
 
 IMPACT_INPUT_KINDS = {                                              # 영향표 meta.inputs 키 → 정본 semantic_summary.json meta.run.inputs 의 kind (CodeRabbit PR #18)

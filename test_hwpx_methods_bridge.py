@@ -14,6 +14,7 @@ import xml.etree.ElementTree as ET
 
 import hwpx_methods_bridge as MB
 import hwpx_results_refresh as HR
+import semantic_report_areas as SRA
 from test_hwpx_results_refresh import NS, para, table, build_fixture_hwpx, stage1_body, OLD_METHODS_TOC
 import shutil
 import zipfile
@@ -24,6 +25,12 @@ DATA = HERE / "docs" / "03-analysis" / "data"
 
 def canonical_facts():
     return HR.load_facts(HR.DEFAULT_SUMMARY, HR.DEFAULT_CASES, HR.DEFAULT_RECOUNT)
+
+
+class SharedAreaCrosswalkTests(unittest.TestCase):
+    def test_bridge_reexports_the_shared_ncs_crosswalk(self):
+        self.assertIs(MB.NCS_GROUP_TO_AREA, SRA.NCS_GROUP_TO_AREA)
+        self.assertEqual(tuple(SRA.NCS_GROUP_TO_AREA), MB.NCS_GROUP_ORDER)
 
 
 class MethodsFactsTests(unittest.TestCase):

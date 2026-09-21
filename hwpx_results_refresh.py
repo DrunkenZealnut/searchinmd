@@ -43,6 +43,7 @@ from xml.sax.saxutils import escape
 
 import hwpx_methods_bridge as MB
 from hwpx_methods_bridge import fmt, pct, NCS_GROUP_TO_AREA   # 콤마·소수 1자리 %·정본 그룹→분야 대응표 — 2단계 모듈과 한 정의 (hwpx-methods-bridge-refresh)
+from semantic_report_areas import AREA_ORDER, TEXTBOOK_GROUP_TO_AREA as TEXTBOOK_AREA
 
 HERE = Path(__file__).resolve().parent
 HP = "{http://www.hancom.co.kr/hwpml/2011/paragraph}"
@@ -66,14 +67,6 @@ HEADINGS = {                                   # 절 이름 → (시작 제목, 
     "ncs": ("2. NCS 반도체 자료의 안전보건 키워드 분석 주요 결과", "3. NCS 반도체 교과서의 사고, 부상, 질병 사례 분석"),
     "cases": ("3. NCS 반도체 교과서의 사고, 부상, 질병 사례 분석", "4. 학생 대상 화학물질·안전보건 교육의 필요성과 효과"),
 }
-AREA_ORDER = ("개발", "제조", "장비", "재료")
-# 교과서 4개 분야는 연구상 분류 (보고서 1절 2) 의 설명) — 교재(그룹 이름) → 분야
-TEXTBOOK_AREA = {
-    "반도체 기초기술 1": "개발", "반도체 기초기술 2": "개발", "반도체 기초": "개발",
-    "반도체 공정기초": "제조", "반도체 포토에칭": "제조", "반도체 박막확산": "제조", "반도체 조립검사": "제조",
-    "반도체 장비 유지보수": "장비",
-    "반도체 인프라 일반": "재료",
-}
 GRADE_LABEL = {1: "미흡·없음", 2: "형식적 언급", 3: "구체적 대책"}
 COLORS = {1: "#64748b", 2: "#c87a05", 3: "#087f75"}   # 보고서 원본 그림의 인쇄용 색 — 대시보드 등급 램프(--g1 #6b7280 / --g2 #d97706 / --g3 #059669)보다 한 단계 어둡다, 같은 등급 부호
 FP_KIND_LABEL = {"guideline": "보호구 착용 지침", "definition": "무재해운동 정의", "property": "톨루엔의 물성·유해성·인화성 설명"}
@@ -90,7 +83,7 @@ class CorpusFacts:
     documents: int
     total: int
     grades: dict[int, int]
-    areas: dict[str, dict]                  # 분야 → {"documents", "pages", "total", "grades"}
+    areas: dict[str, dict]                  # 분야 → {"documents", "pages", "total", "grades", "titles"} — titles 는 그 분야로 접힌 그룹명(교과서: 교재 제목, 등장 순; 산문의 『』 나열 — report-area-crosswalk)
     keywords: dict[str, dict]               # 키워드 → {"total", "grades", "areas": {분야: {"total", "grades"}}}
     order: list[str]                        # 원본 키워드 순서
     detected_pages: int = 0                 # corpora.*.detected_pages — 출현이 놓인 (교재, 쪽) 수 (2026-09-14~; 1절 교과서 문장·2절 4) 가 쓴다)
@@ -237,15 +230,17 @@ def load_facts(summary_path: Path = DEFAULT_SUMMARY, cases_path: Path = DEFAULT_
     textbook_cases = int(json.loads(Path(recount_path).read_text(encoding="utf-8"))["textbook"]["cases_pages"])
     order = [k["name"] for k in summary["keywords"]]
 
-    def corpus_facts(corpus: str, group_to_area) -> CorpusFacts:
+    def corpus_facts(corpus: str, crosswalk: dict[str, str]) -> CorpusFacts:
+        group_to_area = crosswalk.get
         c = summary["corpora"][corpus]
-        areas = {a: {"documents": 0, "pages": 0, "total": 0, "grades": {1: 0, 2: 0, 3: 0}} for a in AREA_ORDER}
-        for g in c["groups"]:
+        areas = {a: {"documents": 0, "pages": 0, "total": 0, "grades": {1: 0, 2: 0, 3: 0}, "titles": []} for a in AREA_ORDER}
+        for g in sorted(c["groups"], key=lambda g: list(crosswalk).index(g["name"]) if g["name"] in crosswalk else len(crosswalk)):   # 정본 groups[] 는 이름순 — 산문의 제목 나열은 대응표(분류표)의 선언 순서를 따른다
             area = group_to_area(g["name"])
             if area is None:
                 raise ValueError(f"{corpus} 그룹 '{g['name']}' 의 분야를 모른다 — 대응표를 갱신하십시오")
             if "pages" not in g:
                 raise ValueError(f"semantic_summary.json 의 그룹 {corpus}/{g['name']} 에 pages 가 없습니다 — 2026-09-14 이후 정본이 필요합니다 (0 으로 채우지 않는다)")
+            areas[area]["titles"].append(g["name"])
             areas[area]["documents"] += g["documents"]
             areas[area]["pages"] += g["pages"]
             areas[area]["total"] += g["total"]
@@ -274,8 +269,8 @@ def load_facts(summary_path: Path = DEFAULT_SUMMARY, cases_path: Path = DEFAULT_
         return CorpusFacts(documents=c["documents"], total=c["total"], grades={1: c["grades"]["1"], 2: c["grades"]["2"], 3: c["grades"]["3"]},
                            areas=areas, keywords=keywords, order=order, detected_pages=int(c["detected_pages"]), grade_sources={k: int(v) for k, v in (c.get("grade_sources") or {}).items()})
 
-    ncs = corpus_facts("NCS", NCS_GROUP_TO_AREA.get)
-    school = corpus_facts("교과서", TEXTBOOK_AREA.get)
+    ncs = corpus_facts("NCS", NCS_GROUP_TO_AREA)
+    school = corpus_facts("교과서", TEXTBOOK_AREA)
     pages = cases["pages"]
     unknown_verdicts = {p.get("verdict") for p in pages} - set(VERDICTS)
     if unknown_verdicts:
@@ -706,7 +701,26 @@ def _grade_max(grades: dict[int, int]) -> int:
     return max((1, 2, 3), key=lambda g: (grades[g], -g))
 
 
-AREA_LABEL = {"개발": "반도체 개발 분야", "제조": "반도체 제조 분야", "장비": "반도체 장비 분야", "재료": "반도체 재료 분야"}
+AREA_LABEL = {"개발": "반도체 개발 분야", "제조": "반도체 제조 분야", "장비": "반도체 장비 분야", "재료": "반도체 재료 분야"}   # HWPX 산문의 영역명 — 순서·집합은 semantic_report_areas.AREA_ORDER 와 같다 (D2 b: 옛 "재료 · 인프라" 합성 표기는 버렸다)
+INFRA_TEXTBOOK = "반도체 인프라 일반"                # 지원설비 문장의 근거 교재 — 이 제목이 장비 분야로 접혀 있을 때만 그 문장을 쓴다 (report-area-crosswalk D1 b)
+ACCIDENT_LOCATOR = "특히 반도체산업의 대형 사고는"                    # 1절 2) 의 사고·SDS/GHS 문단 (원본 첫머리) — textbook_paragraphs 와 relocate_accident_paragraph 가 함께 쓴다 (ship 리뷰 — 손 문구 중복 제거)
+EQUIPMENT_TAIL_LOCATOR = "따라서 장비 분야에서는 전기, 기계, 압력"     # 장비 블록의 마지막 문단 — 사고·SDS 문단이 이 뒤로 간다 (D3 W1)
+
+
+def area_sentence(corpus: CorpusFacts, area: str, lead: str) -> str:
+    """분야 첫 문장 — 권수로 분기: 2권 이상이면 교재 제목을 『』 로 나열하고, 0권은 문장을 만들지 않는다(empty_area_sentence 가 따로 있다 — "0권, 총 0쪽" 은 어떤 데이터에서도 나오지 않는다)."""
+    a = corpus.areas[area]
+    if a["documents"] == 0:
+        # 0권 분기는 재료만 대상으로 설계했다(report-area-crosswalk D1 b — 인프라 일반이 장비로 옮겨 재료가 비는 경우). 다른 영역이 비면 이 예외로
+        # textbook_paragraphs() 전체가 멈춘다 — 그때 그 영역의 문장·조건·표 8 을 재료와 같은 방식으로 확장할지는 그 상황에서 새로 결정한다 (ship 리뷰 — red team).
+        raise ValueError(f"{AREA_LABEL[area]}는 0권이라 분야 문장을 만들 수 없다 — empty_area_sentence 를 쓴다")
+    pages_total = sum(x["pages"] for x in corpus.areas.values())
+    count = f"{a['documents']}권" + (f"({'·'.join(f'『{t}』' for t in a['titles'])})" if a["documents"] >= 2 else "")
+    return f"{lead} {count}, 총 {fmt(a['pages'])}쪽으로 전체의 약 {pct(a['pages'], pages_total)}를 차지하였다."
+
+
+def empty_area_sentence(area: str) -> str:
+    return f"{AREA_LABEL[area]}로 분류한 교과서는 없었다."
 
 
 def _compare_share(value: float, reference: float) -> str:
@@ -724,20 +738,32 @@ def textbook_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
     top6 = s.ranked()[:6]
     k = lambda n: s.keywords[n]["total"]
     g3 = s.grades[3]
-    def area_sentence(area, lead):
-        a = s.areas[area]
-        return f"{lead} {a['documents']}권, 총 {fmt(a['pages'])}쪽으로 전체의 약 {pct(a['pages'], pages_total)}를 차지하였다."
+    area = lambda name, lead: area_sentence(s, name, lead)
     largest_area = max(AREA_ORDER, key=lambda a: s.areas[a]["pages"])
     run_date, dictionary = provenance(f)
     def zero_or_count(name, label):                       # "‘X’는 전혀 검출되지 않았고" / "‘X’는 N건에 그쳤고" — 0 주장은 데이터로만
         return f"{eun(q(label))} 전혀 검출되지 않았고" if k(name) == 0 else f"{eun(q(label))} {fmt(k(name))}건에 그쳤고"
+    # 영역 문단의 분기 (report-area-crosswalk, D1 b·D2 b·D3 W1): 재료가 0권이면 (4) 의 본문은 한 문장이고, 사고·SDS 문단은 refresh() 의 relocate_accident_paragraph 가 장비 블록 끝으로
+    # 옮긴다(근거 교재 인프라 일반이 장비 분야에 있으므로). (4) 제목은 AREA_LABEL 로 다시 쓴다 — 옛 합성 영역명은 아래 locator(원본 첫머리)에만 남는다.
+    materials_empty = s.areas["재료"]["documents"] == 0
+    infra_in_equipment = INFRA_TEXTBOOK in s.areas["장비"]["titles"]
+    accident_sds = (f"특히 반도체산업의 대형 사고는 생산공정 자체뿐 아니라 화학물질 공급, 가스 공급, 배기, 폐수·폐가스 처리, 시설 유지보수 과정 등에서 발생할 수 있다. 따라서 인프라 관련 교육에서는 GHS, SDS/MSDS, 화학물질 저장과 이송, 특수 가스 관리, 누출·화재·폭발·질식 예방과 비상 대응 등을 체계적으로 다룰 필요가 있다. "
+                    f"그러나 전체 교과서 분석에서 ‘물질안전보건자료’는 {fmt(k('물질안전보건자료'))}건, ‘MSDS’ {fmt(k('MSDS'))}건, ‘작업환경’ {fmt(k('작업환경'))}건, ‘유해 인자’ {fmt(k('유해인자'))}건에 그쳤다는 결과는 이 분야의 화학물질과 작업환경 교육도 상당한 보완이 필요함을 시사한다.")
+    materials = ("" if materials_empty else area("재료", "반도체 재료 분야는") + " 이 분야는 반도체 생산에 필요한 화학물질, 특수 가스, 전력, 초순수, 폐수처리, 각종 지원설비와 연결되기 때문에 안전보건 측면에서 매우 중요한 교육 영역이다.")
+    infra_sentence = (f" 『{INFRA_TEXTBOOK}』은 반도체 생산에 필요한 화학물질, 특수 가스, 전력, 초순수, 폐수처리 등 각종 지원설비의 운용을 다루므로, 이 분야의 안전보건 교육은 장비 유지보수와 인프라 운용 양쪽에 걸친다." if infra_in_equipment else "")
     conditions = {
         "키워드 분석 결과": {"top_keyword": top6[0][0], "zero_keywords": zero},
-        "반도체 제조 분야는": {"manufacturing_has_most_pages": largest_area == "제조"},
         "따라서 제조 분야는 안전보건교육이 가장 적극적으로": {"zero_keywords_in_sentence": [n for n in ("직업병", "물질안전보건자료") if k(n) == 0]},
-        "따라서 장비 분야에서는 전기, 기계, 압력": {"textbook_accident_pages": f.cases.textbook_cases, "fall_is_zero": k("추락") == 0},
+        EQUIPMENT_TAIL_LOCATOR: {"textbook_accident_pages": f.cases.textbook_cases, "fall_is_zero": k("추락") == 0},
         "또한 공정안전관리, 직업병, 물질안전보건자료": {"zero_keywords": zero, "textbook_accident_pages": f.cases.textbook_cases},
-        "본 연구에서는 9권의 반도체 교과서를": {"page_basis": f.page_basis.get("NCS")},        # 실제 쪽 기준일 때만 "교과서는 … 영향을 받지 않았다" 문장 (2단계, hwpx-methods-bridge-refresh)
+        "본 연구에서는 9권의 반도체 교과서를": {"page_basis": f.page_basis.get("NCS"),          # 실제 쪽 기준일 때만 "교과서는 … 영향을 받지 않았다" 문장 (2단계, hwpx-methods-bridge-refresh)
+                                       "area_labels": [AREA_LABEL[a] for a in AREA_ORDER], "empty_areas": [a for a in AREA_ORDER if s.areas[a]["documents"] == 0]},
+        "반도체 개발 분야는": {"documents": s.areas["개발"]["documents"], "titles": list(s.areas["개발"]["titles"])},
+        "반도체 제조 분야는": {"manufacturing_has_most_pages": largest_area == "제조", "documents": s.areas["제조"]["documents"], "titles": list(s.areas["제조"]["titles"])},
+        "반도체 장비 분야는": {"equipment_documents": s.areas["장비"]["documents"], "equipment_titles": list(s.areas["장비"]["titles"]), "infra_in_equipment": infra_in_equipment},
+        "(4) 반도체 재료·인프라 분야": {"area_label": AREA_LABEL["재료"]},
+        "반도체 재료·인프라 분야는": {"materials_documents": s.areas["재료"]["documents"], "materials_empty": materials_empty},
+        ACCIDENT_LOCATOR: {"relocate_after_equipment": materials_empty and infra_in_equipment},      # 실제 이동은 relocate_accident_paragraph — 여기서는 문장만. 근거 교재(인프라 일반)가 장비에 없으면 옮길 곳이 없으므로 옮기지 않는다 (ship 리뷰 — red team)
     }
     return _with_conditions([
         ("본 연구에서는 반도체고등학교의 전공교과서를 대상으로",
@@ -757,23 +783,25 @@ def textbook_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
         ("9권의 교과서에서 구체적인 사고",
          f"{s.documents}권의 교과서에서 구체적인 사고·부상·직업병 사례가 {'한 건도 발견되지 않았다' if f.cases.textbook_cases == 0 else str(f.cases.textbook_cases) + '쪽에서만 발견되었다'}는 것을 의미하기 때문이다. 단순히 ‘위험’이나 ‘안전’이라는 용어를 소개하는 것과 불산 누출, TMAH 급성중독, 질식, 엑스선 피폭 등의 사고가 어떻게 발생하고 어떻게 예방할 수 있는지를 사례로 학습하는 것은 교육 효과 측면에서 큰 차이가 있다. 따라서 현행 교과서는 위험의 존재를 일부 언급하고 있으나, 학생이 산업현장의 사고와 질병 발생 과정을 이해하고 예방 행동으로 연결하기에는 한계가 있다고 판단된다."),
         ("본 연구에서는 9권의 반도체 교과서를",
-         f"본 연구에서는 {s.documents}권의 반도체 교과서를 교육 내용에 따라 반도체 개발, 반도체 제조, 반도체 장비, 반도체 재료·인프라 분야로 재분류하였다. 이 분류는 교과서 제목과 주요 교육 내용을 기준으로 한 연구상 분류이며, 대시보드 자체에서 4개 분야별 수치를 별도로 제시한 것은 아니다. 분야별 쪽수는 각 교재 마크다운의 쪽 표식 최댓값을 합한 값이다."
+         f"본 연구에서는 {s.documents}권의 반도체 교과서를 교육 내용에 따라 {', '.join(AREA_LABEL[a].removesuffix(' 분야') for a in AREA_ORDER)} 분야로 재분류하였다. 이 분류는 교과서 제목과 주요 교육 내용을 기준으로 한 연구상 분류이며, 대시보드 자체에서 4개 분야별 수치를 별도로 제시한 것은 아니다. 분야별 쪽수는 각 교재 마크다운의 쪽 표식 최댓값을 합한 값이다."
          + (f" {MB.textbook_basis_sentence(f)}" if f.ncs_real_pages and f.bridge is not None else "") + " 분야별로 설명하면 다음과 같다."),
         ("반도체 개발 분야는",
-         area_sentence("개발", "반도체 개발 분야는") + " 『반도체 기초기술』과 『반도체 기초』는 반도체의 원리, 소자, 회로, 기본 기술을 중심으로 구성되기 때문에, 제조 설비나 화학물질을 직접 취급하는 상황에 대한 안전보건 내용은 제조·장비 분야보다 상대적으로 적을 가능성이 높다."),
+         area("개발", "반도체 개발 분야는") + " 『반도체 기초기술』과 『반도체 기초』는 반도체의 원리, 소자, 회로, 기본 기술을 중심으로 구성되기 때문에, 제조 설비나 화학물질을 직접 취급하는 상황에 대한 안전보건 내용은 제조·장비 분야보다 상대적으로 적을 가능성이 높다."),
         ("반도체 제조 분야는",
-         area_sentence("제조", "반도체 제조 분야는").replace("차지하였다.", "차지하여 가장 큰 비중을 보였다." if largest_area == "제조" else "차지하였다.")
+         area("제조", "반도체 제조 분야는").replace("차지하였다.", "차지하여 가장 큰 비중을 보였다." if largest_area == "제조" else "차지하였다.")
          + " 공정 기초, 포토에칭, 박막 확산, 조립검사 등은 실제 반도체 생산공정과 직접 연결되는 분야이므로, 화학물질, 고온, 특수 가스, 전기, 설비, 방사선, 자동화 장비 등 다양한 위험 요인을 다룰 수 있는 영역이다."),
         ("따라서 제조 분야는 안전보건교육이 가장 적극적으로",
          f"따라서 제조 분야는 안전보건교육이 가장 적극적으로 통합되어야 하는 분야이다. 하지만 전체 교과서에서 {zero_or_count('직업병', '직업병')} {zero_or_count('물질안전보건자료', '물질안전보건자료')} ‘MSDS’는 {fmt(k('MSDS'))}건, ‘작업환경’은 {fmt(k('작업환경'))}건에 그쳤다는 결과를 고려하면, 제조공정 교육이 공정 기술 중심으로 구성되고, 안전보건과 연결은 매우 부족하다고 판단된다. 특히 포토 공정의 현상액과 유기용제, 식각 공정의 산·알칼리와 부식성 물질, 박막·확산 공정의 특수 가스와 고온 설비, 조립·검사 공정의 기계적 위험과 엑스선 검사장비 등을 공정 원리와 함께 설명할 필요가 있다."),
         ("반도체 장비 분야는",
-         area_sentence("장비", "반도체 장비 분야는") + " 장비 유지보수는 정상적인 자동화 생산 작업과 달리 장비 내부 접근, 전원 차단, 잔류 에너지원 제거, 배관 개방, 세정과 부품 교체 등의 작업을 해야 하므로, 사고 위험이 심하게 증가할 수 있다."),
-        ("따라서 장비 분야에서는 전기, 기계, 압력",
+         area("장비", "반도체 장비 분야는") + " 장비 유지보수는 정상적인 자동화 생산 작업과 달리 장비 내부 접근, 전원 차단, 잔류 에너지원 제거, 배관 개방, 세정과 부품 교체 등의 작업을 해야 하므로, 사고 위험이 심하게 증가할 수 있다." + infra_sentence),
+        (EQUIPMENT_TAIL_LOCATOR,
          f"따라서 장비 분야에서는 전기, 기계, 압력, 진공, 고온, 화학물질과 같은 위험 에너지원과 함께 LOTO(Lockout/Tagout), 인터로크, 작업 허가, 잔류 에너지원 확인, 유지보수 전후 안전 점검을 핵심적으로 교육해야 한다. 그러나 {zero_or_count('추락', '추락')} ‘끼임’은 {fmt(k('끼임'))}건에 그쳤으며, 구체적인 사고 사례도 {f.cases.textbook_cases}건이라는 점을 보았을 때, 장비 유지보수 교육에서 실제 사고 예방 내용이 충분하지 않을 가능성이 있다."),
-        ("반도체 재료·인프라 분야는",
-         area_sentence("재료", "반도체 재료·인프라 분야는") + " 이 분야는 반도체 생산에 필요한 화학물질, 특수 가스, 전력, 초순수, 폐수처리, 각종 지원설비와 연결되기 때문에 안전보건 측면에서 매우 중요한 교육 영역이다."),
-        ("특히 반도체산업의 대형 사고는",
-         f"특히 반도체산업의 대형 사고는 생산공정 자체뿐 아니라 화학물질 공급, 가스 공급, 배기, 폐수·폐가스 처리, 시설 유지보수 과정 등에서 발생할 수 있다. 따라서 재료·인프라 분야에서는 GHS, SDS/MSDS, 화학물질 저장과 이송, 특수 가스 관리, 누출·화재·폭발·질식 예방과 비상 대응 등을 체계적으로 다룰 필요가 있다. 그러나 전체 교과서 분석에서 ‘물질안전보건자료’는 {fmt(k('물질안전보건자료'))}건, ‘MSDS’ {fmt(k('MSDS'))}건, ‘작업환경’ {fmt(k('작업환경'))}건, ‘유해 인자’ {fmt(k('유해인자'))}건에 그쳤다는 결과는 이 분야의 화학물질과 작업환경 교육도 상당한 보완이 필요함을 시사한다."),
+        ("(4) 반도체 재료·인프라 분야",                                          # 본문 소제목 — 목차는 원래 "  (4) 반도체 재료 분야" 였다 (D2 b 로 본문도 같아진다)
+         f"  (4) {AREA_LABEL['재료']}"),
+        ("반도체 재료·인프라 분야는",                                            # 원본 (4) 본문 첫머리(locator) — 0권이면 한 문장
+         empty_area_sentence("재료") if materials_empty else materials),
+        (ACCIDENT_LOCATOR,
+         accident_sds),
         ("첫째, 등급 1은",
          f"첫째, 등급 1은 {fmt(s.grades[1])}건(약 {pct(s.grades[1], s.total)})으로 나타났다. 이는 교과서에서 ‘안전’, ‘위험’, ‘주의’ 등의 기본적인 표현은 어느 정도 사용하고 있으나, 대부분 위험 요인을 알리거나 일반적인 주의를 요구하는 수준에 머무른다고 해석할 수 있다."),
         ("둘째, 등급2는",
@@ -982,6 +1010,26 @@ def case_paragraphs(f: Facts) -> list[tuple[str, str, dict]]:
 
 
 PARAGRAPH_TEMPLATES = {"textbook": textbook_paragraphs, "ncs": ncs_paragraphs, "cases": case_paragraphs}
+
+def relocate_accident_paragraph(root: ET.Element, paragraphs: dict[str, ET.Element], ledger: "_Ledger") -> dict:
+    """D3 W1 (report-area-crosswalk): 재료 영역이 0권이면 사고·SDS 문단(근거 교재 『반도체 인프라 일반』은 장비 분야)을 (4) 블록에서 빼 장비 블록 끝으로 옮긴다.
+    옮김 = 재작성된 그 문단의 복제본을 장비 마지막 문단(과 그 뒤 빈 문단) 뒤에 넣고 원본(과 그 뒤 빈 문단)을 지운다 — 장부(inserted·removed)에 적히므로 check_untouched 의 순서 검사와 어긋나지 않는다.
+    빈 문단이 없는 문서(테스트 fixture)면 간격 문단 없이 본문만 옮긴다."""
+    def _disposable_blank(p: ET.Element) -> bool:
+        """빈 간격 문단이라도 명시적 쪽/단 나눔(pageBreak·columnBreak)이 걸려 있으면 스페이서로 보지 않는다 — 지우면 그 나눔이 조용히 사라진다 (ship 리뷰 — Codex 적대적)."""
+        return _is_blank(p) and p.get("pageBreak", "0") == "0" and p.get("columnBreak", "0") == "0"
+
+    src, tail = paragraphs[ACCIDENT_LOCATOR], paragraphs[EQUIPMENT_TAIL_LOCATOR]
+    src_blank = _paragraph_after(root, src)
+    src_blank = src_blank if src_blank is not None and _disposable_blank(src_blank) else None
+    tail_blank = _paragraph_after(root, tail)
+    tail_blank = tail_blank if tail_blank is not None and _disposable_blank(tail_blank) else None
+    ref = tail_blank if tail_blank is not None else tail
+    pieces = [MB.Piece("P", direct_text(src))] + ([MB.Piece("B")] if tail_blank is not None else [])
+    records = ledger.insert(ref, pieces, {"P": src, "B": tail_blank}, "textbook")
+    ledger.remove([src] + ([src_blank] if src_blank is not None else []), "textbook")
+    return {"locator": ACCIDENT_LOCATOR, "after": EQUIPMENT_TAIL_LOCATOR, "inserted": len(pieces), "removed": 1 + (src_blank is not None),
+            "numbers": records[0]["numbers"], "keys": records[0]["keys"]}
 
 
 # ---------------------------------------------------------------- 표
@@ -1548,8 +1596,8 @@ def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_d
         section = sections[name]
         entries = template(facts)
         prefixes = tuple(prefix for prefix, _, _ in entries)
-        for prefix, new_text, conditions in entries:
-            p = find_paragraph(section, prefix, prefixes)
+        located = [(prefix, find_paragraph(section, prefix, prefixes), new_text, conditions) for prefix, new_text, conditions in entries]   # 먼저 전부 찾고 나서 쓴다 — locator 는 원본 첫머리이고, 새 문장이 다른 locator 로 시작할 수 있다 (report-area-crosswalk)
+        for prefix, p, new_text, conditions in located:
             old = direct_text(p)
             info = set_text(p, new_text)
             touched.add(id(p))
@@ -1557,6 +1605,8 @@ def refresh(hwpx: Path, facts: Facts, out: Path, diff_out: Path | None, review_d
             diff["paragraphs"].append({"section": name, "locator": prefix, "old_numbers": audited_numbers(old), "new_numbers": new_numbers,
                                        "keys": facts.keys_for(new_numbers), "conditions": conditions, **info})
             text_pairs.append((name, old, new_text))
+        if name == "textbook" and dict((pfx, c) for pfx, _, c in entries).get(ACCIDENT_LOCATOR, {}).get("relocate_after_equipment"):
+            diff["relocation"] = relocate_accident_paragraph(root, {pfx: p for pfx, p, _, _ in located}, _Ledger(root, facts, touched, inserted, removed, text_pairs))   # D3 W1
 
     # 표
     review_specs: list = []                                              # 검토 HTML 용 (헤더 행 포함)
