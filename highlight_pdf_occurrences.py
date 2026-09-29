@@ -496,6 +496,10 @@ OCR_SWIFT_SOURCE = HERE / "outputs" / "vision_ocr_chars.swift"
 OCR_BATCH = 16
 
 
+class OcrError(RuntimeError):
+    """Vision OCR 도구의 빌드·실행 실패. 실행 중에 나면 그 권만 건너뛰고 나머지는 계속한다(설계 §5)."""
+
+
 def build_ocr_tool(cache_dir: Path, source: Path = OCR_SWIFT_SOURCE) -> Path:
     """swiftc 로 빌드해 cache_dir 에 둔다. 소스보다 새 바이너리가 있으면 그대로 쓴다."""
     cache_dir = Path(cache_dir)
@@ -505,11 +509,11 @@ def build_ocr_tool(cache_dir: Path, source: Path = OCR_SWIFT_SOURCE) -> Path:
         return binary
     swiftc = shutil.which("swiftc")
     if not swiftc:
-        raise RuntimeError("swiftc 가 없습니다 — 교과서 OCR 은 macOS Swift 툴체인이 필요합니다 (xcode-select --install)")
+        raise OcrError("swiftc 가 없습니다 — 교과서 OCR 은 macOS Swift 툴체인이 필요합니다 (xcode-select --install)")
     tmp = binary.with_name(binary.name + ".tmp")
     proc = subprocess.run([swiftc, "-O", "-o", str(tmp), str(source)], capture_output=True, text=True)
     if proc.returncode != 0:
-        raise RuntimeError(f"OCR 도구 빌드 실패: {proc.stderr.strip()[:500]}")
+        raise OcrError(f"OCR 도구 빌드 실패: {proc.stderr.strip()[:500]}")
     os.replace(tmp, binary)
     return binary
 
@@ -517,8 +521,14 @@ def build_ocr_tool(cache_dir: Path, source: Path = OCR_SWIFT_SOURCE) -> Path:
 def run_ocr_tool(binary: Path, images: list[Path]) -> list[dict]:
     proc = subprocess.run([str(binary)] + [str(p) for p in images], capture_output=True)
     if proc.returncode != 0:
-        raise RuntimeError(f"OCR 도구 실행 실패 ({proc.returncode}): {proc.stderr.decode('utf-8', 'replace')[:500]}")
-    return json.loads(proc.stdout)
+        raise OcrError(f"OCR 도구 실행 실패 ({proc.returncode}): {proc.stderr.decode('utf-8', 'replace')[:500]}")
+    try:
+        results = json.loads(proc.stdout)
+    except ValueError as exc:
+        raise OcrError(f"OCR 도구 출력이 JSON 이 아닙니다: {exc}") from exc
+    if not isinstance(results, list):
+        raise OcrError(f"OCR 도구 출력이 목록이 아닙니다: {type(results).__name__}")
+    return results
 
 
 def ocr_pages(doc: fitz.Document, indices: list[int], dpi: int, cache_dir: Path, binary: Path, stem: str) -> dict[int, dict]:
@@ -547,10 +557,10 @@ def ocr_pages(doc: fitz.Document, indices: list[int], dpi: int, cache_dir: Path,
                 pngs.append(png)
             results = run_ocr_tool(binary, pngs)
             if len(results) != len(batch):
-                raise RuntimeError(f"OCR 결과 수가 다릅니다: {stem} {len(results)} != {len(batch)}")
+                raise OcrError(f"OCR 결과 수가 다릅니다: {stem} {len(results)} != {len(batch)}")
             for idx, result in zip(batch, results):
                 if "error" in result:
-                    raise RuntimeError(f"OCR 실패: {stem} {idx + 1}쪽: {result['error']}")
+                    raise OcrError(f"OCR 실패: {stem} {idx + 1}쪽: {result['error']}")
                 result["dpi"] = dpi
                 (folder / f"{idx}.json").write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
                 out[idx] = result
@@ -634,6 +644,22 @@ class BookStats:
         return d
 
 
+@dataclass
+class FailedBook:
+    """OCR 실패로 건너뛴 권. 그 출현은 미발견 목록에 사유와 함께 남긴다."""
+    corpus: str
+    relpath: str
+    pdf: str
+    rows: list
+    error: str
+
+    def as_json(self) -> dict:
+        return {"corpus": self.corpus, "relpath": self.relpath, "pdf": self.pdf, "rows": len(self.rows), "error": self.error}
+
+
+FAILED_REASON = "OCR 실패로 권 건너뜀"
+
+
 def _context_bucket(k: int) -> str:
     return "0" if k == 0 else "1-3" if k <= 3 else "4-9" if k <= 9 else "10+"
 
@@ -650,81 +676,87 @@ def process_book(corpus: str, relpath: str, rows: list[Row], document: skr.Docum
     out.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(pdf, out)
     doc = fitz.open(str(out))
-    stats.pdf_pages = doc.page_count
-    for index in range(doc.page_count):
-        for annot in doc[index].annots():
-            stats.preexisting_annots[annot.type[1]] = stats.preexisting_annots.get(annot.type[1], 0) + 1
-    streams: dict[int, CharStream] = {}
-    ocr_streams: dict[int, CharStream] = {}
-    stem = pdf.stem
+    try:
+        stats.pdf_pages = doc.page_count
+        for index in range(doc.page_count):
+            for annot in doc[index].annots():
+                stats.preexisting_annots[annot.type[1]] = stats.preexisting_annots.get(annot.type[1], 0) + 1
+        streams: dict[int, CharStream] = {}
+        ocr_streams: dict[int, CharStream] = {}
+        stem = pdf.stem
 
-    def get_stream(page_no: int) -> CharStream | None:
-        idx = page_no - 1
-        if idx < 0 or idx >= doc.page_count:
-            return None
-        if page_no not in streams:
-            page = doc[idx]
-            if corpus == "교과서":
+        def get_stream(page_no: int) -> CharStream | None:
+            idx = page_no - 1
+            if idx < 0 or idx >= doc.page_count:
+                return None
+            if page_no not in streams:
+                page = doc[idx]
+                if corpus == "교과서":
+                    result = ocr_pages(doc, [idx], dpi, cache_dir, binary, stem)[idx]
+                    stats.ocr_pages += 1
+                    streams[page_no] = CharStream.from_ocr(result, page)
+                else:
+                    streams[page_no] = CharStream.from_rawdict(page)
+            return streams[page_no]
+
+        def get_ocr_stream(page_no: int) -> CharStream | None:          # NCS 대체 경로: 텍스트 층에 없는 글자를 OCR 로 (binary 가 있을 때만)
+            idx = page_no - 1
+            if binary is None or idx < 0 or idx >= doc.page_count:
+                return None
+            if page_no not in ocr_streams:
                 result = ocr_pages(doc, [idx], dpi, cache_dir, binary, stem)[idx]
                 stats.ocr_pages += 1
-                streams[page_no] = CharStream.from_ocr(result, page)
+                ocr_streams[page_no] = CharStream.from_ocr(result, doc[idx])
+            return ocr_streams[page_no]
+
+        if corpus == "교과서":
+            canonical = sorted({r.page - 1 for r in rows if 0 <= r.page - 1 < doc.page_count})
+            ocr_pages(doc, canonical, dpi, cache_dir, binary, stem)          # 정본 쪽은 한꺼번에 (이웃 쪽은 필요할 때만)
+
+        used: dict = {}
+        for row in sorted(rows, key=lambda r: r.order):
+            resolution = None
+            if row.start is not None and row.text is not None:
+                resolution = resolve_row(get_stream, row.page, row.text, row.start, row.end, row.keyword, used,
+                                         get_ocr_stream=get_ocr_stream if corpus == "NCS" else None)
+            if resolution is None:
+                stats.unresolved += 1
+                stats.unresolved_rows.append(row)
+                continue
+            source = ocr_streams if resolution.ocr else streams
+            add_highlight(doc[resolution.page - 1], quads_for(source[resolution.page], resolution.start, resolution.end), row, resolution.page,
+                          shared=resolution.shared, far=resolution.far, ocr=resolution.ocr)
+            if resolution.shared:
+                stats.shared += 1
+            elif resolution.ocr:
+                stats.ocr += 1
+                if resolution.far:
+                    stats.ocr_far += 1
+                elif resolution.page != row.page:
+                    stats.ocr_adjacent += 1
+            elif resolution.far:
+                stats.far += 1
+            elif resolution.page == row.page:
+                stats.same_page += 1
             else:
-                streams[page_no] = CharStream.from_rawdict(page)
-        return streams[page_no]
+                stats.adjacent += 1
+            stats.context[_context_bucket(resolution.k)] += 1
 
-    def get_ocr_stream(page_no: int) -> CharStream | None:          # NCS 대체 경로: 텍스트 층에 없는 글자를 OCR 로 (binary 가 있을 때만)
-        idx = page_no - 1
-        if binary is None or idx < 0 or idx >= doc.page_count:
-            return None
-        if page_no not in ocr_streams:
-            result = ocr_pages(doc, [idx], dpi, cache_dir, binary, stem)[idx]
-            stats.ocr_pages += 1
-            ocr_streams[page_no] = CharStream.from_ocr(result, doc[idx])
-        return ocr_streams[page_no]
-
-    if corpus == "교과서":
-        canonical = sorted({r.page - 1 for r in rows if 0 <= r.page - 1 < doc.page_count})
-        ocr_pages(doc, canonical, dpi, cache_dir, binary, stem)          # 정본 쪽은 한꺼번에 (이웃 쪽은 필요할 때만)
-
-    used: dict = {}
-    for row in sorted(rows, key=lambda r: r.order):
-        resolution = None
-        if row.start is not None and row.text is not None:
-            resolution = resolve_row(get_stream, row.page, row.text, row.start, row.end, row.keyword, used,
-                                     get_ocr_stream=get_ocr_stream if corpus == "NCS" else None)
-        if resolution is None:
-            stats.unresolved += 1
-            stats.unresolved_rows.append(row)
-            continue
-        source = ocr_streams if resolution.ocr else streams
-        add_highlight(doc[resolution.page - 1], quads_for(source[resolution.page], resolution.start, resolution.end), row, resolution.page,
-                      shared=resolution.shared, far=resolution.far, ocr=resolution.ocr)
-        if resolution.shared:
-            stats.shared += 1
-        elif resolution.ocr:
-            stats.ocr += 1
-            if resolution.far:
-                stats.ocr_far += 1
-            elif resolution.page != row.page:
-                stats.ocr_adjacent += 1
-        elif resolution.far:
-            stats.far += 1
-        elif resolution.page == row.page:
-            stats.same_page += 1
+        add_legend(doc[0], source_label)
+        try:
+            doc.save(str(out), incremental=True, encryption=fitz.PDF_ENCRYPT_KEEP)
+        except Exception:                                                     # 증분 저장이 안 되는 파일(손상된 xref 등) — 전체 저장으로
+            tmp = out.with_name(out.name + ".tmp")
+            doc.save(str(tmp), garbage=0)
+            doc.close()
+            os.replace(tmp, out)
         else:
-            stats.adjacent += 1
-        stats.context[_context_bucket(resolution.k)] += 1
-
-    add_legend(doc[0], source_label)
-    try:
-        doc.save(str(out), incremental=True, encryption=fitz.PDF_ENCRYPT_KEEP)
-    except Exception:                                                     # 증분 저장이 안 되는 파일(손상된 xref 등) — 전체 저장으로
-        tmp = out.with_name(out.name + ".tmp")
-        doc.save(str(tmp), garbage=0)
-        doc.close()
-        os.replace(tmp, out)
-    else:
-        doc.close()
+            doc.close()
+    except BaseException:
+        if not doc.is_closed:
+            doc.close()
+        out.unlink(missing_ok=True)                                      # 형광펜이 덜 들어간 사본은 남기지 않는다
+        raise
     stats.seconds = round(time.time() - t0, 1)
     return stats
 
@@ -737,11 +769,12 @@ def _unresolved_reason(row: Row, pdf_pages: int) -> str:
     return "정본 쪽·이웃 쪽에서 미발견"
 
 
-def write_outputs(out_root: Path, books: list[BookStats], totals: dict, meta: dict, partial: bool) -> None:
+def write_outputs(out_root: Path, books: list[BookStats], totals: dict, meta: dict, partial: bool,
+                  failed: list[FailedBook] | tuple = ()) -> None:
     out_root.mkdir(parents=True, exist_ok=True)
     log = {"generated_at": meta["generated_at"], "xlsx": meta["xlsx"], "xlsx_sha256": meta["xlsx_sha256"], "dpi": meta["dpi"],
            "colors": GRADE_HEX, "canonical_run": meta.get("canonical_run"), "partial": partial, "totals": totals,
-           "books": [b.as_json() for b in books]}
+           "books": [b.as_json() for b in books], "failed_books": [f.as_json() for f in failed]}
     name = "highlight_log.partial.json" if partial else "highlight_log.json"
     (out_root / name).write_text(json.dumps(log, ensure_ascii=False, indent=1), encoding="utf-8")
     with (out_root / ("unresolved.partial.csv" if partial else "unresolved.csv")).open("w", encoding="utf-8", newline="") as fh:
@@ -751,8 +784,12 @@ def write_outputs(out_root: Path, books: list[BookStats], totals: dict, meta: di
             for row in b.unresolved_rows:
                 writer.writerow((row.corpus, row.relpath, row.keyword, row.expression, row.matched, row.line, row.page, row.grade,
                                  row.locator or "", _unresolved_reason(row, b.pdf_pages)))
+        for f in failed:
+            for row in f.rows:
+                writer.writerow((row.corpus, row.relpath, row.keyword, row.expression, row.matched, row.line, row.page, row.grade,
+                                 row.locator or "", FAILED_REASON))
     if not partial:
-        (out_root / "README.md").write_text(readme_text(totals, meta, books), encoding="utf-8")
+        (out_root / "README.md").write_text(readme_text(totals, meta, books, failed), encoding="utf-8")
 
 
 TOTAL_KEYS = ("books", "rows", "same_page", "shared", "adjacent", "far", "ocr", "ocr_adjacent", "ocr_far", "unresolved")
@@ -762,7 +799,7 @@ def book_totals(books: list[BookStats]) -> dict:
     return {"books": len(books), **{k: sum(getattr(b, k) for b in books) for k in TOTAL_KEYS[1:]}}
 
 
-def readme_text(totals: dict, meta: dict, books: list[BookStats]) -> str:
+def readme_text(totals: dict, meta: dict, books: list[BookStats], failed: list[FailedBook] | tuple = ()) -> str:
     by_corpus: dict[str, dict] = {}
     for b in books:
         c = by_corpus.setdefault(b.corpus, {k: 0 for k in TOTAL_KEYS})
@@ -790,6 +827,13 @@ def readme_text(totals: dict, meta: dict, books: list[BookStats]) -> str:
     lines += [
         f"| 합계 | {totals['books']} | {totals['rows']:,} | {totals['same_page']:,} | {totals['shared']:,} | {totals['adjacent']:,} | {totals['far']:,} | {totals['ocr']:,} | {totals['unresolved']:,} |",
         "",
+    ]
+    if failed:
+        lines += [f"**OCR 실패로 만들지 못한 권 {len(failed)}권** — 출현 {sum(len(f.rows) for f in failed):,}건은 위 표에 없고 `unresolved.csv` 에 "
+                  f"사유 `{FAILED_REASON}` 로, 오류는 `highlight_log.json` 의 `failed_books` 에 있다. 이 실행은 완결본이 아니다.", ""]
+        lines += [f"- {f.corpus} `{Path(f.pdf).name}` (출현 {len(f.rows):,}건)" for f in failed]
+        lines.append("")
+    lines += [
         "- NCS: PDF 텍스트 층(PyMuPDF rawdict)에서 마크다운 줄의 앞뒤 문맥 창으로 위치를 찾았다.",
         f"- 교과서: 스캔본이라 Apple Vision OCR({meta['dpi']} dpi, `outputs/vision_ocr_chars.swift`)로 글자 좌표를 얻었다. 마크다운 변환기(surya)와 다른 OCR 이라 일부는 못 찾는다.",
         "- 정본 쪽 중복 자리: 정본 출현 수가 그 쪽 PDF 본문의 표현 수보다 많아(표·병합 셀 중복 등) 이미 표시한 자리에 겹쳐 표시한 출현 — 팝업에 적혀 있다.",
@@ -863,8 +907,14 @@ def main(argv: list[str] | None = None) -> int:
         say(f"OCR 도구 없음 — NCS 의 OCR 대체 경로는 건너뜁니다: {exc}")
     source_label = args.xlsx.name
     books: list[BookStats] = []
+    failed: list[FailedBook] = []
     for n, (corpus, relpath, book_rows, document, pdf, out) in enumerate(plan, start=1):
-        stats = process_book(corpus, relpath, book_rows, document, compiled, pdf, out, args.dpi, cache_dir, binary, source_label)
+        try:
+            stats = process_book(corpus, relpath, book_rows, document, compiled, pdf, out, args.dpi, cache_dir, binary, source_label)
+        except OcrError as exc:                                          # 설계 §5: Vision 실패는 그 권만 건너뛰고 나머지는 계속
+            failed.append(FailedBook(corpus, relpath, str(pdf), book_rows, str(exc)[:500]))
+            say(f"[{n}/{len(plan)}] {corpus} {pdf.name}: OCR 실패로 건너뜀 — {exc}")
+            continue
         books.append(stats)
         say(f"[{n}/{len(plan)}] {corpus} {pdf.name}: 출현 {stats.rows} → 그 쪽 {stats.same_page} (+중복 {stats.shared}), ±1쪽 {stats.adjacent}, 먼 쪽 {stats.far}, OCR {stats.ocr}, 미발견 {stats.unresolved}"
             f" (engine {stats.locator['engine']}줄 / naive {stats.locator['naive']}줄{', OCR ' + str(stats.ocr_pages) + '쪽' if stats.ocr_pages else ''}, {stats.seconds}s)")
@@ -872,10 +922,11 @@ def main(argv: list[str] | None = None) -> int:
     totals = book_totals(books)
     meta = {"generated_at": dt.datetime.now().astimezone().isoformat(timespec="seconds"), "xlsx": skr.public_path(args.xlsx),
             "xlsx_sha256": hashlib.sha256(args.xlsx.read_bytes()).hexdigest(), "dpi": args.dpi, "canonical_run": canonical_run}
-    write_outputs(args.out, books, totals, meta, partial)
-    complete = not partial and totals["rows"] == len(rows) and totals["books"] == len(grouped)
+    write_outputs(args.out, books, totals, meta, partial, failed)
+    complete = not partial and not failed and totals["rows"] == len(rows) and totals["books"] == len(grouped)
     say(f"합계: {totals['books']}권 {totals['rows']:,}건 — 그 쪽 {totals['same_page']:,} (+중복 {totals['shared']:,}), ±1쪽 {totals['adjacent']:,}, 먼 쪽 {totals['far']:,}, OCR {totals['ocr']:,}, 미발견 {totals['unresolved']:,}"
-        + ("" if complete else " (부분 실행 — 정본 합계와 대조하지 않음)"))
+        + (f" · OCR 실패로 건너뛴 권 {len(failed)}권(출현 {sum(len(f.rows) for f in failed):,}건)" if failed else "")
+        + ("" if complete else " (완결본 아님 — 정본 합계와 대조하지 않음)"))
     return 0 if complete else 1
 
 

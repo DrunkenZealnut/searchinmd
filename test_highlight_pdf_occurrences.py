@@ -6,9 +6,11 @@ Vision OCR 통합(OcrToolTests)은 swiftc 가 있을 때만 돈다.
 from __future__ import annotations
 
 import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import fitz
 
@@ -432,6 +434,28 @@ def _figure_page_pdf(path: Path, sentence: str) -> None:
     doc.save(str(path))
 
 
+class OcrErrorTests(unittest.TestCase):
+    """OCR 도구의 모든 실패는 OcrError 로 올라온다 — main 이 그 권만 건너뛰는 근거(설계 §5)."""
+
+    def test_tool_failures_raise_ocr_error(self):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        doc = fitz.open()
+        doc.new_page(width=200, height=100)
+        with mock.patch.object(HL, "run_ocr_tool", return_value=[{"error": "image load failed"}]):
+            with self.assertRaisesRegex(HL.OcrError, "시험 1쪽"):
+                HL.ocr_pages(doc, [0], dpi=72, cache_dir=tmp, binary=Path("/x"), stem="시험")
+        with mock.patch.object(HL, "run_ocr_tool", return_value=[]):
+            with self.assertRaisesRegex(HL.OcrError, "결과 수"):
+                HL.ocr_pages(doc, [0], dpi=72, cache_dir=tmp, binary=Path("/x"), stem="시험")
+        done = lambda out, code=0: subprocess.CompletedProcess(["x"], code, stdout=out, stderr=b"boom")
+        for out, code, pattern in ((b"not json", 0, "JSON"), (b"{}", 0, "목록"), (b"", 3, "실행 실패")):
+            with mock.patch.object(HL.subprocess, "run", return_value=done(out, code)):
+                with self.assertRaisesRegex(HL.OcrError, pattern):
+                    HL.run_ocr_tool(Path("/x"), [Path("/a.png")])
+        self.assertTrue(issubclass(HL.OcrError, RuntimeError))            # 빌드 실패를 잡는 main 의 except RuntimeError 는 그대로
+
+
 HAS_SWIFTC = shutil.which("swiftc") is not None
 
 
@@ -594,6 +618,30 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(HL.main(self.argv(xlsx) + ["--only", "LM0000000000"]), 1)          # 아무 권도 안 맞음 → 부분 실행, 합계 0
         self.assertFalse((self.tmp / "out/highlight_log.json").exists())
         self.assertTrue((self.tmp / "out/highlight_log.partial.json").exists())
+
+    def test_ocr_failure_skips_only_that_book_and_still_writes_the_logs(self):
+        import json
+        rel_a, _, rows_a = self.ncs_fixture()                                    # 3·4행은 OCR 단계까지 간다
+        rel_b = "반도체개발/LM8888888888_둘째_교재/LM8888888888_둘째_교재.md"
+        md_b = self.tmp / "ncs_md" / rel_b
+        md_b.parent.mkdir(parents=True)
+        md_b.write_text(MD_BODY, encoding="utf-8")
+        _text_pdf(self.tmp / "ncs_pdf/반도체개발/LM8888888888_둘째 교재.pdf")
+        rows_b = [_row(rel_b, "안전", "안전", 4, 2, 2, "안전 수칙을 지킨다"),            # 정본 쪽에서 바로 찾는다 — OCR 이 필요 없다
+                  _row(rel_b, "화재", "화재", 5, 2, 2, "화재 예방 교육")]
+        xlsx = self.tmp / "t.xlsx"
+        _write_xlsx(xlsx, rows_a + rows_b, [])
+        with mock.patch.object(HL, "build_ocr_tool", return_value=Path("/nonexistent/vision_ocr_chars")), \
+                mock.patch.object(HL, "run_ocr_tool", side_effect=HL.OcrError("OCR 도구 실행 실패 (1): 시험")):
+            self.assertEqual(HL.main(self.argv(xlsx)), 1)                                   # 완결본이 아니다
+        log = json.loads((self.tmp / "out/highlight_log.json").read_text(encoding="utf-8"))
+        self.assertEqual([(f["relpath"], f["rows"]) for f in log["failed_books"]], [(rel_a, 4)])
+        self.assertIn("시험", log["failed_books"][0]["error"])
+        self.assertEqual((log["totals"]["books"], log["totals"]["rows"], log["totals"]["same_page"]), (1, 2, 2))
+        self.assertFalse((self.tmp / "out/ncs/반도체개발/LM9999999999_시험 교재_키워드표시.pdf").exists())    # 덜 된 사본은 남기지 않는다
+        self.assertTrue((self.tmp / "out/ncs/반도체개발/LM8888888888_둘째 교재_키워드표시.pdf").exists())
+        self.assertEqual((self.tmp / "out/unresolved.csv").read_text(encoding="utf-8").count(HL.FAILED_REASON), 4)
+        self.assertIn("OCR 실패로 만들지 못한 권 1권", (self.tmp / "out/README.md").read_text(encoding="utf-8"))
 
     @unittest.skipUnless(HAS_SWIFTC, "swiftc 가 없다")
     def test_end_to_end_ncs_finds_figure_text_on_a_neighbour_page_by_ocr(self):

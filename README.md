@@ -96,12 +96,12 @@ export NCS_PDF_ROOT=/path/to/ncs/pdfs   # 원본 PDF (비공개)
 python3 resegment.py                    # 약 30초. 내장 EXPECTED 회귀 검사가 어긋나면 산출물을 쓰지 않는다
 ```
 
-원본 PDF 가 있으면 정본 xlsx 의 출현 키워드를 **PDF 사본에 등급별 형광펜**으로 얹을 수도 있습니다(`highlight_pdf_occurrences.py`, 2026-09-26). NCS 86권은 PDF 텍스트 층에서, 스캔본인 교과서 9권은 macOS 내장 Vision OCR(`outputs/vision_ocr_chars.swift`)로 글자 좌표를 얻어 원본은 건드리지 않고 사본에 주석만 추가합니다. 텍스트 층에 없는 글자(표 셀·그림·스크린샷 속 글자 — 연구 책임자 결정으로 출현에 포함)는 NCS 도 해당 쪽·이웃 쪽·먼 쪽을 OCR 로 다시 읽어 찾습니다. 색은 등급1 노랑 / 등급2 주황 / 등급3 초록, 산출물은 `data/highlighted/`(비추적)이며 권별 발견·미발견 수는 `highlight_log.json` 에 남습니다.
+원본 PDF 가 있으면 정본 xlsx 의 출현 키워드를 **PDF 사본에 등급별 형광펜**으로 얹을 수도 있습니다(`highlight_pdf_occurrences.py`, 2026-09-26). NCS 86권은 PDF 텍스트 층에서, 스캔본인 교과서 9권은 macOS 내장 Vision OCR(`outputs/vision_ocr_chars.swift`)로 글자 좌표를 얻어 원본은 건드리지 않고 사본에 주석만 추가합니다. 텍스트 층에 없는 글자(표 셀·그림·스크린샷 속 글자 — 연구 책임자 결정으로 출현에 포함)는 NCS 도 해당 쪽·이웃 쪽·먼 쪽을 OCR 로 다시 읽어 찾습니다. 색은 등급1 노랑 / 등급2 주황 / 등급3 초록, 산출물은 `data/highlighted/`(비추적)이며 권별 발견·미발견 수는 `highlight_log.json` 에 남습니다. 교과서 OCR 에는 macOS 와 Swift 컴파일러 `swiftc` 가 필요합니다(없으면 `xcode-select --install`). 실행 중 OCR 이 실패한 권은 건너뛰고 `highlight_log.json` 의 `failed_books` 에 적은 뒤 종료 코드 1 로 끝납니다.
 
 ```bash
-pip install pymupdf openpyxl
+python3.13 -m pip install pymupdf openpyxl
 python3.13 highlight_pdf_occurrences.py          # 약 15분(교과서 OCR 포함, 두 번째부터는 캐시). data/highlighted/ 에 95권 + 로그
-python3.13 highlight_pdf_occurrences.py --only LM1903060329   # 한 권만 (부분 실행)
+python3.13 highlight_pdf_occurrences.py --only LM1903060329   # 한 권만 — 부분 실행이라 로그는 .partial, 종료 코드 1 이 정상
 ```
 
 보고서 HWPX 의 **목차 쪽번호를 실제 쪽과 맞추려면** `hwpx_toc_sync.py`(2026-09-29)를 씁니다. 같은 문서를 인쇄할 프로그램(Polaris Office·한글, 또는 Polaris Tools 의 HWPX→PDF)에서 PDF 로 내보낸 뒤 둘을 함께 주면, 목차 항목을 본문 제목과 대조하고 PDF 에서 각 제목이 놓인 쪽을 찾아 목차 숫자를 고칩니다. 입력 파일은 덮어쓰지 않고 `<입력>_목차연동.hwpx` 를 새로 만들며, 목차 밖 문단은 바꾸지 않습니다. 메모를 함께 인쇄한 Polaris PDF 도 됩니다(메모 칸의 글은 빼고 맞춥니다).
