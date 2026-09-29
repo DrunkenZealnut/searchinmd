@@ -104,6 +104,15 @@ python3.13 highlight_pdf_occurrences.py          # 약 15분(교과서 OCR 포�
 python3.13 highlight_pdf_occurrences.py --only LM1903060329   # 한 권만 (부분 실행)
 ```
 
+보고서 HWPX 의 **목차 쪽번호를 실제 쪽과 맞추려면** `hwpx_toc_sync.py`(2026-09-29)를 씁니다. 같은 문서를 인쇄할 프로그램(Polaris Office·한글, 또는 Polaris Tools 의 HWPX→PDF)에서 PDF 로 내보낸 뒤 둘을 함께 주면, 목차 항목을 본문 제목과 대조하고 PDF 에서 각 제목이 놓인 쪽을 찾아 목차 숫자를 고칩니다. 입력 파일은 덮어쓰지 않고 `<입력>_목차연동.hwpx` 를 새로 만들며, 목차 밖 문단은 바꾸지 않습니다. 메모를 함께 인쇄한 Polaris PDF 도 됩니다(메모 칸의 글은 빼고 맞춥니다).
+
+```bash
+pip install pymupdf
+python3.13 hwpx_toc_sync.py 보고서.hwpx --pdf 보고서.pdf --check                      # 검사만(어긋나면 종료 코드 1)
+python3.13 hwpx_toc_sync.py 보고서.hwpx --pdf 보고서.pdf                              # 쪽번호 갱신
+python3.13 hwpx_toc_sync.py 보고서.hwpx --pdf 보고서.pdf --sync-titles --add-missing  # 바뀐 제목 반영·빠진 항목 추가까지
+```
+
 ### 등급이 뜻하는 것
 
 | 등급 | 뜻 |
@@ -130,7 +139,7 @@ node    outputs/test-sri.js                  # 38 — 외부 스크립트 SRI (-
 
 Node 기반 하니스는 HTML과 실제 공통 렌더러를 `vm` + DOM mock으로 불러옵니다. 복사해 붙인 사본을 테스트하지 않습니다. `test-core-logic.html` 은 브라우저에서 열어 탭 제목으로 봐도 됩니다 — `run-core-logic-tests.js` 는 같은 HTML 을 헤드리스로 돌릴 뿐입니다. `test-recount-grades.py`는 `openpyxl`을 스텁으로 주입해 pip 패키지 없이도, 원본 엑셀 없이도 돕니다.
 
-의미 재검산 자체(코퍼스 규칙, `EXPECTED` 가드, manifest, 결정론, 산출물 writer)는 `test_semantic_keyword_recount.py` 가 검증합니다 — `python3 -m unittest test_semantic_keyword_recount`, 이것만은 `openpyxl` 이 깔린 Python 이 필요합니다. 표현 점검(`expression_review.py` — 표본·정밀도 구간·재정·영향표)은 `test_expression_review.py` 가 검증하며 같은 조건입니다. 보고서 HWPX 재작성(`hwpx_results_refresh.py`)은 `test_hwpx_results_refresh.py` 가 fixture HWPX 로 검증하고(표준 라이브러리만; 그림 렌더는 ImageMagick 이 있을 때만), 2단계(제2장 5절·제3장 2절 4), `hwpx_methods_bridge.py`)는 `test_hwpx_methods_bridge.py` 가 검증합니다(역시 표준 라이브러리만). CI 는 위 하니스 5종 뒤에 `openpyxl` 을 설치하고 넷 다 돌립니다. PDF 형광펜(`highlight_pdf_occurrences.py`)은 `test_highlight_pdf_occurrences.py` 가 fitz 로 만든 PDF 로 검증합니다 — `python3.13 -m unittest test_highlight_pdf_occurrences`, `pymupdf` 가 필요하고 Vision OCR 부분은 `swiftc` 가 있을 때만 돌며 CI 밖입니다.
+의미 재검산 자체(코퍼스 규칙, `EXPECTED` 가드, manifest, 결정론, 산출물 writer)는 `test_semantic_keyword_recount.py` 가 검증합니다 — `python3 -m unittest test_semantic_keyword_recount`, 이것만은 `openpyxl` 이 깔린 Python 이 필요합니다. 표현 점검(`expression_review.py` — 표본·정밀도 구간·재정·영향표)은 `test_expression_review.py` 가 검증하며 같은 조건입니다. 보고서 HWPX 재작성(`hwpx_results_refresh.py`)은 `test_hwpx_results_refresh.py` 가 fixture HWPX 로 검증하고(표준 라이브러리만; 그림 렌더는 ImageMagick 이 있을 때만), 2단계(제2장 5절·제3장 2절 4), `hwpx_methods_bridge.py`)는 `test_hwpx_methods_bridge.py` 가 검증합니다(역시 표준 라이브러리만). CI 는 위 하니스 5종 뒤에 `openpyxl` 을 설치하고 넷 다 돌립니다. PDF 형광펜(`highlight_pdf_occurrences.py`)은 `test_highlight_pdf_occurrences.py` 가 fitz 로 만든 PDF 로 검증합니다 — `python3.13 -m unittest test_highlight_pdf_occurrences`, `pymupdf` 가 필요하고 Vision OCR 부분은 `swiftc` 가 있을 때만 돌며 CI 밖입니다. 목차 쪽번호 연동(`hwpx_toc_sync.py`)은 `test_hwpx_toc_sync.py` 가 시험 안에서 만든 HWPX·PDF 로 검증합니다 — `python3.13 -m unittest test_hwpx_toc_sync`, 역시 `pymupdf` 가 필요하고 CI 밖입니다.
 
 대시보드 데이터는 `semantic_keyword_recount.py` 한 실행이 `docs/semantic_recount_data.js` 와 `docs/03-analysis/data/semantic_summary.json` 에 같은 JSON 으로 씁니다. `test-dashboard-data.js` 는 그 요약 파일을 기준으로 대시보드·분리 분석 페이지·README·`CLAUDE.md` 의 인용값을 대조하므로(S2~S8), 수치는 손으로 고치지 말고 정본 실행을 다시 돌리세요. 위 블록의 단언 수 두 개(`test-dashboard-data.js`, `test-recount-grades.py`)는 하니스가 README·`CLAUDE.md` 의 인용값과 직접 대조하므로(S9, R17), 하니스가 찍는 수를 두 파일에 옮기세요.
 
