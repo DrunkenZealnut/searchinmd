@@ -96,6 +96,14 @@ export NCS_PDF_ROOT=/path/to/ncs/pdfs   # 원본 PDF (비공개)
 python3 resegment.py                    # 약 30초. 내장 EXPECTED 회귀 검사가 어긋나면 산출물을 쓰지 않는다
 ```
 
+원본 PDF 가 있으면 정본 xlsx 의 출현 키워드를 **PDF 사본에 등급별 형광펜**으로 얹을 수도 있습니다(`highlight_pdf_occurrences.py`, 2026-09-26). NCS 86권은 PDF 텍스트 층에서, 스캔본인 교과서 9권은 macOS 내장 Vision OCR(`outputs/vision_ocr_chars.swift`)로 글자 좌표를 얻어 원본은 건드리지 않고 사본에 주석만 추가합니다. 텍스트 층에 없는 글자(표 셀·그림·스크린샷 속 글자 — 연구 책임자 결정으로 출현에 포함)는 NCS 도 해당 쪽·이웃 쪽·먼 쪽을 OCR 로 다시 읽어 찾습니다. 색은 등급1 노랑 / 등급2 주황 / 등급3 초록, 산출물은 `data/highlighted/`(비추적)이며 권별 발견·미발견 수는 `highlight_log.json` 에 남습니다.
+
+```bash
+pip install pymupdf openpyxl
+python3.13 highlight_pdf_occurrences.py          # 약 15분(교과서 OCR 포함, 두 번째부터는 캐시). data/highlighted/ 에 95권 + 로그
+python3.13 highlight_pdf_occurrences.py --only LM1903060329   # 한 권만 (부분 실행)
+```
+
 ### 등급이 뜻하는 것
 
 | 등급 | 뜻 |
@@ -122,7 +130,7 @@ node    outputs/test-sri.js                  # 38 — 외부 스크립트 SRI (-
 
 Node 기반 하니스는 HTML과 실제 공통 렌더러를 `vm` + DOM mock으로 불러옵니다. 복사해 붙인 사본을 테스트하지 않습니다. `test-core-logic.html` 은 브라우저에서 열어 탭 제목으로 봐도 됩니다 — `run-core-logic-tests.js` 는 같은 HTML 을 헤드리스로 돌릴 뿐입니다. `test-recount-grades.py`는 `openpyxl`을 스텁으로 주입해 pip 패키지 없이도, 원본 엑셀 없이도 돕니다.
 
-의미 재검산 자체(코퍼스 규칙, `EXPECTED` 가드, manifest, 결정론, 산출물 writer)는 `test_semantic_keyword_recount.py` 가 검증합니다 — `python3 -m unittest test_semantic_keyword_recount`, 이것만은 `openpyxl` 이 깔린 Python 이 필요합니다. 표현 점검(`expression_review.py` — 표본·정밀도 구간·재정·영향표)은 `test_expression_review.py` 가 검증하며 같은 조건입니다. 보고서 HWPX 재작성(`hwpx_results_refresh.py`)은 `test_hwpx_results_refresh.py` 가 fixture HWPX 로 검증하고(표준 라이브러리만; 그림 렌더는 ImageMagick 이 있을 때만), 2단계(제2장 5절·제3장 2절 4), `hwpx_methods_bridge.py`)는 `test_hwpx_methods_bridge.py` 가 검증합니다(역시 표준 라이브러리만). CI 는 위 하니스 5종 뒤에 `openpyxl` 을 설치하고 넷 다 돌립니다.
+의미 재검산 자체(코퍼스 규칙, `EXPECTED` 가드, manifest, 결정론, 산출물 writer)는 `test_semantic_keyword_recount.py` 가 검증합니다 — `python3 -m unittest test_semantic_keyword_recount`, 이것만은 `openpyxl` 이 깔린 Python 이 필요합니다. 표현 점검(`expression_review.py` — 표본·정밀도 구간·재정·영향표)은 `test_expression_review.py` 가 검증하며 같은 조건입니다. 보고서 HWPX 재작성(`hwpx_results_refresh.py`)은 `test_hwpx_results_refresh.py` 가 fixture HWPX 로 검증하고(표준 라이브러리만; 그림 렌더는 ImageMagick 이 있을 때만), 2단계(제2장 5절·제3장 2절 4), `hwpx_methods_bridge.py`)는 `test_hwpx_methods_bridge.py` 가 검증합니다(역시 표준 라이브러리만). CI 는 위 하니스 5종 뒤에 `openpyxl` 을 설치하고 넷 다 돌립니다. PDF 형광펜(`highlight_pdf_occurrences.py`)은 `test_highlight_pdf_occurrences.py` 가 fitz 로 만든 PDF 로 검증합니다 — `python3.13 -m unittest test_highlight_pdf_occurrences`, `pymupdf` 가 필요하고 Vision OCR 부분은 `swiftc` 가 있을 때만 돌며 CI 밖입니다.
 
 대시보드 데이터는 `semantic_keyword_recount.py` 한 실행이 `docs/semantic_recount_data.js` 와 `docs/03-analysis/data/semantic_summary.json` 에 같은 JSON 으로 씁니다. `test-dashboard-data.js` 는 그 요약 파일을 기준으로 대시보드·분리 분석 페이지·README·`CLAUDE.md` 의 인용값을 대조하므로(S2~S8), 수치는 손으로 고치지 말고 정본 실행을 다시 돌리세요. 위 블록의 단언 수 두 개(`test-dashboard-data.js`, `test-recount-grades.py`)는 하니스가 README·`CLAUDE.md` 의 인용값과 직접 대조하므로(S9, R17), 하니스가 찍는 수를 두 파일에 옮기세요.
 
