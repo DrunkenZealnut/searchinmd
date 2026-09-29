@@ -343,6 +343,41 @@ class RunTests(Base):
         self.assertEqual(new.sig, TOC_STYLE['N)'])
         self.assertNotIn('<hp:linesegarray>', new.xml)
 
+    def test_add_missing_before_the_first_entry(self):
+        paras = base_paras((3, 3, 3, 5, 6))
+        paras.insert(7, H('1) 머리말', 'N)'))                                          # 첫 목차 항목의 제목보다 앞선 본문 제목
+        make_hwpx(self.hwpx, paras)
+        pages = base_pdf_pages()
+        pages[2] = [('1) 머리말', None)] + pages[2]
+        make_pdf(self.pdf, pages)
+        rc, out, _ = quiet(TS.run, [str(self.hwpx), '--pdf', str(self.pdf), '--add-missing'])
+        self.assertEqual(rc, 0, out)                                                  # 맨 앞 삽입도 대조(verify_untouched)를 통과한다
+        self.assertIn('[목차에 없음] 1) 머리말 (3쪽) — 앞 항목: (맨 앞)', out)
+        self.assertEqual(self.toc_pages_of(self.tmp / '문서_목차연동.hwpx'),
+                         [('1) 머리말', 3), ('제1장 서론', 3), ('1. 연구 배경', 3), ('1) 주요 사건', 3), ('2. 연구 필요성', 5), ('제2장 연구 방법', 6)])
+
+    def test_verify_untouched_compares_every_paragraph_but_the_toc_entries(self):
+        make_hwpx(self.hwpx, base_paras())
+        make_pdf(self.pdf, base_pdf_pages())
+        quiet(TS.run, [str(self.hwpx), '--pdf', str(self.pdf)])
+        dst = self.tmp / '문서_목차연동.hwpx'
+        doc = TS.load_hwpx(self.hwpx)
+        TS.find_toc(doc)
+        TS.verify_untouched(doc, dst, {}, {}, False)                                  # 목차 항목의 쪽번호만 바뀐 출력은 통과
+        with zipfile.ZipFile(dst) as z:
+            sec = z.read('Contents/section0.xml').decode('utf-8')
+        for old, new in (('<hp:t></hp:t>', '<hp:t> </hp:t>'),                             # 목차 사이의 빈 문단
+                         ('본문 한 단락입니다.', '바뀐 단락입니다.')):                       # 본문
+            tampered = self.tmp / 'tampered.hwpx'
+            with zipfile.ZipFile(dst) as zin, zipfile.ZipFile(tampered, 'w') as zout:
+                for info in zin.infolist():
+                    data = zin.read(info.filename)
+                    if info.filename == 'Contents/section0.xml':
+                        data = sec.replace(old, new, 1).encode('utf-8')
+                    zout.writestr(info, data)
+            with self.assertRaises(AssertionError, msg=old):
+                TS.verify_untouched(doc, tampered, {}, {}, False)
+
     def test_tab_width_is_estimated_from_same_level_entries(self):
         make_hwpx(self.hwpx, [P('표지'), TOC('1) 짧은 제목', 3, 'N)').replace('width="30000"', 'width="36000"'),
                               TOC('2) 훨씬 더 길게 늘어난 제목입니다', 3, 'N)').replace('width="30000"', 'width="24000"'),

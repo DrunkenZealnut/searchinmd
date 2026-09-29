@@ -451,32 +451,27 @@ def write_hwpx(src: Path, dst: Path, sections: dict[str, str]) -> None:
             zout.writestr(info.filename, data, compress_type=ctype)
 
 
-def verify_untouched(doc: Doc, out: Path, n_inserted: int, fix_memos: bool) -> None:
-    """저장한 파일을 다시 읽어, 목차 구간 밖의 최상위 문단이 원본과 바이트 단위로 같은지 본다."""
-    after = load_hwpx(out)
+def verify_untouched(doc: Doc, out: Path, ins_before: dict, ins_after: dict, fix_memos: bool) -> None:
+    """저장한 파일을 다시 읽어, 목차 항목이 아닌 최상위 문단이 원본과 바이트 단위로 같은지 본다. 원본 문단을
+    차례로 따라가며 목차 항목 문단만 대조에서 빼고, 새로 넣은 항목은 넣은 자리(ins_before / ins_after: 원본
+    문단 (구역, 번호) → 그 앞 / 뒤에 넣은 수)로 건너뛴다 — 목차 사이의 빈 문단도 대조된다."""
+    after = load_hwpx(out).paras
     toc_keys = {(e.para.section, e.para.index) for e in doc.toc}
-    first = doc.toc[0].para
-    last = doc.toc[-1].para
-    def outside(paras, toc_len):
-        out_list, in_block = [], False
-        seen = 0
-        for p in paras:
-            if (p.section, p.index) == (first.section, first.index):
-                in_block = True
-            if in_block and seen < toc_len:
-                if p.text.strip():
-                    seen += 1
-                continue
-            in_block = False
-            out_list.append(p.xml)
-        return out_list
-    before = outside(doc.paras, len(doc.toc))
-    if fix_memos:
-        before = [fix_empty_memos(x)[0] for x in before]
-    got = outside(after.paras, len(doc.toc) + n_inserted)
-    if before != got:
-        diff = next(i for i, (x, y) in enumerate(zip(before, got)) if x != y) if len(before) == len(got) else None
-        raise AssertionError(f'목차 밖 문단이 바뀌었습니다(첫 차이 위치 {diff}, 문단 수 {len(before)} → {len(got)})')
+    j = 0
+    for p in doc.paras:
+        key = (p.section, p.index)
+        j += ins_before.get(key, 0)
+        if j >= len(after):
+            raise AssertionError(f'출력 문단이 모자랍니다({len(after)}개, {p.section} 문단 {p.index} 에서)')
+        q = after[j]
+        j += 1
+        if key not in toc_keys:
+            want = fix_empty_memos(p.xml)[0] if fix_memos else p.xml
+            if q.section != p.section or q.xml != want:
+                raise AssertionError(f'목차 밖 문단이 바뀌었습니다({p.section} 문단 {p.index})')
+        j += ins_after.get(key, 0)
+    if j != len(after):
+        raise AssertionError(f'출력 문단 수가 다릅니다(예상 {j}, 실제 {len(after)})')
 
 
 # ----------------------------------------------------------------------------- 실행
@@ -610,7 +605,11 @@ def run(argv: list[str] | None = None) -> int:
         ET.fromstring(out_xml.encode('utf-8'))
         sections[name] = out_xml
     write_hwpx(a.hwpx, out, sections)
-    verify_untouched(doc, out, n_inserted=added, fix_memos=a.fix_empty_memos)
+    by_id = {id(p): p for p in doc.paras}
+    first = doc.toc[0].para
+    ins_before = {(first.section, first.index): len(inserts[-1])} if -1 in inserts else {}
+    ins_after = {(by_id[k].section, by_id[k].index): len(v) for k, v in inserts.items() if k != -1}
+    verify_untouched(doc, out, ins_before, ins_after, fix_memos=a.fix_empty_memos)
     print(f'저장: {out}  (쪽번호 {sum(1 for e in doc.toc if e.actual is not None and e.actual != e.page)}개'
           f'{", 제목 %d개" % len(retitle) if a.sync_titles and retitle else ""}'
           f'{", 항목 추가 %d개" % added if added else ""}'

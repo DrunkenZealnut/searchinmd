@@ -107,7 +107,7 @@ python3.13 highlight_pdf_occurrences.py --only LM1903060329   # 한 권만 — �
 보고서 HWPX 의 **목차 쪽번호를 실제 쪽과 맞추려면** `hwpx_toc_sync.py`(2026-09-29)를 씁니다. 같은 문서를 인쇄할 프로그램(Polaris Office·한글, 또는 Polaris Tools 의 HWPX→PDF)에서 PDF 로 내보낸 뒤 둘을 함께 주면, 목차 항목을 본문 제목과 대조하고 PDF 에서 각 제목이 놓인 쪽을 찾아 목차 숫자를 고칩니다. 입력 파일은 덮어쓰지 않고 `<입력>_목차연동.hwpx` 를 새로 만들며, 목차 밖 문단은 바꾸지 않습니다. 메모를 함께 인쇄한 Polaris PDF 도 됩니다(메모 칸의 글은 빼고 맞춥니다).
 
 ```bash
-pip install pymupdf
+python3.13 -m pip install pymupdf
 python3.13 hwpx_toc_sync.py 보고서.hwpx --pdf 보고서.pdf --check                      # 검사만(어긋나면 종료 코드 1)
 python3.13 hwpx_toc_sync.py 보고서.hwpx --pdf 보고서.pdf                              # 쪽번호 갱신
 python3.13 hwpx_toc_sync.py 보고서.hwpx --pdf 보고서.pdf --sync-titles --add-missing  # 바뀐 제목 반영·빠진 항목 추가까지
